@@ -13,7 +13,8 @@ import {
 } from 'lucide-react';
 import { FaceBiometryEnrollmentPanel } from '@/components/common/FaceBiometryEnrollmentPanel';
 import FaceBiometryReadCard from '@/components/common/FaceBiometryReadCard';
-import FaceMultiFaceTestPanel from '@/components/apps/seguranca-escolar/FaceMultiFaceTestPanel';
+import SchoolGateCapture from '@/components/apps/seguranca-escolar/SchoolGateCapture';
+import { FACE_TERMS_SCHOOL } from '@/components/common/face-terms';
 import { SchoolSecurityHeader } from '@/components/apps/seguranca-escolar/SchoolSecurityHeader';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -126,9 +127,18 @@ export default function SegurancaEscolarPage() {
     gateName: '',
     direction: 'ENTRY',
   });
-  const [enrollmentForm, setEnrollmentForm] = useState({
+  const [enrollmentForm, setEnrollmentForm] = useState<{
+    citizenId: string;
+    sourceLabel: string;
+    relationship: 'MAE' | 'PAI' | 'RESPONSAVEL_LEGAL' | 'TITULAR';
+    guardianName: string;
+    signedTerm: boolean;
+  }>({
     citizenId: '',
     sourceLabel: '',
+    relationship: 'RESPONSAVEL_LEGAL',
+    guardianName: '',
+    signedTerm: false,
   });
   const [eventForm, setEventForm] = useState({
     deviceId: '',
@@ -218,16 +228,16 @@ export default function SegurancaEscolarPage() {
         return;
       }
 
-      const [dashboardData, schoolData, deviceData, zoneData, configData, identityData, eventData] =
+      const [dashboardData, schoolData, deviceData, zoneData, configData, eventData] =
         await Promise.all([
           facePlatformService.getDashboard(),
           facePlatformService.listSchools(),
           facePlatformService.listDevices(),
           facePlatformService.listZones(),
           facePlatformService.listConfigurations(),
-          facePlatformService.listIdentities(),
           facePlatformService.listEvents({ limit: 30 }),
         ]);
+      const identityData = Array.from({ length: dashboardData?.totals?.totalIdentities || 0 });
 
       setDashboard(dashboardData);
       setSchools(schoolData);
@@ -306,17 +316,13 @@ export default function SegurancaEscolarPage() {
   }
 
   async function handleCreateEnrollment({
-    imageBase64,
-    metadata,
-    embedding,
-    modelName,
-    modelVersion,
+    frames,
+    challengeId,
+    consentAccepted,
   }: {
-    imageBase64: string;
-    metadata: { qualityScore: number; livenessScore: number };
-    embedding?: number[] | null;
-    modelName?: string;
-    modelVersion?: string;
+    frames: string[];
+    challengeId: string;
+    consentAccepted: boolean;
   }) {
     if (!enrollmentForm.citizenId) {
       return;
@@ -324,25 +330,28 @@ export default function SegurancaEscolarPage() {
 
     try {
       setSubmitting('enrollment');
-      await facePlatformService.createEnrollment({
-        citizenId: enrollmentForm.citizenId,
-        sourceType: 'SCHOOL_SECURITY',
+      const response = await facePlatformService.enrollCitizen(enrollmentForm.citizenId, {
+        purpose: 'SCHOOL_SECURITY',
+        frames,
+        challengeId,
         sourceLabel:
           enrollmentForm.sourceLabel ||
           `Cadastro presencial da biometria escolar${selectedSchool ? ` - ${selectedSchool.nome}` : ''}`,
-        imageBase64,
-        embedding,
-        modelName,
-        modelVersion,
-        qualityScore: metadata.qualityScore,
-        livenessScore: metadata.livenessScore,
-        metadata,
+        consent: {
+          accepted: consentAccepted,
+          relationship: enrollmentForm.relationship,
+          grantedByName: enrollmentForm.guardianName.trim(),
+          signedTermOnFile: enrollmentForm.signedTerm,
+        },
       });
-      setEnrollmentForm({ citizenId: '', sourceLabel: '' });
+      setEnrollmentForm({ citizenId: '', sourceLabel: '', relationship: 'RESPONSAVEL_LEGAL', guardianName: '', signedTerm: false });
       await loadAll();
       await loadCitizens(selectedSchoolId);
-    } catch (error: any) {
-      alert(error?.response?.data?.error || 'Erro ao cadastrar biometria do cidadão.');
+      return {
+        message: response?.approved
+          ? 'Biometria do aluno cadastrada.'
+          : `Biometria enviada para conferência: ${(response?.reviewReasons || [])[0] || 'confirme antes de usar.'}`,
+      };
     } finally {
       setSubmitting(null);
     }
@@ -439,7 +448,6 @@ export default function SegurancaEscolarPage() {
               <TabsTrigger value="cameras">Câmeras</TabsTrigger>
               <TabsTrigger value="biometrias">Biometria</TabsTrigger>
               <TabsTrigger value="eventos">Eventos</TabsTrigger>
-              <TabsTrigger value="teste-multi-rosto">Teste multi-rosto</TabsTrigger>
               <TabsTrigger value="configuracao">Configuração</TabsTrigger>
             </TabsList>
 
@@ -595,7 +603,14 @@ export default function SegurancaEscolarPage() {
                 <CardContent className="space-y-4">
                   <Select
                     value={enrollmentForm.citizenId}
-                    onValueChange={(value) => setEnrollmentForm({ ...enrollmentForm, citizenId: value })}
+                    onValueChange={(value) => {
+                      const selected = citizens.find((item: any) => item.citizen.id === value);
+                      setEnrollmentForm({
+                        ...enrollmentForm,
+                        citizenId: value,
+                        guardianName: selected?.guardian?.name || selected?.responsavel?.name || '',
+                      });
+                    }}
                   >
                     <SelectTrigger>
                       <SelectValue placeholder="Cidadão" />
@@ -615,15 +630,56 @@ export default function SegurancaEscolarPage() {
                     onChange={(event) => setEnrollmentForm({ ...enrollmentForm, sourceLabel: event.target.value })}
                   />
 
+                  <div className="grid gap-3 rounded-xl border border-slate-200 bg-slate-50 p-3 sm:grid-cols-2">
+                    <div className="space-y-1">
+                      <label className="text-xs font-medium text-slate-600">Quem autoriza</label>
+                      <select
+                        className="h-10 w-full rounded-md border border-slate-200 bg-white px-3 text-sm"
+                        value={enrollmentForm.relationship}
+                        onChange={(event) => setEnrollmentForm({ ...enrollmentForm, relationship: event.target.value as any })}
+                      >
+                        <option value="MAE">Mãe</option>
+                        <option value="PAI">Pai</option>
+                        <option value="RESPONSAVEL_LEGAL">Responsável legal</option>
+                        <option value="TITULAR">O próprio aluno (maior de idade)</option>
+                      </select>
+                    </div>
+                    {enrollmentForm.relationship !== 'TITULAR' && (
+                      <div className="space-y-1">
+                        <label className="text-xs font-medium text-slate-600">Nome do responsável</label>
+                        <Input
+                          value={enrollmentForm.guardianName}
+                          onChange={(event) => setEnrollmentForm({ ...enrollmentForm, guardianName: event.target.value })}
+                          placeholder="Nome completo"
+                        />
+                      </div>
+                    )}
+                    <label className="flex items-center gap-2 text-sm text-slate-700 sm:col-span-2">
+                      <input
+                        type="checkbox"
+                        checked={enrollmentForm.signedTerm}
+                        onChange={(event) => setEnrollmentForm({ ...enrollmentForm, signedTerm: event.target.checked })}
+                      />
+                      Termo de autorização assinado e arquivado na escola
+                    </label>
+                  </div>
+
                   <FaceBiometryEnrollmentPanel
-                    title="Cadastro biométrico do cidadão"
-                    description="A câmera do setor grava o rosto em vídeo ao vivo e envia a biometria automaticamente."
-                    helperText="Abra a câmera, mantenha apenas uma pessoa no quadro e aguarde o envio automático."
+                    title="Cadastro biométrico do aluno"
+                    description="A câmera captura o aluno ao vivo; a prova de vida e o cadastro são conferidos no servidor."
+                    helperText="Deixe só o aluno na moldura. Ele vai olhar de frente, virar o rosto para o lado pedido e voltar."
                     purposeLabel="Cadastro escolar"
                     startLabel="Abrir câmera"
                     retryLabel="Refazer biometria"
                     cancelLabel="Fechar câmera"
                     disabled={!selectedSchoolId || !enrollmentForm.citizenId || Boolean(submitting)}
+                    readyToCapture={enrollmentForm.relationship === 'TITULAR' || enrollmentForm.guardianName.trim().length >= 3}
+                    consent={{
+                      title: 'Autorização para a biometria escolar',
+                      body: FACE_TERMS_SCHOOL,
+                      checkboxLabel: 'O responsável foi informado e autorizou o uso da biometria do aluno para a segurança escolar.',
+                    }}
+                    getChallenge={() => facePlatformService.createChallenge({ mode: 'enroll', citizenId: enrollmentForm.citizenId })}
                     onEnroll={handleCreateEnrollment}
                   />
                 </CardContent>
@@ -642,8 +698,14 @@ export default function SegurancaEscolarPage() {
                     <div key={item.matriculaId} className="rounded-xl border border-slate-200 p-3 text-sm">
                       <div className="flex items-center justify-between gap-3">
                         <span className="font-medium">{item.citizen.name}</span>
-                        <Badge variant={item.faceIdentity ? 'default' : 'secondary'}>
-                          {item.faceIdentity ? item.faceIdentity.status : 'Sem biometria'}
+                        <Badge variant={item.faceIdentity?.totalEmbeddings ? 'default' : 'secondary'}>
+                          {item.faceIdentity?.needsReenrollment
+                            ? 'Refazer cadastro'
+                            : item.faceIdentity?.totalEmbeddings
+                              ? item.schoolConsent
+                                ? 'Biometria ativa'
+                                : 'Sem autorização escolar'
+                              : 'Sem biometria'}
                         </Badge>
                       </div>
                       <p className="text-slate-600">Responsável: {item.guardian?.name || item.responsavel?.name || 'Não informado'}</p>
@@ -698,28 +760,6 @@ export default function SegurancaEscolarPage() {
                   </Select>
 
                   <Select
-                    value={eventForm.expectedCitizenId || 'none'}
-                    onValueChange={(value) =>
-                      setEventForm({
-                        ...eventForm,
-                        expectedCitizenId: value === 'none' ? '' : value,
-                      })
-                    }
-                  >
-                    <SelectTrigger>
-                      <SelectValue placeholder="Cidadão esperado (opcional)" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="none">Sem cidadão esperado</SelectItem>
-                      {citizens.map((item: any) => (
-                        <SelectItem key={item.citizen.id} value={item.citizen.id}>
-                          {item.citizen.name}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-
-                  <Select
                     value={eventForm.eventType}
                     onValueChange={(value) =>
                       setEventForm({
@@ -734,109 +774,17 @@ export default function SegurancaEscolarPage() {
                     <SelectContent>
                       <SelectItem value="ENTRY">Entrada</SelectItem>
                       <SelectItem value="EXIT">Saída</SelectItem>
-                      <SelectItem value="DETECTION">Detecção</SelectItem>
+                      <SelectItem value="DETECTION">Só registrar (sem avisar responsável)</SelectItem>
                     </SelectContent>
                   </Select>
 
-                  <FaceBiometryReadCard
-                    title="Leitura ao vivo para evento escolar"
-                    description="A câmera grava o rosto em vídeo ao vivo, reconhece a biometria cadastrada e registra o evento operacional."
-                    purposeLabel="Leitura escolar"
-                    disabled={!selectedSchoolId || !eventForm.deviceId || Boolean(submitting)}
-                    expectedOwnerLabel={
-                      eventForm.expectedCitizenId
-                        ? citizens.find((item: any) => item.citizen.id === eventForm.expectedCitizenId)?.citizen?.name ||
-                          'Cidadão esperado'
-                        : undefined
-                    }
-                    onRead={async ({ imageBase64, metadata, embedding, modelName, modelVersion }) => {
-                      try {
-                        setSubmitting('event-live');
-                        setLiveEventMessage('Leitura ao vivo concluída. Registrando o evento escolar...');
-
-                        const readResult = (await facePlatformService.readBiometry({
-                          imageBase64,
-                          embedding,
-                          modelName,
-                          modelVersion,
-                          sourceType: 'SCHOOL_SECURITY_LIVE_READ',
-                          sourceLabel: `Leitura ao vivo${selectedSchool ? ` - ${selectedSchool.nome}` : ''}`,
-                          expectedCitizenId: eventForm.expectedCitizenId || undefined,
-                          qualityScore: metadata.qualityScore,
-                          livenessScore: metadata.livenessScore,
-                          metadata,
-                        })) as FaceReadResult;
-
-                        setLiveEventResult(readResult);
-
-                        await facePlatformService.ingestEvent({
-                          deviceId: eventForm.deviceId,
-                          zoneId: eventForm.zoneId || undefined,
-                          unidadeEducacaoId: selectedSchoolId,
-                          identityId: readResult.identity?.id || undefined,
-                          citizenId: readResult.identity?.citizenId || undefined,
-                          eventType: resolveEventType(eventForm.eventType, readResult.matchStatus),
-                          confidence: readResult.confidence || undefined,
-                          provider: readResult.provider || modelName || undefined,
-                          modelName: readResult.modelName || modelName || undefined,
-                          modelVersion: readResult.modelVersion || modelVersion || undefined,
-                          imageBase64,
-                          metadata: {
-                            liveSession: metadata,
-                            liveRead: readResult,
-                            recognitionEmbedding: embedding || null,
-                            recognitionModelName: modelName || null,
-                            recognitionModelVersion: modelVersion || null,
-                            expectedCitizenId: eventForm.expectedCitizenId || null,
-                          },
-                        });
-
-                        setLiveEventMessage('Evento ao vivo registrado com sucesso na fila operacional.');
-                        await loadAll();
-                        return readResult;
-                      } catch (error: any) {
-                        setLiveEventMessage(null);
-                        alert(error?.response?.data?.error || 'Erro ao registrar o evento ao vivo.');
-                        throw error;
-                      } finally {
-                        setSubmitting(null);
-                      }
-                    }}
+                  <SchoolGateCapture
+                    deviceId={eventForm.deviceId}
+                    zoneId={eventForm.zoneId || undefined}
+                    eventType={eventForm.eventType}
+                    disabled={!selectedSchoolId || Boolean(submitting)}
+                    onRegistered={() => void loadAll()}
                   />
-
-                  {liveEventMessage && (
-                    <div className="rounded-2xl border border-sky-200 bg-sky-50 px-4 py-3 text-sm text-sky-700">
-                      {submitting === 'event-live' ? (
-                        <span className="inline-flex items-center gap-2">
-                          <Loader2 className="h-4 w-4 animate-spin" />
-                          {liveEventMessage}
-                        </span>
-                      ) : (
-                        liveEventMessage
-                      )}
-                    </div>
-                  )}
-
-                  {liveEventResult && (
-                    <div className="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-4 text-sm text-slate-700">
-                      <div className="flex flex-wrap items-center gap-2">
-                        <Badge className={getMatchBadgeClass(liveEventResult.matchStatus)}>
-                          {liveEventResult.matchStatus === 'MATCHED'
-                            ? 'Reconhecimento confirmado'
-                            : liveEventResult.matchStatus === 'REVIEW_REQUIRED'
-                              ? 'Correspondência em revisão'
-                              : 'Sem correspondência'}
-                        </Badge>
-                        <Badge className="border-slate-200 bg-white text-slate-700">
-                          Confiança {Math.round((liveEventResult.confidence || 0) * 100)}%
-                        </Badge>
-                      </div>
-                      <p className="mt-3 font-medium text-slate-900">{getRecognizedName(liveEventResult)}</p>
-                      {liveEventResult.reviewReason && (
-                        <p className="mt-1 text-slate-600">{liveEventResult.reviewReason}</p>
-                      )}
-                    </div>
-                  )}
                 </CardContent>
               </Card>
 
@@ -853,7 +801,18 @@ export default function SegurancaEscolarPage() {
                       </div>
                       <p className="text-slate-600">
                         {event.type} • {event.matchStatus}
+                        {event.reviewReason ? ` • ${event.reviewReason}` : ''}
                       </p>
+                      {event.hasPreview && (
+                        <a
+                          className="text-xs text-sky-700 underline"
+                          href={facePlatformService.mediaUrl('event', event.id)}
+                          target="_blank"
+                          rel="noreferrer"
+                        >
+                          Ver foto (acesso registrado)
+                        </a>
+                      )}
                       {event.matchStatus === 'REVIEW_REQUIRED' && (
                         <div className="mt-3 flex gap-2">
                           <Button
@@ -880,9 +839,6 @@ export default function SegurancaEscolarPage() {
               </Card>
             </TabsContent>
 
-            <TabsContent value="teste-multi-rosto" className="space-y-4">
-              <FaceMultiFaceTestPanel schoolName={selectedSchool?.nome || undefined} />
-            </TabsContent>
 
             <TabsContent value="configuracao" className="grid gap-4 lg:grid-cols-2">
               <Card className="border-amber-100 bg-white/85">

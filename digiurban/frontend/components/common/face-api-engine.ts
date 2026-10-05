@@ -1,5 +1,12 @@
 'use client';
 
+/**
+ * face-api.js no navegador SÓ para guiar a captura (achar o rosto, centralizar,
+ * perceber o giro do desafio). O reconhecimento e a prova de vida são feitos no
+ * servidor (motor UniFace) — o navegador não calcula mais assinatura de rosto.
+ * Modelos servidos pelo próprio app (/face-models), não de repositório de terceiros.
+ */
+
 export type FaceApiModule = typeof import('face-api.js');
 
 export interface FaceApiPoint {
@@ -17,7 +24,6 @@ export interface FaceApiFaceAnalysis {
   };
   score: number;
   landmarks: FaceApiPoint[];
-  descriptor: number[] | null;
 }
 
 export interface FaceApiFrameAnalysis {
@@ -38,9 +44,7 @@ interface FaceApiEngine {
   faceapi: FaceApiModule;
 }
 
-const DEFAULT_FACE_API_MODEL_BASE_URL =
-  process.env.NEXT_PUBLIC_FACE_API_MODELS_URL ||
-  'https://cdn.jsdelivr.net/gh/justadudewhohacks/face-api.js-models@master';
+const DEFAULT_FACE_API_MODEL_BASE_URL = '/face-models';
 const FACE_API_MODEL_NAME = 'face-api.js';
 const FACE_API_MODEL_VERSION = '0.22.2';
 const DEFAULT_ANALYSIS_INPUT_SIZE = 416;
@@ -50,21 +54,6 @@ let enginePromise: Promise<FaceApiEngine | null> | null = null;
 
 function clamp(value: number, min: number, max: number) {
   return Math.min(Math.max(value, min), max);
-}
-
-function normalizeDescriptorVector(vector: ArrayLike<number> | null | undefined) {
-  if (!vector || typeof vector.length !== 'number' || vector.length === 0) {
-    return [] as number[];
-  }
-
-  const values = Array.from(vector, (value) => Number(value) || 0);
-  const magnitude = Math.sqrt(values.reduce((sum, value) => sum + value * value, 0));
-
-  if (!Number.isFinite(magnitude) || magnitude <= 0) {
-    return values;
-  }
-
-  return values.map((value) => value / magnitude);
 }
 
 async function ensureBackend(tf: typeof import('@tensorflow/tfjs')) {
@@ -131,7 +120,6 @@ async function loadFaceApiEngine(): Promise<FaceApiEngine | null> {
     await Promise.all([
       faceapi.nets.tinyFaceDetector.loadFromUri(`${DEFAULT_FACE_API_MODEL_BASE_URL}/tiny_face_detector`),
       faceapi.nets.faceLandmark68Net.loadFromUri(`${DEFAULT_FACE_API_MODEL_BASE_URL}/face_landmark_68`),
-      faceapi.nets.faceRecognitionNet.loadFromUri(`${DEFAULT_FACE_API_MODEL_BASE_URL}/face_recognition`),
     ]);
 
     return { faceapi };
@@ -171,8 +159,7 @@ export async function analyzeFaceApiFrame(
         scoreThreshold: options.scoreThreshold ?? DEFAULT_ANALYSIS_SCORE_THRESHOLD,
       })
     )
-    .withFaceLandmarks()
-    .withFaceDescriptors();
+    .withFaceLandmarks();
 
   const faces = detections.map((detection) => ({
     box: {
@@ -183,7 +170,6 @@ export async function analyzeFaceApiFrame(
     },
     score: detection.detection.score,
     landmarks: extractLandmarks(detection.landmarks, video.videoWidth, video.videoHeight),
-    descriptor: normalizeDescriptorVector(detection.descriptor || []),
   }));
 
   if (!faces.length) {

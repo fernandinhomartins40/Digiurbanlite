@@ -31,7 +31,7 @@ export async function getRetentionSettings() {
   });
 }
 
-export async function updateRetentionSettings(data: Partial<{ enabled: boolean; botChatDays: number; humanChatDays: number; assistantDays: number }>) {
+export async function updateRetentionSettings(data: Partial<{ enabled: boolean; botChatDays: number; humanChatDays: number; assistantDays: number; faceUnmatchedImageDays: number; faceEventImageDays: number; faceEventDays: number }>) {
   return runAsPlatform(async () =>
     prisma.privacyRetentionSettings.upsert({ where: { id: 'singleton' }, create: { id: 'singleton', ...data }, update: data })
   );

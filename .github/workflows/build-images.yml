@@ -54,6 +54,7 @@ jobs:
           cache-dependency-path: |
             digiurban/backend/package-lock.json
             ultrazend-messages-server/package-lock.json
+            ultrazend-face-server/package-lock.json
       - name: Backend - testes unitarios
         working-directory: digiurban/backend
         run: |
@@ -66,6 +67,13 @@ jobs:
           npm install --legacy-peer-deps --ignore-scripts --no-audit --no-fund
           npx prisma generate
           npx jest --ci
+      - name: Biometria - regras de decisao e tipos
+        working-directory: ultrazend-face-server
+        run: |
+          npm install --legacy-peer-deps --ignore-scripts --no-audit --no-fund
+          npx prisma generate
+          npx tsc --noEmit
+          npm test
 
   build:
     runs-on: ubuntu-latest
@@ -87,6 +95,9 @@ jobs:
           - name: digiurban-face
             context: ./ultrazend-face-server
             dockerfile: ./ultrazend-face-server/Dockerfile
+          - name: digiurban-face-engine
+            context: ./ultrazend-face-engine
+            dockerfile: ./ultrazend-face-engine/Dockerfile
 
     steps:
       - name: Checkout
@@ -195,7 +206,7 @@ jobs:
 
           echo "=== Baixando imagens prontas (a VPS NAO compila) ==="
           RELEASE="${RELEASE}" docker-compose -f docker-compose.vps.yml pull \
-            digiurban ultrazend-messages ultrazend-smtp ultrazend-face
+            digiurban ultrazend-messages ultrazend-smtp ultrazend-face ultrazend-face-engine
 
           # IA LOCAL REMOVIDA (2026-09-14): llamacpp e digiurban-ai sairam do compose
           # (a IA passa a ser externa). Containers de servicos removidos NAO somem
@@ -236,7 +247,7 @@ jobs:
 
           echo "=== Subindo satelites (schema ja criado pelo backend) ==="
           RELEASE="${RELEASE}" docker-compose -f docker-compose.vps.yml up -d \
-            ultrazend-messages ultrazend-face
+            ultrazend-face-engine ultrazend-messages ultrazend-face
           wait_for_container_health ultrazend-messages 30 5
 
           echo "=== Seeds ==="

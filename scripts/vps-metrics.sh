@@ -24,7 +24,7 @@ set -u
 
 OUT="${METRICS_FILE:-/var/log/digiurban-metrics.csv}"
 MAX_LINES="${METRICS_MAX_LINES:-2000}"   # ~83 dias de coleta horaria
-CONTAINERS="digiurban-vps ultrazend-messages ultrazend-smtp ultrazend-face digiurban-postgres digiurban-redis"
+CONTAINERS="digiurban-vps ultrazend-messages ultrazend-smtp ultrazend-face ultrazend-face-engine digiurban-postgres digiurban-redis"
 
 # Se nao houver permissao no caminho padrao, cai para o diretorio do projeto.
 if ! touch "$OUT" 2>/dev/null; then

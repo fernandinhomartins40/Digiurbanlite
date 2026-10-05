@@ -14,6 +14,22 @@ import { logError, logger } from '../config/logger.config';
  * Middleware de erro global
  * IMPORTANTE: Deve ser registrado por último no app.ts (depois de todas as rotas)
  */
+/**
+ * O corpo da requisição vai para o arquivo de log: nunca gravar fotos (biometria,
+ * documentos), senhas nem tokens — dado sensível em log é vazamento (LGPD art. 46).
+ */
+function redactBody(body: unknown): unknown {
+  if (!body || typeof body !== 'object') return body;
+  const sensitive = /password|senha|token|secret|frames?|image|base64|embedding|vector|cpf|document/i;
+  const output: Record<string, unknown> = {};
+  for (const [key, value] of Object.entries(body as Record<string, unknown>)) {
+    if (sensitive.test(key)) output[key] = '[omitido]';
+    else if (typeof value === 'string' && value.length > 300) output[key] = `[texto com ${value.length} caracteres]`;
+    else output[key] = value;
+  }
+  return output;
+}
+
 export const errorHandler = (
   err: Error,
   req: Request,
@@ -30,7 +46,7 @@ export const errorHandler = (
   // ✅ LOG ESTRUTURADO com Winston (persistido em arquivo)
   logError(err, req, {
     statusCode,
-    body: req.body,
+    body: redactBody(req.body),
     params: req.params,
     query: req.query
   });
@@ -43,7 +59,8 @@ export const errorHandler = (
   // ✅ SEMPRE retorna JSON (nunca HTML)
   res.status(statusCode).json({
     success: false,
-    error: 'Erro interno do servidor',
+    // erro "do usuário" (4xx): a tela mostra o motivo real (antes: "Erro interno do servidor")
+    error: statusCode >= 400 && statusCode < 500 ? err.message : 'Erro interno do servidor',
     message: shouldExposeMessage ? err.message : 'Ocorreu um erro inesperado',
     ...(process.env.NODE_ENV === 'development' && {
       stack: err.stack,

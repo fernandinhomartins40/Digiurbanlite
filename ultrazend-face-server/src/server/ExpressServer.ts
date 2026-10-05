@@ -3,7 +3,6 @@ import cors from 'cors';
 import express, { type Application, type NextFunction, type Request, type Response } from 'express';
 import helmet from 'helmet';
 import rateLimit from 'express-rate-limit';
-import path from 'path';
 import serviceAuthMiddleware from '../middleware/service-auth';
 import facePlatformRoutes from '../routes/face-platform.routes';
 import logger from '../utils/logger';
@@ -26,16 +25,12 @@ export class ExpressServer {
     this.app.set('trust proxy', 1);
 
     this.app.use(helmet());
-    this.app.use(cors({
-      origin: process.env.CORS_ORIGIN || '*',
-      credentials: true,
-    }));
-    this.app.use(express.json({ limit: '20mb' }));
-    this.app.use(express.urlencoded({ extended: true, limit: '20mb' }));
+    // Só o backend chama este serviço (rede interna): navegador nenhum entra aqui
+    this.app.use(cors({ origin: false }));
+    this.app.use(express.json({ limit: '12mb' }));
     this.app.use(compression());
-
-    const uploadDir = process.env.UPLOAD_DIR || path.join(process.cwd(), 'uploads');
-    this.app.use('/uploads', express.static(uploadDir));
+    // As fotos da biometria NÃO são mais servidas abertas em /uploads: saem só
+    // pelo backend, para quem tem permissão, e cada acesso é registrado.
 
     const limiter = rateLimit({
       windowMs: Number(process.env.RATE_LIMIT_WINDOW_MS || 60000),
@@ -63,7 +58,7 @@ export class ExpressServer {
       });
     });
 
-    this.app.use('/api/face-platform', serviceAuthMiddleware, facePlatformRoutes);
+    this.app.use('/api/face-platform', (req, res, next) => void serviceAuthMiddleware(req, res, next), facePlatformRoutes);
 
     this.app.use((_req: Request, res: Response) => {
       res.status(404).json({ error: 'Route not found' });

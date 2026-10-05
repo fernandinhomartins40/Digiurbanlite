@@ -1,246 +1,172 @@
 import { Router, Request, Response } from 'express';
 import facePlatformService from '../services/FacePlatformService';
+import { requireTenant } from '../middleware/service-auth';
+import type { FaceActor } from '../services/face/access-log';
+import { applyFaceRetention, reprocessPendingEmbeddings } from '../services/face/jobs';
+import { invalidateSettingsCache } from '../services/face/settings';
+import logger from '../utils/logger';
 
 const router = Router();
 
-function respondWithFaceError(res: Response, error: any, fallbackStatus = 500) {
-  const status = Number(error?.status || error?.statusCode || error?.response?.status || fallbackStatus);
-  const safeStatus = Number.isFinite(status) ? status : fallbackStatus;
-  const message = error?.message || 'Erro interno do servidor';
-
+function respond(res: Response, error: any) {
+  const status = Number(error?.status || error?.statusCode || 500);
+  const safeStatus = Number.isFinite(status) && status >= 400 && status < 600 ? status : 500;
+  if (safeStatus >= 500) logger.error('Erro no serviço facial', { error: error?.message });
+  const message = safeStatus >= 500 && !error?.status ? 'Erro interno do serviço facial' : error?.message || 'Erro';
   return res.status(safeStatus).json({
     success: false,
     error: message,
     message,
-    ...(error?.details !== undefined ? { details: error.details } : {}),
-    ...(error?.code ? { code: error.code } : {}),
+    ...(error?.details && safeStatus < 500 ? { details: error.details } : {}),
   });
 }
 
-function hasEmbedding(payload: any) {
-  return Array.isArray(payload?.embedding) && payload.embedding.length > 0;
+/** Quem está agindo (o backend informa; entra no registro de acesso) */
+function actorOf(req: Request): FaceActor {
+  const type = String(req.headers['x-actor-type'] || 'SYSTEM').toUpperCase();
+  return {
+    type: type === 'USER' || type === 'CITIZEN' ? type : 'SYSTEM',
+    id: req.headers['x-actor-id'] ? String(req.headers['x-actor-id']) : null,
+    role: req.headers['x-actor-role'] ? String(req.headers['x-actor-role']) : null,
+  };
 }
 
-router.get('/status', async (_req: Request, res: Response) => {
-  try {
-    return res.json(await facePlatformService.getStatus());
-  } catch (error: any) {
-    console.error('Erro ao carregar status do serviço facial:', error);
-    return respondWithFaceError(res, error, 500);
-  }
-});
+const tenantOf = (req: Request) => (req as any).tenantId as string;
 
-router.get('/dashboard', async (_req: Request, res: Response) => {
-  try {
-    const data = await facePlatformService.getDashboard();
-    return res.json(data);
-  } catch (error: any) {
-    console.error('Erro ao carregar dashboard facial:', error);
-    return respondWithFaceError(res, error, 500);
-  }
-});
-
-router.get('/schools', async (_req: Request, res: Response) => {
-  try {
-    const schools = await facePlatformService.listSchools();
-    return res.json(schools);
-  } catch (error: any) {
-    console.error('Erro ao listar escolas para segurança escolar:', error);
-    return respondWithFaceError(res, error, 500);
-  }
-});
-
-router.get('/schools/:schoolId/citizens', async (req: Request, res: Response) => {
-  try {
-    const data = await facePlatformService.listSchoolCitizens(String(req.params.schoolId));
-    return res.json(data);
-  } catch (error: any) {
-    console.error('Erro ao listar cidadãos da unidade escolar:', error);
-    return respondWithFaceError(res, error, 500);
-  }
-});
-
-router.get('/devices', async (_req: Request, res: Response) => {
-  try {
-    const devices = await facePlatformService.listDevices();
-    return res.json(devices);
-  } catch (error: any) {
-    console.error('Erro ao listar dispositivos faciais:', error);
-    return respondWithFaceError(res, error, 500);
-  }
-});
-
-router.post('/devices', async (req: Request, res: Response) => {
-  try {
-    const device = await facePlatformService.createDevice(req.body);
-    return res.status(201).json(device);
-  } catch (error: any) {
-    console.error('Erro ao criar dispositivo facial:', error);
-    return respondWithFaceError(res, error, 500);
-  }
-});
-
-router.put('/devices/:id', async (req: Request, res: Response) => {
-  try {
-    const device = await facePlatformService.updateDevice(String(req.params.id), req.body);
-    return res.json(device);
-  } catch (error: any) {
-    console.error('Erro ao atualizar dispositivo facial:', error);
-    return respondWithFaceError(res, error, 500);
-  }
-});
-
-router.get('/zones', async (_req: Request, res: Response) => {
-  try {
-    const zones = await facePlatformService.listZones();
-    return res.json(zones);
-  } catch (error: any) {
-    console.error('Erro ao listar zonas faciais:', error);
-    return respondWithFaceError(res, error, 500);
-  }
-});
-
-router.post('/zones', async (req: Request, res: Response) => {
-  try {
-    const zone = await facePlatformService.createZone(req.body);
-    return res.status(201).json(zone);
-  } catch (error: any) {
-    console.error('Erro ao criar zona facial:', error);
-    return respondWithFaceError(res, error, 500);
-  }
-});
-
-router.get('/configurations', async (_req: Request, res: Response) => {
-  try {
-    const configurations = await facePlatformService.listConfigurations();
-    return res.json(configurations);
-  } catch (error: any) {
-    console.error('Erro ao listar configurações escolares:', error);
-    return respondWithFaceError(res, error, 500);
-  }
-});
-
-router.put('/configurations/:schoolId', async (req: Request, res: Response) => {
-  try {
-    const configuration = await facePlatformService.upsertSchoolConfiguration({
-      ...req.body,
-      unidadeEducacaoId: String(req.params.schoolId),
-    });
-    return res.json(configuration);
-  } catch (error: any) {
-    console.error('Erro ao salvar configuração escolar:', error);
-    return respondWithFaceError(res, error, 500);
-  }
-});
-
-router.get('/identities', async (_req: Request, res: Response) => {
-  try {
-    const identities = await facePlatformService.listIdentities();
-    return res.json(identities);
-  } catch (error: any) {
-    console.error('Erro ao listar identidades faciais:', error);
-    return respondWithFaceError(res, error, 500);
-  }
-});
-
-router.post('/identities/enrollments', async (req: any, res: Response) => {
-  try {
-    if (!hasEmbedding(req.body)) {
-      return res.status(400).json({
-        success: false,
-        error: 'O cadastro facial exige embedding válido do face-api.js.',
-        message: 'O cadastro facial exige embedding válido do face-api.js.',
-      });
+function handle(fn: (req: Request, res: Response) => Promise<unknown>, status = 200) {
+  return async (req: Request, res: Response) => {
+    try {
+      const result = await fn(req, res);
+      if (!res.headersSent) res.status(status).json(result);
+    } catch (error) {
+      respond(res, error);
     }
+  };
+}
 
-    const identity = await facePlatformService.createEnrollment({
-      ...req.body,
-      approvedById: req.userId || null,
-    });
-    return res.status(201).json(identity);
-  } catch (error: any) {
-    console.error('Erro ao registrar enrollment facial:', error);
-    return respondWithFaceError(res, error, 500);
-  }
-});
+// ---------------- Manutenção da plataforma (sem município) ----------------
+router.post('/maintenance/retention', handle(async () => applyFaceRetention()));
+router.post('/maintenance/reprocess', handle(async () => reprocessPendingEmbeddings(50)));
+router.post('/maintenance/settings-changed', handle(async () => {
+  invalidateSettingsCache();
+  return { success: true };
+}));
 
-router.delete('/identities/citizens/:citizenId/biometry', async (req: any, res: Response) => {
+// ---------------- Rotas de município ----------------
+router.use(requireTenant);
+
+router.get('/status', handle((req) => facePlatformService.getStatus(tenantOf(req))));
+router.get('/dashboard', handle((req) => facePlatformService.getDashboard(tenantOf(req))));
+router.get('/schools', handle((req) => facePlatformService.listSchools(tenantOf(req))));
+router.get('/schools/:schoolId/citizens', handle((req) => facePlatformService.listSchoolCitizens(tenantOf(req), String(req.params.schoolId))));
+router.get('/devices', handle((req) => facePlatformService.listDevices(tenantOf(req))));
+router.post('/devices', handle((req) => facePlatformService.createDevice(tenantOf(req), req.body), 201));
+router.put('/devices/:id', handle((req) => facePlatformService.updateDevice(tenantOf(req), String(req.params.id), req.body)));
+router.get('/zones', handle((req) => facePlatformService.listZones(tenantOf(req))));
+router.post('/zones', handle((req) => facePlatformService.createZone(tenantOf(req), req.body), 201));
+router.get('/configurations', handle((req) => facePlatformService.listConfigurations(tenantOf(req))));
+router.put('/configurations/:schoolId', handle((req) =>
+  facePlatformService.upsertSchoolConfiguration(tenantOf(req), { ...req.body, unidadeEducacaoId: String(req.params.schoolId) })
+));
+
+router.get('/identities', handle((req) => facePlatformService.listIdentities(tenantOf(req), actorOf(req))));
+
+router.post('/challenges', handle(async (req) => {
+  const subject = String(req.body?.subject || '').trim();
+  if (!subject) throw Object.assign(new Error('Informe para quem é o desafio'), { status: 400 });
+  return facePlatformService.createChallenge(tenantOf(req), subject);
+}, 201));
+
+router.get('/citizens/:citizenId/biometry', handle((req) =>
+  facePlatformService.getCitizenBiometry(tenantOf(req), String(req.params.citizenId), actorOf(req))
+));
+
+router.post('/citizens/:citizenId/enrollments', handle((req) =>
+  facePlatformService.createEnrollment(tenantOf(req), {
+    citizenId: String(req.params.citizenId),
+    purpose: req.body?.purpose,
+    frames: req.body?.frames,
+    challengeId: req.body?.challengeId,
+    sourceType: String(req.body?.sourceType || 'MANUAL_ADMIN'),
+    sourceLabel: req.body?.sourceLabel || null,
+    consent: req.body?.consent || null,
+    actor: actorOf(req),
+  }), 201
+));
+
+router.delete('/citizens/:citizenId/biometry', handle((req) =>
+  facePlatformService.deleteCitizenBiometry(tenantOf(req), {
+    citizenId: String(req.params.citizenId),
+    actor: actorOf(req),
+    reason: req.body?.reason || null,
+  })
+));
+
+router.get('/citizens/:citizenId/consents', handle((req) => facePlatformService.listConsents(tenantOf(req), String(req.params.citizenId))));
+router.post('/citizens/:citizenId/consents', handle((req) =>
+  facePlatformService.grantConsent(tenantOf(req), String(req.params.citizenId), req.body?.purpose, req.body?.consent, actorOf(req)), 201
+));
+router.post('/citizens/:citizenId/consents/revoke', handle((req) =>
+  facePlatformService.revokeConsent(
+    tenantOf(req),
+    String(req.params.citizenId),
+    req.body?.purpose,
+    actorOf(req),
+    String(req.body?.reason || 'Revogado a pedido do titular')
+  )
+));
+
+router.post('/recognition/verify', handle((req) =>
+  facePlatformService.verify(tenantOf(req), {
+    frames: req.body?.frames,
+    challengeId: req.body?.challengeId,
+    expectedCitizenId: req.body?.expectedCitizenId || null,
+    purpose: req.body?.purpose || 'IDENTITY_VERIFICATION',
+    sourceType: String(req.body?.sourceType || 'LIVE_READ'),
+    challengeSubject: String(req.body?.challengeSubject || ''),
+    actor: actorOf(req),
+  })
+));
+
+router.get('/events', handle((req) =>
+  facePlatformService.listEvents(tenantOf(req), {
+    unidadeEducacaoId: req.query.unidadeEducacaoId as string | undefined,
+    zoneId: req.query.zoneId as string | undefined,
+    matchStatus: req.query.matchStatus as any,
+    limit: req.query.limit ? Number(req.query.limit) : undefined,
+  })
+));
+router.post('/events/ingest', handle((req) =>
+  facePlatformService.ingestRecognition(tenantOf(req), {
+    deviceId: String(req.body?.deviceId || ''),
+    zoneId: req.body?.zoneId || null,
+    eventType: req.body?.eventType,
+    frame: req.body?.frame,
+    actor: actorOf(req),
+  }), 201
+));
+router.post('/events/:id/review', handle((req) =>
+  facePlatformService.reviewEvent(tenantOf(req), String(req.params.id), actorOf(req), req.body?.decision)
+));
+
+router.get('/media/:kind/:id', async (req: Request, res: Response) => {
   try {
-    const result = await facePlatformService.deleteCitizenBiometry({
-      citizenId: String(req.params.citizenId),
-      deletedById: req.body?.deletedById || null,
-      reason: req.body?.reason || null,
-    });
-    return res.json(result);
-  } catch (error: any) {
-    console.error('Erro ao excluir biometria facial do cidadão:', error);
-    return respondWithFaceError(res, error, 500);
+    const kind = req.params.kind === 'event' ? 'event' : req.params.kind === 'enrollment' ? 'enrollment' : null;
+    if (!kind) return res.status(400).json({ error: 'Tipo de foto inválido' });
+    const media = await facePlatformService.getMedia(tenantOf(req), kind, String(req.params.id), actorOf(req));
+    res.setHeader('Content-Type', media.mimeType);
+    res.setHeader('Cache-Control', 'no-store');
+    return res.send(media.buffer);
+  } catch (error) {
+    return respond(res, error);
   }
 });
 
-router.post('/recognition/read', async (req: Request, res: Response) => {
-  try {
-    if (!hasEmbedding(req.body)) {
-      return res.status(400).json({
-        success: false,
-        error: 'A leitura biométrica ao vivo exige embedding válido do face-api.js.',
-        message: 'A leitura biométrica ao vivo exige embedding válido do face-api.js.',
-      });
-    }
-
-    const result = await facePlatformService.readBiometry(req.body);
-    return res.json(result);
-  } catch (error: any) {
-    console.error('Erro ao ler biometria facial ao vivo:', error);
-    return respondWithFaceError(res, error, 500);
-  }
-});
-
-router.get('/events', async (req: Request, res: Response) => {
-  try {
-    const events = await facePlatformService.listEvents({
-      unidadeEducacaoId: req.query.unidadeEducacaoId as string | undefined,
-      zoneId: req.query.zoneId as string | undefined,
-      matchStatus: req.query.matchStatus as any,
-      limit: req.query.limit ? Number(req.query.limit) : undefined,
-    });
-    return res.json(events);
-  } catch (error: any) {
-    console.error('Erro ao listar eventos faciais:', error);
-    return respondWithFaceError(res, error, 500);
-  }
-});
-
-router.post('/events/ingest', async (req: Request, res: Response) => {
-  try {
-    if (!hasEmbedding(req.body)) {
-      return res.status(400).json({
-        success: false,
-        error: 'A ingestão de evento facial exige embedding válido do face-api.js.',
-        message: 'A ingestão de evento facial exige embedding válido do face-api.js.',
-      });
-    }
-
-    const event = await facePlatformService.ingestRecognition(req.body);
-    return res.status(201).json(event);
-  } catch (error: any) {
-    console.error('Erro ao ingerir evento facial:', error);
-    return respondWithFaceError(res, error, 500);
-  }
-});
-
-router.post('/events/:id/review', async (req: Request, res: Response) => {
-  try {
-    const event = await facePlatformService.reviewEvent(
-      String(req.params.id),
-      req.body.reviewedById,
-      req.body.decision
-    );
-    return res.json(event);
-  } catch (error: any) {
-    console.error('Erro ao revisar evento facial:', error);
-    return respondWithFaceError(res, error, 500);
-  }
-});
+router.get('/access-logs', handle((req) =>
+  facePlatformService.listAccessLogs(tenantOf(req), {
+    citizenId: req.query.citizenId as string | undefined,
+    limit: req.query.limit ? Number(req.query.limit) : undefined,
+  })
+));
 
 export default router;

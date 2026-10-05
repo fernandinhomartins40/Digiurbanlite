@@ -12,6 +12,8 @@ Digiurbanlite/
 ├── digiurban/frontend/         # Next.js 14 App Router (porta 3000)
 ├── ultrazend-messages-server/  # WebSocket + Bot Engine (porta 9001)
 ├── ultrazend-smtp-server/      # SMTP MX + Submission (portas 25, 587)
+├── ultrazend-face-server/      # Biometria facial: regras, consentimento, fotos cifradas (rede interna, 9006)
+├── ultrazend-face-engine/      # Motor facial Python (UniFace + ONNX CPU) — só mede, não decide (rede interna, 8000)
 ├── docker/                     # nginx.conf, supervisord.conf, startup.sh, SQL scripts
 ├── docker-compose.vps.yml      # Orquestração produção
 └── Dockerfile                  # Multi-stage build (backend + frontend + nginx)
@@ -284,6 +286,8 @@ BUILD_TIMESTAMP=$(date +%s) docker compose -f docker-compose.vps.yml up -d --bui
 | ultrazend-smtp | 25, 587 | 25, 587 |
 | digiurban-postgres | 5432 | 5432 |
 | digiurban-redis | 6379 | 6379 |
+| ultrazend-face | — (interna) | 9006 |
+| ultrazend-face-engine | — (interna) | 8000 |
 
 ### Variáveis de Ambiente Obrigatórias
 ```env
@@ -335,6 +339,17 @@ npx ts-node prisma/seeds/seed-system-certificate.ts
 - `moduleType` (código técnico do serviço) é gerado NO SERVIDOR a partir do nome, sem repetir no município (`services/service-module-type.service.ts`); a tela não envia nem exibe. `ModuleWorkflow` é único por `[tenantId, moduleType]` — buscar com `findFirst`, nunca `findUnique({ moduleType })`. Destino do pedido é `destination`/`appAction`, não o `moduleType`
 - Checagem central de município (`middleware/tenant-context.ts`): rotas de login/logout/senha e sessões SUPER_ADMIN/plataforma são ISENTAS — sessão antiga de outro município não pode bloquear login
 - ⚠️ A extension injeta `tenantId` no `data` de TOPO de create/update, mas **NÃO** em nested create (`{ fields: { create: [...] } }`) — propagar explícito com `tryGetTenantId()` (visto na F6 do Registry)
+
+### Biometria facial (migração UniFace 2026-10-04)
+- **O rosto é analisado no SERVIDOR** (`ultrazend-face-engine`, UniFace/ONNX). O navegador (face-api.js, modelos em `/face-models`) SÓ guia o enquadramento — nunca mandar vetor nem "nota de prova de vida" do cliente
+- Prova de vida = desafio sorteado pelo servidor (3 fotos: frente, giro para o lado sorteado, frente) + MiniFASNet. Regras puras em `ultrazend-face-server/src/services/face/decisions.ts` (testes: `npm test` no face-server, roda no CI)
+- **Tudo por município**: o face-server recebe `X-Tenant-Id` do backend e filtra cada consulta; identidade facial é única por `[tenantId, personId]`
+- **Consentimento por finalidade** (`FaceConsent`: IDENTITY_VERIFICATION | SCHOOL_SECURITY; menor = responsável, art. 14); busca 1:N só entre quem consentiu; revogar tudo apaga a biometria. Registro de acesso em `FaceAccessLog`
+- Vetores NUNCA saem do face-server; fotos cifradas (AES-GCM, chave do JWT_SECRET) e só via `/api/admin/face-platform/media` (coordenador+). Sem porta pública
+- Modelo/limites no painel (`FaceEngineSettings`, Super-admin › Privacidade); trocar modelo = reprocessamento automático pelas fotos (job do face-server). Prazos de foto/evento em `PrivacyRetentionSettings.face*` (rotina diária sempre ligada)
+- ⚠️ Pesos de reconhecimento do UniFace = licença NÃO comercial (InsightFace/WebFace). Ver `docs/LGPD-RIPD-BIOMETRIA-FACIAL.md`
+- Smoke ponta a ponta: `backend/scripts/smoke-biometria.ts` (requer banco + motor + face-server + fotos de teste)
+- `PrismaPromise` é preguiçosa: em `runAsTenant(id, () => prisma.x.create())` a consulta roda FORA do contexto — usar `async () =>`
 
 ### Registry — Motor de Dados Orientado a Metadados (plano F0–F7)
 Substitui o padrão "módulo-por-serviço" (metadados hardcoded em `MANAGEMENT_CONFIGS` + `switch` em `analyzeCustomData`). **Serviço estruturado novo = `EntityType` + `FieldDefinition` no banco, NÃO um módulo em código.**

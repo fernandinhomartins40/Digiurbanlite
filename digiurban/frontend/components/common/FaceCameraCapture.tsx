@@ -1,5 +1,13 @@
 'use client';
 
+/**
+ * Captura facial ao vivo com DESAFIO sorteado pelo servidor:
+ *   1. de frente  ->  2. virando o rosto para o lado pedido  ->  3. de frente de novo
+ * As 3 fotos vão para o servidor, que reconhece o rosto e confere a prova de vida
+ * (motor UniFace). O navegador só guia o enquadramento — antes ele calculava a
+ * assinatura do rosto e uma "nota de presença" em que o servidor acreditava.
+ */
+
 import { useEffect, useRef, useState } from 'react';
 import {
   BadgeCheck,
@@ -25,7 +33,14 @@ const FACE_SIZE_MIN_RATIO = 0.16;
 const FACE_SIZE_TARGET_RATIO = 0.38;
 const FACE_SIZE_MAX_RATIO = 0.54;
 
-type SessionStep = 'align' | 'hold_still' | 'completed';
+type SessionStep = 'align' | 'hold_still' | 'turn' | 'return' | 'completed';
+export type FaceChallengeDirection = 'left' | 'right';
+
+/** Giro mínimo (nariz em relação aos olhos, proporção do rosto) para aceitar o desafio */
+const TURN_MIN_YAW = 0.11;
+const FRONTAL_MAX_YAW = 0.07;
+const RETURN_HOLD_MS = 350;
+const FRAME_MAX_WIDTH = 720;
 type FeedbackTone = 'neutral' | 'warning' | 'success';
 
 interface FacePoint {
@@ -69,32 +84,17 @@ interface ChallengeState {
   stableMs: number;
   faceDetections: number;
   maxFacesDetected: number;
-  minYawScore: number;
-  maxYawScore: number;
-  minSizeRatio: number;
-  maxSizeRatio: number;
 }
 
 export interface FaceCaptureSessionMetadata {
-  captureMode: 'LIVE_GUIDED_VIDEO';
+  captureMode: 'LIVE_CHALLENGE';
   sessionId: string;
   completedAt: string;
-  qualityScore: number;
-  livenessScore: number;
-  completedSteps: SessionStep[];
-  modelProvider: string;
-  modelVersion: string;
-  embedding: number[] | null;
+  challengeId: string;
+  direction: FaceChallengeDirection;
+  /** 3 fotos JPEG (de frente, virando, de frente) — analisadas no servidor */
+  frames: string[];
   detectedFacesCount: number;
-  analysisMode: 'face-api.js';
-  metrics: {
-    centerOffsetX: number;
-    centerOffsetY: number;
-    sizeRatio: number;
-    yawScore: number;
-    stabilityScore: number;
-  };
-  hints: string[];
 }
 
 interface FaceCameraCaptureProps {
@@ -109,8 +109,10 @@ interface FaceCameraCaptureProps {
   cancelLabel?: string;
   showDetailedStatus?: boolean;
   requireFaceApi?: boolean;
+  /** Pede ao servidor o desafio (lado sorteado) antes de abrir a câmera */
+  getChallenge: () => Promise<{ challengeId: string; direction: FaceChallengeDirection }>;
 }
-const GUIDE_STEPS: Exclude<SessionStep, 'completed'>[] = ['align', 'hold_still'];
+const GUIDE_STEPS: Exclude<SessionStep, 'completed'>[] = ['align', 'hold_still', 'turn', 'return'];
 
 function clamp(value: number, min: number, max: number) {
   return Math.min(Math.max(value, min), max);
@@ -191,37 +193,20 @@ function isStable(
   return variation <= 0.03;
 }
 
-function buildQualityScore(metrics: FaceMetrics, stabilityScore: number) {
-  const centerDistance = Math.sqrt(
-    metrics.centerOffsetX * metrics.centerOffsetX + metrics.centerOffsetY * metrics.centerOffsetY
-  );
-  const centeredScore = 1 - clamp(centerDistance / 0.18, 0, 1);
-  const sizeScore = 1 - clamp(Math.abs(metrics.sizeRatio - FACE_SIZE_TARGET_RATIO) / 0.24, 0, 1);
-
-  return roundScore(centeredScore * 0.45 + sizeScore * 0.35 + stabilityScore * 0.2);
-}
-
-function buildLivenessScore(challengeState: ChallengeState, stabilityScore: number) {
-  const seenFramesScore = clamp(challengeState.faceDetections / 26, 0, 1) * 0.35;
-  const yawVariation = Math.abs(challengeState.maxYawScore - challengeState.minYawScore);
-  const sizeVariation = Math.abs(challengeState.maxSizeRatio - challengeState.minSizeRatio);
-  const subtleMotionScore = clamp(yawVariation * 2.4 + sizeVariation * 1.8, 0, 1) * 0.25;
-  const stabilityContribution = stabilityScore * 0.25;
-  const sustainedSessionScore = clamp(challengeState.stableMs / HOLD_DURATION_MS, 0, 1) * 0.15;
-
-  return roundScore(
-    clamp(seenFramesScore + subtleMotionScore + stabilityContribution + sustainedSessionScore, 0, 1)
-  );
-}
-
 function getStepLabel(step: SessionStep) {
   if (step === 'align') return 'Centralizar';
-  if (step === 'hold_still') return 'Validar';
+  if (step === 'hold_still') return 'Foto de frente';
+  if (step === 'turn') return 'Virar o rosto';
+  if (step === 'return') return 'Voltar de frente';
   return 'Pronto';
 }
 
+function directionLabel(direction: FaceChallengeDirection) {
+  return direction === 'left' ? 'esquerda' : 'direita';
+}
+
 function isStepCompleted(currentStep: SessionStep, targetStep: SessionStep) {
-  const order: SessionStep[] = ['align', 'hold_still', 'completed'];
+  const order: SessionStep[] = ['align', 'hold_still', 'turn', 'return', 'completed'];
   return order.indexOf(currentStep) > order.indexOf(targetStep);
 }
 
@@ -236,7 +221,7 @@ export function FaceCameraCapture({
   retryLabel = 'Refazer validação ao vivo',
   cancelLabel = 'Interromper sessão',
   showDetailedStatus = false,
-  requireFaceApi = true,
+  getChallenge,
 }: FaceCameraCaptureProps) {
   const videoRef = useRef<HTMLVideoElement | null>(null);
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
@@ -251,15 +236,13 @@ export function FaceCameraCapture({
   const feedbackRef = useRef('');
   const feedbackToneRef = useRef<FeedbackTone>('neutral');
   const sessionStepRef = useRef<SessionStep>('align');
+  const challengeRef = useRef<{ challengeId: string; direction: FaceChallengeDirection } | null>(null);
+  const framesRef = useRef<string[]>([]);
   const challengeStateRef = useRef<ChallengeState>({
     completedSteps: [],
     stableMs: 0,
     faceDetections: 0,
     maxFacesDetected: 0,
-    minYawScore: 1,
-    maxYawScore: -1,
-    minSizeRatio: 1,
-    maxSizeRatio: 0,
   });
 
   const [cameraActive, setCameraActive] = useState(false);
@@ -298,11 +281,8 @@ export function FaceCameraCapture({
       stableMs: 0,
       faceDetections: 0,
       maxFacesDetected: 0,
-      minYawScore: 1,
-      maxYawScore: -1,
-      minSizeRatio: 1,
-      maxSizeRatio: 0,
     };
+    framesRef.current = [];
     sessionStepRef.current = 'align';
     setSessionStep('align');
     setLiveMetrics(null);
@@ -396,153 +376,140 @@ export function FaceCameraCapture({
     resetChallengeState();
   };
 
-  const finalizeCapture = (input: {
-    metrics: FaceMetrics;
-    embedding: number[] | null;
-    detectedFacesCount: number;
-    modelProvider: string;
-    modelVersion: string;
-  }) => {
-    if (captureDoneRef.current) {
-      return;
-    }
-
+  /** Foto do quadro atual (sem espelhar), reduzida para no máximo 720 px */
+  const captureFrame = (): string | null => {
     const video = videoRef.current;
     const canvas = canvasRef.current;
+    const context = canvas?.getContext('2d');
+    if (!video || !canvas || !context) return null;
+    const width = video.videoWidth || 720;
+    const height = video.videoHeight || 1280;
+    const scale = Math.min(1, FRAME_MAX_WIDTH / width);
+    canvas.width = Math.round(width * scale);
+    canvas.height = Math.round(height * scale);
+    context.drawImage(video, 0, 0, canvas.width, canvas.height);
+    return canvas.toDataURL('image/jpeg', 0.9);
+  };
 
-    if (!video || !canvas) {
+  const finalizeCapture = (detectedFacesCount: number) => {
+    if (captureDoneRef.current || !challengeRef.current || framesRef.current.length !== 3) {
       return;
     }
-
-    const context = canvas.getContext('2d');
-    if (!context) {
-      setCameraError('Não foi possível processar a validação facial ao vivo.');
-      return;
-    }
-
-    const width = video.videoWidth || 1280;
-    const height = video.videoHeight || 720;
-    const stabilityScore = clamp(challengeStateRef.current.stableMs / HOLD_DURATION_MS, 0, 1);
-    const qualityScore = buildQualityScore(input.metrics, stabilityScore);
-    const livenessScore = buildLivenessScore(challengeStateRef.current, stabilityScore);
-
-    canvas.width = width;
-    canvas.height = height;
-    context.drawImage(video, 0, 0, width, height);
 
     const metadata: FaceCaptureSessionMetadata = {
-      captureMode: 'LIVE_GUIDED_VIDEO',
+      captureMode: 'LIVE_CHALLENGE',
       sessionId: sessionIdRef.current,
       completedAt: new Date().toISOString(),
-      qualityScore,
-      livenessScore,
-      completedSteps: [...challengeStateRef.current.completedSteps, 'hold_still'],
-      modelProvider: input.modelProvider,
-      modelVersion: input.modelVersion,
-      embedding: input.embedding,
-      detectedFacesCount: input.detectedFacesCount,
-      analysisMode: 'face-api.js',
-      metrics: {
-        centerOffsetX: roundScore(input.metrics.centerOffsetX),
-        centerOffsetY: roundScore(input.metrics.centerOffsetY),
-        sizeRatio: roundScore(input.metrics.sizeRatio),
-        yawScore: roundScore(input.metrics.yawScore),
-        stabilityScore: roundScore(stabilityScore),
-      },
-      hints: [
-        'video-ao-vivo',
-        'moldura-oval',
-        'captura-automatica',
-        'validacao-estavel',
-        input.detectedFacesCount > 1 ? 'multiplos-rostos-detectados' : 'um-rosto-detectado',
-      ],
+      challengeId: challengeRef.current.challengeId,
+      direction: challengeRef.current.direction,
+      frames: [...framesRef.current],
+      detectedFacesCount,
     };
 
     captureDoneRef.current = true;
-    onChange(canvas.toDataURL('image/jpeg', 0.94));
+    onChange(framesRef.current[0]);
     onMetadataChange?.(metadata);
     setCaptureSummary(metadata);
-    markStepCompleted('hold_still');
+    markStepCompleted('return');
     updateSessionStep('completed');
-      syncFeedback('Sessão concluída. O melhor quadro foi selecionado automaticamente.', 'success');
+    syncFeedback('Pronto! Enviando para conferência...', 'success');
     stopCamera();
   };
 
   const evaluateFaceSession = (
     input: {
       metrics: FaceMetrics;
-      embedding: number[] | null;
       detectedFacesCount: number;
-      modelProvider: string;
-      modelVersion: string;
     },
     timestamp: number
   ) => {
     const challengeState = challengeStateRef.current;
     const metrics = input.metrics;
+    const step = sessionStepRef.current;
+    const direction = challengeRef.current?.direction || 'left';
     const centered = isCentered(metrics);
     const stable = isStable(metrics, previousMetricsRef.current);
 
     challengeState.faceDetections += 1;
     challengeState.maxFacesDetected = Math.max(challengeState.maxFacesDetected, input.detectedFacesCount);
-    challengeState.minYawScore = Math.min(challengeState.minYawScore, metrics.yawScore);
-    challengeState.maxYawScore = Math.max(challengeState.maxYawScore, metrics.yawScore);
-    challengeState.minSizeRatio = Math.min(challengeState.minSizeRatio, metrics.sizeRatio);
-    challengeState.maxSizeRatio = Math.max(challengeState.maxSizeRatio, metrics.sizeRatio);
     setLiveMetrics(metrics);
+    previousMetricsRef.current = metrics;
 
     if (input.detectedFacesCount > 1) {
       holdSinceRef.current = null;
       challengeState.stableMs = 0;
-      previousMetricsRef.current = metrics;
       syncFeedback('Há mais de um rosto no quadro. Deixe apenas uma pessoa na câmera.', 'warning');
+      return;
+    }
+
+    const faceTooFar = metrics.sizeRatio < FACE_SIZE_MIN_RATIO;
+    const faceTooClose = metrics.sizeRatio > FACE_SIZE_MAX_RATIO;
+    if (faceTooFar || faceTooClose) {
+      holdSinceRef.current = null;
+      challengeState.stableMs = 0;
+      syncFeedback(
+        faceTooFar ? 'Aproxime um pouco mais o rosto da câmera.' : 'Afaste só um pouco o rosto para caber melhor na moldura.',
+        'warning'
+      );
+      return;
+    }
+
+    // ---- 2. virar o rosto para o lado sorteado ----
+    if (step === 'turn') {
+      // nariz à direita dos olhos na imagem = pessoa virada para a PRÓPRIA esquerda
+      const turned = direction === 'left' ? metrics.yawScore >= TURN_MIN_YAW : metrics.yawScore <= -TURN_MIN_YAW;
+      const wrongSide = direction === 'left' ? metrics.yawScore <= -TURN_MIN_YAW : metrics.yawScore >= TURN_MIN_YAW;
+      if (turned) {
+        const frame = captureFrame();
+        if (frame) framesRef.current[1] = frame;
+        markStepCompleted('turn');
+        updateSessionStep('return');
+        syncFeedback('Isso! Agora volte a olhar de frente para a câmera.', 'neutral');
+        return;
+      }
+      syncFeedback(
+        wrongSide
+          ? `Para o outro lado: vire devagar para a sua ${directionLabel(direction)}.`
+          : `Vire o rosto devagar para a sua ${directionLabel(direction)}.`,
+        wrongSide ? 'warning' : 'neutral'
+      );
       return;
     }
 
     if (!centered) {
       holdSinceRef.current = null;
       challengeState.stableMs = 0;
-      previousMetricsRef.current = metrics;
       syncFeedback('Centralize o rosto na moldura.', 'warning');
       return;
     }
 
-    const faceTooFar = metrics.sizeRatio < FACE_SIZE_MIN_RATIO;
-    const faceTooClose = metrics.sizeRatio > FACE_SIZE_MAX_RATIO;
-    const outsideOptimalFrame = faceTooFar || faceTooClose;
-    const lookingAway = Math.abs(metrics.yawScore) > 0.18;
-
-    if (outsideOptimalFrame) {
-      holdSinceRef.current = null;
-      challengeState.stableMs = 0;
-      previousMetricsRef.current = metrics;
-      syncFeedback(
-        faceTooFar
-          ? 'Aproxime um pouco mais o rosto da câmera.'
-          : 'Afaste só um pouco o rosto para caber melhor na moldura.',
-        'warning'
-      );
-      return;
-    }
-
+    const lookingAway = Math.abs(metrics.yawScore) > (step === 'return' ? FRONTAL_MAX_YAW : 0.18);
     if (lookingAway) {
       holdSinceRef.current = null;
       challengeState.stableMs = 0;
-      previousMetricsRef.current = metrics;
-      syncFeedback('Olhe de frente para a câmera.', 'warning');
+      syncFeedback('Olhe de frente para a câmera.', step === 'return' ? 'neutral' : 'warning');
       return;
     }
 
-    if (sessionStepRef.current === 'align') {
+    // ---- 3. de frente de novo ----
+    if (step === 'return') {
+      if (holdSinceRef.current === null) holdSinceRef.current = timestamp;
+      if (timestamp - holdSinceRef.current >= RETURN_HOLD_MS) {
+        const frame = captureFrame();
+        if (frame) framesRef.current[2] = frame;
+        finalizeCapture(input.detectedFacesCount);
+      }
+      return;
+    }
+
+    if (step === 'align') {
       if (holdSinceRef.current === null) {
         holdSinceRef.current = timestamp;
       }
 
       const elapsed = timestamp - holdSinceRef.current;
       syncFeedback(
-        elapsed >= ALIGN_DURATION_MS
-          ? 'Enquadramento confirmado. Capturando automaticamente...'
-          : 'Mantenha o rosto estável por um instante.',
+        elapsed >= ALIGN_DURATION_MS ? 'Enquadramento confirmado. Fique paradinho(a)...' : 'Mantenha o rosto estável por um instante.',
         'neutral'
       );
 
@@ -550,15 +517,13 @@ export function FaceCameraCapture({
         markStepCompleted('align');
         updateSessionStep('hold_still');
       }
-
-      previousMetricsRef.current = metrics;
       return;
     }
 
+    // ---- 1. foto de frente ----
     if (!stable) {
       holdSinceRef.current = null;
       challengeState.stableMs = 0;
-      previousMetricsRef.current = metrics;
       syncFeedback('Mantenha o rosto estável por um instante.', 'warning');
       return;
     }
@@ -568,14 +533,15 @@ export function FaceCameraCapture({
     }
 
     challengeState.stableMs = timestamp - holdSinceRef.current;
-    syncFeedback('Capturando automaticamente o melhor quadro...', 'success');
+    syncFeedback('Fique paradinho(a)...', 'success');
 
     if (challengeState.stableMs >= HOLD_DURATION_MS) {
-      finalizeCapture(input);
-      return;
+      const frame = captureFrame();
+      if (frame) framesRef.current[0] = frame;
+      markStepCompleted('hold_still');
+      updateSessionStep('turn');
+      syncFeedback(`Agora vire o rosto devagar para a sua ${directionLabel(direction)}.`, 'neutral');
     }
-
-    previousMetricsRef.current = metrics;
   };
 
   const startCamera = async () => {
@@ -597,6 +563,18 @@ export function FaceCameraCapture({
       onChange('');
       onMetadataChange?.(null);
 
+      // o servidor sorteia o lado do desafio (vale 2 minutos, uma vez só)
+      try {
+        challengeRef.current = await getChallenge();
+      } catch (challengeError: any) {
+        setCameraError(
+          challengeError?.response?.data?.error ||
+            challengeError?.message ||
+            'Não foi possível iniciar a validação agora. Tente novamente em instantes.'
+        );
+        return;
+      }
+
       const [faceApiEngine, stream] = await Promise.all([
         getFaceApiEngine(),
         navigator.mediaDevices.getUserMedia({
@@ -615,7 +593,7 @@ export function FaceCameraCapture({
       lastVideoTimeRef.current = -1;
 
       if (!faceApiEngine) {
-        setCameraError('O motor face-api.js não pôde ser carregado. A sessão foi interrompida.');
+        setCameraError('Não foi possível preparar a câmera neste aparelho. Atualize a página e tente de novo.');
         stopCamera();
         return;
       }
@@ -626,7 +604,7 @@ export function FaceCameraCapture({
       }
 
       setCameraActive(true);
-      syncFeedback('Centralize o rosto na moldura e aguarde o envio automático.', 'neutral');
+      syncFeedback('Centralize o rosto na moldura e siga as instruções.', 'neutral');
     } catch (error) {
       console.error('Erro ao iniciar a validação facial ao vivo:', error);
       setCameraError('Não foi possível iniciar a câmera ao vivo. Verifique a permissão do navegador.');
@@ -682,18 +660,15 @@ export function FaceCameraCapture({
               evaluateFaceSession(
                 {
                   metrics,
-                  embedding: analysis.selectedFace.descriptor,
                   detectedFacesCount: analysis.detectedFacesCount,
-                  modelProvider: analysis.provider,
-                  modelVersion: analysis.modelVersion,
                 },
                 performance.now()
               );
             }
           }
         } catch (error) {
-          console.error('Falha durante a análise facial ao vivo com face-api.js.', error);
-          setCameraError('Falha ao processar a biometria facial com face-api.js. A sessão foi interrompida.');
+          console.error('Falha durante a análise facial ao vivo.', error);
+          setCameraError('Falha ao acompanhar o rosto pela câmera. Tente de novo.');
           stopCamera();
           return;
         }
@@ -720,13 +695,12 @@ export function FaceCameraCapture({
         ? 'border-amber-200 bg-amber-50 text-amber-700'
         : 'border-sky-200 bg-sky-50 text-sky-700';
 
-  const completedAlign = isStepCompleted(sessionStep, 'align');
-  const completedHold = sessionStep === 'completed';
+
   const isMobileFullScreen = isMobileViewport && (cameraActive || cameraLoading || faceEngineLoading);
   const stepItems = GUIDE_STEPS.map((stepKey) => {
     return {
       stepKey,
-      done: stepKey === 'align' ? completedAlign : completedHold,
+      done: isStepCompleted(sessionStep, stepKey),
       active: sessionStep === stepKey,
       label: getStepLabel(stepKey),
     };
@@ -765,17 +739,10 @@ export function FaceCameraCapture({
               <div className="flex flex-wrap items-center gap-2">
                 <Badge className="border-emerald-400/40 bg-emerald-500/20 text-emerald-50">
                   <BadgeCheck className="mr-1 h-3.5 w-3.5" />
-                  Sessão ao vivo validada
+                  Captura ao vivo concluída
                 </Badge>
                 {captureSummary && (
-                  <>
-                    <Badge className="border-white/20 bg-white/10 text-white">
-                      Qualidade {Math.round(captureSummary.qualityScore * 100)}%
-                    </Badge>
-                    <Badge className="border-white/20 bg-white/10 text-white">
-                      Presença {Math.round(captureSummary.livenessScore * 100)}%
-                    </Badge>
-                  </>
+                  <Badge className="border-white/20 bg-white/10 text-white">3 fotos para conferência</Badge>
                 )}
               </div>
             </div>
@@ -828,7 +795,7 @@ export function FaceCameraCapture({
                       </div>
                       {isMobileFullScreen && (
                         <p className="max-w-lg text-sm leading-6 text-slate-100/92">
-                          Centralize o rosto na moldura e aguarde o envio automático.
+                          Siga as instruções: de frente, vire o rosto quando pedirmos e volte de frente.
                         </p>
                       )}
                     </div>
@@ -870,7 +837,7 @@ export function FaceCameraCapture({
                         )}
                       </div>
                       <p className="text-center text-xs text-slate-200/80">
-                        Uma pessoa por vez. O melhor quadro é enviado automaticamente.
+                        Uma pessoa por vez, com boa luz. A conferência é feita no servidor.
                       </p>
 
                       {showDetailedStatus && (
@@ -923,7 +890,7 @@ export function FaceCameraCapture({
                   <p className="text-xs text-slate-300">
                     {cameraLoading || faceEngineLoading
                       ? 'Quando a câmera abrir em tela cheia, siga os avisos na tela.'
-                      : 'Centralize apenas um rosto e aguarde o envio automático.'}
+                      : 'Você vai olhar de frente, virar o rosto para um lado e voltar. Leva poucos segundos.'}
                   </p>
                 </div>
               </div>

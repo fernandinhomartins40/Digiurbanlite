@@ -9,6 +9,7 @@ datasource db {
 
 model User {
   id                     String                   @id @default(cuid())
+  tenantId String?
   name                   String
   cpf                    String?                  @unique
   personId               String?                  @unique
@@ -32,7 +33,7 @@ model Person {
   updatedAt    DateTime                  @updatedAt
   user         User?
   citizen      Citizen?
-  faceIdentity FaceRecognitionIdentity?
+  faceIdentities FaceRecognitionIdentity[]
 
   @@index([name])
   @@index([email])
@@ -41,6 +42,7 @@ model Person {
 
 model Citizen {
   id                  String                   @id @default(cuid())
+  tenantId String?
   cpf                 String
   name                String
   email               String
@@ -62,6 +64,7 @@ model Citizen {
 
 model UnidadeEducacao {
   id                          String                        @id @default(cuid())
+  tenantId String?
   nome                        String
   tipo                        String
   telefone                    String?
@@ -79,6 +82,7 @@ model UnidadeEducacao {
 
 model Matricula {
   id                String             @id @default(cuid())
+  tenantId String?
   alunoId           String
   responsavelId     String
   unidadeEducacaoId String
@@ -153,7 +157,8 @@ enum GuardianNotificationStatus {
 
 model FaceRecognitionIdentity {
   id          String                        @id @default(cuid())
-  personId    String                        @unique
+  tenantId String?
+  personId    String
   citizenId   String?                       @unique
   label       String?
   status      FaceRecognitionIdentityStatus @default(PENDING)
@@ -167,12 +172,15 @@ model FaceRecognitionIdentity {
   embeddings  FaceEmbedding[]
   events      FaceRecognitionEvent[]
 
+  @@unique([tenantId, personId])
   @@index([status])
+  @@index([tenantId])
   @@map("face_recognition_identities")
 }
 
 model FaceEnrollment {
   id            String               @id @default(cuid())
+  tenantId String?
   identityId    String
   sourceType    String
   sourceLabel   String?
@@ -197,6 +205,7 @@ model FaceEnrollment {
 
 model FaceEmbedding {
   id           String                 @id @default(cuid())
+  tenantId String?
   identityId   String
   enrollmentId String?
   modelName    String
@@ -215,6 +224,7 @@ model FaceEmbedding {
 
 model FaceDevice {
   id                  String                 @id @default(cuid())
+  tenantId String?
   code                String                 @unique
   name                String
   unidadeEducacaoId   String?
@@ -243,6 +253,7 @@ model FaceDevice {
 
 model FaceZone {
   id                String            @id @default(cuid())
+  tenantId String?
   deviceId          String
   unidadeEducacaoId String?
   name              String
@@ -264,6 +275,7 @@ model FaceZone {
 
 model FaceRecognitionEvent {
   id                    String                     @id @default(cuid())
+  tenantId String?
   identityId            String?
   deviceId              String
   zoneId                String?
@@ -324,4 +336,79 @@ model SchoolSecurityConfiguration {
 
   @@index([isActive])
   @@map("school_security_configurations")
+}
+
+// ---- Cópias de tabelas criadas pelas migrations do backend (fonte da verdade) ----
+
+model FaceConsent {
+  id                 String    @id @default(cuid())
+  tenantId           String?
+  citizenId          String
+  purpose            String
+  grantedByCitizenId String?
+  grantedByName      String?
+  relationship       String
+  channel            String
+  recordedByUserId   String?
+  termsVersion       String
+  evidence           Json?
+  grantedAt          DateTime  @default(now())
+  revokedAt          DateTime?
+  revokedReason      String?
+  revokedBy          String?
+
+  @@index([tenantId])
+  @@index([citizenId, purpose])
+  @@map("face_consents")
+}
+
+model FaceAccessLog {
+  id         String   @id @default(cuid())
+  tenantId   String?
+  actorType  String
+  actorId    String?
+  action     String
+  citizenId  String?
+  identityId String?
+  details    Json?
+  createdAt  DateTime @default(now())
+
+  @@index([tenantId, createdAt])
+  @@index([citizenId, createdAt])
+  @@map("face_access_logs")
+}
+
+model FaceEngineSettings {
+  id                  String   @id @default("singleton")
+  recognitionModel    String   @default("arcface_mnet")
+  matchThreshold      Float    @default(0.5)
+  reviewThreshold     Float    @default(0.4)
+  minQuality          Float    @default(0.55)
+  minLiveness         Float    @default(0.6)
+  challengeYawDegrees Float    @default(12)
+  updatedBy           String?
+  updatedAt           DateTime @updatedAt
+
+  @@map("face_engine_settings")
+}
+
+model PrivacyRetentionSettings {
+  id                     String    @id @default("singleton")
+  faceUnmatchedImageDays Int       @default(7)
+  faceEventImageDays     Int       @default(90)
+  faceEventDays          Int       @default(365)
+  faceLastRunAt          DateTime?
+  faceLastRunSummary     Json?
+
+  @@map("privacy_retention_settings")
+}
+
+model PlatformSecret {
+  key         String   @id
+  valueEnc    String
+  previousEnc String?
+  rotatedAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@map("platform_secrets")
 }

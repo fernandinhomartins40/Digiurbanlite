@@ -563,29 +563,18 @@ router.post(
   asyncHandler(async (req, res: Response): Promise<void> => {
     const authReq = req as AuthenticatedRequest;
     const { id } = authReq.params;
-    const { imageBase64, embedding, modelName, modelVersion, sourceLabel, qualityScore, livenessScore, metadata } = authReq.body as {
-      imageBase64?: string;
-      embedding?: number[];
-      modelName?: string;
-      modelVersion?: string;
+    const { frames, challengeId, sourceLabel, consent } = authReq.body as {
+      frames?: string[];
+      challengeId?: string;
       sourceLabel?: string;
-      qualityScore?: number;
-      livenessScore?: number;
-      metadata?: Record<string, unknown>;
+      consent?: { accepted?: boolean; relationship?: string; grantedByName?: string; signedTermOnFile?: boolean; note?: string };
     };
 
-    if (!imageBase64 || typeof imageBase64 !== 'string') {
+    // O rosto é analisado no servidor: o navegador manda só as 3 fotos do desafio
+    if (!Array.isArray(frames) || frames.length !== 3 || !challengeId) {
       res.status(400).json({
         success: false,
-        error: 'A validação facial ao vivo é obrigatória',
-      });
-      return;
-    }
-
-    if (!Array.isArray(embedding) || embedding.length === 0) {
-      res.status(400).json({
-        success: false,
-        error: 'O cadastro facial exige embedding válido do face-api.js.',
+        error: 'A validação ao vivo precisa ser feita de novo. Atualize a página e tente outra vez.',
       });
       return;
     }
@@ -607,19 +596,26 @@ router.post(
       return;
     }
 
-    const enrollment = await facePlatformClientService.createEnrollment({
-      citizenId: id,
-      sourceType: 'ADMIN_WEBCAM',
-      sourceLabel: sourceLabel?.trim() || `Cadastro administrativo de ${citizen.name}`,
-      imageBase64,
-      embedding,
-      approvedById: authReq.user.id,
-      qualityScore: typeof qualityScore === 'number' ? qualityScore : undefined,
-      livenessScore: typeof livenessScore === 'number' ? livenessScore : undefined,
-      metadata: metadata && typeof metadata === 'object' ? metadata : undefined,
-      modelName: modelName?.trim() || undefined,
-      modelVersion: modelVersion?.trim() || undefined,
-    });
+    const enrollment: any = await facePlatformClientService.createEnrollment(
+      id,
+      {
+        purpose: 'IDENTITY_VERIFICATION',
+        frames,
+        challengeId,
+        sourceType: 'ADMIN_WEBCAM',
+        sourceLabel: sourceLabel?.trim() || `Cadastro presencial de ${citizen.name}`,
+        consent: consent?.accepted
+          ? {
+              relationship: ['MAE', 'PAI', 'RESPONSAVEL_LEGAL'].includes(String(consent.relationship)) ? consent.relationship : 'TITULAR',
+              channel: 'PRESENCIAL',
+              grantedByName: consent.grantedByName || null,
+              recordedByUserId: authReq.user.id,
+              evidence: { termoAssinado: Boolean(consent.signedTermOnFile), observacao: String(consent.note || '').slice(0, 300) },
+            }
+          : null,
+      },
+      { type: 'USER', id: authReq.user.id, role: authReq.user.role }
+    );
 
     let accessLevel = await getCitizenAccessLevelSummary(id);
     let promotedToGold = false;
@@ -634,9 +630,11 @@ router.post(
 
     res.status(201).json({
       success: true,
-      message: promotedToGold
-        ? 'Biometria facial validada automaticamente e cidadão promovido para ouro'
-        : 'Biometria facial validada automaticamente com sucesso',
+      message: !enrollment?.approved
+        ? 'Biometria enviada para conferência: ' + ((enrollment?.reviewReasons || [])[0] || 'confirme antes de aprovar.')
+        : promotedToGold
+          ? 'Biometria facial validada e cidadão promovido para ouro'
+          : 'Biometria facial validada com sucesso',
       data: {
         enrollment,
         promotedToGold,
@@ -680,10 +678,11 @@ router.delete(
       return;
     }
 
-    const deletion = await facePlatformClientService.deleteCitizenBiometry(id, {
-      deletedById: authReq.user.id,
-      reason: `Biometria facial excluída administrativamente por ${authReq.user.name} para permitir novo cadastro.`,
-    });
+    const deletion = await facePlatformClientService.deleteCitizenBiometry(
+      id,
+      { type: 'USER', id: authReq.user.id, role: authReq.user.role },
+      `Biometria facial excluída administrativamente por ${authReq.user.name} para permitir novo cadastro.`
+    );
 
     let downgradedFromGold = false;
 

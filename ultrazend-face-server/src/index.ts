@@ -3,6 +3,7 @@ import { createServer } from 'http';
 import ExpressServer from './server/ExpressServer';
 import logger from './utils/logger';
 import prisma from './utils/prisma';
+import { startFaceJobs } from './services/face/jobs';
 
 dotenv.config();
 
@@ -20,6 +21,8 @@ async function start() {
     httpServer.listen(PORT, HOST, () => {
       logger.info(`UltraZend Face Server running on ${HOST}:${PORT}`);
     });
+
+    startFaceJobs();
 
     const gracefulShutdown = async () => {
       logger.info('Shutting down UltraZend Face Server');

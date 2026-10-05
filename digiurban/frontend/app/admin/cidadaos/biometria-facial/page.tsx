@@ -38,10 +38,9 @@ import { useToast } from '@/hooks/use-toast';
 import facePlatformService from '@/lib/services/face-platform.service';
 import type { CitizenAccessLevelSummary, RegistrationLevel } from '@/types/citizen-access';
 
-interface FaceBiometryLiveMetadata {
-  qualityScore: number;
-  livenessScore: number;
-}
+import { FACE_TERMS_IN_PERSON } from '@/components/common/face-terms';
+
+type ConsentRelationship = 'TITULAR' | 'MAE' | 'PAI' | 'RESPONSAVEL_LEGAL';
 
 type AttendanceTab = 'register' | 'read';
 
@@ -270,18 +269,26 @@ export default function AdminCitizenFaceBiometryPage() {
     }
   }, [activeTab, biometricLocked]);
 
+  const [consentRelationship, setConsentRelationship] = useState<ConsentRelationship>('TITULAR');
+  const [consentGrantedBy, setConsentGrantedBy] = useState('');
+  const [consentSignedTerm, setConsentSignedTerm] = useState(false);
+
+  const requestChallenge = async (mode: 'enroll' | 'read') => {
+    const response = await apiRequest('/admin/face-platform/challenges', {
+      method: 'POST',
+      body: JSON.stringify({ mode, citizenId: selectedCitizen?.id }),
+    });
+    return response;
+  };
+
   const handleRegisterBiometry = async ({
-    imageBase64,
-    metadata,
-    embedding,
-    modelName,
-    modelVersion,
+    frames,
+    challengeId,
+    consentAccepted,
   }: {
-    imageBase64: string;
-    metadata: FaceBiometryLiveMetadata;
-    embedding?: number[] | null;
-    modelName?: string;
-    modelVersion?: string;
+    frames: string[];
+    challengeId: string;
+    consentAccepted: boolean;
   }) => {
     if (!selectedCitizen?.id) {
       return;
@@ -292,14 +299,15 @@ export default function AdminCitizenFaceBiometryPage() {
       const response = await apiRequest(`/admin/citizens/${selectedCitizen.id}/face-biometry`, {
         method: 'POST',
         body: JSON.stringify({
-          imageBase64,
-          embedding,
-          modelName,
-          modelVersion,
+          frames,
+          challengeId,
           sourceLabel: sourceLabel.trim() || `Biometria presencial capturada para ${selectedCitizen.name}`,
-          qualityScore: metadata.qualityScore,
-          livenessScore: metadata.livenessScore,
-          metadata,
+          consent: {
+            accepted: consentAccepted,
+            relationship: consentRelationship,
+            grantedByName: consentRelationship === 'TITULAR' ? selectedCitizen.name : consentGrantedBy.trim(),
+            signedTermOnFile: consentSignedTerm,
+          },
         }),
       });
 
@@ -311,17 +319,13 @@ export default function AdminCitizenFaceBiometryPage() {
         title: 'Biometria cadastrada',
         description: response.message || 'A biometria facial foi vinculada ao cidadão.',
       });
-    } catch (error: any) {
-      console.error('Erro ao cadastrar biometria facial:', error);
-      toast({
-        variant: 'destructive',
-        title: 'Erro ao cadastrar biometria',
-        description: error?.message || 'Não foi possível cadastrar a biometria facial.',
-      });
+      return { message: response.message };
     } finally {
       setSubmitting(null);
     }
   };
+
+  const consentReady = consentRelationship === 'TITULAR' || consentGrantedBy.trim().length >= 3;
 
   const handleApprovePending = async () => {
     if (!selectedCitizen?.id) {
@@ -568,17 +572,69 @@ export default function AdminCitizenFaceBiometryPage() {
                       />
                     </div>
 
+                    <div className="grid gap-3 rounded-2xl border border-slate-200 bg-white p-4 sm:grid-cols-2">
+                      <div className="space-y-2">
+                        <label className="text-sm font-medium text-slate-700" htmlFor="consentRelationship">
+                          Quem autoriza a biometria
+                        </label>
+                        <select
+                          id="consentRelationship"
+                          className="h-10 w-full rounded-md border border-slate-200 bg-white px-3 text-sm"
+                          value={consentRelationship}
+                          onChange={(event) => setConsentRelationship(event.target.value as ConsentRelationship)}
+                          disabled={!canVerify || Boolean(submitting)}
+                        >
+                          <option value="TITULAR">O próprio cidadão</option>
+                          <option value="MAE">Mãe (cidadão menor de idade)</option>
+                          <option value="PAI">Pai (cidadão menor de idade)</option>
+                          <option value="RESPONSAVEL_LEGAL">Responsável legal</option>
+                        </select>
+                      </div>
+                      {consentRelationship !== 'TITULAR' && (
+                        <div className="space-y-2">
+                          <label className="text-sm font-medium text-slate-700" htmlFor="consentGrantedBy">
+                            Nome de quem autorizou
+                          </label>
+                          <Input
+                            id="consentGrantedBy"
+                            value={consentGrantedBy}
+                            onChange={(event) => setConsentGrantedBy(event.target.value)}
+                            placeholder="Nome completo do responsável"
+                            disabled={!canVerify || Boolean(submitting)}
+                          />
+                        </div>
+                      )}
+                      <label className="flex items-center gap-2 text-sm text-slate-700 sm:col-span-2">
+                        <input
+                          type="checkbox"
+                          checked={consentSignedTerm}
+                          onChange={(event) => setConsentSignedTerm(event.target.checked)}
+                          disabled={!canVerify || Boolean(submitting)}
+                        />
+                        Há termo assinado em papel arquivado no atendimento
+                      </label>
+                    </div>
+
                     <FaceBiometryEnrollmentPanel
                       title="Captura biométrica do cidadão"
-                      description={`A webcam do atendimento usa face-api.js para registrar ${selectedCitizen.name} ao vivo e enviar a biometria automaticamente.`}
-                      helperText="Mantenha apenas o cidadão em atendimento na moldura e aguarde a conclusão automática da sessão."
+                      description={`A câmera do atendimento captura ${selectedCitizen.name} ao vivo; a prova de vida e o cadastro são conferidos no servidor.`}
+                      helperText="Deixe só o cidadão em atendimento na moldura. Ele vai olhar de frente, virar o rosto para o lado pedido e voltar."
                       purposeLabel="Cadastro presencial"
                       startLabel="Abrir câmera"
                       retryLabel="Refazer captura"
                       cancelLabel="Fechar câmera"
                       disabled={!canVerify || Boolean(submitting)}
+                      readyToCapture={consentReady}
+                      consent={{
+                        title: 'Consentimento para a biometria',
+                        body: FACE_TERMS_IN_PERSON,
+                        checkboxLabel:
+                          consentRelationship === 'TITULAR'
+                            ? 'O cidadão foi informado e autorizou o cadastro da biometria.'
+                            : 'O responsável foi informado e autorizou o cadastro da biometria.',
+                      }}
                       successMessage="Biometria cadastrada. Agora faça a leitura para validar o reconhecimento."
-                      requireFaceApi
+                      getChallenge={() => requestChallenge('enroll')}
                       onEnroll={handleRegisterBiometry}
                       onSuccess={() => setActiveTab('read')}
                     />
@@ -601,18 +657,13 @@ export default function AdminCitizenFaceBiometryPage() {
                   purposeLabel="Leitura presencial"
                   disabled={!canVerify}
                   expectedOwnerLabel={`${selectedCitizen.name} • ${maskCpf(selectedCitizen.cpf)}`}
-                  onRead={async ({ imageBase64, metadata, embedding, modelName, modelVersion }) =>
-                    facePlatformService.readBiometry({
-                      imageBase64,
-                      embedding,
-                      modelName,
-                      modelVersion,
+                  getChallenge={() => requestChallenge('read')}
+                  onRead={async ({ frames, challengeId }) =>
+                    facePlatformService.verify({
+                      frames,
+                      challengeId,
                       expectedCitizenId: selectedCitizen.id,
-                      sourceType: 'ADMIN_LIVE_READ',
-                      sourceLabel: `Leitura biométrica presencial para ${selectedCitizen.name}`,
-                      qualityScore: metadata.qualityScore,
-                      livenessScore: metadata.livenessScore,
-                      metadata,
+                      purpose: 'IDENTITY_VERIFICATION',
                     })
                   }
                 />

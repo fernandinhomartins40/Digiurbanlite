@@ -15,6 +15,7 @@ import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
 import { useToast } from '@/hooks/use-toast';
 import { useSuperAdminAuth } from '@/contexts/SuperAdminAuthContext';
+import FaceBiometrySettings from '@/components/super-admin/FaceBiometrySettings';
 
 interface Settings {
   enabled: boolean;
@@ -23,6 +24,11 @@ interface Settings {
   assistantDays: number;
   lastRunAt: string | null;
   lastRunSummary: Summary | null;
+  faceUnmatchedImageDays: number;
+  faceEventImageDays: number;
+  faceEventDays: number;
+  faceLastRunAt: string | null;
+  faceLastRunSummary: Record<string, number | string> | null;
 }
 
 interface Summary {
@@ -165,7 +171,7 @@ export default function PrivacyPage() {
           <ShieldCheck className="h-7 w-7 text-blue-600" />
           Privacidade
         </h1>
-        <p className="text-gray-600">Por quanto tempo o sistema guarda as conversas. Depois do prazo, o conteúdo é apagado (LGPD).</p>
+        <p className="text-gray-600">Por quanto tempo o sistema guarda conversas e biometria. Depois do prazo, o conteúdo é apagado (LGPD).</p>
       </div>
 
       <Card>
@@ -229,6 +235,8 @@ export default function PrivacyPage() {
           {isAdmin && !settings.enabled && <p className="text-xs text-gray-500">Ative e salve para poder aplicar.</p>}
         </CardContent>
       </Card>
+
+      <FaceBiometrySettings isAdmin={isAdmin} retention={settings} onSaved={load} />
     </div>
   );
 }

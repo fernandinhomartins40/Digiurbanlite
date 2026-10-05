@@ -1,3 +1,17 @@
+/**
+ * Serviço de biometria facial (por município).
+ *
+ * Revisão de 2026-10-04 (migração para o motor UniFace no servidor):
+ * - TODA consulta é filtrada pelo município da chamada (antes a busca comparava
+ *   rostos de todos os municípios e devolvia nome/CPF de outro município);
+ * - o rosto é analisado no SERVIDOR (ultrazend-face-engine): o navegador só
+ *   captura as fotos — antes ele mandava o vetor e a "nota de prova de vida"
+ *   e o servidor acreditava;
+ * - prova de vida com desafio sorteado pelo servidor + anti-fraude passivo;
+ * - consentimento por finalidade, registro de acesso e fotos cifradas;
+ * - vetores de rosto nunca saem deste serviço.
+ */
+
 import crypto from 'crypto';
 import {
   FaceEnrollmentStatus,
@@ -9,16 +23,29 @@ import {
   SituacaoMatricula,
 } from '@prisma/client';
 import prisma from '../utils/prisma';
+import { deviceSecretKey } from '../utils/secrets';
 import { syncCitizenPersonIdentity } from './person-identity.service';
 import digiUrbanIntegration from '../integrations/DigiUrbanIntegration';
 import faceStorageService from './face/face-storage.service';
-import { cosineSimilarity, normalizeVector } from './face/vector-utils';
-import faceLivenessService from './face/face-liveness.service';
+import { analyzeFrames, engineStatus } from './face/engine-client';
+import { evaluateChallenge, findBestMatch, normalize, sanitizeMetadata, type GalleryEntry } from './face/decisions';
+import { getEngineSettings } from './face/settings';
+import { consumeChallenge, createChallenge } from './face/challenge.service';
+import {
+  assertPurpose,
+  citizenIdsWithConsent,
+  grantConsent,
+  hasActiveConsent,
+  listConsents,
+  revokeConsent,
+  type ConsentInput,
+  type FacePurpose,
+} from './face/consent.service';
+import { listFaceAccess, logFaceAccess, type FaceActor } from './face/access-log';
 
-const FACE_ENCRYPTION_KEY =
-  process.env.FACE_PLATFORM_ENCRYPTION_KEY ||
-  process.env.ENCRYPTION_MASTER_KEY ||
-  'CHANGE_THIS_FACE_PLATFORM_KEY';
+// ---------------------------------------------------------------------------
+// Tipos de entrada
+// ---------------------------------------------------------------------------
 
 interface CreateDeviceInput {
   code: string;
@@ -42,7 +69,6 @@ interface CreateZoneInput {
   gateName?: string | null;
   direction?: 'ENTRY' | 'EXIT' | 'BOTH';
   dedupeWindowSecs?: number;
-  metadata?: Prisma.InputJsonValue;
 }
 
 interface UpsertSchoolConfigurationInput {
@@ -56,267 +82,171 @@ interface UpsertSchoolConfigurationInput {
   activeHoursStart?: string | null;
   activeHoursEnd?: string | null;
   isActive?: boolean;
-  metadata?: Prisma.InputJsonValue;
 }
 
-interface CreateEnrollmentInput {
+export interface EnrollmentInput {
   citizenId: string;
-  sourceType?: string;
+  purpose: FacePurpose;
+  frames: string[];
+  challengeId: string;
+  sourceType: string;
   sourceLabel?: string | null;
-  imageBase64?: string | null;
-  embedding?: number[] | null;
-  qualityScore?: number | null;
-  livenessScore?: number | null;
-  metadata?: Prisma.InputJsonValue;
-  approvedById?: string | null;
-  modelName?: string;
-  modelVersion?: string | null;
+  actor: FaceActor;
+  /** Consentimento registrado junto (termo aceito na tela) */
+  consent?: Omit<ConsentInput, 'tenantId' | 'citizenId' | 'purpose'> | null;
 }
 
-interface ReadBiometryInput {
-  imageBase64?: string | null;
-  embedding?: number[] | null;
-  qualityScore?: number | null;
-  livenessScore?: number | null;
-  metadata?: Prisma.InputJsonValue;
+export interface VerifyInput {
+  frames: string[];
+  challengeId: string;
+  /** 1:1 — confirma se é este cidadão. Sem ele: busca no município (1:N). */
   expectedCitizenId?: string | null;
-  sourceType?: string;
-  sourceLabel?: string | null;
-  modelName?: string | null;
-  modelVersion?: string | null;
+  purpose: FacePurpose;
+  sourceType: string;
+  actor: FaceActor;
+  /** chave do desafio (o cidadão do autoatendimento ou o servidor que lê) */
+  challengeSubject: string;
 }
 
-interface DeleteCitizenBiometryInput {
-  citizenId: string;
-  deletedById?: string | null;
-  reason?: string | null;
-}
-
-interface IngestRecognitionInput {
+export interface IngestInput {
   deviceId: string;
   zoneId?: string | null;
-  unidadeEducacaoId?: string | null;
-  citizenId?: string | null;
-  studentCitizenId?: string | null;
-  identityId?: string | null;
-  eventType?: 'DETECTION' | 'ENTRY' | 'EXIT' | 'UNMATCHED' | 'REVIEW';
-  confidence?: number | null;
-  imageBase64?: string | null;
-  embedding?: number[] | null;
-  boundingBox?: Prisma.InputJsonValue;
-  metadata?: Prisma.InputJsonValue;
-  provider?: string | null;
-  modelName?: string | null;
-  modelVersion?: string | null;
-  recognizedAt?: string | Date | null;
+  eventType?: 'DETECTION' | 'ENTRY' | 'EXIT';
+  frame: string;
+  actor: FaceActor;
 }
 
-function encryptSecret(value?: string | null) {
-  if (!value) {
-    return null;
-  }
+// ---------------------------------------------------------------------------
+// Utilitários
+// ---------------------------------------------------------------------------
 
-  const key = crypto.createHash('sha256').update(FACE_ENCRYPTION_KEY).digest();
-  const iv = crypto.randomBytes(12);
-  const cipher = crypto.createCipheriv('aes-256-gcm', key, iv);
-  const encrypted = Buffer.concat([cipher.update(value, 'utf8'), cipher.final()]);
-  const authTag = cipher.getAuthTag();
-
-  return Buffer.concat([iv, authTag, encrypted]).toString('base64');
-}
-
-function unique<T>(items: T[]) {
-  return Array.from(new Set(items));
-}
-
-function normalizeEmbedding(vector: number[]) {
-  return normalizeVector(vector.map((value) => Number(value) || 0));
-}
-
-function buildEventTimestamp(recognizedAt?: string | Date | null) {
-  if (!recognizedAt) {
-    return new Date();
-  }
-
-  return recognizedAt instanceof Date ? recognizedAt : new Date(recognizedAt);
-}
-
-function renderTemplate(template: string | null | undefined, variables: Record<string, string>) {
-  if (!template) {
-    return null;
-  }
-
-  return template.replace(/\{\{\s*(\w+)\s*\}\}/g, (_, key) => variables[key] || '');
-}
-
-function formatDateTime(date: Date) {
-  return new Intl.DateTimeFormat('pt-BR', {
-    dateStyle: 'short',
-    timeStyle: 'short',
-  }).format(date);
-}
-
-function getAutoApproveQualityThreshold() {
-  return Number(process.env.FACE_AUTO_APPROVE_QUALITY_THRESHOLD || 0.78);
-}
-
-function getAutoApproveLivenessThreshold() {
-  return Number(process.env.FACE_AUTO_APPROVE_LIVENESS_THRESHOLD || 0.82);
-}
-
-function getAutoMatchThreshold() {
-  return Number(process.env.FACE_AUTO_MATCH_THRESHOLD || 0.92);
-}
-
-function getReviewMatchThreshold() {
-  return Number(process.env.FACE_REVIEW_MATCH_THRESHOLD || 0.82);
-}
-
-function createFacePlatformError(message: string, status = 500, details?: unknown) {
+function faceError(message: string, status = 500, details?: unknown) {
   const error = new Error(message) as Error & { status?: number; details?: unknown };
   error.status = status;
   error.details = details;
   return error;
 }
 
-export class FacePlatformService {
-  public async getStatus() {
-    try {
-      await Promise.all([
-        prisma.faceRecognitionIdentity.count(),
-        prisma.faceDevice.count(),
-        prisma.faceZone.count(),
-        prisma.faceRecognitionEvent.count(),
-        prisma.schoolSecurityConfiguration.count(),
-      ]);
-    } catch (error: any) {
-      const missingSchema =
-        error?.code === 'P2021' ||
-        /relation .* does not exist/i.test(error?.message || '') ||
-        /table .* does not exist/i.test(error?.message || '');
+function encryptSecret(value?: string | null) {
+  if (!value) return null;
+  const iv = crypto.randomBytes(12);
+  const cipher = crypto.createCipheriv('aes-256-gcm', deviceSecretKey(), iv);
+  const encrypted = Buffer.concat([cipher.update(value, 'utf8'), cipher.final()]);
+  return Buffer.concat([iv, cipher.getAuthTag(), encrypted]).toString('base64');
+}
 
-      return {
-        available: false,
-        schemaReady: false,
-        service: 'ultrazend-face-server',
-        code: error?.code || null,
-        message: missingSchema
-          ? 'As tabelas do reconhecimento facial ainda não foram aplicadas no banco.'
-          : 'O serviço facial está ativo, mas a base ainda não está pronta.',
-        providers: {
-          recognition: {
-            configured: true,
-            available: true,
-            engine: 'face-api.js-vector-store',
-            message: 'Motor vetorial face-api.js aguardando schema do serviço facial.',
-          },
-          liveness: await faceLivenessService.getStatus(),
-        },
-        timestamp: new Date().toISOString(),
-      };
+function unique<T>(items: T[]) {
+  return Array.from(new Set(items));
+}
+
+function renderTemplate(template: string | null | undefined, variables: Record<string, string>) {
+  if (!template) return null;
+  return template.replace(/\{\{\s*(\w+)\s*\}\}/g, (_, key) => variables[key] || '');
+}
+
+function formatDateTime(date: Date) {
+  return new Intl.DateTimeFormat('pt-BR', { dateStyle: 'short', timeStyle: 'short', timeZone: 'America/Sao_Paulo' }).format(date);
+}
+
+function assertFrames(frames: unknown, expected: number): string[] {
+  if (!Array.isArray(frames) || frames.length !== expected || frames.some((frame) => typeof frame !== 'string' || frame.length < 100)) {
+    throw faceError(
+      expected === 3
+        ? 'A validação ao vivo precisa de 3 fotos. Atualize a página e tente de novo.'
+        : 'Envie uma foto da câmera.',
+      400
+    );
+  }
+  return frames as string[];
+}
+
+// Galeria (vetores) por município + modelo + finalidade, com cache curto
+const galleryCache = new Map<string, { at: number; entries: GalleryEntry[] }>();
+function invalidateGallery(tenantId: string) {
+  for (const key of galleryCache.keys()) if (key.startsWith(`${tenantId}:`)) galleryCache.delete(key);
+}
+
+// ---------------------------------------------------------------------------
+// Serviço
+// ---------------------------------------------------------------------------
+
+export class FacePlatformService {
+  // ----- status e painel -----
+
+  public async getStatus(tenantId: string) {
+    const [engine, settings] = await Promise.all([engineStatus(), getEngineSettings()]);
+    let schemaReady = true;
+    try {
+      await prisma.faceRecognitionIdentity.count({ where: { tenantId } });
+    } catch {
+      schemaReady = false;
     }
 
-    const livenessStatus = await faceLivenessService.getStatus();
-    const recognitionStatus = {
-      configured: true,
-      available: true,
-      engine: 'face-api.js-vector-store',
-      message: 'Reconhecimento vetorial face-api.js ativo.',
-    };
-
     return {
-      available: true,
-      schemaReady: true,
+      available: Boolean(engine.available) && schemaReady,
+      schemaReady,
       service: 'ultrazend-face-server',
-      message: 'Serviço facial disponível.',
+      message: !schemaReady
+        ? 'As tabelas da biometria ainda não foram aplicadas no banco.'
+        : engine.available
+          ? 'Serviço facial disponível.'
+          : 'O motor de reconhecimento facial está indisponível no momento.',
       providers: {
-        recognition: recognitionStatus,
-        liveness: livenessStatus,
+        recognition: {
+          configured: true,
+          available: Boolean(engine.available),
+          engine: 'uniface',
+          model: settings.recognitionModel,
+          message: engine.available ? 'Reconhecimento no servidor (UniFace).' : engine.message,
+        },
+        liveness: {
+          configured: true,
+          available: Boolean(engine.available),
+          provider: 'desafio-servidor+minifasnet',
+          message: 'Prova de vida com desafio sorteado pelo servidor e anti-fraude passivo.',
+        },
       },
       timestamp: new Date().toISOString(),
     };
   }
 
-  public async getDashboard() {
+  public async getDashboard(tenantId: string) {
     const today = new Date();
     today.setHours(0, 0, 0, 0);
+    const where = { tenantId };
 
-    const [
-      totalIdentities,
-      totalDevices,
-      totalZones,
-      totalSchools,
-      eventsToday,
-      matchedToday,
-      pendingReviews,
-      notificationsPending,
-      recentEvents,
-    ] = await Promise.all([
-      prisma.faceRecognitionIdentity.count(),
-      prisma.faceDevice.count({ where: { isActive: true } }),
-      prisma.faceZone.count({ where: { isActive: true } }),
-      prisma.unidadeEducacao.count({ where: { isActive: true } }),
-      prisma.faceRecognitionEvent.count({ where: { recognizedAt: { gte: today } } }),
-      prisma.faceRecognitionEvent.count({
-        where: {
-          recognizedAt: { gte: today },
-          matchStatus: FaceMatchStatus.MATCHED,
-        },
-      }),
-      prisma.faceRecognitionEvent.count({
-        where: {
-          matchStatus: FaceMatchStatus.REVIEW_REQUIRED,
-        },
-      }),
-      prisma.faceRecognitionEvent.count({
-        where: {
-          notificationStatus: GuardianNotificationStatus.PENDING,
-        },
-      }),
-      prisma.faceRecognitionEvent.findMany({
-        take: 10,
-        orderBy: { recognizedAt: 'desc' },
-        include: {
-          device: true,
-          zone: true,
-          unidadeEducacao: true,
-          studentCitizen: {
-            select: { id: true, name: true },
-          },
-          guardianCitizen: {
-            select: { id: true, name: true },
-          },
-        },
-      }),
-    ]);
+    const [totalIdentities, totalDevices, totalZones, totalSchools, eventsToday, matchedToday, pendingReviews, notificationsPending, recentEvents] =
+      await Promise.all([
+        prisma.faceRecognitionIdentity.count({ where }),
+        prisma.faceDevice.count({ where: { ...where, isActive: true } }),
+        prisma.faceZone.count({ where: { ...where, isActive: true } }),
+        prisma.unidadeEducacao.count({ where: { ...where, isActive: true } }),
+        prisma.faceRecognitionEvent.count({ where: { ...where, recognizedAt: { gte: today } } }),
+        prisma.faceRecognitionEvent.count({ where: { ...where, recognizedAt: { gte: today }, matchStatus: FaceMatchStatus.MATCHED } }),
+        prisma.faceRecognitionEvent.count({ where: { ...where, matchStatus: FaceMatchStatus.REVIEW_REQUIRED } }),
+        prisma.faceRecognitionEvent.count({ where: { ...where, notificationStatus: GuardianNotificationStatus.PENDING } }),
+        prisma.faceRecognitionEvent.findMany({
+          where,
+          take: 10,
+          orderBy: { recognizedAt: 'desc' },
+          include: this.eventInclude(),
+        }),
+      ]);
 
     return {
-      totals: {
-        totalIdentities,
-        totalDevices,
-        totalZones,
-        totalSchools,
-        eventsToday,
-        matchedToday,
-        pendingReviews,
-        notificationsPending,
-      },
+      totals: { totalIdentities, totalDevices, totalZones, totalSchools, eventsToday, matchedToday, pendingReviews, notificationsPending },
       recentEvents: recentEvents.map((event) => this.serializeEvent(event)),
     };
   }
 
-  public async listSchools() {
+  // ----- escolas -----
+
+  public async listSchools(tenantId: string) {
     const schools = await prisma.unidadeEducacao.findMany({
-      where: { isActive: true },
+      where: { tenantId, isActive: true },
       include: {
         schoolSecurityConfiguration: true,
-        _count: {
-          select: {
-            faceDevices: true,
-            faceZones: true,
-            faceEvents: true,
-          },
-        },
+        _count: { select: { faceDevices: true, faceZones: true, faceEvents: true } },
       },
       orderBy: { nome: 'asc' },
     });
@@ -333,45 +263,36 @@ export class FacePlatformService {
     }));
   }
 
-  public async listSchoolCitizens(unidadeEducacaoId: string) {
+  private async assertSchool(tenantId: string, unidadeEducacaoId: string | null | undefined) {
+    if (!unidadeEducacaoId) return null;
+    const school = await prisma.unidadeEducacao.findFirst({ where: { id: unidadeEducacaoId, tenantId }, select: { id: true } });
+    if (!school) throw faceError('Unidade escolar não encontrada', 404);
+    return school.id;
+  }
+
+  public async listSchoolCitizens(tenantId: string, unidadeEducacaoId: string) {
+    await this.assertSchool(tenantId, unidadeEducacaoId);
+    const settings = await getEngineSettings();
     const matriculas = await prisma.matricula.findMany({
-      where: {
-        unidadeEducacaoId,
-        situacao: SituacaoMatricula.ATIVA,
-      },
+      where: { tenantId, unidadeEducacaoId, situacao: SituacaoMatricula.ATIVA },
       orderBy: { updatedAt: 'desc' },
     });
 
     const citizenIds = unique(matriculas.map((item) => item.alunoId));
     const guardianIds = unique(matriculas.map((item) => item.responsavelId));
 
-    const [citizens, guardians, identities, school] = await Promise.all([
-      prisma.citizen.findMany({
-        where: { id: { in: citizenIds } },
-        select: { id: true, name: true, cpf: true, phone: true, personId: true },
-      }),
-      prisma.citizen.findMany({
-        where: { id: { in: guardianIds } },
-        select: { id: true, name: true, phone: true, email: true },
-      }),
+    const [citizens, guardians, identities, school, consented] = await Promise.all([
+      prisma.citizen.findMany({ where: { tenantId, id: { in: citizenIds } }, select: { id: true, name: true, cpf: true } }),
+      prisma.citizen.findMany({ where: { tenantId, id: { in: guardianIds } }, select: { id: true, name: true } }),
       prisma.faceRecognitionIdentity.findMany({
-        where: {
-          citizenId: { in: citizenIds },
-        },
+        where: { tenantId, citizenId: { in: citizenIds } },
         include: {
-          enrollments: {
-            orderBy: { createdAt: 'desc' },
-            take: 1,
-          },
-          embeddings: {
-            where: { isActive: true },
-          },
+          enrollments: { orderBy: { createdAt: 'desc' }, take: 1 },
+          embeddings: { where: { isActive: true }, select: { modelName: true } },
         },
       }),
-      prisma.unidadeEducacao.findUnique({
-        where: { id: unidadeEducacaoId },
-        select: { id: true, nome: true, tipo: true },
-      }),
+      prisma.unidadeEducacao.findFirst({ where: { id: unidadeEducacaoId, tenantId }, select: { id: true, nome: true, tipo: true } }),
+      citizenIdsWithConsent(tenantId, 'SCHOOL_SECURITY'),
     ]);
 
     const citizenMap = new Map(citizens.map((citizen) => [citizen.id, citizen]));
@@ -383,54 +304,44 @@ export class FacePlatformService {
       citizens: matriculas
         .map((matricula) => {
           const citizen = citizenMap.get(matricula.alunoId);
-          const guardian = guardianMap.get(matricula.responsavelId);
+          if (!citizen) return null;
+          const guardian = guardianMap.get(matricula.responsavelId) || null;
           const identity = identityMap.get(matricula.alunoId);
-
-          if (!citizen) {
-            return null;
-          }
-
           return {
             matriculaId: matricula.id,
             numeroMatricula: matricula.numeroMatricula,
-            citizen,
-            aluno: citizen,
-            guardian: guardian || null,
-            responsavel: guardian || null,
-            faceIdentity: identity
-              ? {
-                  id: identity.id,
-                  status: identity.status,
-                  totalEmbeddings: this.countRegisteredTemplates(identity),
-                  latestEnrollment: identity.enrollments[0] || null,
-                }
-              : null,
-            };
+            citizen: { id: citizen.id, name: citizen.name, cpf: maskCpf(citizen.cpf) },
+            aluno: { id: citizen.id, name: citizen.name },
+            guardian,
+            responsavel: guardian,
+            schoolConsent: consented.has(citizen.id),
+            faceIdentity: identity ? this.summarizeIdentity(identity, settings.recognitionModel) : null,
+          };
         })
         .filter(Boolean),
     };
   }
 
-  public async listDevices() {
+  // ----- dispositivos, zonas e configurações -----
+
+  public async listDevices(tenantId: string) {
     const devices = await prisma.faceDevice.findMany({
-      include: {
-        unidadeEducacao: {
-          select: { id: true, nome: true, tipo: true },
-        },
-        zones: true,
-      },
+      where: { tenantId },
+      include: { unidadeEducacao: { select: { id: true, nome: true, tipo: true } }, zones: true },
       orderBy: { name: 'asc' },
     });
-
     return devices.map((device) => this.serializeDevice(device));
   }
 
-  public async createDevice(input: CreateDeviceInput) {
+  public async createDevice(tenantId: string, input: CreateDeviceInput) {
+    if (!input?.code?.trim() || !input?.name?.trim()) throw faceError('Informe código e nome do dispositivo', 400);
+    const unidadeEducacaoId = await this.assertSchool(tenantId, input.unidadeEducacaoId);
     const device = await prisma.faceDevice.create({
       data: {
+        tenantId,
         code: input.code.trim(),
         name: input.name.trim(),
-        unidadeEducacaoId: input.unidadeEducacaoId || null,
+        unidadeEducacaoId,
         type: input.type || 'CAMERA',
         protocol: input.protocol || 'RTSP',
         manufacturer: input.manufacturer || null,
@@ -439,1089 +350,727 @@ export class FacePlatformService {
         streamUrlEncrypted: encryptSecret(input.streamUrl),
         usernameEncrypted: encryptSecret(input.username),
         passwordEncrypted: encryptSecret(input.password),
-        metadata: (input.metadata || {}) as Prisma.InputJsonValue,
+        metadata: sanitizeMetadata(input.metadata) as Prisma.InputJsonValue,
         isActive: true,
       },
-      include: {
-        unidadeEducacao: {
-          select: { id: true, nome: true, tipo: true },
-        },
-        zones: true,
-      },
+      include: { unidadeEducacao: { select: { id: true, nome: true, tipo: true } }, zones: true },
     });
-
     return this.serializeDevice(device);
   }
 
-  public async updateDevice(id: string, input: Partial<CreateDeviceInput>) {
-    const data: Prisma.FaceDeviceUpdateInput = {
-      ...(input.code ? { code: input.code.trim() } : {}),
-      ...(input.name ? { name: input.name.trim() } : {}),
-      ...(input.unidadeEducacaoId !== undefined ? { unidadeEducacaoId: input.unidadeEducacaoId || null } : {}),
-      ...(input.type ? { type: input.type } : {}),
-      ...(input.protocol !== undefined ? { protocol: input.protocol || null } : {}),
-      ...(input.manufacturer !== undefined ? { manufacturer: input.manufacturer || null } : {}),
-      ...(input.model !== undefined ? { model: input.model || null } : {}),
-      ...(input.locationDescription !== undefined
-        ? { locationDescription: input.locationDescription || null }
-        : {}),
-      ...(input.streamUrl !== undefined ? { streamUrlEncrypted: encryptSecret(input.streamUrl) } : {}),
-      ...(input.username !== undefined ? { usernameEncrypted: encryptSecret(input.username) } : {}),
-      ...(input.password !== undefined ? { passwordEncrypted: encryptSecret(input.password) } : {}),
-      ...(input.metadata !== undefined ? { metadata: input.metadata as Prisma.InputJsonValue } : {}),
-    };
+  public async updateDevice(tenantId: string, id: string, input: Partial<CreateDeviceInput>) {
+    const existing = await prisma.faceDevice.findFirst({ where: { id, tenantId }, select: { id: true } });
+    if (!existing) throw faceError('Dispositivo não encontrado', 404);
+    const unidadeEducacaoId =
+      input.unidadeEducacaoId !== undefined ? await this.assertSchool(tenantId, input.unidadeEducacaoId) : undefined;
 
     const device = await prisma.faceDevice.update({
       where: { id },
-      data,
-      include: {
-        unidadeEducacao: {
-          select: { id: true, nome: true, tipo: true },
-        },
-        zones: true,
+      data: {
+        ...(input.code ? { code: input.code.trim() } : {}),
+        ...(input.name ? { name: input.name.trim() } : {}),
+        ...(unidadeEducacaoId !== undefined ? { unidadeEducacaoId } : {}),
+        ...(input.type ? { type: input.type } : {}),
+        ...(input.protocol !== undefined ? { protocol: input.protocol || null } : {}),
+        ...(input.manufacturer !== undefined ? { manufacturer: input.manufacturer || null } : {}),
+        ...(input.model !== undefined ? { model: input.model || null } : {}),
+        ...(input.locationDescription !== undefined ? { locationDescription: input.locationDescription || null } : {}),
+        ...(input.streamUrl !== undefined ? { streamUrlEncrypted: encryptSecret(input.streamUrl) } : {}),
+        ...(input.username !== undefined ? { usernameEncrypted: encryptSecret(input.username) } : {}),
+        ...(input.password !== undefined ? { passwordEncrypted: encryptSecret(input.password) } : {}),
       },
+      include: { unidadeEducacao: { select: { id: true, nome: true, tipo: true } }, zones: true },
     });
-
     return this.serializeDevice(device);
   }
 
-  public async listZones() {
+  public async listZones(tenantId: string) {
     const zones = await prisma.faceZone.findMany({
-      include: {
-        device: true,
-        unidadeEducacao: {
-          select: { id: true, nome: true, tipo: true },
-        },
-      },
-      orderBy: [{ unidadeEducacao: { nome: 'asc' } }, { name: 'asc' }],
+      where: { tenantId },
+      include: { device: true, unidadeEducacao: { select: { id: true, nome: true, tipo: true } } },
+      orderBy: [{ name: 'asc' }],
     });
-
-    return zones.map((zone) => ({
-      ...zone,
-      device: this.serializeDevice(zone.device),
-    }));
+    return zones.map((zone) => ({ ...zone, device: this.serializeDevice(zone.device) }));
   }
 
-  public async createZone(input: CreateZoneInput) {
+  public async createZone(tenantId: string, input: CreateZoneInput) {
+    if (!input?.name?.trim()) throw faceError('Informe o nome da zona', 400);
+    const device = await prisma.faceDevice.findFirst({ where: { id: input.deviceId, tenantId } });
+    if (!device) throw faceError('Dispositivo não encontrado', 404);
+    const unidadeEducacaoId = await this.assertSchool(tenantId, input.unidadeEducacaoId || device.unidadeEducacaoId);
+
     const zone = await prisma.faceZone.create({
       data: {
-        deviceId: input.deviceId,
-        unidadeEducacaoId: input.unidadeEducacaoId || null,
+        tenantId,
+        deviceId: device.id,
+        unidadeEducacaoId,
         name: input.name.trim(),
         gateName: input.gateName || null,
         direction: input.direction || 'BOTH',
-        dedupeWindowSecs: input.dedupeWindowSecs || 180,
-        metadata: (input.metadata || {}) as Prisma.InputJsonValue,
+        dedupeWindowSecs: Math.min(Math.max(Number(input.dedupeWindowSecs) || 180, 10), 3600),
       },
-      include: {
-        device: true,
-        unidadeEducacao: {
-          select: { id: true, nome: true, tipo: true },
-        },
-      },
+      include: { device: true, unidadeEducacao: { select: { id: true, nome: true, tipo: true } } },
     });
-
-    return {
-      ...zone,
-      device: this.serializeDevice(zone.device),
-    };
+    return { ...zone, device: this.serializeDevice(zone.device) };
   }
 
-  public async listConfigurations() {
+  public async listConfigurations(tenantId: string) {
     return prisma.schoolSecurityConfiguration.findMany({
-      include: {
-        unidadeEducacao: {
-          select: { id: true, nome: true, tipo: true },
-        },
-      },
-      orderBy: {
-        unidadeEducacao: { nome: 'asc' },
-      },
+      where: { unidadeEducacao: { tenantId } },
+      include: { unidadeEducacao: { select: { id: true, nome: true, tipo: true } } },
+      orderBy: { unidadeEducacao: { nome: 'asc' } },
     });
   }
 
-  public async upsertSchoolConfiguration(input: UpsertSchoolConfigurationInput) {
+  public async upsertSchoolConfiguration(tenantId: string, input: UpsertSchoolConfigurationInput) {
+    await this.assertSchool(tenantId, input.unidadeEducacaoId);
+    const data = {
+      notifyOnEntry: input.notifyOnEntry ?? true,
+      notifyOnExit: input.notifyOnExit ?? true,
+      preferredChannel: input.preferredChannel === 'whatsapp' ? 'chat' : input.preferredChannel || 'chat',
+      dedupeWindowSecs: Math.min(Math.max(Number(input.dedupeWindowSecs) || 180, 10), 3600),
+      entryMessageTemplate: input.entryMessageTemplate || null,
+      exitMessageTemplate: input.exitMessageTemplate || null,
+      activeHoursStart: input.activeHoursStart || null,
+      activeHoursEnd: input.activeHoursEnd || null,
+      isActive: input.isActive ?? true,
+    };
     return prisma.schoolSecurityConfiguration.upsert({
       where: { unidadeEducacaoId: input.unidadeEducacaoId },
-      update: {
-        notifyOnEntry: input.notifyOnEntry ?? true,
-        notifyOnExit: input.notifyOnExit ?? true,
-        preferredChannel: input.preferredChannel || 'chat',
-        dedupeWindowSecs: input.dedupeWindowSecs || 180,
-        entryMessageTemplate: input.entryMessageTemplate || null,
-        exitMessageTemplate: input.exitMessageTemplate || null,
-        activeHoursStart: input.activeHoursStart || null,
-        activeHoursEnd: input.activeHoursEnd || null,
-        isActive: input.isActive ?? true,
-        metadata: (input.metadata || {}) as Prisma.InputJsonValue,
-      },
-      create: {
-        unidadeEducacaoId: input.unidadeEducacaoId,
-        notifyOnEntry: input.notifyOnEntry ?? true,
-        notifyOnExit: input.notifyOnExit ?? true,
-        preferredChannel: input.preferredChannel || 'chat',
-        dedupeWindowSecs: input.dedupeWindowSecs || 180,
-        entryMessageTemplate: input.entryMessageTemplate || null,
-        exitMessageTemplate: input.exitMessageTemplate || null,
-        activeHoursStart: input.activeHoursStart || null,
-        activeHoursEnd: input.activeHoursEnd || null,
-        isActive: input.isActive ?? true,
-        metadata: (input.metadata || {}) as Prisma.InputJsonValue,
-      },
-      include: {
-        unidadeEducacao: {
-          select: { id: true, nome: true, tipo: true },
-        },
-      },
+      update: data,
+      create: { unidadeEducacaoId: input.unidadeEducacaoId, ...data },
+      include: { unidadeEducacao: { select: { id: true, nome: true, tipo: true } } },
     });
   }
 
-  public async listIdentities() {
+  // ----- identidades (sem vetores!) -----
+
+  public async listIdentities(tenantId: string, actor: FaceActor) {
+    const settings = await getEngineSettings();
     const identities = await prisma.faceRecognitionIdentity.findMany({
+      where: { tenantId },
       include: {
-        person: true,
-        citizen: {
-          select: { id: true, name: true, cpf: true, phone: true, personId: true },
-        },
-        enrollments: {
-          orderBy: { createdAt: 'desc' },
-          take: 3,
-        },
-        embeddings: {
-          where: { isActive: true },
-        },
+        citizen: { select: { id: true, name: true, cpf: true } },
+        enrollments: { orderBy: { createdAt: 'desc' }, take: 3 },
+        embeddings: { where: { isActive: true }, select: { modelName: true } },
       },
       orderBy: { updatedAt: 'desc' },
     });
 
+    await logFaceAccess({ tenantId, actor, action: 'LIST', details: { total: identities.length } });
+
     return identities.map((identity) => ({
-      id: identity.id,
-      status: identity.status,
-      label: identity.label,
-      person: identity.person,
-      citizen: identity.citizen,
-      embeddings: identity.embeddings.map((embedding) => ({
-        id: embedding.id,
-        modelName: embedding.modelName,
-        modelVersion: embedding.modelVersion,
-        vector: embedding.vector,
-        qualityScore: embedding.qualityScore,
-        isActive: embedding.isActive,
-        createdAt: embedding.createdAt,
-      })),
-      totalEmbeddings: this.countRegisteredTemplates(identity),
-      latestEnrollment: identity.enrollments[0] || null,
-      enrollments: identity.enrollments,
+      ...this.summarizeIdentity(identity, settings.recognitionModel),
+      citizen: identity.citizen ? { id: identity.citizen.id, name: identity.citizen.name, cpf: maskCpf(identity.citizen.cpf) } : null,
     }));
   }
 
-  public async createEnrollment(input: CreateEnrollmentInput) {
-    const identity = await this.ensureIdentityForCitizen(input.citizenId);
-    let imagePath: string | null = null;
-    let vector: number[] | null = input.embedding?.length ? normalizeEmbedding(input.embedding) : null;
+  public async getCitizenBiometry(tenantId: string, citizenId: string, actor: FaceActor) {
+    const settings = await getEngineSettings();
+    const [identity, consents] = await Promise.all([
+      prisma.faceRecognitionIdentity.findFirst({
+        where: { tenantId, citizenId },
+        include: {
+          enrollments: { orderBy: { createdAt: 'desc' } },
+          embeddings: { where: { isActive: true }, select: { modelName: true } },
+        },
+      }),
+      listConsents(tenantId, citizenId),
+    ]);
+    await logFaceAccess({ tenantId, actor, action: 'VIEW', citizenId, identityId: identity?.id });
+    return {
+      identity: identity ? this.summarizeIdentity(identity, settings.recognitionModel) : null,
+      consents,
+    };
+  }
 
+  private summarizeIdentity(
+    identity: {
+      id: string;
+      status: FaceRecognitionIdentityStatus;
+      label?: string | null;
+      citizenId: string | null;
+      enrollments: Array<{ id: string; status: FaceEnrollmentStatus; sourceType: string; qualityScore: number | null; livenessScore: number | null; capturedAt: Date; createdAt: Date; imagePath: string | null; metadata: Prisma.JsonValue | null }>;
+      embeddings: Array<{ modelName: string }>;
+    },
+    currentModel: string
+  ) {
+    const current = identity.embeddings.filter((embedding) => embedding.modelName === currentModel).length;
+    const latest = identity.enrollments[0];
+    return {
+      id: identity.id,
+      status: identity.status,
+      label: identity.label || null,
+      citizenId: identity.citizenId,
+      totalEmbeddings: current,
+      // tinha biometria do motor antigo mas não deu para converter: refazer o cadastro
+      needsReenrollment: current === 0 && identity.embeddings.length > 0,
+      latestEnrollment: latest
+        ? {
+            id: latest.id,
+            status: latest.status,
+            sourceType: latest.sourceType,
+            qualityScore: latest.qualityScore,
+            livenessScore: latest.livenessScore,
+            capturedAt: latest.capturedAt,
+            createdAt: latest.createdAt,
+            hasImage: Boolean(latest.imagePath),
+            reviewReasons: Array.isArray((latest.metadata as any)?.reviewReasons) ? (latest.metadata as any).reviewReasons : [],
+          }
+        : null,
+    };
+  }
+
+  // ----- consentimento -----
+
+  public async listConsents(tenantId: string, citizenId: string) {
+    return listConsents(tenantId, citizenId);
+  }
+
+  public async grantConsent(tenantId: string, citizenId: string, purpose: FacePurpose, consent: EnrollmentInput['consent'], actor: FaceActor) {
+    await this.assertCitizen(tenantId, citizenId);
+    if (!consent) throw faceError('Consentimento ausente', 400);
+    const saved = await grantConsent({ ...consent, tenantId, citizenId, purpose: assertPurpose(purpose) });
+    invalidateGallery(tenantId);
+    await logFaceAccess({ tenantId, actor, action: 'CONSENT_GRANTED', citizenId, details: { purpose, relationship: consent.relationship, channel: consent.channel } });
+    return saved;
+  }
+
+  public async revokeConsent(tenantId: string, citizenId: string, purpose: FacePurpose, actor: FaceActor, reason: string) {
+    const count = await revokeConsent(tenantId, citizenId, assertPurpose(purpose), `${actor.type}:${actor.id || ''}`, reason);
+    invalidateGallery(tenantId);
+    await logFaceAccess({ tenantId, actor, action: 'CONSENT_REVOKED', citizenId, details: { purpose, reason } });
+
+    // sem nenhuma finalidade ativa, a biometria não tem mais por que existir
+    const remaining = await prisma.faceConsent.count({ where: { tenantId, citizenId, revokedAt: null } });
+    let deletion = null;
+    if (remaining === 0) {
+      deletion = await this.deleteCitizenBiometry(tenantId, {
+        citizenId,
+        actor,
+        reason: 'Consentimento revogado para todas as finalidades',
+        allowEmpty: true,
+      });
+    }
+    return { revoked: count, biometryDeleted: Boolean(deletion?.deletedEmbeddings || deletion?.deletedEnrollments) };
+  }
+
+  // ----- desafio da prova de vida -----
+
+  public createChallenge(tenantId: string, subject: string) {
+    return createChallenge(tenantId, subject);
+  }
+
+  // ----- cadastro -----
+
+  public async createEnrollment(tenantId: string, input: EnrollmentInput) {
+    const purpose = assertPurpose(input.purpose);
+    const frames = assertFrames(input.frames, 3);
+    await this.assertCitizen(tenantId, input.citizenId);
+
+    if (input.consent) {
+      await grantConsent({ ...input.consent, tenantId, citizenId: input.citizenId, purpose });
+      await logFaceAccess({ tenantId, actor: input.actor, action: 'CONSENT_GRANTED', citizenId: input.citizenId, details: { purpose, channel: input.consent.channel } });
+    }
+    if (!(await hasActiveConsent(tenantId, input.citizenId, purpose))) {
+      throw faceError('É preciso registrar o consentimento para a biometria antes do cadastro.', 403);
+    }
+
+    const direction = consumeChallenge(input.challengeId, tenantId, `enroll:${input.citizenId}`);
+    const identity = await this.ensureIdentityForCitizen(tenantId, input.citizenId);
     await this.assertIdentityCanEnroll(identity.id);
 
-    if (input.imageBase64) {
-      imagePath = await faceStorageService.persistBase64Image('enrollments', input.imageBase64);
+    const settings = await getEngineSettings();
+    const analysis = await analyzeFrames(frames, { model: settings.recognitionModel });
+    const liveness = evaluateChallenge(analysis.frames, direction, settings);
+
+    if (!liveness.passed || !liveness.embedding) {
+      await logFaceAccess({ tenantId, actor: input.actor, action: 'ENROLL_REJECTED', citizenId: input.citizenId, identityId: identity.id, details: { reasons: liveness.reasons } });
+      throw faceError(liveness.reasons[0] || 'Não foi possível validar o rosto ao vivo.', 422, { reasons: liveness.reasons });
     }
 
-    if (!vector?.length) {
-      throw createFacePlatformError('O cadastro facial exige embedding válido do face-api.js.', 400);
+    const quality = liveness.quality ?? 0;
+    if (quality < settings.minQuality) {
+      throw faceError('A foto ficou com pouca qualidade. Procure um lugar bem iluminado, sem óculos escuros ou boné, e tente de novo.', 422);
     }
 
-    const recognitionProviderMetadata = {
-      provider: input.modelName || 'face-api.js',
-      modelName: input.modelName || 'face-api.js',
-      modelVersion: input.modelVersion || null,
-      vectorLength: vector.length,
-      source: 'face-api.js',
-    };
+    const vector = normalize(liveness.embedding);
 
-    const livenessAssessment = await faceLivenessService.assess({
-      imageBase64: input.imageBase64,
-      hintedScore: input.livenessScore ?? null,
-      metadata: input.metadata,
-    });
+    // Mesmo rosto já cadastrado para OUTRO cidadão do município? Vai para revisão
+    const gallery = await this.loadGallery(tenantId, settings.recognitionModel, null);
+    const duplicate = findBestMatch(vector, gallery.filter((entry) => entry.citizenId !== input.citizenId), settings);
+    const reviewReasons: string[] = [];
+    if (duplicate.status !== 'UNMATCHED') {
+      reviewReasons.push('Este rosto se parece com o de outro cidadão já cadastrado. Confirme a identidade antes de aprovar.');
+    }
 
-    const autoApproved = this.shouldAutoApproveEnrollment({
-      approvedById: input.approvedById,
-      qualityScore: input.qualityScore,
-      livenessScore: livenessAssessment.score,
-      hasBiometricTemplate: Boolean(vector?.length || recognitionProviderMetadata),
-    });
-    const status =
-      input.approvedById || autoApproved ? FaceEnrollmentStatus.APPROVED : FaceEnrollmentStatus.PENDING;
-    const metadata =
-      input.metadata && typeof input.metadata === 'object'
-        ? { ...(input.metadata as Record<string, unknown>) }
-        : {};
+    const staffApproval = input.actor.type === 'USER';
+    const approved = reviewReasons.length === 0;
+    const imagePath = await faceStorageService.persistBase64Image(tenantId, 'enrollments', frames[0]);
 
     const enrollment = await prisma.faceEnrollment.create({
       data: {
+        tenantId,
         identityId: identity.id,
-        sourceType: input.sourceType || 'MANUAL_ADMIN',
+        sourceType: input.sourceType,
         sourceLabel: input.sourceLabel || null,
         imagePath,
-        qualityScore: input.qualityScore ?? null,
-        livenessScore: livenessAssessment.score,
-        status,
+        qualityScore: quality,
+        livenessScore: liveness.score,
+        status: approved ? FaceEnrollmentStatus.APPROVED : FaceEnrollmentStatus.PENDING,
+        approvedById: approved && staffApproval ? input.actor.id || null : null,
+        approvedAt: approved ? new Date() : null,
         metadata: {
-          ...metadata,
-          recognitionProvider: recognitionProviderMetadata,
-          livenessProvider: {
-            provider: livenessAssessment.provider,
-            score: livenessAssessment.score,
-            passed: livenessAssessment.passed,
-            mode: livenessAssessment.mode,
-            details: livenessAssessment.details,
-          },
-          autoApproved,
-          autoApprovalThresholds: {
-            quality: getAutoApproveQualityThreshold(),
-            liveness: getAutoApproveLivenessThreshold(),
-          },
+          engine: analysis.model,
+          purpose,
+          liveness: { score: liveness.score, realFraction: liveness.realFraction, challenge: direction },
+          reviewReasons,
+          ...(duplicate.status !== 'UNMATCHED' ? { possibleDuplicateIdentityId: duplicate.identityId, duplicateScore: duplicate.score } : {}),
         } as Prisma.InputJsonValue,
-        approvedById: input.approvedById || null,
-        approvedAt: input.approvedById || autoApproved ? new Date() : null,
       },
     });
 
-    if (vector?.length) {
-      await prisma.faceEmbedding.create({
-        data: {
-          identityId: identity.id,
-          enrollmentId: enrollment.id,
-          modelName: input.modelName || 'face-api.js',
-          modelVersion: input.modelVersion || null,
-          vector,
-          qualityScore: input.qualityScore ?? null,
-          isActive: true,
-        },
-      });
-    }
+    await prisma.faceEmbedding.create({
+      data: {
+        tenantId,
+        identityId: identity.id,
+        enrollmentId: enrollment.id,
+        modelName: analysis.model.name,
+        modelVersion: `uniface-${analysis.model.version}`,
+        vector,
+        qualityScore: quality,
+        isActive: true,
+      },
+    });
 
     await prisma.faceRecognitionIdentity.update({
       where: { id: identity.id },
-      data: {
-        status: status === FaceEnrollmentStatus.APPROVED
-          ? FaceRecognitionIdentityStatus.ACTIVE
-          : FaceRecognitionIdentityStatus.REVIEW,
-      },
+      data: { tenantId, status: approved ? FaceRecognitionIdentityStatus.ACTIVE : FaceRecognitionIdentityStatus.REVIEW },
     });
+    invalidateGallery(tenantId);
 
-    return prisma.faceRecognitionIdentity.findUnique({
-      where: { id: identity.id },
-      include: {
-        person: true,
-        citizen: {
-          select: { id: true, name: true, cpf: true, phone: true },
-        },
-        enrollments: {
-          orderBy: { createdAt: 'desc' },
-        },
-        embeddings: {
-          where: { isActive: true },
-        },
-      },
+    await logFaceAccess({
+      tenantId,
+      actor: input.actor,
+      action: 'ENROLL',
+      citizenId: input.citizenId,
+      identityId: identity.id,
+      details: { purpose, approved, sourceType: input.sourceType },
     });
-  }
-
-  public async readBiometry(input: ReadBiometryInput) {
-    const vector = input.embedding?.length ? normalizeEmbedding(input.embedding) : null;
-
-    if (!vector?.length) {
-      throw createFacePlatformError('A leitura biométrica ao vivo exige embedding válido do face-api.js.', 400);
-    }
-
-    const bestMatch = await this.findBestFaceApiVectorMatch(vector);
-
-    const livenessAssessment = await faceLivenessService.assess({
-      imageBase64: input.imageBase64,
-      hintedScore: input.livenessScore ?? null,
-      metadata: input.metadata,
-    });
-    const matchedIdentity = bestMatch.identity;
-    const expectedCitizenId = input.expectedCitizenId || null;
-    const hasExpectedCitizen = Boolean(expectedCitizenId);
-    const belongsToExpectedCitizen =
-      hasExpectedCitizen && matchedIdentity ? matchedIdentity.citizenId === expectedCitizenId : null;
-    const mismatchedExpectedCitizen = hasExpectedCitizen && matchedIdentity && belongsToExpectedCitizen === false;
-    const failedLiveness = livenessAssessment.passed === false;
-    const gatedMatchStatus = mismatchedExpectedCitizen
-      ? FaceMatchStatus.UNMATCHED
-      : failedLiveness
-        ? matchedIdentity
-          ? FaceMatchStatus.REVIEW_REQUIRED
-          : FaceMatchStatus.UNMATCHED
-        : bestMatch.matchStatus;
-    const reviewReason = mismatchedExpectedCitizen
-      ? 'A biometria lida não pertence ao cidadão em atendimento.'
-      : failedLiveness
-        ? 'Prova de vida abaixo do limiar mínimo'
-        : bestMatch.reviewReason;
-    const exposedIdentity = mismatchedExpectedCitizen ? null : matchedIdentity;
 
     return {
-      recognized: Boolean(exposedIdentity) && gatedMatchStatus === FaceMatchStatus.MATCHED,
-      matchStatus: gatedMatchStatus,
-      confidence: bestMatch.score,
-      reviewReason,
-      belongsToExpectedCitizen,
-      expectedCitizenId,
-      qualityScore: input.qualityScore ?? null,
-      livenessScore: livenessAssessment.score,
-      sourceType: input.sourceType || 'LIVE_READ',
-      sourceLabel: input.sourceLabel || null,
-      provider: input.modelName || 'face-api.js',
-      modelName: input.modelName || 'face-api.js',
-      modelVersion: input.modelVersion || null,
-      liveness: {
-        provider: livenessAssessment.provider,
-        score: livenessAssessment.score,
-        passed: livenessAssessment.passed,
-        mode: livenessAssessment.mode,
-      },
-      identity: exposedIdentity
-        ? {
-            id: exposedIdentity.id,
-            status: exposedIdentity.status,
-            citizenId: exposedIdentity.citizenId || null,
-            citizen: exposedIdentity.citizen
-              ? {
-                  id: exposedIdentity.citizen.id,
-                  name: exposedIdentity.citizen.name,
-                  cpf: exposedIdentity.citizen.cpf,
-                }
-              : null,
-            person: exposedIdentity.person
-              ? {
-                  id: exposedIdentity.person.id,
-                  name: exposedIdentity.person.name,
-                  cpf: exposedIdentity.person.cpf,
-                }
-              : null,
-          }
-        : null,
-      readAt: new Date().toISOString(),
+      identityId: identity.id,
+      enrollmentId: enrollment.id,
+      status: enrollment.status,
+      approved,
+      reviewReasons,
+      qualityScore: quality,
+      livenessScore: liveness.score,
     };
   }
 
-  public async deleteCitizenBiometry(input: DeleteCitizenBiometryInput) {
+  // ----- leitura (1:1 ou 1:N no município) -----
+
+  public async verify(tenantId: string, input: VerifyInput) {
+    const purpose = assertPurpose(input.purpose);
+    const frames = assertFrames(input.frames, 3);
+    const direction = consumeChallenge(input.challengeId, tenantId, input.challengeSubject);
+    const settings = await getEngineSettings();
+    const analysis = await analyzeFrames(frames, { model: settings.recognitionModel });
+    const liveness = evaluateChallenge(analysis.frames, direction, settings);
+
+    const base = {
+      livenessScore: liveness.score,
+      liveness: { passed: liveness.passed, score: liveness.score, reasons: liveness.reasons, provider: 'uniface' },
+      provider: 'uniface',
+      modelName: analysis.model.name,
+      modelVersion: analysis.model.version,
+      expectedCitizenId: input.expectedCitizenId || null,
+      readAt: new Date().toISOString(),
+    };
+
+    if (!liveness.passed || !liveness.embedding) {
+      await logFaceAccess({ tenantId, actor: input.actor, action: 'READ_REJECTED', citizenId: input.expectedCitizenId, details: { reasons: liveness.reasons, purpose } });
+      return {
+        ...base,
+        recognized: false,
+        matchStatus: 'UNMATCHED' as const,
+        confidence: 0,
+        reviewReason: liveness.reasons[0] || 'Prova de vida não confirmada',
+        belongsToExpectedCitizen: input.expectedCitizenId ? false : null,
+        identity: null,
+      };
+    }
+
+    const probe = normalize(liveness.embedding);
+    const expected = input.expectedCitizenId || null;
+    // 1:1: compara SÓ com o cidadão esperado. 1:N: só quem consentiu para a finalidade.
+    const gallery = expected
+      ? (await this.loadGallery(tenantId, settings.recognitionModel, null)).filter((entry) => entry.citizenId === expected)
+      : await this.loadGallery(tenantId, settings.recognitionModel, purpose);
+
+    const match = findBestMatch(probe, gallery, settings);
+    const identity = match.identityId
+      ? await prisma.faceRecognitionIdentity.findFirst({
+          where: { id: match.identityId, tenantId },
+          include: { citizen: { select: { id: true, name: true, cpf: true } } },
+        })
+      : null;
+
+    await logFaceAccess({
+      tenantId,
+      actor: input.actor,
+      action: expected ? 'VERIFY' : 'IDENTIFY',
+      citizenId: match.citizenId || expected,
+      identityId: match.identityId,
+      details: { purpose, status: match.status, score: Math.round(match.score * 1000) / 1000, sourceType: input.sourceType },
+    });
+
+    const noTemplate = gallery.length === 0;
+    return {
+      ...base,
+      recognized: match.status === 'MATCHED',
+      matchStatus: match.status,
+      confidence: Math.round(match.score * 1000) / 1000,
+      reviewReason: noTemplate
+        ? expected
+          ? 'Este cidadão ainda não tem biometria no motor atual. Faça um novo cadastro.'
+          : 'Nenhuma biometria cadastrada para esta finalidade no município.'
+        : match.reviewReason,
+      belongsToExpectedCitizen: expected ? match.status === 'MATCHED' && match.citizenId === expected : null,
+      identity:
+        identity && match.status !== 'UNMATCHED'
+          ? {
+              id: identity.id,
+              status: identity.status,
+              citizenId: identity.citizenId,
+              citizen: identity.citizen
+                ? { id: identity.citizen.id, name: identity.citizen.name, cpf: maskCpf(identity.citizen.cpf) }
+                : null,
+            }
+          : null,
+    };
+  }
+
+  // ----- exclusão (direito do titular) -----
+
+  public async deleteCitizenBiometry(
+    tenantId: string,
+    input: { citizenId: string; actor: FaceActor; reason?: string | null; allowEmpty?: boolean }
+  ) {
     const identity = await prisma.faceRecognitionIdentity.findFirst({
-      where: { citizenId: input.citizenId },
-      include: {
-        citizen: {
-          select: { id: true, name: true, cpf: true },
-        },
-        enrollments: {
-          orderBy: { createdAt: 'desc' },
-        },
-        embeddings: true,
-      },
+      where: { tenantId, citizenId: input.citizenId },
+      include: { enrollments: true, embeddings: true },
     });
 
     if (!identity) {
-      throw createFacePlatformError('Nenhuma identidade facial foi encontrada para este cidadão.', 404);
+      if (input.allowEmpty) return null;
+      throw faceError('Nenhuma biometria facial encontrada para este cidadão.', 404);
     }
 
-    const enrollmentCount = identity.enrollments.length;
-    const embeddingCount = identity.embeddings.length;
+    const events = await prisma.faceRecognitionEvent.findMany({
+      where: { tenantId, OR: [{ identityId: identity.id }, { studentCitizenId: input.citizenId }], previewPath: { not: null } },
+      select: { id: true, previewPath: true },
+    });
+
+    if (identity.enrollments.length === 0 && identity.embeddings.length === 0 && events.length === 0) {
+      if (input.allowEmpty) return null;
+      throw faceError('Este cidadão não possui biometria facial cadastrada.', 404);
+    }
+
     const imagePaths = unique(
-      identity.enrollments
-        .map((enrollment) => enrollment.imagePath)
-        .filter((imagePath): imagePath is string => Boolean(imagePath))
+      [...identity.enrollments.map((item) => item.imagePath), ...events.map((item) => item.previewPath)].filter(
+        (item): item is string => Boolean(item)
+      )
     );
-
-    if (enrollmentCount === 0 && embeddingCount === 0) {
-      throw createFacePlatformError('Este cidadão não possui biometria facial cadastrada para exclusão.', 404);
-    }
-
-    const resetReason =
-      input.reason?.trim() || 'Biometria facial excluída administrativamente para permitir novo cadastro.';
+    const reason = input.reason?.trim() || 'Biometria facial excluída.';
 
     await prisma.$transaction(async (tx) => {
-      await tx.faceEmbedding.deleteMany({
-        where: { identityId: identity.id },
+      await tx.faceEmbedding.deleteMany({ where: { identityId: identity.id } });
+      await tx.faceEnrollment.deleteMany({ where: { identityId: identity.id } });
+      // os registros de entrada/saída ficam (histórico escolar), SEM a foto
+      await tx.faceRecognitionEvent.updateMany({
+        where: { id: { in: events.map((event) => event.id) } },
+        data: { previewPath: null },
       });
-
-      await tx.faceEnrollment.deleteMany({
-        where: { identityId: identity.id },
-      });
-
       await tx.faceRecognitionIdentity.update({
         where: { id: identity.id },
-        data: {
-          status: FaceRecognitionIdentityStatus.PENDING,
-          notes: resetReason,
-        },
+        data: { status: FaceRecognitionIdentityStatus.PENDING, notes: reason },
       });
     });
 
     await Promise.allSettled(imagePaths.map((imagePath) => faceStorageService.deleteRelativePath(imagePath)));
+    invalidateGallery(tenantId);
+
+    await logFaceAccess({
+      tenantId,
+      actor: input.actor,
+      action: 'DELETE',
+      citizenId: input.citizenId,
+      identityId: identity.id,
+      details: { reason, enrollments: identity.enrollments.length, embeddings: identity.embeddings.length, images: imagePaths.length },
+    });
 
     return {
       identityId: identity.id,
       citizenId: input.citizenId,
-      citizen: identity.citizen,
-      deletedById: input.deletedById || null,
-      deletedEnrollments: enrollmentCount,
-      deletedEmbeddings: embeddingCount,
+      deletedEnrollments: identity.enrollments.length,
+      deletedEmbeddings: identity.embeddings.length,
       deletedImages: imagePaths.length,
       resetAt: new Date().toISOString(),
-      reason: resetReason,
+      reason,
     };
   }
 
-  public async listEvents(params: {
-    unidadeEducacaoId?: string;
-    zoneId?: string;
-    matchStatus?: FaceMatchStatus;
-    limit?: number;
-  } = {}) {
+  // ----- eventos da escola -----
+
+  public async listEvents(
+    tenantId: string,
+    params: { unidadeEducacaoId?: string; zoneId?: string; matchStatus?: FaceMatchStatus; limit?: number }
+  ) {
     const events = await prisma.faceRecognitionEvent.findMany({
       where: {
+        tenantId,
         ...(params.unidadeEducacaoId ? { unidadeEducacaoId: params.unidadeEducacaoId } : {}),
         ...(params.zoneId ? { zoneId: params.zoneId } : {}),
         ...(params.matchStatus ? { matchStatus: params.matchStatus } : {}),
       },
-      take: params.limit || 100,
+      include: this.eventInclude(),
       orderBy: { recognizedAt: 'desc' },
-      include: {
-        device: true,
-        zone: true,
-        unidadeEducacao: true,
-        identity: {
-          include: {
-            citizen: {
-              select: { id: true, name: true, cpf: true },
-            },
-            person: {
-              select: { id: true, name: true, cpf: true },
-            },
-          },
-        },
-        studentCitizen: {
-          select: { id: true, name: true, cpf: true, phone: true },
-        },
-        guardianCitizen: {
-          select: { id: true, name: true, phone: true, email: true },
-        },
-        reviewedBy: {
-          select: { id: true, name: true },
-        },
-      },
+      take: Math.min(Math.max(Number(params.limit) || 50, 1), 200),
     });
-
     return events.map((event) => this.serializeEvent(event));
   }
 
-  public async ingestRecognition(input: IngestRecognitionInput) {
-    const [device, zone] = await Promise.all([
-      prisma.faceDevice.findUnique({
-        where: { id: input.deviceId },
-        include: { unidadeEducacao: true },
-      }),
-      input.zoneId
-        ? prisma.faceZone.findUnique({
-            where: { id: input.zoneId },
-            include: { unidadeEducacao: true },
-          })
-        : Promise.resolve(null),
-    ]);
+  /**
+   * Portaria: uma foto da câmera -> cada rosto vira um registro. O reconhecimento
+   * é SEMPRE feito aqui (antes dava para registrar "aluno entrou" informando só o
+   * código do aluno, sem rosto, e o responsável era avisado).
+   */
+  public async ingestRecognition(tenantId: string, input: IngestInput) {
+    const frame = assertFrames([input.frame], 1)[0];
+    const device = await prisma.faceDevice.findFirst({ where: { id: input.deviceId, tenantId } });
+    if (!device) throw faceError('Dispositivo facial não encontrado', 404);
+    const zone = input.zoneId ? await prisma.faceZone.findFirst({ where: { id: input.zoneId, tenantId, deviceId: device.id } }) : null;
+    if (input.zoneId && !zone) throw faceError('Zona não encontrada para este dispositivo', 404);
 
-    if (!device) {
-      throw createFacePlatformError('Dispositivo facial não encontrado', 404);
+    const settings = await getEngineSettings();
+    const analysis = await analyzeFrames([frame], { model: settings.recognitionModel, multi: true, maxFaces: 10 });
+    const faces = analysis.frames[0]?.faces || [];
+    if (faces.length === 0) {
+      return { facesDetected: 0, events: [] };
     }
 
+    const gallery = await this.loadGallery(tenantId, settings.recognitionModel, 'SCHOOL_SECURITY');
+    const recognizedAt = new Date();
+    const results = [];
     let previewPath: string | null = null;
-    const vector = input.embedding?.length ? normalizeEmbedding(input.embedding) : null;
 
-    const recognizedAt = buildEventTimestamp(input.recognizedAt);
-    let identity = null as any;
-    let confidence = input.confidence ?? null;
-    let matchStatus: FaceMatchStatus = FaceMatchStatus.UNMATCHED;
-    let reviewReason: string | null = null;
-    let citizenId = input.citizenId || input.studentCitizenId || null;
-    let providerUsed = input.provider || null;
-    let modelNameUsed = input.modelName || null;
-
-    if (input.imageBase64) {
-      previewPath = await faceStorageService.persistBase64Image('events', input.imageBase64);
-    }
-
-    if (input.identityId) {
-      identity = await prisma.faceRecognitionIdentity.findUnique({
-        where: { id: input.identityId },
-        include: {
-          citizen: true,
-          person: true,
-        },
-      });
-      citizenId = citizenId || identity?.citizenId || null;
-      matchStatus = identity ? FaceMatchStatus.MATCHED : FaceMatchStatus.UNMATCHED;
-    } else if (citizenId) {
-      identity = await this.ensureIdentityForCitizen(citizenId);
-      matchStatus = FaceMatchStatus.MATCHED;
-      confidence = confidence ?? 1;
-    } else if (vector?.length) {
-      const bestMatch = await this.findBestFaceApiVectorMatch(vector);
-      identity = bestMatch.identity;
-      confidence = confidence ?? bestMatch.score;
-      matchStatus = bestMatch.matchStatus;
-      reviewReason = bestMatch.reviewReason;
-      citizenId = bestMatch.identity?.citizenId || null;
-      providerUsed = providerUsed || input.modelName || 'face-api.js';
-      modelNameUsed = modelNameUsed || input.modelName || 'face-api.js';
-    } else if (input.imageBase64) {
-      throw createFacePlatformError('A ingestão de evento facial exige embedding válido do face-api.js.', 400);
-    }
-
-    const schoolContext = await this.resolveSchoolContext(
-      citizenId,
-      input.unidadeEducacaoId || zone?.unidadeEducacaoId || device.unidadeEducacaoId || null
-    );
-    const eventType = this.resolveEventType(input.eventType, zone?.direction || null, matchStatus);
-    const dedupeWindowSecs =
-      zone?.dedupeWindowSecs ||
-      schoolContext.configuration?.dedupeWindowSecs ||
-      180;
-    const dedupeKey =
-      citizenId && eventType !== FaceEventType.UNMATCHED
-        ? `${citizenId}:${zone?.id || device.id}:${eventType}`
-        : null;
-
-    if (dedupeKey) {
-      const duplicateSince = new Date(recognizedAt.getTime() - dedupeWindowSecs * 1000);
-      const existingEvent = await prisma.faceRecognitionEvent.findFirst({
-        where: {
-          dedupeKey,
-          recognizedAt: { gte: duplicateSince },
-        },
-        orderBy: { recognizedAt: 'desc' },
-        include: {
-          device: true,
-          zone: true,
-          unidadeEducacao: true,
-          studentCitizen: {
-            select: { id: true, name: true, cpf: true, phone: true },
-          },
-          guardianCitizen: {
-            select: { id: true, name: true, phone: true, email: true },
-          },
-        },
-      });
-
-      if (existingEvent) {
-        return {
-          duplicate: true,
-          event: this.serializeEvent(existingEvent),
-        };
+    for (const face of faces) {
+      const match = findBestMatch(normalize(face.embedding), gallery, settings);
+      let status = match.status;
+      let reviewReason = match.reviewReason;
+      // foto/tela mostrada à câmera: não avisa o responsável sem alguém conferir
+      if (status === 'MATCHED' && !face.spoof.isReal) {
+        status = 'REVIEW_REQUIRED';
+        reviewReason = 'Possível foto ou tela mostrada à câmera: confirme manualmente';
       }
+      const citizenId = status === 'UNMATCHED' ? null : match.citizenId;
+
+      const schoolContext = await this.resolveSchoolContext(tenantId, citizenId, zone?.unidadeEducacaoId || device.unidadeEducacaoId || null);
+      const eventType = this.resolveEventType(input.eventType, zone?.direction || null, status);
+      const dedupeKey = citizenId && eventType !== FaceEventType.UNMATCHED ? `${citizenId}:${zone?.id || device.id}:${eventType}` : null;
+
+      if (dedupeKey) {
+        const windowSecs = zone?.dedupeWindowSecs || schoolContext.configuration?.dedupeWindowSecs || 180;
+        const duplicate = await prisma.faceRecognitionEvent.findFirst({
+          where: { tenantId, dedupeKey, recognizedAt: { gte: new Date(recognizedAt.getTime() - windowSecs * 1000) } },
+          include: this.eventInclude(),
+          orderBy: { recognizedAt: 'desc' },
+        });
+        if (duplicate) {
+          results.push({ duplicate: true, event: this.serializeEvent(duplicate) });
+          continue;
+        }
+      }
+
+      // a foto é guardada uma vez por leitura (e some pelo prazo de guarda)
+      if (!previewPath) previewPath = await faceStorageService.persistBase64Image(tenantId, 'events', frame);
+
+      const notificationStatus =
+        schoolContext.guardianCitizenId && status === 'MATCHED' && (eventType === FaceEventType.ENTRY || eventType === FaceEventType.EXIT)
+          ? GuardianNotificationStatus.PENDING
+          : GuardianNotificationStatus.NOT_REQUIRED;
+
+      const created = await prisma.faceRecognitionEvent.create({
+        data: {
+          tenantId,
+          identityId: status === 'UNMATCHED' ? null : match.identityId,
+          deviceId: device.id,
+          zoneId: zone?.id || null,
+          unidadeEducacaoId: schoolContext.unidadeEducacaoId,
+          studentCitizenId: citizenId,
+          guardianCitizenId: schoolContext.guardianCitizenId,
+          type: eventType,
+          matchStatus: status as FaceMatchStatus,
+          confidence: Math.round(match.score * 1000) / 1000,
+          provider: 'uniface',
+          modelName: analysis.model.name,
+          modelVersion: analysis.model.version,
+          previewPath,
+          boundingBox: face.bbox as unknown as Prisma.InputJsonValue,
+          metadata: { spoofReal: face.spoof.isReal, recordedBy: input.actor.id || null } as Prisma.InputJsonValue,
+          dedupeKey,
+          reviewReason,
+          notificationStatus,
+          recognizedAt,
+        },
+        include: this.eventInclude(),
+      });
+
+      if (created.notificationStatus === GuardianNotificationStatus.PENDING) {
+        await this.notifyGuardianForEvent(tenantId, created.id).catch(() => undefined);
+      }
+      results.push({ duplicate: false, event: this.serializeEvent(created) });
     }
 
-    const notificationStatus =
-      schoolContext.guardianCitizenId && matchStatus === FaceMatchStatus.MATCHED &&
-      (eventType === FaceEventType.ENTRY || eventType === FaceEventType.EXIT)
-        ? GuardianNotificationStatus.PENDING
-        : GuardianNotificationStatus.NOT_REQUIRED;
-
-    const createdEvent = await prisma.faceRecognitionEvent.create({
-      data: {
-        identityId: identity?.id || null,
-        deviceId: device.id,
-        zoneId: zone?.id || null,
-        unidadeEducacaoId: schoolContext.unidadeEducacaoId,
-        studentCitizenId: citizenId,
-        guardianCitizenId: schoolContext.guardianCitizenId,
-        type: eventType,
-        matchStatus,
-        confidence,
-        provider: providerUsed || input.modelName || 'face-api.js',
-        modelName: modelNameUsed || null,
-        modelVersion: input.modelVersion || null,
-        previewPath,
-        boundingBox: (input.boundingBox || null) as Prisma.InputJsonValue | undefined,
-        metadata: {
-          ...(input.metadata && typeof input.metadata === 'object' ? input.metadata : {}),
-          storagePreviewPath: previewPath,
-          recognitionProvider: providerUsed || input.modelName || 'face-api.js',
-          recognitionModelName: modelNameUsed || null,
-          recognitionModelVersion: input.modelVersion || null,
-        } as Prisma.InputJsonValue,
-        dedupeKey,
-        reviewReason,
-        notificationStatus,
-        recognizedAt,
-      },
-      include: {
-        device: true,
-        zone: true,
-        unidadeEducacao: true,
-        identity: {
-          include: {
-            citizen: {
-              select: { id: true, name: true, cpf: true },
-            },
-            person: {
-              select: { id: true, name: true, cpf: true },
-            },
-          },
-        },
-        studentCitizen: {
-          select: { id: true, name: true, cpf: true, phone: true },
-        },
-        guardianCitizen: {
-          select: { id: true, name: true, phone: true, email: true },
-        },
-      },
+    await logFaceAccess({
+      tenantId,
+      actor: input.actor,
+      action: 'IDENTIFY',
+      details: { deviceId: device.id, faces: faces.length, matched: results.filter((item) => item.event.matchStatus === 'MATCHED').length },
     });
 
-    if (createdEvent.notificationStatus === GuardianNotificationStatus.PENDING) {
-      await this.notifyGuardianForEvent(createdEvent.id);
-    }
-
-    return {
-      duplicate: false,
-      event: this.serializeEvent(createdEvent),
-    };
+    return { facesDetected: faces.length, events: results };
   }
 
-  public async reviewEvent(eventId: string, reviewedById: string, decision: 'approve' | 'reject') {
-    const event = await prisma.faceRecognitionEvent.findUnique({
-      where: { id: eventId },
-      include: {
-        device: true,
-        zone: true,
-        unidadeEducacao: true,
-        studentCitizen: true,
-        guardianCitizen: true,
-      },
-    });
-
-    if (!event) {
-      throw createFacePlatformError('Evento não encontrado', 404);
+  public async reviewEvent(tenantId: string, eventId: string, actor: FaceActor, decision: 'approve' | 'reject') {
+    if (decision !== 'approve' && decision !== 'reject') throw faceError('Decisão inválida', 400);
+    const event = await prisma.faceRecognitionEvent.findFirst({ where: { id: eventId, tenantId } });
+    if (!event) throw faceError('Evento não encontrado', 404);
+    if (event.matchStatus !== FaceMatchStatus.REVIEW_REQUIRED) {
+      throw faceError('Só registros em revisão podem ser confirmados ou recusados.', 409);
     }
 
-    const nextMatchStatus =
-      decision === 'approve' ? FaceMatchStatus.MATCHED : FaceMatchStatus.UNMATCHED;
-    const nextType =
-      decision === 'approve' && event.type === FaceEventType.REVIEW
-        ? FaceEventType.DETECTION
-        : event.type;
-
+    const approve = decision === 'approve' && Boolean(event.studentCitizenId);
     const updated = await prisma.faceRecognitionEvent.update({
       where: { id: eventId },
       data: {
-        matchStatus: nextMatchStatus,
-        type: nextType,
-        reviewedById,
+        matchStatus: approve ? FaceMatchStatus.MATCHED : FaceMatchStatus.UNMATCHED,
+        type: approve && event.type === FaceEventType.REVIEW ? FaceEventType.DETECTION : event.type,
+        ...(approve ? {} : { identityId: null, studentCitizenId: null, guardianCitizenId: null }),
+        reviewedById: actor.id || null,
         reviewedAt: new Date(),
-        reviewReason: decision === 'approve' ? null : 'Revisão manual rejeitou a identificação',
+        reviewReason: approve ? null : 'Revisão manual recusou a identificação',
         notificationStatus:
-          decision === 'approve' && event.guardianCitizenId
+          approve && event.guardianCitizenId && (event.type === FaceEventType.ENTRY || event.type === FaceEventType.EXIT)
             ? GuardianNotificationStatus.PENDING
             : GuardianNotificationStatus.NOT_REQUIRED,
       },
-      include: {
-        device: true,
-        zone: true,
-        unidadeEducacao: true,
-        studentCitizen: {
-          select: { id: true, name: true, cpf: true, phone: true },
-        },
-        guardianCitizen: {
-          select: { id: true, name: true, phone: true, email: true },
-        },
-        reviewedBy: {
-          select: { id: true, name: true },
-        },
-      },
+      include: { ...this.eventInclude(), reviewedBy: { select: { id: true, name: true } } },
     });
 
-    if (updated.notificationStatus === GuardianNotificationStatus.PENDING) {
-      await this.notifyGuardianForEvent(updated.id);
-    }
+    await logFaceAccess({ tenantId, actor, action: 'EVENT_REVIEW', citizenId: event.studentCitizenId, details: { eventId, decision } });
 
+    if (updated.notificationStatus === GuardianNotificationStatus.PENDING) {
+      await this.notifyGuardianForEvent(tenantId, updated.id).catch(() => undefined);
+    }
     return this.serializeEvent(updated);
   }
 
-  private async findBestFaceApiVectorMatch(vector: number[]) {
+  // ----- fotos (só por dentro do backend, com registro) -----
+
+  public async getMedia(tenantId: string, kind: 'enrollment' | 'event', id: string, actor: FaceActor) {
+    const record =
+      kind === 'enrollment'
+        ? await prisma.faceEnrollment.findFirst({ where: { id, tenantId }, select: { imagePath: true, identity: { select: { citizenId: true } } } })
+        : await prisma.faceRecognitionEvent.findFirst({ where: { id, tenantId }, select: { previewPath: true, studentCitizenId: true } });
+    const relativePath = record ? ('imagePath' in record ? record.imagePath : record.previewPath) : null;
+    if (!record || !relativePath) throw faceError('Foto não encontrada (pode ter sido apagada pelo prazo de guarda).', 404);
+
+    const citizenId = 'identity' in record ? record.identity?.citizenId : (record as any).studentCitizenId;
+    await logFaceAccess({ tenantId, actor, action: 'MEDIA_VIEW', citizenId, details: { kind, id } });
+    return faceStorageService.readImage(relativePath);
+  }
+
+  public async listAccessLogs(tenantId: string, filters: { citizenId?: string; limit?: number }) {
+    return listFaceAccess(tenantId, filters);
+  }
+
+  // -------------------------------------------------------------------------
+  // Internos
+  // -------------------------------------------------------------------------
+
+  private async assertCitizen(tenantId: string, citizenId: string) {
+    const citizen = await prisma.citizen.findFirst({ where: { id: citizenId, tenantId }, select: { id: true } });
+    if (!citizen) throw faceError('Cidadão não encontrado neste município', 404);
+  }
+
+  /** Vetores do município para o modelo atual; com finalidade, só de quem consentiu */
+  private async loadGallery(tenantId: string, modelName: string, purpose: FacePurpose | null): Promise<GalleryEntry[]> {
+    const key = `${tenantId}:${modelName}:${purpose || 'all'}`;
+    const cached = galleryCache.get(key);
+    if (cached && Date.now() - cached.at < 60000) return cached.entries;
+
     const embeddings = await prisma.faceEmbedding.findMany({
       where: {
+        tenantId,
+        modelName,
         isActive: true,
+        identity: { tenantId, status: FaceRecognitionIdentityStatus.ACTIVE, citizenId: { not: null } },
+        OR: [{ enrollmentId: null }, { enrollment: { status: FaceEnrollmentStatus.APPROVED } }],
       },
-      include: {
-        identity: {
-          include: {
-            citizen: {
-              select: { id: true, name: true, cpf: true },
-            },
-            person: {
-              select: { id: true, name: true, cpf: true },
-            },
-          },
-        },
-      },
+      select: { identityId: true, vector: true, identity: { select: { citizenId: true } } },
     });
 
-    let bestMatch: {
-      identity: any | null;
-      score: number;
-      provider: string;
-      modelName: string;
-      matchStatus: FaceMatchStatus;
-      reviewReason: string | null;
-    } = {
-      identity: null,
-      score: 0,
-      provider: 'face-api.js',
-      modelName: 'face-api.js',
-      matchStatus: FaceMatchStatus.UNMATCHED,
-      reviewReason: null,
-    };
+    const consented = purpose ? await citizenIdsWithConsent(tenantId, purpose) : null;
+    const entries = embeddings
+      .filter((item) => item.vector.length > 0 && (!consented || (item.identity.citizenId && consented.has(item.identity.citizenId))))
+      .map((item) => ({ identityId: item.identityId, citizenId: item.identity.citizenId, vector: item.vector }));
 
-    for (const embedding of embeddings) {
-      if (!embedding.vector?.length) {
-        continue;
-      }
-
-      const score = cosineSimilarity(vector, embedding.vector);
-
-      if (score > bestMatch.score) {
-        const decision = this.buildMatchDecision(score);
-
-        bestMatch = {
-          identity: embedding.identity,
-          score,
-          provider: 'face-api.js',
-          modelName: embedding.modelName || 'face-api.js',
-          matchStatus: decision.matchStatus,
-          reviewReason: decision.reviewReason,
-        };
-      }
-    }
-
-    return bestMatch;
+    galleryCache.set(key, { at: Date.now(), entries });
+    return entries;
   }
 
   private async assertIdentityCanEnroll(identityId: string) {
-    const existingIdentity = await prisma.faceRecognitionIdentity.findUnique({
+    const identity = await prisma.faceRecognitionIdentity.findUnique({
       where: { id: identityId },
-      include: {
-        enrollments: {
-          orderBy: { createdAt: 'desc' },
-        },
-        embeddings: {
-          where: { isActive: true },
-        },
-      },
+      include: { enrollments: { orderBy: { createdAt: 'desc' }, take: 1 }, embeddings: { where: { isActive: true }, select: { modelName: true } } },
     });
+    if (!identity) throw faceError('Identidade facial não encontrada.', 404);
 
-    if (!existingIdentity) {
-      throw createFacePlatformError('Identidade facial não encontrada.', 404);
+    const settings = await getEngineSettings();
+    const hasCurrent = identity.embeddings.some((embedding) => embedding.modelName === settings.recognitionModel);
+    const latest = identity.enrollments[0];
+
+    if (latest?.status === FaceEnrollmentStatus.PENDING) {
+      throw faceError('Já existe uma biometria em análise para este cidadão.', 409);
     }
-
-    if (existingIdentity.embeddings.length > 0) {
-      throw createFacePlatformError('Este cidadão já possui biometria facial cadastrada e ativa.', 409);
+    if (hasCurrent) {
+      throw faceError('Este cidadão já possui biometria facial ativa. Para refazer, exclua a atual primeiro.', 409);
     }
-
-    const latestEnrollment = existingIdentity.enrollments[0];
-    if (!latestEnrollment) {
-      return;
+    // biometria só do motor antigo: pode cadastrar de novo (a antiga é substituída)
+    if (identity.embeddings.length > 0) {
+      await prisma.faceEmbedding.deleteMany({ where: { identityId, modelName: { not: settings.recognitionModel } } });
     }
-
-    if (latestEnrollment.status === FaceEnrollmentStatus.PENDING) {
-      throw createFacePlatformError(
-        'Este cidadão já possui biometria facial em análise e não pode cadastrar novamente.',
-        409
-      );
-    }
-
-    if (latestEnrollment.status === FaceEnrollmentStatus.APPROVED) {
-      throw createFacePlatformError('Este cidadão já possui biometria facial cadastrada e ativa.', 409);
-    }
-
-    throw createFacePlatformError(
-      'Este cidadão já possui um cadastro biométrico registrado e não pode cadastrar novamente.',
-      409
-    );
   }
 
-  private buildMatchDecision(score: number) {
-    if (score >= getAutoMatchThreshold()) {
-      return {
-        matchStatus: FaceMatchStatus.MATCHED,
-        reviewReason: null,
-      };
-    }
-
-    if (score >= getReviewMatchThreshold()) {
-      return {
-        matchStatus: FaceMatchStatus.REVIEW_REQUIRED,
-        reviewReason: 'Confiança intermediária exige revisão manual',
-      };
-    }
-
-    return {
-      matchStatus: FaceMatchStatus.UNMATCHED,
-      reviewReason: 'Nenhum resultado acima do limiar mínimo',
-    };
-  }
-
-  private async loadIdentityForMatching(identityId: string) {
-    return prisma.faceRecognitionIdentity.findUnique({
-      where: { id: identityId },
-      include: {
-        citizen: {
-          select: { id: true, name: true, cpf: true },
-        },
-        person: {
-          select: { id: true, name: true, cpf: true },
-        },
-      },
+  private async ensureIdentityForCitizen(tenantId: string, citizenId: string) {
+    const citizen = await prisma.citizen.findFirst({
+      where: { id: citizenId, tenantId },
+      select: { id: true, cpf: true, name: true, email: true, phone: true, rg: true, birthDate: true, isActive: true, personId: true },
     });
-  }
+    if (!citizen) throw faceError('Cidadão não encontrado neste município', 404);
 
-  private shouldAutoApproveEnrollment(input: {
-    approvedById?: string | null;
-    qualityScore?: number | null;
-    livenessScore?: number | null;
-    hasBiometricTemplate: boolean;
-  }) {
-    if (input.approvedById) {
-      return true;
-    }
-
-    if (!input.hasBiometricTemplate) {
-      return false;
-    }
-
-    const qualityScore = input.qualityScore ?? 0;
-    const livenessScore = input.livenessScore ?? 0;
-
-    return (
-      qualityScore >= getAutoApproveQualityThreshold() &&
-      livenessScore >= getAutoApproveLivenessThreshold()
-    );
-  }
-
-  private resolveEventType(
-    explicitType: IngestRecognitionInput['eventType'],
-    zoneDirection: 'ENTRY' | 'EXIT' | 'BOTH' | null,
-    matchStatus: FaceMatchStatus
-  ) {
-    if (explicitType) {
-      return explicitType as FaceEventType;
-    }
-
-    if (matchStatus === FaceMatchStatus.REVIEW_REQUIRED) {
-      return FaceEventType.REVIEW;
-    }
-
-    if (matchStatus === FaceMatchStatus.UNMATCHED) {
-      return FaceEventType.UNMATCHED;
-    }
-
-    if (zoneDirection === 'ENTRY') {
-      return FaceEventType.ENTRY;
-    }
-
-    if (zoneDirection === 'EXIT') {
-      return FaceEventType.EXIT;
-    }
-
-    return FaceEventType.DETECTION;
-  }
-
-  private async resolveSchoolContext(citizenId: string | null, unidadeEducacaoId: string | null) {
-    const matricula = citizenId
-      ? await prisma.matricula.findFirst({
-          where: {
-            alunoId: citizenId,
-            situacao: SituacaoMatricula.ATIVA,
-            ...(unidadeEducacaoId ? { unidadeEducacaoId } : {}),
-          },
-          orderBy: { updatedAt: 'desc' },
-        })
-      : null;
-
-    const finalSchoolId = unidadeEducacaoId || matricula?.unidadeEducacaoId || null;
-
-    const configuration = finalSchoolId
-      ? await prisma.schoolSecurityConfiguration.findUnique({
-          where: { unidadeEducacaoId: finalSchoolId },
-        })
-      : null;
-
-    return {
-      unidadeEducacaoId: finalSchoolId,
-      guardianCitizenId: matricula?.responsavelId || null,
-      configuration,
-    };
-  }
-
-  private async notifyGuardianForEvent(eventId: string) {
-    const event = await prisma.faceRecognitionEvent.findUnique({
-      where: { id: eventId },
-      include: {
-        zone: true,
-        device: true,
-        unidadeEducacao: true,
-        studentCitizen: true,
-        guardianCitizen: true,
-      },
-    });
-
-    if (!event || !event.guardianCitizenId || !event.guardianCitizen || !event.studentCitizen) {
-      if (event) {
-        await prisma.faceRecognitionEvent.update({
-          where: { id: event.id },
-          data: { notificationStatus: GuardianNotificationStatus.NOT_REQUIRED },
-        });
+    const byCitizen = await prisma.faceRecognitionIdentity.findUnique({ where: { citizenId: citizen.id } });
+    if (byCitizen) {
+      if (byCitizen.tenantId !== tenantId) {
+        return prisma.faceRecognitionIdentity.update({ where: { id: byCitizen.id }, data: { tenantId } });
       }
-      return;
-    }
-
-    if (event.type !== FaceEventType.ENTRY && event.type !== FaceEventType.EXIT) {
-      await prisma.faceRecognitionEvent.update({
-        where: { id: event.id },
-        data: { notificationStatus: GuardianNotificationStatus.NOT_REQUIRED },
-      });
-      return;
-    }
-
-    const configuration = event.unidadeEducacaoId
-      ? await prisma.schoolSecurityConfiguration.findUnique({
-          where: { unidadeEducacaoId: event.unidadeEducacaoId },
-        })
-      : null;
-
-    if (configuration?.isActive === false) {
-      await prisma.faceRecognitionEvent.update({
-        where: { id: event.id },
-        data: { notificationStatus: GuardianNotificationStatus.NOT_REQUIRED },
-      });
-      return;
-    }
-
-    if (event.type === FaceEventType.ENTRY && configuration && !configuration.notifyOnEntry) {
-      await prisma.faceRecognitionEvent.update({
-        where: { id: event.id },
-        data: { notificationStatus: GuardianNotificationStatus.NOT_REQUIRED },
-      });
-      return;
-    }
-
-    if (event.type === FaceEventType.EXIT && configuration && !configuration.notifyOnExit) {
-      await prisma.faceRecognitionEvent.update({
-        where: { id: event.id },
-        data: { notificationStatus: GuardianNotificationStatus.NOT_REQUIRED },
-      });
-      return;
-    }
-
-    const variables = {
-      aluno: event.studentCitizen.name,
-      escola: event.unidadeEducacao?.nome || 'Unidade escolar',
-      local: event.zone?.gateName || event.zone?.name || event.device.name,
-      horario: formatDateTime(event.recognizedAt),
-    };
-
-    const title =
-      event.type === FaceEventType.ENTRY
-        ? 'Aluno identificado na entrada'
-        : 'Aluno identificado na saída';
-
-    const fallbackMessage =
-      event.type === FaceEventType.ENTRY
-        ? `${variables.aluno} entrou em ${variables.escola} às ${variables.horario}. Local: ${variables.local}.`
-        : `${variables.aluno} saiu de ${variables.escola} às ${variables.horario}. Local: ${variables.local}.`;
-
-    const template =
-      event.type === FaceEventType.ENTRY
-        ? configuration?.entryMessageTemplate
-        : configuration?.exitMessageTemplate;
-
-    const message = renderTemplate(template, variables) || fallbackMessage;
-    // 'whatsapp' é o nome antigo do canal "chat do app" (nunca enviou WhatsApp)
-    const savedChannel = configuration?.preferredChannel || 'chat';
-    const preferredChannel = (savedChannel === 'whatsapp' ? 'chat' : savedChannel) as
-      | 'web'
-      | 'push'
-      | 'email'
-      | 'sms'
-      | 'chat';
-    const channels = Array.from(
-      new Set<typeof preferredChannel>([preferredChannel, 'web'])
-    ).filter((channel) => ['web', 'push', 'email', 'sms', 'chat'].includes(channel));
-
-    try {
-      await digiUrbanIntegration.dispatchNotification({
-        recipientType: 'citizen',
-        recipientId: event.guardianCitizenId,
-        type: event.type === FaceEventType.ENTRY ? 'STUDENT_ENTRY' : 'STUDENT_EXIT',
-        title,
-        message,
-        channels,
-        priority: 'high',
-        data: {
-          eventId: event.id,
-          citizenId: event.studentCitizenId,
-          studentCitizenId: event.studentCitizenId,
-          guardianCitizenId: event.guardianCitizenId,
-          schoolId: event.unidadeEducacaoId,
-          schoolName: event.unidadeEducacao?.nome || null,
-          zoneId: event.zoneId,
-          zoneName: event.zone?.name || null,
-          eventType: event.type,
-          recognizedAt: event.recognizedAt.toISOString(),
-        },
-      });
-
-      await prisma.faceRecognitionEvent.update({
-        where: { id: event.id },
-        data: {
-          notificationStatus: GuardianNotificationStatus.SENT,
-          notificationAttempts: { increment: 1 },
-          lastNotificationError: null,
-        },
-      });
-    } catch (error: any) {
-      await prisma.faceRecognitionEvent.update({
-        where: { id: event.id },
-        data: {
-          notificationStatus: GuardianNotificationStatus.FAILED,
-          notificationAttempts: { increment: 1 },
-          lastNotificationError: error.message || 'Falha ao enfileirar notificação',
-        },
-      });
-      throw error;
-    }
-  }
-
-  private async ensureIdentityForCitizen(citizenId: string) {
-    const citizen = await prisma.citizen.findUnique({
-      where: { id: citizenId },
-      select: {
-        id: true,
-        cpf: true,
-        name: true,
-        email: true,
-        phone: true,
-        rg: true,
-        birthDate: true,
-        isActive: true,
-        personId: true,
-      },
-    });
-
-    if (!citizen) {
-      throw createFacePlatformError('Cidadão não encontrado', 404);
+      return byCitizen;
     }
 
     let personId = citizen.personId;
-
     if (!personId) {
       const result = await syncCitizenPersonIdentity(prisma, {
         citizenId: citizen.id,
@@ -1537,54 +1086,118 @@ export class FacePlatformService {
       personId = result.personId;
     }
 
-    const existing = await prisma.faceRecognitionIdentity.findFirst({
-      where: {
-        OR: [{ citizenId: citizen.id }, { personId }],
-      },
-      include: {
-        citizen: true,
-        person: true,
-      },
-    });
-
-    if (existing) {
-      if (!existing.citizenId) {
-        return prisma.faceRecognitionIdentity.update({
-          where: { id: existing.id },
-          data: {
-            citizenId: citizen.id,
-          },
-          include: {
-            citizen: true,
-            person: true,
-          },
-        });
-      }
-
-      return existing;
+    const samePerson = await prisma.faceRecognitionIdentity.findFirst({ where: { tenantId, personId } });
+    if (samePerson) {
+      return prisma.faceRecognitionIdentity.update({ where: { id: samePerson.id }, data: { citizenId: citizen.id } });
     }
 
     return prisma.faceRecognitionIdentity.create({
-      data: {
-        personId,
-        citizenId: citizen.id,
-        label: citizen.name,
-        status: FaceRecognitionIdentityStatus.PENDING,
-      },
-      include: {
-        citizen: true,
-        person: true,
-      },
+      data: { tenantId, personId, citizenId: citizen.id, label: citizen.name, status: FaceRecognitionIdentityStatus.PENDING },
     });
   }
 
-  private countRegisteredTemplates(identity: {
-    embeddings?: Array<{ isActive?: boolean; vector?: number[] | null }>;
-    enrollments?: Array<{ status?: FaceEnrollmentStatus; metadata?: Prisma.JsonValue | null }>;
-  }) {
-    return (
-      identity.embeddings?.filter((embedding) => embedding.isActive && Boolean(embedding.vector?.length)).length || 0
-    );
+  private resolveEventType(explicitType: IngestInput['eventType'], zoneDirection: 'ENTRY' | 'EXIT' | 'BOTH' | null, status: string) {
+    if (status === 'REVIEW_REQUIRED') return FaceEventType.REVIEW;
+    if (status === 'UNMATCHED') return FaceEventType.UNMATCHED;
+    if (explicitType === 'ENTRY' || explicitType === 'EXIT' || explicitType === 'DETECTION') return explicitType as FaceEventType;
+    if (zoneDirection === 'ENTRY') return FaceEventType.ENTRY;
+    if (zoneDirection === 'EXIT') return FaceEventType.EXIT;
+    return FaceEventType.DETECTION;
+  }
+
+  private async resolveSchoolContext(tenantId: string, citizenId: string | null, unidadeEducacaoId: string | null) {
+    const matricula = citizenId
+      ? await prisma.matricula.findFirst({
+          where: { tenantId, alunoId: citizenId, situacao: SituacaoMatricula.ATIVA, ...(unidadeEducacaoId ? { unidadeEducacaoId } : {}) },
+          orderBy: { updatedAt: 'desc' },
+        })
+      : null;
+    const finalSchoolId = unidadeEducacaoId || matricula?.unidadeEducacaoId || null;
+    const configuration = finalSchoolId
+      ? await prisma.schoolSecurityConfiguration.findUnique({ where: { unidadeEducacaoId: finalSchoolId } })
+      : null;
+    return { unidadeEducacaoId: finalSchoolId, guardianCitizenId: matricula?.responsavelId || null, configuration };
+  }
+
+  private async notifyGuardianForEvent(tenantId: string, eventId: string) {
+    const event = await prisma.faceRecognitionEvent.findFirst({
+      where: { id: eventId, tenantId },
+      include: { zone: true, device: true, unidadeEducacao: true, studentCitizen: true, guardianCitizen: true },
+    });
+    const markNotRequired = async () => {
+      if (event) await prisma.faceRecognitionEvent.update({ where: { id: event.id }, data: { notificationStatus: GuardianNotificationStatus.NOT_REQUIRED } });
+    };
+
+    if (!event || !event.guardianCitizenId || !event.guardianCitizen || !event.studentCitizen) return markNotRequired();
+    if (event.type !== FaceEventType.ENTRY && event.type !== FaceEventType.EXIT) return markNotRequired();
+
+    const configuration = event.unidadeEducacaoId
+      ? await prisma.schoolSecurityConfiguration.findUnique({ where: { unidadeEducacaoId: event.unidadeEducacaoId } })
+      : null;
+    if (configuration?.isActive === false) return markNotRequired();
+    if (event.type === FaceEventType.ENTRY && configuration && !configuration.notifyOnEntry) return markNotRequired();
+    if (event.type === FaceEventType.EXIT && configuration && !configuration.notifyOnExit) return markNotRequired();
+
+    const variables = {
+      aluno: event.studentCitizen.name,
+      escola: event.unidadeEducacao?.nome || 'Unidade escolar',
+      local: event.zone?.gateName || event.zone?.name || event.device.name,
+      horario: formatDateTime(event.recognizedAt),
+    };
+    const isEntry = event.type === FaceEventType.ENTRY;
+    const message =
+      renderTemplate(isEntry ? configuration?.entryMessageTemplate : configuration?.exitMessageTemplate, variables) ||
+      (isEntry
+        ? `${variables.aluno} entrou em ${variables.escola} às ${variables.horario}. Local: ${variables.local}.`
+        : `${variables.aluno} saiu de ${variables.escola} às ${variables.horario}. Local: ${variables.local}.`);
+
+    const savedChannel = configuration?.preferredChannel || 'chat';
+    const preferredChannel = (savedChannel === 'whatsapp' ? 'chat' : savedChannel) as 'web' | 'push' | 'email' | 'sms' | 'chat';
+    const channels = Array.from(new Set<typeof preferredChannel>([preferredChannel, 'web']));
+
+    try {
+      await digiUrbanIntegration.dispatchNotification(tenantId, {
+        recipientType: 'citizen',
+        recipientId: event.guardianCitizenId,
+        type: isEntry ? 'STUDENT_ENTRY' : 'STUDENT_EXIT',
+        title: isEntry ? 'Aluno identificado na entrada' : 'Aluno identificado na saída',
+        message,
+        channels,
+        priority: 'high',
+        data: {
+          eventId: event.id,
+          studentCitizenId: event.studentCitizenId,
+          schoolId: event.unidadeEducacaoId,
+          schoolName: event.unidadeEducacao?.nome || null,
+          eventType: event.type,
+          recognizedAt: event.recognizedAt.toISOString(),
+        },
+      });
+      await prisma.faceRecognitionEvent.update({
+        where: { id: event.id },
+        data: { notificationStatus: GuardianNotificationStatus.SENT, notificationAttempts: { increment: 1 }, lastNotificationError: null },
+      });
+    } catch (error: any) {
+      await prisma.faceRecognitionEvent.update({
+        where: { id: event.id },
+        data: {
+          notificationStatus: GuardianNotificationStatus.FAILED,
+          notificationAttempts: { increment: 1 },
+          lastNotificationError: error?.message || 'Falha ao enviar aviso',
+        },
+      });
+      throw error;
+    }
+  }
+
+  private eventInclude() {
+    return {
+      device: { select: { id: true, name: true, code: true } },
+      zone: { select: { id: true, name: true, gateName: true, direction: true } },
+      unidadeEducacao: { select: { id: true, nome: true } },
+      studentCitizen: { select: { id: true, name: true } },
+      guardianCitizen: { select: { id: true, name: true } },
+    } as const;
   }
 
   private serializeDevice(device: any) {
@@ -1602,7 +1215,6 @@ export class FacePlatformService {
       healthStatus: device.healthStatus,
       lastHeartbeatAt: device.lastHeartbeatAt,
       isActive: device.isActive,
-      metadata: device.metadata || {},
       hasStreamConfigured: Boolean(device.streamUrlEncrypted),
       hasCredentialsConfigured: Boolean(device.usernameEncrypted || device.passwordEncrypted),
       zones:
@@ -1620,13 +1232,21 @@ export class FacePlatformService {
   }
 
   private serializeEvent(event: any) {
+    const { previewPath, metadata, dedupeKey, boundingBox, ...rest } = event;
     return {
-      ...event,
+      ...rest,
       citizenId: event.studentCitizenId,
-      citizen: event.studentCitizen || event.identity?.citizen || null,
-      previewUrl: faceStorageService.buildPublicPath(event.previewPath),
+      citizen: event.studentCitizen || null,
+      hasPreview: Boolean(previewPath),
+      spoofSuspect: metadata && typeof metadata === 'object' ? (metadata as any).spoofReal === false : false,
     };
   }
+}
+
+function maskCpf(cpf: string | null | undefined) {
+  const digits = String(cpf || '').replace(/\D/g, '');
+  if (digits.length !== 11) return null;
+  return `***.${digits.slice(3, 6)}.${digits.slice(6, 9)}-**`;
 }
 
 export default new FacePlatformService();

@@ -1,4 +1,5 @@
 import axios, { AxiosInstance } from 'axios';
+import { outgoingServiceToken } from '../utils/secrets';
 
 export interface InternalNotificationPayload {
   recipientType: 'user' | 'citizen';
@@ -15,21 +16,24 @@ export class DigiUrbanIntegration {
   private api: AxiosInstance;
 
   constructor() {
-    const apiUrl = process.env.DIGIURBAN_API_URL || 'http://localhost:3001/api';
-    const serviceToken = process.env.DIGIURBAN_SERVICE_TOKEN || '';
-
     this.api = axios.create({
-      baseURL: apiUrl,
-      headers: {
-        Authorization: `Bearer ${serviceToken}`,
-        'Content-Type': 'application/json',
-      },
+      baseURL: process.env.DIGIURBAN_API_URL || 'http://localhost:3001/api',
+      headers: { 'Content-Type': 'application/json' },
       timeout: Number(process.env.DIGIURBAN_TIMEOUT_MS || 15000),
+    });
+    // token atual do painel em toda chamada (troca sem reiniciar)
+    this.api.interceptors.request.use(async (config) => {
+      const token = await outgoingServiceToken();
+      if (token) config.headers.Authorization = `Bearer ${token}`;
+      return config;
     });
   }
 
-  async dispatchNotification(payload: InternalNotificationPayload) {
-    const response = await this.api.post('/internal/notifications/dispatch', payload);
+  /** Aviso ao responsável — SEMPRE no município do aluno (antes ia sem município) */
+  async dispatchNotification(tenantId: string, payload: InternalNotificationPayload) {
+    const response = await this.api.post('/internal/notifications/dispatch', payload, {
+      headers: { 'X-Tenant-Id': tenantId },
+    });
     return response.data;
   }
 }

@@ -687,7 +687,8 @@ model Person {
 
   user         User?
   citizens     Citizen[]
-  faceIdentity FaceRecognitionIdentity?
+  // uma identidade facial por município (a pessoa pode ser cidadã em mais de um)
+  faceIdentities FaceRecognitionIdentity[]
 
   @@index([name])
   @@index([email])
@@ -9649,7 +9650,7 @@ model FaceRecognitionIdentity {
   // Fase 2 Multi-Tenant (onda 6) — herda tenant do pai (citizenId)
   tenantId  String?
   tenant    Tenant?                       @relation("Tenant6FaceRecognitionIdentity", fields: [tenantId], references: [id])
-  personId  String                        @unique
+  personId  String
   citizenId String?                       @unique
   label     String?
   status    FaceRecognitionIdentityStatus @default(PENDING)
@@ -9664,6 +9665,7 @@ model FaceRecognitionIdentity {
   embeddings  FaceEmbedding[]
   events      FaceRecognitionEvent[]
 
+  @@unique([tenantId, personId])
   @@index([status])
   @@index([tenantId])
   @@map("face_recognition_identities")
@@ -11267,6 +11269,12 @@ model PrivacyRetentionSettings {
   botChatDays    Int       @default(365) // conversas com o DigiBot
   humanChatDays  Int       @default(730) // conversas cidadão × servidor sem protocolo
   assistantDays  Int       @default(180) // Assistente de IA dos servidores
+  // Biometria facial (sempre ativo: minimização de dado sensível, LGPD art. 6º III)
+  faceUnmatchedImageDays Int @default(7) // foto de quem a câmera NÃO reconheceu
+  faceEventImageDays     Int @default(90) // foto dos registros de entrada/saída reconhecidos
+  faceEventDays          Int @default(365) // o registro de passagem em si
+  faceLastRunAt          DateTime?
+  faceLastRunSummary     Json?
   lastRunAt      DateTime?
   lastRunSummary Json?
   updatedAt      DateTime  @updatedAt
@@ -11325,6 +11333,62 @@ model AiCreditOrder {
 /// Segredos da plataforma gerados/girados pelo painel (sem .env).
 /// Ex.: internal_service_token — token entre o bot (messages-server) e o backend.
 /// valueEnc cifrado com chave derivada do JWT_SECRET (os dois serviços o têm).
+/// Consentimento para biometria facial, por FINALIDADE (LGPD art. 11, I e art. 14
+/// para menores: consentimento de um dos pais ou responsável legal).
+model FaceConsent {
+  id                 String    @id @default(cuid())
+  tenantId           String?
+  citizenId          String // titular dos dados
+  purpose            String // IDENTITY_VERIFICATION | SCHOOL_SECURITY
+  grantedByCitizenId String? // quem consentiu (o titular ou o responsável)
+  grantedByName      String?
+  relationship       String // TITULAR | MAE | PAI | RESPONSAVEL_LEGAL
+  channel            String // SELF_SERVICE | PRESENCIAL
+  recordedByUserId   String? // servidor que registrou o consentimento presencial
+  termsVersion       String
+  evidence           Json? // IP, navegador, observação do termo assinado
+  grantedAt          DateTime  @default(now())
+  revokedAt          DateTime?
+  revokedReason      String?
+  revokedBy          String?
+
+  @@index([tenantId])
+  @@index([citizenId, purpose])
+  @@map("face_consents")
+}
+
+/// Quem consultou ou alterou biometria de quem (LGPD art. 37 e 46)
+model FaceAccessLog {
+  id         String   @id @default(cuid())
+  tenantId   String?
+  actorType  String // USER | CITIZEN | SYSTEM
+  actorId    String?
+  action     String // ENROLL | READ | IDENTIFY | LIST | DELETE | CONSENT_GRANTED | CONSENT_REVOKED | EVENT_REVIEW | MEDIA_VIEW | RETENTION
+  citizenId  String?
+  identityId String?
+  details    Json?
+  createdAt  DateTime @default(now())
+
+  @@index([tenantId, createdAt])
+  @@index([citizenId, createdAt])
+  @@map("face_access_logs")
+}
+
+/// Motor facial (plataforma): modelo e limites de decisão, alterados no painel
+model FaceEngineSettings {
+  id                  String   @id @default("singleton")
+  recognitionModel    String   @default("arcface_mnet")
+  matchThreshold      Float    @default(0.5) // similaridade para reconhecer sem revisão
+  reviewThreshold     Float    @default(0.4) // entre este e o anterior: revisão humana
+  minQuality          Float    @default(0.55) // qualidade mínima da foto de cadastro
+  minLiveness         Float    @default(0.6) // anti-fraude passivo (fração de fotos "reais")
+  challengeYawDegrees Float    @default(12) // giro mínimo do rosto no desafio
+  updatedBy           String?
+  updatedAt           DateTime @updatedAt
+
+  @@map("face_engine_settings")
+}
+
 model PlatformSecret {
   key         String   @id
   valueEnc    String

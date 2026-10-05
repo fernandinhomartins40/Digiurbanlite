@@ -1,5 +1,9 @@
 import { api } from '@/lib/services/api';
 
+/**
+ * Biometria facial (painel do servidor). O rosto é analisado no servidor: as
+ * telas mandam só as fotos da câmera. Vetores de rosto nunca chegam aqui.
+ */
 export const facePlatformService = {
   getStatus: async () => {
     const response = await api.get('/admin/face-platform/status');
@@ -56,18 +60,51 @@ export const facePlatformService = {
     return response.data;
   },
 
+  /** Só gerente ou mais. Sem vetores; CPF mascarado. */
   listIdentities: async () => {
     const response = await api.get('/admin/face-platform/identities');
     return response.data;
   },
 
-  createEnrollment: async (payload: any) => {
-    const response = await api.post('/admin/face-platform/identities/enrollments', payload);
+  /** Desafio da prova de vida: o servidor sorteia o lado do giro */
+  createChallenge: async (payload: { mode: 'enroll' | 'read'; citizenId?: string }) => {
+    const response = await api.post('/admin/face-platform/challenges', payload);
+    return response.data as { challengeId: string; direction: 'left' | 'right'; expiresAt: string };
+  },
+
+  /** Cadastro presencial com consentimento (titular ou responsável) */
+  enrollCitizen: async (
+    citizenId: string,
+    payload: {
+      purpose: 'IDENTITY_VERIFICATION' | 'SCHOOL_SECURITY';
+      frames: string[];
+      challengeId: string;
+      sourceLabel?: string;
+      consent: { accepted: boolean; relationship: string; grantedByName?: string; signedTermOnFile?: boolean; note?: string };
+    }
+  ) => {
+    const response = await api.post(`/admin/face-platform/citizens/${citizenId}/enrollments`, payload);
     return response.data;
   },
 
-  readBiometry: async (payload: any) => {
-    const response = await api.post('/admin/face-platform/recognition/read', payload);
+  /** Leitura ao vivo: com cidadão esperado confirma se é ele; sem, procura no município */
+  verify: async (payload: {
+    frames: string[];
+    challengeId: string;
+    expectedCitizenId?: string;
+    purpose?: 'IDENTITY_VERIFICATION' | 'SCHOOL_SECURITY';
+  }) => {
+    const response = await api.post('/admin/face-platform/recognition/verify', payload);
+    return response.data;
+  },
+
+  listConsents: async (citizenId: string) => {
+    const response = await api.get(`/admin/face-platform/citizens/${citizenId}/consents`);
+    return response.data;
+  },
+
+  revokeConsent: async (citizenId: string, purpose: 'IDENTITY_VERIFICATION' | 'SCHOOL_SECURITY', reason: string) => {
+    const response = await api.post(`/admin/face-platform/citizens/${citizenId}/consents/revoke`, { purpose, reason });
     return response.data;
   },
 
@@ -76,13 +113,22 @@ export const facePlatformService = {
     return response.data;
   },
 
-  ingestEvent: async (payload: any) => {
+  /** Portaria: uma foto da câmera; o servidor reconhece cada rosto e registra */
+  ingestFrame: async (payload: { deviceId: string; zoneId?: string; eventType?: 'ENTRY' | 'EXIT' | 'DETECTION'; frame: string }) => {
     const response = await api.post('/admin/face-platform/events/ingest', payload);
-    return response.data;
+    return response.data as { facesDetected: number; events: Array<{ duplicate: boolean; event: any }> };
   },
 
   reviewEvent: async (eventId: string, decision: 'approve' | 'reject') => {
     const response = await api.post(`/admin/face-platform/events/${eventId}/review`, { decision });
+    return response.data;
+  },
+
+  /** Foto de cadastro/passagem (coordenador+; cada acesso é registrado) */
+  mediaUrl: (kind: 'enrollment' | 'event', id: string) => `/api/admin/face-platform/media/${kind}/${id}`,
+
+  listAccessLogs: async (params?: { citizenId?: string; limit?: number }) => {
+    const response = await api.get('/admin/face-platform/access-logs', { params });
     return response.data;
   },
 };

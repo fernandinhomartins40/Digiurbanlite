@@ -252,8 +252,38 @@ services:
   # ─────────────────────────────────────────────────────────────
   # MÓDULO: digiurban-prices — Pesquisa de Preços Públicos
   # ─────────────────────────────────────────────────────────────
-  # CompreFace removido: reconhecimento facial usa face-api.js no browser
-  # + cosine similarity no PostgreSQL. Não há chamadas ao CompreFace no código.
+  # Biometria facial (revisão 2026-10-04): o reconhecimento roda no SERVIDOR,
+  # no motor ultrazend-face-engine (UniFace + ONNX em CPU). O navegador só
+  # captura as fotos. Nenhum dos dois serviços tem porta publicada: só o
+  # backend (rede interna) os alcança. Antes a porta 9006 ficava aberta para
+  # a internet e as fotos eram servidas sem login em /uploads.
+  ultrazend-face-engine:
+    image: ghcr.io/fernandinhomartins40/digiurban-face-engine:${RELEASE:-latest}
+    build:
+      context: ./ultrazend-face-engine
+      dockerfile: Dockerfile
+    container_name: ultrazend-face-engine
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+    # Medido em teste: ~0,3 s por foto com 2 threads; modelos leves ~90 MB.
+    mem_limit: 900m
+    cpus: 1.5
+    pids_limit: 128
+    environment:
+      - FACE_ENGINE_THREADS=2
+    restart: unless-stopped
+    networks:
+      - digiurban_network
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request,sys; sys.exit(0 if urllib.request.urlopen('http://127.0.0.1:8000/health', timeout=5).status == 200 else 1)"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 90s
+
 
   ultrazend-face:
     # Otimizacao VPS (docs/VPS-OPTIMIZATION-AUDIT.md, P0-4): a imagem vem PRONTA do
@@ -283,8 +313,9 @@ services:
     # `pids_limit` barra fork bomb / vazamento de processos.
     cpus: 1.0
     pids_limit: 256
-    ports:
-      - "9006:9006"
+    # SEM "ports": a porta 9006 não fica mais aberta para a internet
+    expose:
+      - "9006"
     environment:
       - NODE_ENV=production
       - PORT=9006
@@ -296,17 +327,12 @@ services:
       - DATABASE_URL=${DATABASE_URL}
       - DIGIURBAN_API_URL=http://digiurban-vps:3001/api
       - DIGIURBAN_SERVICE_TOKEN=${MESSAGES_SERVICE_TOKEN:-ultrazend-messages-service-token}
+      # token só vale enquanto o painel não gera o de "Comunicação interna" (lido do banco)
       - FACE_PLATFORM_SERVICE_TOKEN=${FACE_PLATFORM_SERVICE_TOKEN:-ultrazend-face-service-token}
       - FACE_PLATFORM_STORAGE_PATH=/app/uploads/face-platform
-      - COMPREFACE_API_URL=
-      - COMPREFACE_API_KEY=
-      - FACE_LIVENESS_PROVIDER=${FACE_LIVENESS_PROVIDER:-guided-live-session}
-      - SILENT_FACE_LIVENESS_API_URL=${SILENT_FACE_LIVENESS_API_URL:-}
-      - SILENT_FACE_LIVENESS_API_TOKEN=${SILENT_FACE_LIVENESS_API_TOKEN:-}
-      - FACE_REQUIRE_SERVER_LIVENESS=${FACE_REQUIRE_SERVER_LIVENESS:-false}
-      - FACE_LIVENESS_TIMEOUT_MS=${FACE_LIVENESS_TIMEOUT_MS:-12000}
-      - CORS_ORIGIN=${CORS_ORIGIN:-*}
-      - UPLOAD_DIR=/app/uploads
+      # decifra o token do painel e cifra fotos/credenciais (mesma chave do backend)
+      - JWT_SECRET=${JWT_SECRET:-digiurban-super-secret-change-in-production}
+      - FACE_ENGINE_URL=http://ultrazend-face-engine:8000
       - RATE_LIMIT_WINDOW_MS=60000
       - RATE_LIMIT_MAX_REQUESTS=300
       - LOG_LEVEL=info

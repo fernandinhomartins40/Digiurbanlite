@@ -7,11 +7,11 @@
     "dev": "tsx watch src/index.ts",
     "build": "prisma generate && tsc",
     "start": "node dist/index.js",
-    "bootstrap:compreface": "node ./scripts/bootstrap-compreface.mjs",
     "db:generate": "prisma generate",
     "db:push": "prisma db push",
     "db:migrate": "prisma migrate dev",
-    "type-check": "tsc --noEmit"
+    "type-check": "tsc --noEmit",
+    "test": "tsx --test src/services/face/decisions.test.ts"
   },
   "dependencies": {
     "@prisma/client": "~6.19.0",

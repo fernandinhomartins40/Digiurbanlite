@@ -9,7 +9,10 @@ import {
   ShieldCheck,
   UserRoundSearch,
 } from 'lucide-react';
-import FaceCameraCapture, { type FaceCaptureSessionMetadata } from '@/components/common/FaceCameraCapture';
+import FaceCameraCapture, {
+  type FaceCaptureSessionMetadata,
+  type FaceChallengeDirection,
+} from '@/components/common/FaceCameraCapture';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 
@@ -28,6 +31,8 @@ interface FaceReadResult {
   provider?: string | null;
   modelName?: string | null;
   modelVersion?: string | null;
+  livenessScore?: number | null;
+  liveness?: { passed: boolean; score: number; reasons?: string[] } | null;
   identity?: {
     id: string;
     citizenId?: string | null;
@@ -40,29 +45,19 @@ interface FaceBiometryReadCardProps {
   title: string;
   description: string;
   purposeLabel?: string;
+  getChallenge: () => Promise<{ challengeId: string; direction: FaceChallengeDirection }>;
   onRead: (payload: {
-    imageBase64: string;
+    frames: string[];
+    challengeId: string;
     metadata: FaceCaptureSessionMetadata;
-    embedding: number[];
-    modelName?: string;
-    modelVersion?: string;
-    detectedFacesCount?: number;
   }) => Promise<FaceReadResult>;
   disabled?: boolean;
   expectedOwnerLabel?: string;
 }
 
 function maskCpf(value?: string | null) {
-  if (!value) {
-    return 'CPF não disponível';
-  }
-
-  const digits = value.replace(/\D/g, '');
-  if (digits.length !== 11) {
-    return value;
-  }
-
-  return `${digits.slice(0, 3)}.${digits.slice(3, 6)}.${digits.slice(6, 9)}-${digits.slice(9)}`;
+  // o servidor já devolve o CPF mascarado
+  return value || 'CPF não disponível';
 }
 
 function getOwner(result: FaceReadResult) {
@@ -73,6 +68,7 @@ export function FaceBiometryReadCard({
   title,
   description,
   purposeLabel = 'Leitura biométrica ao vivo',
+  getChallenge,
   onRead,
   disabled = false,
   expectedOwnerLabel,
@@ -97,20 +93,12 @@ export function FaceBiometryReadCard({
 
     const executeRead = async () => {
       try {
-        const embedding = captureMetadata.embedding;
-        if (!Array.isArray(embedding) || embedding.length === 0) {
-          throw new Error('Não foi possível extrair um embedding facial válido. A leitura foi interrompida.');
-        }
-
         setReading(true);
         setError(null);
         const response = await onRead({
-          imageBase64: capturedImage,
+          frames: captureMetadata.frames,
+          challengeId: captureMetadata.challengeId,
           metadata: captureMetadata,
-          embedding,
-          modelName: captureMetadata.modelProvider,
-          modelVersion: captureMetadata.modelVersion,
-          detectedFacesCount: captureMetadata.detectedFacesCount,
         });
         setResult(response);
       } catch (readError: any) {
@@ -153,6 +141,7 @@ export function FaceBiometryReadCard({
 
       <CardContent className="space-y-4">
         <FaceCameraCapture
+          getChallenge={getChallenge}
           value={capturedImage}
           onChange={(value) => {
             setCapturedImage(value);
@@ -182,8 +171,8 @@ export function FaceBiometryReadCard({
             <p className="mt-1">Inicie a leitura no dispositivo atual.</p>
           </div>
           <div className="rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-700">
-            <p className="font-medium text-slate-900">2. Centralizar rosto</p>
-            <p className="mt-1">Deixe apenas um rosto na moldura oval.</p>
+            <p className="font-medium text-slate-900">2. Seguir as instruções</p>
+            <p className="mt-1">De frente, vire o rosto para o lado pedido e volte.</p>
           </div>
           <div className="rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-700">
             <p className="font-medium text-slate-900">3. Ver resultado</p>
@@ -231,9 +220,9 @@ export function FaceBiometryReadCard({
               <Badge className="border-slate-200 bg-white text-slate-700">
                 Confiança {Math.round((result.confidence || 0) * 100)}%
               </Badge>
-              {captureMetadata && (
+              {result.liveness && (
                 <Badge className="border-slate-200 bg-white text-slate-700">
-                  Presença {Math.round(captureMetadata.livenessScore * 100)}%
+                  {result.liveness.passed ? 'Prova de vida confirmada' : 'Prova de vida não confirmada'}
                 </Badge>
               )}
             </div>
@@ -287,17 +276,17 @@ export function FaceBiometryReadCard({
                 </div>
               )}
 
-              {captureMetadata && (
+              {result.liveness && !result.liveness.passed && (result.liveness.reasons || []).length > 0 && (
                 <div className="rounded-2xl border border-slate-200 bg-white px-4 py-3">
                   <div className="flex items-center gap-2 text-slate-900">
                     <ShieldCheck className="h-4 w-4 text-blue-600" />
-                    <span className="font-medium">Resumo da sessão ao vivo</span>
+                    <span className="font-medium">Como acertar na próxima tentativa</span>
                   </div>
-                  <p className="mt-1 text-slate-600">
-                    Qualidade {Math.round(captureMetadata.qualityScore * 100)}%, presença{' '}
-                    {Math.round(captureMetadata.livenessScore * 100)}% e desafio concluído em vídeo ao vivo com{' '}
-                    {captureMetadata.modelProvider}. Rostos detectados: {captureMetadata.detectedFacesCount}.
-                  </p>
+                  <ul className="mt-1 list-disc pl-5 text-slate-600">
+                    {(result.liveness.reasons || []).map((reason) => (
+                      <li key={reason}>{reason}</li>
+                    ))}
+                  </ul>
                 </div>
               )}
             </div>

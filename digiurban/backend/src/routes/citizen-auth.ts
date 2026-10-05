@@ -605,47 +605,83 @@ router.get(
   })
 );
 
-// POST /api/auth/citizen/face-biometry - Autoatendimento de biometria facial
+// ===================== Biometria facial do cidadão =====================
+// O rosto é analisado no servidor (UniFace). O navegador manda só as 3 fotos do
+// desafio de prova de vida — antes mandava o vetor e a nota, e o servidor acreditava.
+
+function citizenActor(req: Request) {
+  return { type: 'CITIZEN' as const, id: (req as any).citizenId as string };
+}
+
+// GET /api/auth/citizen/face-biometry - Minha biometria e meus consentimentos
+router.get(
+  '/face-biometry',
+  citizenAuthMiddleware,
+  asyncHandler(async (req: Request, res: Response) => {
+    const citizenId = (req as any).citizenId as string | undefined;
+    if (!citizenId) return res.status(401).json({ error: 'Cidadão não autenticado' });
+    const data = await facePlatformClientService.getCitizenBiometry(citizenId, citizenActor(req));
+    return res.json({ success: true, data });
+  })
+);
+
+// POST /api/auth/citizen/face-biometry/challenge - Desafio da prova de vida (lado sorteado)
+router.post(
+  '/face-biometry/challenge',
+  citizenAuthMiddleware,
+  asyncHandler(async (req: Request, res: Response) => {
+    const citizenId = (req as any).citizenId as string | undefined;
+    if (!citizenId) return res.status(401).json({ error: 'Cidadão não autenticado' });
+    const mode = req.body?.mode === 'read' ? 'read' : 'enroll';
+    const challenge = await facePlatformClientService.createChallenge(
+      mode === 'read' ? `read:citizen:${citizenId}` : `enroll:${citizenId}`,
+      citizenActor(req)
+    );
+    return res.status(201).json({ success: true, data: challenge });
+  })
+);
+
+// POST /api/auth/citizen/face-biometry - Cadastro pelo próprio cidadão (com consentimento)
 router.post(
   '/face-biometry',
   citizenAuthMiddleware,
   asyncHandler(async (req: Request, res: Response) => {
     const citizenId = (req as any).citizenId as string | undefined;
-    const { imageBase64, embedding, modelName, modelVersion, sourceLabel, qualityScore, livenessScore, metadata } = req.body as {
-      imageBase64?: string;
-      embedding?: number[];
-      modelName?: string;
-      modelVersion?: string;
-      sourceLabel?: string;
-      qualityScore?: number;
-      livenessScore?: number;
-      metadata?: Record<string, unknown>;
+    const { frames, challengeId, consentAccepted } = req.body as {
+      frames?: string[];
+      challengeId?: string;
+      consentAccepted?: boolean;
     };
 
     if (!citizenId) {
       return res.status(401).json({ error: 'Cidadão não autenticado' });
     }
 
-    if (!imageBase64 || typeof imageBase64 !== 'string') {
-      return res.status(400).json({ error: 'A validação facial ao vivo é obrigatória' });
+    if (consentAccepted !== true) {
+      return res.status(400).json({ error: 'Para cadastrar a biometria é preciso aceitar o termo de uso.' });
     }
 
-    if (!Array.isArray(embedding) || embedding.length === 0) {
-      return res.status(400).json({ error: 'O cadastro facial exige embedding válido do face-api.js.' });
+    if (!Array.isArray(frames) || frames.length !== 3 || !challengeId) {
+      return res.status(400).json({ error: 'A validação ao vivo precisa ser feita de novo. Atualize a página e tente outra vez.' });
     }
 
-    const enrollment = await facePlatformClientService.createEnrollment({
+    const enrollment: any = await facePlatformClientService.createEnrollment(
       citizenId,
-      sourceType: 'SELF_SERVICE',
-      sourceLabel: sourceLabel?.trim() || 'Autoatendimento do cidadão por vídeo ao vivo',
-      imageBase64,
-      embedding,
-      qualityScore: typeof qualityScore === 'number' ? qualityScore : undefined,
-      livenessScore: typeof livenessScore === 'number' ? livenessScore : undefined,
-      metadata: metadata && typeof metadata === 'object' ? metadata : undefined,
-      modelName: modelName?.trim() || undefined,
-      modelVersion: modelVersion?.trim() || undefined,
-    });
+      {
+        purpose: 'IDENTITY_VERIFICATION',
+        frames,
+        challengeId,
+        sourceType: 'SELF_SERVICE',
+        sourceLabel: 'Autoatendimento do cidadão por vídeo ao vivo',
+        consent: {
+          relationship: 'TITULAR',
+          channel: 'SELF_SERVICE',
+          grantedByCitizenId: citizenId,
+          evidence: { ip: req.ip, userAgent: String(req.headers['user-agent'] || '').slice(0, 200) },
+        },
+      },
+      citizenActor(req)
+    );
 
     const citizen = await prisma.citizen.findUnique({
       where: { id: citizenId },
@@ -668,14 +704,11 @@ router.post(
 
     return res.status(201).json({
       success: true,
-      message:
-        promotedToGold
-          ? 'Biometria facial validada automaticamente e nível Ouro liberado'
-          : accessLevel.goldCriteria.biometricConfirmed
-            ? 'Biometria facial validada automaticamente com sucesso'
-            : accessLevel.goldCriteria.biometric.pendingEnrollments > 0
-            ? 'Biometria facial enviada. Como a sessão não atingiu o limiar automático, ela ficou em revisão.'
-            : 'Biometria facial cadastrada com sucesso',
+      message: !enrollment?.approved
+        ? 'Biometria enviada. Um servidor vai conferir antes de liberar.'
+        : promotedToGold
+          ? 'Biometria facial validada e nível Ouro liberado'
+          : 'Biometria facial validada com sucesso',
       data: {
         enrollment,
         promotedToGold,
@@ -686,52 +719,81 @@ router.post(
   })
 );
 
+// POST /api/auth/citizen/face-biometry/read - Confirmar que sou eu (1:1)
 router.post(
   '/face-biometry/read',
   citizenAuthMiddleware,
   asyncHandler(async (req: Request, res: Response) => {
     const citizenId = (req as any).citizenId as string | undefined;
-    const { imageBase64, embedding, modelName, modelVersion, qualityScore, livenessScore, metadata } = req.body as {
-      imageBase64?: string;
-      embedding?: number[];
-      modelName?: string;
-      modelVersion?: string;
-      qualityScore?: number;
-      livenessScore?: number;
-      metadata?: Record<string, unknown>;
-    };
+    const { frames, challengeId } = req.body as { frames?: string[]; challengeId?: string };
 
     if (!citizenId) {
       return res.status(401).json({ error: 'Cidadão não autenticado' });
     }
 
-    if (!imageBase64 || typeof imageBase64 !== 'string') {
-      return res.status(400).json({ error: 'A leitura facial ao vivo é obrigatória' });
+    if (!Array.isArray(frames) || frames.length !== 3 || !challengeId) {
+      return res.status(400).json({ error: 'A validação ao vivo precisa ser feita de novo. Atualize a página e tente outra vez.' });
     }
 
-    if (!Array.isArray(embedding) || embedding.length === 0) {
-      return res.status(400).json({ error: 'A leitura biométrica ao vivo exige embedding válido do face-api.js.' });
-    }
-
-    const result = await facePlatformClientService.readBiometry({
-      imageBase64,
-      expectedCitizenId: citizenId,
-      sourceType: 'SELF_SERVICE_LIVE_READ',
-      sourceLabel: 'Leitura biométrica ao vivo pelo painel do cidadão',
-      embedding,
-      qualityScore: typeof qualityScore === 'number' ? qualityScore : undefined,
-      livenessScore: typeof livenessScore === 'number' ? livenessScore : undefined,
-      metadata: metadata && typeof metadata === 'object' ? metadata : undefined,
-      modelName: modelName?.trim() || undefined,
-      modelVersion: modelVersion?.trim() || undefined,
-    });
+    const result: any = await facePlatformClientService.verify(
+      {
+        frames,
+        challengeId,
+        challengeSubject: `read:citizen:${citizenId}`,
+        expectedCitizenId: citizenId,
+        purpose: 'IDENTITY_VERIFICATION',
+        sourceType: 'SELF_SERVICE_LIVE_READ',
+      },
+      citizenActor(req)
+    );
 
     return res.json({
       success: true,
       message: result.recognized
-        ? 'Biometria lida com sucesso'
-        : 'Nenhuma biometria compatível foi encontrada nesta leitura ao vivo',
+        ? 'Biometria confirmada: é você.'
+        : result.reviewReason || 'Não foi possível confirmar a sua biometria nesta leitura.',
       data: result,
+    });
+  })
+);
+
+// DELETE /api/auth/citizen/face-biometry - Apagar minha biometria (LGPD art. 18 VI)
+router.delete(
+  '/face-biometry',
+  citizenAuthMiddleware,
+  asyncHandler(async (req: Request, res: Response) => {
+    const citizenId = (req as any).citizenId as string | undefined;
+    if (!citizenId) return res.status(401).json({ error: 'Cidadão não autenticado' });
+
+    const actor = citizenActor(req);
+    for (const purpose of ['IDENTITY_VERIFICATION', 'SCHOOL_SECURITY'] as const) {
+      await facePlatformClientService.revokeConsent(citizenId, purpose, 'Exclusão pedida pelo próprio cidadão', actor).catch(() => undefined);
+    }
+    await facePlatformClientService
+      .deleteCitizenBiometry(citizenId, actor, 'Exclusão pedida pelo próprio cidadão')
+      .catch((error: any) => {
+        if (error?.status !== 404) throw error; // já tinha sido apagada pela revogação
+      });
+
+    const citizen = await prisma.citizen.findUnique({ where: { id: citizenId }, select: { verificationStatus: true } });
+    let downgradedFromGold = false;
+    if (citizen?.verificationStatus === 'GOLD') {
+      await prisma.citizen.update({
+        where: { id: citizenId },
+        data: {
+          verificationStatus: 'VERIFIED',
+          verificationNotes: 'Biometria facial apagada a pedido do cidadão. Nível Prata até novo cadastro biométrico.',
+        },
+      });
+      downgradedFromGold = true;
+    }
+
+    return res.json({
+      success: true,
+      message: downgradedFromGold
+        ? 'Sua biometria foi apagada. Seu nível voltou para Prata; você pode cadastrar de novo quando quiser.'
+        : 'Sua biometria foi apagada.',
+      data: { downgradedFromGold },
     });
   })
 );
