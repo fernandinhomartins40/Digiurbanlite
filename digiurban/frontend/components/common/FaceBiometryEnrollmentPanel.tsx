@@ -1,13 +1,21 @@
 'use client';
 
+/**
+ * Cadastro da biometria facial em passo a passo:
+ *   1. Autorização (termo, quando houver)  2. Preparar  3. Câmera  4. Pronto
+ * Uma coisa por tela. A câmera abre em tela cheia (FaceCameraCapture) e o envio
+ * ao servidor é automático quando a captura termina.
+ */
+
 import { type ReactNode, useEffect, useRef, useState } from 'react';
-import { Loader2, ScanFace, ShieldCheck } from 'lucide-react';
+import { ArrowLeft, Check, CircleAlert, Loader2, ScanFace, Sun, UserRound } from 'lucide-react';
 import FaceCameraCapture, {
   type FaceCaptureSessionMetadata,
   type FaceChallengeDirection,
 } from '@/components/common/FaceCameraCapture';
-import { Badge } from '@/components/ui/badge';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent } from '@/components/ui/card';
+import { cn } from '@/lib/utils';
 
 type PanelMessage = {
   type: 'success' | 'error' | 'info';
@@ -44,11 +52,17 @@ interface FaceBiometryEnrollmentPanelProps {
   className?: string;
 }
 
+const TIPS = [
+  { icon: Sun, title: 'Lugar iluminado', text: 'De preferência com a luz batendo no rosto.' },
+  { icon: ScanFace, title: 'Rosto à mostra', text: 'Sem óculos escuros, boné ou máscara.' },
+  { icon: UserRound, title: 'Só uma pessoa', text: 'Apenas quem vai cadastrar aparece na câmera.' },
+];
+
 export function FaceBiometryEnrollmentPanel({
   title,
   description,
-  helperText = 'Abra a câmera, mantenha apenas uma pessoa no quadro e aguarde o envio automático.',
-  purposeLabel = 'Cadastro facial ao vivo',
+  helperText,
+  purposeLabel = 'Cadastro facial',
   requireFaceApi = true,
   startLabel,
   retryLabel,
@@ -68,7 +82,7 @@ export function FaceBiometryEnrollmentPanel({
   const [submitting, setSubmitting] = useState(false);
   const [message, setMessage] = useState<PanelMessage>(null);
   const [consentAccepted, setConsentAccepted] = useState(false);
-  const blockedByConsent = Boolean(consent) && !consentAccepted;
+  const [consentConfirmed, setConsentConfirmed] = useState(false);
 
   useEffect(() => {
     const sessionId = captureMetadata?.sessionId;
@@ -113,6 +127,9 @@ export function FaceBiometryEnrollmentPanel({
           type: 'error',
           text: readableMessage,
         });
+        // volta para o botão da câmera, pronto para tentar de novo
+        setCapturedImage('');
+        setCaptureMetadata(null);
       } finally {
         setSubmitting(false);
       }
@@ -121,98 +138,144 @@ export function FaceBiometryEnrollmentPanel({
     void submit();
   }, [capturedImage, captureMetadata, consentAccepted, disabled, onEnroll, onSuccess, submitting, successMessage]);
 
+  const stepLabels = consent ? ['Autorização', 'Preparar', 'Câmera', 'Pronto'] : ['Preparar', 'Câmera', 'Pronto'];
+  const offset = consent ? 1 : 0;
+  const done = message?.type === 'success' && !submitting;
+  const onConsentStep = Boolean(consent) && !consentConfirmed && !done && !submitting;
+  const currentStep = done ? offset + 2 : submitting ? offset + 1 : onConsentStep ? 0 : offset;
+
   return (
-    <Card className={`border-blue-100 ${className}`.trim()}>
-      <CardHeader className="space-y-3">
-        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-          <div>
-            <CardTitle className="flex items-center gap-2 text-lg">
-              <ScanFace className="h-5 w-5 text-blue-600" />
-              {title}
-            </CardTitle>
-            <p className="mt-1 text-sm text-slate-600">{description}</p>
-          </div>
-          <Badge className="border-sky-200 bg-sky-100 text-sky-700">
-            <ShieldCheck className="mr-1 h-3.5 w-3.5" />
-            {purposeLabel}
-          </Badge>
-        </div>
-      </CardHeader>
-
-      <CardContent className="space-y-4">
-        <p className="rounded-2xl border border-sky-200 bg-sky-50 px-4 py-3 text-sm text-sky-700">
-          {helperText}
-        </p>
-
-        <div className="grid gap-3 md:grid-cols-3">
-          <div className="rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-700">
-            <p className="font-medium text-slate-900">1. Abrir câmera</p>
-            <p className="mt-1">Inicie a sessão ao vivo no dispositivo atual.</p>
-          </div>
-          <div className="rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-700">
-            <p className="font-medium text-slate-900">2. Seguir as instruções</p>
-            <p className="mt-1">De frente, vire o rosto para o lado pedido e volte de frente.</p>
-          </div>
-          <div className="rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-700">
-            <p className="font-medium text-slate-900">3. Conferência no servidor</p>
-            <p className="mt-1">O sistema confere se é uma pessoa ao vivo e cadastra.</p>
-          </div>
+    <Card className={cn('border-slate-200', className)}>
+      <CardContent className="space-y-6 p-5 sm:p-7">
+        <div className="space-y-1">
+          <h2 className="text-xl font-semibold text-slate-900">{title}</h2>
+          <p className="text-sm leading-6 text-slate-600">{description}</p>
         </div>
 
-        {consent && (
-          <div className="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-4 text-sm text-slate-700">
-            <p className="font-semibold text-slate-900">{consent.title}</p>
-            <div className="mt-2 space-y-2 leading-6">{consent.body}</div>
-            <label className="mt-3 flex cursor-pointer items-start gap-3 rounded-xl border border-slate-200 bg-white px-3 py-3">
+        {/* passos */}
+        <ol className="flex items-center gap-2" aria-label={purposeLabel}>
+          {stepLabels.map((label, index) => {
+            const isDone = index < currentStep || done;
+            const isCurrent = index === currentStep && !done;
+            return (
+              <li key={label} className="flex min-w-0 flex-1 flex-col gap-1.5">
+                <span className={cn('h-1.5 rounded-full', isDone ? 'bg-emerald-500' : isCurrent ? 'bg-blue-600' : 'bg-slate-200')} />
+                <span
+                  className={cn(
+                    'truncate text-xs font-medium',
+                    isDone ? 'text-emerald-700' : isCurrent ? 'text-blue-700' : 'text-slate-400'
+                  )}
+                >
+                  {index + 1}. {label}
+                </span>
+              </li>
+            );
+          })}
+        </ol>
+
+        {done ? (
+          <div className="flex flex-col items-center gap-3 py-6 text-center">
+            <div className="flex h-16 w-16 items-center justify-center rounded-full bg-emerald-100 text-emerald-600">
+              <Check className="h-9 w-9" strokeWidth={3} />
+            </div>
+            <p className="text-lg font-semibold text-slate-900">Tudo certo!</p>
+            <p className="max-w-md text-sm leading-6 text-slate-600">{message?.text}</p>
+          </div>
+        ) : submitting ? (
+          <div className="flex flex-col items-center gap-3 py-8 text-center">
+            <Loader2 className="h-10 w-10 animate-spin text-blue-600" />
+            <p className="text-lg font-semibold text-slate-900">Conferindo...</p>
+            <p className="max-w-md text-sm leading-6 text-slate-600">
+              Estamos confirmando que é uma pessoa de verdade na câmera e fazendo o cadastro. Leva alguns segundos.
+            </p>
+          </div>
+        ) : onConsentStep && consent ? (
+          <div className="space-y-4">
+            <div>
+              <p className="font-semibold text-slate-900">{consent.title}</p>
+              <div className="mt-2 max-h-64 space-y-2 overflow-y-auto rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm leading-6 text-slate-700">
+                {consent.body}
+              </div>
+            </div>
+            <label className="flex cursor-pointer items-start gap-3 rounded-2xl border border-slate-200 px-4 py-3 text-sm">
               <input
                 type="checkbox"
-                className="mt-1 h-4 w-4"
+                className="mt-0.5 h-5 w-5 shrink-0"
                 checked={consentAccepted}
                 onChange={(event) => setConsentAccepted(event.target.checked)}
-                disabled={submitting}
+                disabled={disabled}
               />
               <span className="font-medium text-slate-900">{consent.checkboxLabel}</span>
             </label>
+            {!readyToCapture && (
+              <p className="text-sm text-amber-700">Preencha os dados pedidos acima para continuar.</p>
+            )}
+            <Button
+              type="button"
+              size="lg"
+              className="h-12 w-full text-base"
+              disabled={disabled || !consentAccepted || !readyToCapture}
+              onClick={() => setConsentConfirmed(true)}
+            >
+              Continuar
+            </Button>
           </div>
-        )}
+        ) : (
+          <div className="space-y-5">
+            {message?.type === 'error' && (
+              <div role="alert" className="flex items-start gap-3 rounded-2xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-700">
+                <CircleAlert className="mt-0.5 h-5 w-5 shrink-0" />
+                <div>
+                  <p className="font-semibold">Não deu certo desta vez</p>
+                  <p className="mt-0.5">{message.text}</p>
+                </div>
+              </div>
+            )}
 
-        <FaceCameraCapture
-          getChallenge={getChallenge}
-          value={capturedImage}
-          onChange={(value) => {
-            setCapturedImage(value);
-            setMessage(null);
-          }}
-          onMetadataChange={setCaptureMetadata}
-          disabled={disabled || submitting || blockedByConsent || !readyToCapture}
-          purposeLabel={purposeLabel}
-          startLabel={blockedByConsent ? 'Aceite o termo para continuar' : startLabel}
-          retryLabel={retryLabel}
-          cancelLabel={cancelLabel}
-          showDetailedStatus={false}
-          requireFaceApi={requireFaceApi}
-        />
+            <div className="grid gap-3 sm:grid-cols-3">
+              {TIPS.map(({ icon: Icon, title: tipTitle, text }) => (
+                <div key={tipTitle} className="flex items-start gap-3 sm:flex-col sm:gap-2">
+                  <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-blue-50 text-blue-600">
+                    <Icon className="h-5 w-5" />
+                  </div>
+                  <div>
+                    <p className="text-sm font-semibold text-slate-900">{tipTitle}</p>
+                    <p className="text-sm leading-5 text-slate-600">{text}</p>
+                  </div>
+                </div>
+              ))}
+            </div>
 
-        {submitting && (
-          <div className="rounded-2xl border border-sky-200 bg-sky-50 px-4 py-3 text-sm text-sky-700">
-            <span className="inline-flex items-center gap-2">
-              <Loader2 className="h-4 w-4 animate-spin" />
-              Conferindo a prova de vida e cadastrando...
-            </span>
-          </div>
-        )}
+            <p className="text-sm leading-6 text-slate-600">
+              {helperText || 'A câmera vai abrir em tela cheia. Olhe de frente, vire o rosto para o lado pedido e volte. Leva poucos segundos.'}
+            </p>
 
-        {message && (
-          <div
-            className={`rounded-2xl border px-4 py-3 text-sm ${
-              message.type === 'success'
-                ? 'border-emerald-200 bg-emerald-50 text-emerald-700'
-                : message.type === 'error'
-                  ? 'border-rose-200 bg-rose-50 text-rose-700'
-                  : 'border-slate-200 bg-slate-50 text-slate-700'
-            }`}
-          >
-            {message.text}
+            <FaceCameraCapture
+              getChallenge={getChallenge}
+              value={capturedImage}
+              onChange={(value) => {
+                setCapturedImage(value);
+                if (value) setMessage(null);
+              }}
+              onMetadataChange={setCaptureMetadata}
+              disabled={disabled || !readyToCapture}
+              purposeLabel={purposeLabel}
+              startLabel={message?.type === 'error' ? 'Tentar de novo' : startLabel}
+              retryLabel={retryLabel}
+              cancelLabel={cancelLabel}
+              requireFaceApi={requireFaceApi}
+            />
+
+            {consent && (
+              <button
+                type="button"
+                onClick={() => setConsentConfirmed(false)}
+                className="inline-flex items-center gap-1.5 text-sm text-slate-500 hover:text-slate-700"
+              >
+                <ArrowLeft className="h-4 w-4" />
+                Voltar ao termo
+              </button>
+            )}
           </div>
         )}
       </CardContent>

@@ -134,9 +134,6 @@ export function FaceBiometryReadCard({
           {title}
         </CardTitle>
         <p className="text-sm text-slate-600">{description}</p>
-        <Badge className="w-fit border-sky-200 bg-sky-100 text-sky-700">
-          {purposeLabel}
-        </Badge>
       </CardHeader>
 
       <CardContent className="space-y-4">
@@ -156,35 +153,23 @@ export function FaceBiometryReadCard({
           }}
           disabled={disabled || reading}
           purposeLabel={purposeLabel}
-          showDetailedStatus={false}
+          startLabel={result || error ? 'Ler de novo' : 'Abrir câmera'}
+          retryLabel="Ler de novo"
           requireFaceApi
         />
 
-        <div className="rounded-2xl border border-sky-200 bg-sky-50 px-4 py-3 text-sm text-sky-700">
-          A leitura é enviada automaticamente assim que a sessão ao vivo termina.
-          {expectedOwnerLabel ? ` Comparação esperada: ${expectedOwnerLabel}.` : ''}
-        </div>
-
-        <div className="grid gap-3 md:grid-cols-3">
-          <div className="rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-700">
-            <p className="font-medium text-slate-900">1. Abrir câmera</p>
-            <p className="mt-1">Inicie a leitura no dispositivo atual.</p>
-          </div>
-          <div className="rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-700">
-            <p className="font-medium text-slate-900">2. Seguir as instruções</p>
-            <p className="mt-1">De frente, vire o rosto para o lado pedido e volte.</p>
-          </div>
-          <div className="rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-700">
-            <p className="font-medium text-slate-900">3. Ver resultado</p>
-            <p className="mt-1">O sistema mostra quem foi reconhecido.</p>
-          </div>
-        </div>
+        {!result && !reading && !error && (
+          <p className="text-sm leading-6 text-slate-600">
+            A câmera abre em tela cheia. Olhe de frente, vire o rosto para o lado pedido e volte — o resultado aparece aqui.
+            {expectedOwnerLabel ? ` Esperado: ${expectedOwnerLabel}.` : ''}
+          </p>
+        )}
 
         {reading && (
           <div className="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-4 text-sm text-slate-700">
             <span className="inline-flex items-center gap-2">
               <Loader2 className="h-4 w-4 animate-spin" />
-              Processando a leitura biométrica e comparando com a base cadastrada...
+              Conferindo o rosto...
             </span>
           </div>
         )}

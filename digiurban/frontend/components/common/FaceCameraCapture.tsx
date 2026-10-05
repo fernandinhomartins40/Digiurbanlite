@@ -8,17 +8,9 @@
  * assinatura do rosto e uma "nota de presença" em que o servidor acreditava.
  */
 
-import { useEffect, useRef, useState } from 'react';
-import {
-  BadgeCheck,
-  Camera,
-  CameraOff,
-  Loader2,
-  RefreshCcw,
-  ScanFace,
-  ShieldCheck,
-} from 'lucide-react';
-import { Badge } from '@/components/ui/badge';
+import { useCallback, useEffect, useRef, useState } from 'react';
+import { createPortal } from 'react-dom';
+import { Camera, Check, ChevronsLeft, ChevronsRight, Loader2, RefreshCcw, X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 import { analyzeFaceApiFrame, getFaceApiEngine } from '@/components/common/face-api-engine';
@@ -42,6 +34,53 @@ const FRONTAL_MAX_YAW = 0.07;
 const RETURN_HOLD_MS = 350;
 const FRAME_MAX_WIDTH = 720;
 type FeedbackTone = 'neutral' | 'warning' | 'success';
+
+/**
+ * Moldura oval na tela. Ela é calculada a partir do VÍDEO (não da tela), para
+ * mostrar exatamente a região que a conferência usa: rosto no centro, ocupando
+ * cerca de metade do lado menor da imagem.
+ */
+const OVAL_WIDTH_OF_SHORT_SIDE = 0.5;
+const OVAL_ASPECT = 1.35;
+/** o centro medido é o dos pontos do rosto (sem a testa): a moldura sobe um pouco */
+const OVAL_LIFT = 0.06;
+
+interface StageLayout {
+  width: number;
+  height: number;
+  videoWidth: number;
+  videoHeight: number;
+  videoLeft: number;
+  videoTop: number;
+  cx: number;
+  cy: number;
+  rx: number;
+  ry: number;
+}
+
+function computeStageLayout(stageWidth: number, stageHeight: number, sourceWidth: number, sourceHeight: number): StageLayout {
+  const ovalWidthSource = OVAL_WIDTH_OF_SHORT_SIDE * Math.min(sourceWidth, sourceHeight);
+  const ovalHeightSource = ovalWidthSource * OVAL_ASPECT;
+  // preenche a tela; só encolhe se a moldura não couber (ex.: vídeo deitado em tela em pé)
+  const cover = Math.max(stageWidth / sourceWidth, stageHeight / sourceHeight);
+  const scale = Math.min(cover, (0.84 * stageWidth) / ovalWidthSource, (0.62 * stageHeight) / ovalHeightSource);
+  const videoWidth = sourceWidth * scale;
+  const videoHeight = sourceHeight * scale;
+  const videoLeft = (stageWidth - videoWidth) / 2;
+  const videoTop = (stageHeight - videoHeight) / 2;
+  return {
+    width: stageWidth,
+    height: stageHeight,
+    videoWidth,
+    videoHeight,
+    videoLeft,
+    videoTop,
+    cx: stageWidth / 2,
+    cy: videoTop + (TARGET_CENTER_Y * sourceHeight - OVAL_LIFT * ovalHeightSource) * scale,
+    rx: (ovalWidthSource * scale) / 2,
+    ry: (ovalHeightSource * scale) / 2,
+  };
+}
 
 interface FacePoint {
   x: number;
@@ -112,14 +151,9 @@ interface FaceCameraCaptureProps {
   /** Pede ao servidor o desafio (lado sorteado) antes de abrir a câmera */
   getChallenge: () => Promise<{ challengeId: string; direction: FaceChallengeDirection }>;
 }
-const GUIDE_STEPS: Exclude<SessionStep, 'completed'>[] = ['align', 'hold_still', 'turn', 'return'];
 
 function clamp(value: number, min: number, max: number) {
   return Math.min(Math.max(value, min), max);
-}
-
-function roundScore(value: number) {
-  return Math.round(value * 1000) / 1000;
 }
 
 function createSessionId() {
@@ -193,21 +227,18 @@ function isStable(
   return variation <= 0.03;
 }
 
-function getStepLabel(step: SessionStep) {
-  if (step === 'align') return 'Centralizar';
-  if (step === 'hold_still') return 'Foto de frente';
-  if (step === 'turn') return 'Virar o rosto';
-  if (step === 'return') return 'Voltar de frente';
-  return 'Pronto';
-}
-
 function directionLabel(direction: FaceChallengeDirection) {
   return direction === 'left' ? 'esquerda' : 'direita';
 }
 
-function isStepCompleted(currentStep: SessionStep, targetStep: SessionStep) {
-  const order: SessionStep[] = ['align', 'hold_still', 'turn', 'return', 'completed'];
-  return order.indexOf(currentStep) > order.indexOf(targetStep);
+/** Para a pessoa são 3 passos: de frente, virar, de frente */
+const USER_STEPS = ['Olhe de frente', 'Vire o rosto', 'Volte de frente'];
+
+function userStepIndex(step: SessionStep) {
+  if (step === 'align' || step === 'hold_still') return 0;
+  if (step === 'turn') return 1;
+  if (step === 'return') return 2;
+  return 3;
 }
 
 export function FaceCameraCapture({
@@ -217,13 +248,15 @@ export function FaceCameraCapture({
   disabled = false,
   className = '',
   purposeLabel = 'Biometria facial',
-  startLabel = 'Iniciar validação ao vivo',
-  retryLabel = 'Refazer validação ao vivo',
-  cancelLabel = 'Interromper sessão',
-  showDetailedStatus = false,
+  startLabel = 'Abrir câmera',
+  retryLabel = 'Refazer',
+  cancelLabel = 'Fechar câmera',
   getChallenge,
 }: FaceCameraCaptureProps) {
   const videoRef = useRef<HTMLVideoElement | null>(null);
+  const stageRef = useRef<HTMLDivElement | null>(null);
+  const closeTimerRef = useRef<number | null>(null);
+  const progressRef = useRef(0);
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const streamRef = useRef<MediaStream | null>(null);
   const analysisFrameRef = useRef<number | null>(null);
@@ -252,10 +285,22 @@ export function FaceCameraCapture({
   const [sessionStep, setSessionStep] = useState<SessionStep>('align');
   const [liveFeedback, setLiveFeedback] = useState('Abra a câmera e mantenha apenas uma pessoa no enquadramento.');
   const [feedbackTone, setFeedbackTone] = useState<FeedbackTone>('neutral');
-  const [liveMetrics, setLiveMetrics] = useState<FaceMetrics | null>(null);
   const [captureSummary, setCaptureSummary] = useState<FaceCaptureSessionMetadata | null>(null);
-  const [isMobileViewport, setIsMobileViewport] = useState(false);
+  const [layout, setLayout] = useState<StageLayout | null>(null);
+  const [progress, setProgress] = useState(0);
+  const [faceInFrame, setFaceInFrame] = useState(false);
+  const [successFlash, setSuccessFlash] = useState(false);
+  const [mounted, setMounted] = useState(false);
   const contextualLabel = purposeLabel.trim() || 'Biometria facial';
+
+  /** Quanto do passo a passo já foi feito (0 a 1) — enche o anel da moldura */
+  const syncProgress = (value: number) => {
+    const next = Math.round(clamp(value, 0, 1) * 100) / 100;
+    if (progressRef.current !== next) {
+      progressRef.current = next;
+      setProgress(next);
+    }
+  };
 
   const syncFeedback = (message: string, tone: FeedbackTone) => {
     if (feedbackRef.current !== message) {
@@ -285,8 +330,10 @@ export function FaceCameraCapture({
     framesRef.current = [];
     sessionStepRef.current = 'align';
     setSessionStep('align');
-    setLiveMetrics(null);
     setCaptureSummary(null);
+    setFaceInFrame(false);
+    setSuccessFlash(false);
+    syncProgress(0);
     syncFeedback('Abra a câmera e mantenha apenas uma pessoa no enquadramento.', 'neutral');
   };
 
@@ -299,6 +346,11 @@ export function FaceCameraCapture({
 
   const stopCamera = () => {
     stopAnalysisLoop();
+    if (closeTimerRef.current !== null) {
+      window.clearTimeout(closeTimerRef.current);
+      closeTimerRef.current = null;
+    }
+    setSuccessFlash(false);
 
     if (streamRef.current) {
       streamRef.current.getTracks().forEach((track) => track.stop());
@@ -319,30 +371,7 @@ export function FaceCameraCapture({
   }, []);
 
   useEffect(() => {
-    if (typeof window === 'undefined' || typeof window.matchMedia !== 'function') {
-      return;
-    }
-
-    const mediaQuery = window.matchMedia('(max-width: 768px)');
-    const syncViewport = () => {
-      setIsMobileViewport(mediaQuery.matches);
-    };
-
-    syncViewport();
-
-    if (typeof mediaQuery.addEventListener === 'function') {
-      mediaQuery.addEventListener('change', syncViewport);
-
-      return () => {
-        mediaQuery.removeEventListener('change', syncViewport);
-      };
-    }
-
-    mediaQuery.addListener(syncViewport);
-
-    return () => {
-      mediaQuery.removeListener(syncViewport);
-    };
+    setMounted(true);
   }, []);
 
   useEffect(() => {
@@ -412,8 +441,14 @@ export function FaceCameraCapture({
     setCaptureSummary(metadata);
     markStepCompleted('return');
     updateSessionStep('completed');
-    syncFeedback('Pronto! Enviando para conferência...', 'success');
-    stopCamera();
+    syncFeedback('Pronto!', 'success');
+    syncProgress(1);
+    stopAnalysisLoop();
+    setSuccessFlash(true);
+    closeTimerRef.current = window.setTimeout(() => {
+      closeTimerRef.current = null;
+      stopCamera();
+    }, 900);
   };
 
   const evaluateFaceSession = (
@@ -432,7 +467,7 @@ export function FaceCameraCapture({
 
     challengeState.faceDetections += 1;
     challengeState.maxFacesDetected = Math.max(challengeState.maxFacesDetected, input.detectedFacesCount);
-    setLiveMetrics(metrics);
+    setFaceInFrame(true);
     previousMetricsRef.current = metrics;
 
     if (input.detectedFacesCount > 1) {
@@ -464,6 +499,7 @@ export function FaceCameraCapture({
         if (frame) framesRef.current[1] = frame;
         markStepCompleted('turn');
         updateSessionStep('return');
+        syncProgress(0.66);
         syncFeedback('Isso! Agora volte a olhar de frente para a câmera.', 'neutral');
         return;
       }
@@ -494,6 +530,8 @@ export function FaceCameraCapture({
     // ---- 3. de frente de novo ----
     if (step === 'return') {
       if (holdSinceRef.current === null) holdSinceRef.current = timestamp;
+      syncFeedback('Isso! Fique de frente só mais um instante.', 'success');
+      syncProgress(0.66 + 0.3 * Math.min((timestamp - holdSinceRef.current) / RETURN_HOLD_MS, 1));
       if (timestamp - holdSinceRef.current >= RETURN_HOLD_MS) {
         const frame = captureFrame();
         if (frame) framesRef.current[2] = frame;
@@ -534,12 +572,14 @@ export function FaceCameraCapture({
 
     challengeState.stableMs = timestamp - holdSinceRef.current;
     syncFeedback('Fique paradinho(a)...', 'success');
+    syncProgress(0.33 * Math.min(challengeState.stableMs / HOLD_DURATION_MS, 1));
 
     if (challengeState.stableMs >= HOLD_DURATION_MS) {
       const frame = captureFrame();
       if (frame) framesRef.current[0] = frame;
       markStepCompleted('hold_still');
       updateSessionStep('turn');
+      syncProgress(0.33);
       syncFeedback(`Agora vire o rosto devagar para a sua ${directionLabel(direction)}.`, 'neutral');
     }
   };
@@ -580,9 +620,10 @@ export function FaceCameraCapture({
         navigator.mediaDevices.getUserMedia({
           video: {
             facingMode: { ideal: 'user' },
-            width: { ideal: 720 },
-            height: { ideal: 1280 },
-            aspectRatio: { ideal: 9 / 16 },
+            // celular em pé pede imagem em pé; computador pede imagem deitada
+            ...(window.innerHeight > window.innerWidth
+              ? { width: { ideal: 720 }, height: { ideal: 1280 } }
+              : { width: { ideal: 1280 }, height: { ideal: 720 } }),
           },
           audio: false,
         }),
@@ -604,7 +645,7 @@ export function FaceCameraCapture({
       }
 
       setCameraActive(true);
-      syncFeedback('Centralize o rosto na moldura e siga as instruções.', 'neutral');
+      syncFeedback('Coloque o rosto dentro da moldura.', 'neutral');
     } catch (error) {
       console.error('Erro ao iniciar a validação facial ao vivo:', error);
       setCameraError('Não foi possível iniciar a câmera ao vivo. Verifique a permissão do navegador.');
@@ -652,8 +693,8 @@ export function FaceCameraCapture({
               challengeStateRef.current.maxFacesDetected,
               analysis?.detectedFacesCount || 0
             );
-            setLiveMetrics(null);
-            syncFeedback('Ajuste o rosto para continuar a captura.', 'warning');
+            setFaceInFrame(false);
+            syncFeedback('Coloque o rosto dentro da moldura.', 'warning');
           } else {
             const metrics = getFaceMetrics(analysis.selectedFace.landmarks);
             if (metrics) {
@@ -688,322 +729,240 @@ export function FaceCameraCapture({
     };
   }, [cameraActive]);
 
-  const feedbackToneClass =
-    feedbackTone === 'success'
-      ? 'border-emerald-200 bg-emerald-50 text-emerald-700'
-      : feedbackTone === 'warning'
-        ? 'border-amber-200 bg-amber-50 text-amber-700'
-        : 'border-sky-200 bg-sky-50 text-sky-700';
+  const overlayOpen = cameraActive || cameraLoading || faceEngineLoading;
 
-
-  const isMobileFullScreen = isMobileViewport && (cameraActive || cameraLoading || faceEngineLoading);
-  const stepItems = GUIDE_STEPS.map((stepKey) => {
-    return {
-      stepKey,
-      done: isStepCompleted(sessionStep, stepKey),
-      active: sessionStep === stepKey,
-      label: getStepLabel(stepKey),
-    };
-  });
+  // posição do vídeo e da moldura: refaz quando a tela ou o vídeo mudam de tamanho
+  const refreshLayout = useCallback(() => {
+    const stage = stageRef.current;
+    if (!stage) return;
+    const video = videoRef.current;
+    const portrait = stage.clientHeight > stage.clientWidth;
+    const sourceWidth = video?.videoWidth || (portrait ? 720 : 1280);
+    const sourceHeight = video?.videoHeight || (portrait ? 1280 : 720);
+    setLayout(computeStageLayout(stage.clientWidth, stage.clientHeight, sourceWidth, sourceHeight));
+  }, []);
 
   useEffect(() => {
-    if (!isMobileFullScreen || typeof document === 'undefined') {
-      return;
-    }
+    if (!overlayOpen) return;
+    refreshLayout();
+    const video = videoRef.current;
+    const stage = stageRef.current;
+    const observer = typeof ResizeObserver !== 'undefined' && stage ? new ResizeObserver(refreshLayout) : null;
+    if (stage) observer?.observe(stage);
+    window.addEventListener('resize', refreshLayout);
+    window.addEventListener('orientationchange', refreshLayout);
+    video?.addEventListener('loadedmetadata', refreshLayout);
+    video?.addEventListener('resize', refreshLayout);
+    return () => {
+      observer?.disconnect();
+      window.removeEventListener('resize', refreshLayout);
+      window.removeEventListener('orientationchange', refreshLayout);
+      video?.removeEventListener('loadedmetadata', refreshLayout);
+      video?.removeEventListener('resize', refreshLayout);
+    };
+  }, [overlayOpen, cameraActive, refreshLayout]);
 
+  // tela cheia: trava a rolagem da página e fecha com Esc
+  useEffect(() => {
+    if (!overlayOpen || typeof document === 'undefined') return;
     const previousOverflow = document.body.style.overflow;
     document.body.style.overflow = 'hidden';
-
+    const onKeyDown = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') stopCamera();
+    };
+    window.addEventListener('keydown', onKeyDown);
     return () => {
       document.body.style.overflow = previousOverflow;
+      window.removeEventListener('keydown', onKeyDown);
     };
-  }, [isMobileFullScreen]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [overlayOpen]);
 
-  return (
-    <div className={cn('space-y-4', className, isMobileFullScreen && 'relative z-[80]')}>
-      <div
-        className={cn(
-          'overflow-hidden rounded-[28px] border border-slate-200 bg-slate-950',
-          !isMobileFullScreen && 'mx-auto w-full max-w-[22rem]',
-          isMobileFullScreen && 'fixed inset-0 z-[80] rounded-none border-0'
-        )}
-      >
-        {value && !cameraActive && !cameraLoading && !faceEngineLoading ? (
-          <div className="relative aspect-[9/16]">
-            <img
-              src={value}
-              alt="Quadro facial validado"
-              className="h-full w-full object-cover"
-            />
-            <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-slate-950 via-slate-950/75 to-transparent p-4 text-white">
-              <div className="flex flex-wrap items-center gap-2">
-                <Badge className="border-emerald-400/40 bg-emerald-500/20 text-emerald-50">
-                  <BadgeCheck className="mr-1 h-3.5 w-3.5" />
-                  Captura ao vivo concluída
-                </Badge>
-                {captureSummary && (
-                  <Badge className="border-white/20 bg-white/10 text-white">3 fotos para conferência</Badge>
-                )}
-              </div>
-            </div>
-          </div>
-        ) : (
-          <div
-            className={cn(
-              'relative w-full overflow-hidden bg-slate-950',
-              isMobileFullScreen ? 'h-[100dvh]' : 'aspect-[9/16]'
-            )}
-          >
-            <video
-              ref={videoRef}
-              muted
-              playsInline
+  const direction = challengeRef.current?.direction || 'left';
+  const stepIndex = userStepIndex(sessionStep);
+  const ringColor = successFlash || feedbackTone === 'success' ? '#34d399' : feedbackTone === 'warning' ? '#fbbf24' : '#22d3ee';
+  const showTurnArrows = cameraActive && sessionStep === 'turn' && !successFlash;
+  // o vídeo aparece espelhado (como espelho): a esquerda da pessoa fica à esquerda da tela
+  const ArrowIcon = direction === 'left' ? ChevronsLeft : ChevronsRight;
+
+  const overlay = overlayOpen ? (
+    <div
+      ref={stageRef}
+      role="dialog"
+      aria-modal="true"
+      aria-label={contextualLabel}
+      className="fixed inset-0 z-[1000] overflow-hidden bg-slate-950 text-white"
+      style={{ height: '100dvh', pointerEvents: 'auto' }}
+    >
+      <video
+        ref={videoRef}
+        muted
+        playsInline
+        autoPlay
+        className={cn('absolute max-w-none transition-opacity duration-300', cameraActive ? 'opacity-100' : 'opacity-0')}
+        style={
+          layout
+            ? { left: layout.videoLeft, top: layout.videoTop, width: layout.videoWidth, height: layout.videoHeight, transform: 'scaleX(-1)' }
+            : { inset: 0, width: '100%', height: '100%', objectFit: 'cover', transform: 'scaleX(-1)' }
+        }
+      />
+
+      {/* escurece tudo fora da moldura e desenha o anel de progresso */}
+      {cameraActive && layout && (
+        <svg className="pointer-events-none absolute inset-0" width={layout.width} height={layout.height} aria-hidden>
+          <defs>
+            <mask id="face-oval-mask">
+              <rect width={layout.width} height={layout.height} fill="white" />
+              <ellipse cx={layout.cx} cy={layout.cy} rx={layout.rx} ry={layout.ry} fill="black" />
+            </mask>
+          </defs>
+          <rect width={layout.width} height={layout.height} fill="rgba(2,6,23,0.78)" mask="url(#face-oval-mask)" />
+          <ellipse
+            cx={layout.cx}
+            cy={layout.cy}
+            rx={layout.rx}
+            ry={layout.ry}
+            fill="none"
+            stroke="rgba(255,255,255,0.35)"
+            strokeWidth={3}
+            strokeDasharray={faceInFrame ? undefined : '10 12'}
+          />
+          {/* anel que enche conforme os passos; começa no alto da moldura */}
+          <ellipse
+            cx={layout.cx}
+            cy={layout.cy}
+            rx={layout.ry}
+            ry={layout.rx}
+            fill="none"
+            stroke={ringColor}
+            strokeWidth={6}
+            strokeLinecap="round"
+            pathLength={100}
+            strokeDasharray={`${Math.max(progress * 100, 0.001)} 100`}
+            transform={`rotate(-90 ${layout.cx} ${layout.cy})`}
+            style={{ transition: 'stroke-dasharray 250ms linear, stroke 200ms' }}
+          />
+        </svg>
+      )}
+
+      {/* setas do lado para onde virar */}
+      {showTurnArrows && layout && (
+        <div
+          className="pointer-events-none absolute flex -translate-y-1/2 animate-pulse items-center justify-center rounded-full bg-cyan-400/20 text-cyan-200"
+          style={{
+            top: layout.cy,
+            left: direction === 'left' ? Math.max(layout.cx - layout.rx - 76, 8) : undefined,
+            right: direction === 'right' ? Math.max(layout.width - (layout.cx + layout.rx) - 76, 8) : undefined,
+            width: 64,
+            height: 64,
+          }}
+        >
+          <ArrowIcon className="h-10 w-10" strokeWidth={2.5} />
+        </div>
+      )}
+
+      {/* confirmação de captura */}
+      {successFlash && layout && (
+        <div
+          className="pointer-events-none absolute flex -translate-x-1/2 -translate-y-1/2 items-center justify-center rounded-full bg-emerald-500 text-white shadow-2xl"
+          style={{ left: layout.cx, top: layout.cy, width: 96, height: 96 }}
+        >
+          <Check className="h-14 w-14" strokeWidth={3} />
+        </div>
+      )}
+
+      {/* topo: passos e fechar */}
+      <div className="absolute inset-x-0 top-0 flex items-center justify-between gap-3 px-4 pt-[max(0.9rem,env(safe-area-inset-top))]">
+        <div className="flex items-center gap-1.5" aria-label={`Passo ${Math.min(stepIndex + 1, 3)} de 3`}>
+          {USER_STEPS.map((label, index) => (
+            <span
+              key={label}
               className={cn(
-                'h-full w-full object-cover transition-opacity duration-300',
-                cameraActive ? 'scale-x-[-1] opacity-100' : 'opacity-0'
+                'h-1.5 rounded-full transition-all duration-300',
+                index < stepIndex ? 'w-6 bg-emerald-400' : index === stepIndex ? 'w-10 bg-white' : 'w-6 bg-white/30'
               )}
             />
+          ))}
+        </div>
+        <button
+          type="button"
+          onClick={stopCamera}
+          aria-label={cancelLabel}
+          className="flex h-11 w-11 items-center justify-center rounded-full bg-white/15 text-white backdrop-blur transition hover:bg-white/25"
+        >
+          <X className="h-5 w-5" />
+        </button>
+      </div>
 
-            {cameraActive ? (
-              <>
-                <div className="absolute inset-0 bg-slate-950/42" />
-                <div
-                  className={cn(
-                    'pointer-events-none absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 rounded-[999px] border-2 border-cyan-300/90 shadow-[0_0_0_9999px_rgba(2,6,23,0.45)] transition-transform duration-300',
-                    isMobileFullScreen
-                      ? 'h-[72dvh] w-[86vw] max-w-[34rem]'
-                      : 'h-[74%] w-[74%] max-w-[18rem]',
-                    feedbackTone === 'success' ? 'border-emerald-300' : '',
-                    feedbackTone === 'warning' ? 'border-amber-300' : ''
-                  )}
-                >
-                  <div className="absolute inset-[11%] rounded-[999px] border border-white/20" />
-                  <div className="absolute inset-x-[20%] top-[18%] h-[2px] rounded-full bg-cyan-200/80 blur-sm animate-pulse" />
-                  <div className="absolute inset-x-[20%] bottom-[18%] h-[2px] rounded-full bg-cyan-200/45 blur-sm animate-pulse" />
-                </div>
-                <div className="absolute inset-x-0 top-0 z-10 bg-gradient-to-b from-slate-950 via-slate-950/80 to-transparent px-4 pb-16 pt-[max(1rem,env(safe-area-inset-top))] text-white">
-                  <div className="flex items-start justify-between gap-3">
-                    <div className="space-y-3">
-                      <div className="flex flex-wrap gap-2">
-                        <Badge className="border-white/15 bg-slate-950/75 text-white">
-                          <ScanFace className="mr-1 h-3.5 w-3.5" />
-                          {contextualLabel}
-                        </Badge>
-                        <Badge className="border-white/15 bg-slate-950/75 text-white">
-                          Sessão ativa
-                        </Badge>
-                      </div>
-                      {isMobileFullScreen && (
-                        <p className="max-w-lg text-sm leading-6 text-slate-100/92">
-                          Siga as instruções: de frente, vire o rosto quando pedirmos e volte de frente.
-                        </p>
-                      )}
-                    </div>
-
-                    {isMobileFullScreen && (
-                      <Button
-                        type="button"
-                        variant="outline"
-                        onClick={stopCamera}
-                        disabled={disabled}
-                        className="border-white/20 bg-slate-950/70 text-white hover:bg-slate-900 hover:text-white"
-                      >
-                        <CameraOff className="mr-2 h-4 w-4" />
-                        {cancelLabel}
-                      </Button>
-                    )}
-                  </div>
-                </div>
-                {isMobileFullScreen && (
-                  <div className="absolute inset-x-0 bottom-0 z-10 bg-gradient-to-t from-slate-950 via-slate-950/90 to-transparent px-4 pb-[max(1rem,env(safe-area-inset-bottom))] pt-24 text-white">
-                    <div className="mx-auto flex w-full max-w-xl flex-col gap-3">
-                      <div
-                        className={cn(
-                          'rounded-[28px] border px-4 py-4 text-sm shadow-lg backdrop-blur',
-                          feedbackTone === 'success'
-                            ? 'border-emerald-300/45 bg-emerald-500/15 text-emerald-50'
-                            : feedbackTone === 'warning'
-                              ? 'border-amber-300/45 bg-amber-500/15 text-amber-50'
-                              : 'border-sky-300/45 bg-sky-500/15 text-sky-50'
-                        )}
-                      >
-                        {faceEngineLoading ? (
-                          <span className="inline-flex items-center gap-2">
-                            <Loader2 className="h-4 w-4 animate-spin" />
-                            Preparando o reconhecimento facial...
-                          </span>
-                        ) : (
-                          liveFeedback
-                        )}
-                      </div>
-                      <p className="text-center text-xs text-slate-200/80">
-                        Uma pessoa por vez, com boa luz. A conferência é feita no servidor.
-                      </p>
-
-                      {showDetailedStatus && (
-                        <div className="grid grid-cols-2 gap-2">
-                          {stepItems.map(({ stepKey, done, active, label }, index) => (
-                            <div
-                              key={stepKey}
-                              className={cn(
-                                'rounded-2xl border px-3 py-3 text-sm shadow-sm backdrop-blur transition-colors',
-                                done
-                                  ? 'border-emerald-300/45 bg-emerald-500/12 text-emerald-50'
-                                  : active
-                                    ? 'border-sky-300/45 bg-sky-500/12 text-sky-50'
-                                    : 'border-white/15 bg-white/8 text-slate-200'
-                              )}
-                            >
-                              <div className="flex items-center gap-2">
-                                {done ? (
-                                  <BadgeCheck className="h-4 w-4" />
-                                ) : (
-                                  <span className="flex h-4 w-4 items-center justify-center rounded-full border border-current text-[10px]">
-                                    {index + 1}
-                                  </span>
-                                )}
-                                <span className="font-medium">{label}</span>
-                              </div>
-                            </div>
-                          ))}
-                        </div>
-                      )}
-                    </div>
-                  </div>
-                )}
-              </>
-            ) : (
-              <div className="flex h-full flex-col items-center justify-center gap-4 px-6 text-center text-slate-100">
-                <div className="flex h-16 w-16 items-center justify-center rounded-full bg-white/10">
-                  {cameraLoading || faceEngineLoading ? (
-                    <Loader2 className="h-8 w-8 animate-spin" />
-                  ) : (
-                    <ShieldCheck className="h-8 w-8" />
-                  )}
-                </div>
-                <div className="space-y-2">
-                  <p className="text-sm font-medium">
-                    {cameraLoading || faceEngineLoading
-                      ? 'Preparando a câmera...'
-                      : `Validação facial ao vivo para ${contextualLabel.toLowerCase()}.`}
-                  </p>
-                  <p className="text-xs text-slate-300">
-                    {cameraLoading || faceEngineLoading
-                      ? 'Quando a câmera abrir em tela cheia, siga os avisos na tela.'
-                      : 'Você vai olhar de frente, virar o rosto para um lado e voltar. Leva poucos segundos.'}
-                  </p>
-                </div>
-              </div>
-            )}
+      {/* base: uma instrução por vez, bem grande */}
+      <div className="absolute inset-x-0 bottom-0 px-5 pb-[max(1.5rem,env(safe-area-inset-bottom))] text-center">
+        {cameraActive ? (
+          <div className="mx-auto max-w-md space-y-2">
+            <p className="text-xs font-medium uppercase tracking-[0.2em] text-white/60">
+              {successFlash ? 'Concluído' : `Passo ${Math.min(stepIndex + 1, 3)} de 3 · ${USER_STEPS[Math.min(stepIndex, 2)]}`}
+            </p>
+            <p
+              aria-live="polite"
+              className={cn(
+                'text-xl font-semibold leading-snug sm:text-2xl',
+                successFlash || feedbackTone === 'success' ? 'text-emerald-300' : feedbackTone === 'warning' ? 'text-amber-300' : 'text-white'
+              )}
+            >
+              {liveFeedback}
+            </p>
+          </div>
+        ) : (
+          <div className="mx-auto flex max-w-md flex-col items-center gap-3 pb-[30dvh]">
+            <Loader2 className="h-9 w-9 animate-spin text-cyan-300" />
+            <p className="text-lg font-semibold">Abrindo a câmera...</p>
+            <p className="text-sm text-white/70">Se o navegador perguntar, permita o uso da câmera.</p>
           </div>
         )}
       </div>
+    </div>
+  ) : null;
 
-      {!isMobileFullScreen && (showDetailedStatus || cameraActive || cameraLoading || faceEngineLoading || value) && (
-        <div className={cn('rounded-2xl border px-4 py-3 text-sm', feedbackToneClass)}>
-          {faceEngineLoading ? (
-            <span className="inline-flex items-center gap-2">
-              <Loader2 className="h-4 w-4 animate-spin" />
-              Preparando o reconhecimento facial...
-            </span>
-          ) : (
-            liveFeedback
-          )}
-        </div>
-      )}
-
-      {showDetailedStatus && !isMobileFullScreen && (
-        <div className="grid gap-3 rounded-2xl border border-slate-200 bg-white p-4 md:grid-cols-2">
-          {stepItems.map(({ stepKey, done, active, label }, index) => (
-            <div
-              key={stepKey}
-              className={cn(
-                'rounded-2xl border px-3 py-3 text-sm transition-colors',
-                done
-                  ? 'border-emerald-200 bg-emerald-50 text-emerald-700'
-                  : active
-                    ? 'border-sky-200 bg-sky-50 text-sky-700'
-                    : 'border-slate-200 bg-slate-50 text-slate-500'
-              )}
-            >
-              <div className="flex items-center gap-2">
-                {done ? (
-                  <BadgeCheck className="h-4 w-4" />
-                ) : (
-                  <span className="flex h-4 w-4 items-center justify-center rounded-full border border-current text-[10px]">
-                    {index + 1}
-                  </span>
-                )}
-                <span className="font-medium">{label}</span>
-              </div>
+  return (
+    <div className={cn('space-y-3', className)}>
+      {value && !overlayOpen ? (
+        <div className="flex items-center gap-4 rounded-2xl border border-emerald-200 bg-emerald-50 p-3">
+          <img
+            src={value}
+            alt="Foto capturada"
+            className="h-16 w-16 shrink-0 rounded-full border-2 border-white object-cover shadow"
+            style={{ transform: 'scaleX(-1)' }}
+          />
+          <div className="min-w-0 flex-1">
+            <p className="flex items-center gap-1.5 text-sm font-semibold text-emerald-800">
+              <Check className="h-4 w-4" />
+              Captura concluída
+            </p>
+            <div className="mt-1 flex flex-wrap gap-x-4 gap-y-1 text-sm">
+              <button type="button" onClick={startCamera} disabled={disabled || cameraLoading} className="inline-flex items-center gap-1 font-medium text-emerald-800 underline-offset-2 hover:underline disabled:opacity-50">
+                <RefreshCcw className="h-3.5 w-3.5" />
+                {retryLabel}
+              </button>
+              <button type="button" onClick={clearCapture} disabled={disabled} className="text-slate-600 underline-offset-2 hover:underline disabled:opacity-50">
+                Descartar
+              </button>
             </div>
-          ))}
-        </div>
-      )}
-
-      {showDetailedStatus && !isMobileFullScreen && cameraActive && liveMetrics && (
-        <div className="grid gap-3 rounded-2xl border border-slate-200 bg-slate-50 p-4 md:grid-cols-3">
-          <div className="rounded-xl border border-slate-200 bg-white px-3 py-3">
-            <p className="text-xs font-medium uppercase tracking-[0.18em] text-slate-500">Centralização</p>
-            <p className="mt-1 text-sm text-slate-800">
-              {Math.round(Math.abs(liveMetrics.centerOffsetX) * 100)}% horizontal e{' '}
-              {Math.round(Math.abs(liveMetrics.centerOffsetY) * 100)}% vertical fora do centro.
-            </p>
-          </div>
-          <div className="rounded-xl border border-slate-200 bg-white px-3 py-3">
-            <p className="text-xs font-medium uppercase tracking-[0.18em] text-slate-500">Distância</p>
-            <p className="mt-1 text-sm text-slate-800">
-              O rosto ocupa {Math.round(liveMetrics.sizeRatio * 100)}% da área útil analisada.
-            </p>
-          </div>
-          <div className="rounded-xl border border-slate-200 bg-white px-3 py-3">
-            <p className="text-xs font-medium uppercase tracking-[0.18em] text-slate-500">Sessão</p>
-            <p className="mt-1 text-sm text-slate-800">
-              {challengeStateRef.current.faceDetections} leituras faciais processadas em vídeo ao vivo.
-            </p>
           </div>
         </div>
+      ) : (
+        <Button type="button" size="lg" onClick={startCamera} disabled={disabled || overlayOpen} className="h-12 w-full text-base">
+          {overlayOpen ? <Loader2 className="mr-2 h-5 w-5 animate-spin" /> : <Camera className="mr-2 h-5 w-5" />}
+          {startLabel}
+        </Button>
       )}
 
       {cameraError && (
-        <div className="rounded-2xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-700">
+        <div role="alert" className="rounded-2xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-700">
           {cameraError}
         </div>
       )}
 
-      <div className={cn('flex flex-wrap gap-3', isMobileFullScreen && 'hidden')}>
-        {!cameraActive && (
-          <Button type="button" variant="outline" onClick={startCamera} disabled={disabled || cameraLoading}>
-            {cameraLoading ? (
-              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-            ) : (
-              <Camera className="mr-2 h-4 w-4" />
-            )}
-            {startLabel}
-          </Button>
-        )}
-
-        {cameraActive && (
-          <Button type="button" variant="outline" onClick={stopCamera} disabled={disabled}>
-            <CameraOff className="mr-2 h-4 w-4" />
-            {cancelLabel}
-          </Button>
-        )}
-
-        {value && !cameraActive && (
-          <>
-            <Button type="button" variant="outline" onClick={startCamera} disabled={disabled || cameraLoading}>
-              <RefreshCcw className="mr-2 h-4 w-4" />
-              {retryLabel}
-            </Button>
-            <Button type="button" variant="ghost" onClick={clearCapture} disabled={disabled}>
-              Limpar biometria
-            </Button>
-          </>
-        )}
-      </div>
-
       <canvas ref={canvasRef} className="hidden" />
+      {mounted && overlay ? createPortal(overlay, document.body) : null}
     </div>
   );
 }

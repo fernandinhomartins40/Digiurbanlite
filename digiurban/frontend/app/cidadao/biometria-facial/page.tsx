@@ -2,11 +2,10 @@
 
 import Link from 'next/link';
 import { useEffect, useState } from 'react';
-import { Loader2, ScanFace, ShieldAlert, ShieldCheck, Trash2, UserRoundSearch } from 'lucide-react';
+import { ArrowLeft, Loader2, ShieldCheck, Trash2, UserRoundSearch } from 'lucide-react';
 import { useCitizenAuth } from '@/contexts/CitizenAuthContext';
 import { CitizenLayout } from '@/components/citizen/CitizenLayout';
 import { FaceBiometryEnrollmentPanel } from '@/components/common/FaceBiometryEnrollmentPanel';
-import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import type { CitizenAccessLevelSummary } from '@/types/citizen-access';
@@ -34,6 +33,7 @@ export default function CitizenFaceBiometryPage() {
   const [deleting, setDeleting] = useState(false);
   const [notice, setNotice] = useState<{ tone: 'success' | 'error'; text: string } | null>(null);
   const [reloadKey, setReloadKey] = useState(0);
+  const [justEnrolled, setJustEnrolled] = useState(false);
 
   useEffect(() => {
     let active = true;
@@ -75,6 +75,7 @@ export default function CitizenFaceBiometryPage() {
       const response = await apiRequest('/citizen/auth/face-biometry', { method: 'DELETE' });
       setNotice({ tone: 'success', text: response.message || 'Sua biometria foi apagada.' });
       setConfirmDelete(false);
+      setJustEnrolled(false);
       await refreshCitizenData();
       setReloadKey((value) => value + 1);
     } catch (error: any) {
@@ -94,161 +95,47 @@ export default function CitizenFaceBiometryPage() {
         ? 'Já existe um cadastro biométrico registrado para sua conta.'
         : 'Sua biometria facial já está registrada nesta conta.';
 
+  const showWizard = !biometricLocked || justEnrolled;
+
   return (
     <CitizenLayout>
-      <div className="space-y-6">
-        <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
-          <div className="space-y-2">
-            <Badge className="border-sky-200 bg-sky-100 text-sky-700">Biometria ao vivo</Badge>
-            <h1 className="text-2xl font-bold text-slate-900">Cadastro facial do cidadão</h1>
-            <p className="max-w-3xl text-sm leading-6 text-slate-600">
-              Use a câmera do dispositivo para cadastrar sua biometria facial. A conferência é feita no servidor da
-              prefeitura e você pode apagar sua biometria quando quiser.
-            </p>
-          </div>
-
-          <div className="flex flex-wrap gap-3">
-            <Button asChild variant="outline">
-              <Link href="/cidadao/perfil">
-                <ShieldCheck className="mr-2 h-4 w-4" />
-                Voltar ao perfil
-              </Link>
-            </Button>
-            <Button asChild variant="outline">
-              <Link href="/cidadao/biometria-facial/leitura">
-                <UserRoundSearch className="mr-2 h-4 w-4" />
-                Testar leitura
-              </Link>
-            </Button>
-          </div>
+      <div className="mx-auto w-full max-w-2xl space-y-5">
+        <div className="space-y-2">
+          <Link href="/cidadao/perfil" className="inline-flex items-center gap-1.5 text-sm text-slate-500 hover:text-slate-700">
+            <ArrowLeft className="h-4 w-4" />
+            Voltar ao perfil
+          </Link>
+          <h1 className="text-2xl font-bold text-slate-900">Biometria facial</h1>
+          <p className="text-sm leading-6 text-slate-600">
+            Seu rosto confirma que é você mesmo usando a conta. Você pode apagar quando quiser.
+          </p>
         </div>
 
-        <div className="grid gap-6 xl:grid-cols-[0.88fr_1.12fr]">
-          <Card className="border-sky-100 bg-white/90">
-            <CardContent className="space-y-4 p-6">
-              <div className="flex items-center gap-3">
-                <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-sky-100 text-sky-700">
-                  <ScanFace className="h-6 w-6" />
-                </div>
-                <div>
-                  <p className="text-sm font-semibold text-slate-900">Fluxo do cidadão</p>
-                  <p className="text-sm text-slate-600">Cadastro ao vivo com prova de vida, conferido no servidor.</p>
-                </div>
-              </div>
+        {notice && (
+          <div
+            className={`rounded-2xl border px-4 py-3 text-sm ${
+              notice.tone === 'success' ? 'border-emerald-200 bg-emerald-50 text-emerald-700' : 'border-rose-200 bg-rose-50 text-rose-700'
+            }`}
+          >
+            {notice.text}
+          </div>
+        )}
 
-              <div className="grid gap-3 text-sm leading-6 text-slate-700 sm:grid-cols-2">
-                <div className="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3">
-                  <p className="font-medium text-slate-900">Antes de começar</p>
-                  <p className="mt-1">Procure um lugar iluminado. Você vai olhar de frente, virar o rosto para um lado e voltar.</p>
-                </div>
-                <div className="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3">
-                  <p className="font-medium text-slate-900">Depois do envio</p>
-                  <p className="mt-1">Depois do cadastro, use "Testar leitura" para conferir. Para refazer, apague e cadastre de novo.</p>
-                </div>
-              </div>
-
-              <div className="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-700">
-                <p className="font-medium text-slate-900">Meus consentimentos</p>
-                {activeConsents.length === 0 ? (
-                  <p className="mt-1">Nenhum consentimento ativo.</p>
-                ) : (
-                  <ul className="mt-1 space-y-1">
-                    {activeConsents.map((item) => (
-                      <li key={item.id}>
-                        {PURPOSE_LABEL[item.purpose] || item.purpose} — desde{' '}
-                        {new Date(item.grantedAt).toLocaleDateString('pt-BR')}
-                        {item.relationship !== 'TITULAR' && item.grantedByName ? ` (autorizado por ${item.grantedByName})` : ''}
-                      </li>
-                    ))}
-                  </ul>
-                )}
-              </div>
-
-              {(hasRegisteredBiometry(accessLevel) || activeConsents.length > 0) && (
-                <div className="rounded-2xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-800">
-                  {confirmDelete ? (
-                    <div className="space-y-3">
-                      <p>
-                        Tem certeza? Sua biometria, as fotos e os consentimentos serão apagados. Se você tem nível Ouro,
-                        ele volta para Prata até um novo cadastro.
-                      </p>
-                      <div className="flex flex-wrap gap-2">
-                        <Button size="sm" variant="destructive" onClick={deleteMyBiometry} disabled={deleting}>
-                          {deleting ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Trash2 className="mr-2 h-4 w-4" />}
-                          Sim, apagar
-                        </Button>
-                        <Button size="sm" variant="outline" onClick={() => setConfirmDelete(false)} disabled={deleting}>
-                          Cancelar
-                        </Button>
-                      </div>
-                    </div>
-                  ) : (
-                    <Button size="sm" variant="outline" onClick={() => setConfirmDelete(true)}>
-                      <Trash2 className="mr-2 h-4 w-4" />
-                      Apagar minha biometria
-                    </Button>
-                  )}
-                </div>
-              )}
-
-              {notice && (
-                <div
-                  className={`rounded-2xl border px-4 py-3 text-sm ${
-                    notice.tone === 'success' ? 'border-emerald-200 bg-emerald-50 text-emerald-700' : 'border-rose-200 bg-rose-50 text-rose-700'
-                  }`}
-                >
-                  {notice.text}
-                </div>
-              )}
+        {loadingAccessLevel && !justEnrolled ? (
+          <Card>
+            <CardContent className="flex min-h-[240px] items-center justify-center">
+              <Loader2 className="h-6 w-6 animate-spin text-sky-600" />
             </CardContent>
           </Card>
-
-          {loadingAccessLevel ? (
-            <Card className="border-sky-100">
-              <CardContent className="flex min-h-[280px] items-center justify-center">
-                <Loader2 className="h-6 w-6 animate-spin text-sky-600" />
-              </CardContent>
-            </Card>
-          ) : biometricLocked ? (
-            <Card className="border-amber-200 bg-amber-50">
-              <CardContent className="space-y-4 p-6">
-                <div className="flex items-start gap-3 text-amber-800">
-                  <ShieldAlert className="mt-0.5 h-5 w-5" />
-                  <div className="space-y-1">
-                    <p className="font-semibold text-slate-900">Biometria já cadastrada</p>
-                    <p className="text-sm">{biometricStatusText}</p>
-                  </div>
-                </div>
-
-                <div className="rounded-2xl border border-amber-200 bg-white px-4 py-3 text-sm text-slate-700">
-                  Para refazer o cadastro, apague a biometria atual (ao lado) e cadastre de novo.
-                </div>
-
-                <div className="flex flex-wrap gap-3">
-                  <Button asChild>
-                    <Link href="/cidadao/biometria-facial/leitura">
-                      <UserRoundSearch className="mr-2 h-4 w-4" />
-                      Testar leitura
-                    </Link>
-                  </Button>
-                  <Button asChild variant="outline">
-                    <Link href="/cidadao/perfil">
-                      <ShieldCheck className="mr-2 h-4 w-4" />
-                      Voltar ao perfil
-                    </Link>
-                  </Button>
-                </div>
-              </CardContent>
-            </Card>
-          ) : (
+        ) : showWizard ? (
+          <>
             <FaceBiometryEnrollmentPanel
-              title={needsReenrollment ? 'Atualize sua biometria' : 'Cadastro facial ao vivo'}
+              title={needsReenrollment ? 'Atualize sua biometria' : 'Cadastrar meu rosto'}
               description={
                 needsReenrollment
                   ? 'Trocamos o sistema de reconhecimento por um mais seguro e precisamos de uma nova captura do seu rosto.'
-                  : 'Capture o rosto ao vivo. A conferência da prova de vida e o cadastro são feitos no servidor da prefeitura.'
+                  : 'São poucos passos, feitos pela câmera deste aparelho.'
               }
-              helperText="Fique em um lugar iluminado, sem óculos escuros ou boné, e siga as instruções na tela."
               purposeLabel="Cadastro facial do cidadão"
               startLabel="Abrir câmera"
               retryLabel="Refazer captura"
@@ -271,14 +158,93 @@ export default function CitizenFaceBiometryPage() {
                   body: JSON.stringify({ frames, challengeId, consentAccepted }),
                 });
 
+                // mantém a tela de "tudo certo" enquanto os dados da conta são atualizados
+                setJustEnrolled(true);
+                setNotice(null);
                 await refreshCitizenData();
                 setAccessLevel(response.data?.accessLevel || null);
-                setReloadKey((value) => value + 1);
                 return { message: response.message };
               }}
             />
-          )}
-        </div>
+
+            {justEnrolled && (
+              <div className="flex flex-col gap-3 sm:flex-row">
+                <Button asChild size="lg" className="h-12 flex-1 text-base">
+                  <Link href="/cidadao/biometria-facial/leitura">
+                    <UserRoundSearch className="mr-2 h-5 w-5" />
+                    Testar o reconhecimento
+                  </Link>
+                </Button>
+                <Button asChild size="lg" variant="outline" className="h-12 flex-1 text-base">
+                  <Link href="/cidadao/perfil">Voltar ao perfil</Link>
+                </Button>
+              </div>
+            )}
+          </>
+        ) : (
+          <Card>
+            <CardContent className="space-y-6 p-5 sm:p-7">
+              <div className="flex flex-col items-center gap-3 text-center">
+                <div className="flex h-16 w-16 items-center justify-center rounded-full bg-emerald-100 text-emerald-600">
+                  <ShieldCheck className="h-9 w-9" />
+                </div>
+                <p className="text-lg font-semibold text-slate-900">Biometria cadastrada</p>
+                <p className="max-w-md text-sm leading-6 text-slate-600">{biometricStatusText}</p>
+              </div>
+
+              <Button asChild size="lg" className="h-12 w-full text-base">
+                <Link href="/cidadao/biometria-facial/leitura">
+                  <UserRoundSearch className="mr-2 h-5 w-5" />
+                  Testar o reconhecimento
+                </Link>
+              </Button>
+
+              {activeConsents.length > 0 && (
+                <div className="border-t border-slate-200 pt-4 text-sm text-slate-600">
+                  <p className="font-medium text-slate-900">O que você autorizou</p>
+                  <ul className="mt-1 space-y-1">
+                    {activeConsents.map((item) => (
+                      <li key={item.id}>
+                        {PURPOSE_LABEL[item.purpose] || item.purpose} — desde{' '}
+                        {new Date(item.grantedAt).toLocaleDateString('pt-BR')}
+                        {item.relationship !== 'TITULAR' && item.grantedByName ? ` (autorizado por ${item.grantedByName})` : ''}
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              )}
+
+              <div className="border-t border-slate-200 pt-4">
+                {confirmDelete ? (
+                  <div className="space-y-3 rounded-2xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-800">
+                    <p>
+                      Tem certeza? Sua biometria, as fotos e as autorizações serão apagadas. Se você tem nível Ouro, ele
+                      volta para Prata até um novo cadastro.
+                    </p>
+                    <div className="flex flex-wrap gap-2">
+                      <Button size="sm" variant="destructive" onClick={deleteMyBiometry} disabled={deleting}>
+                        {deleting ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Trash2 className="mr-2 h-4 w-4" />}
+                        Sim, apagar
+                      </Button>
+                      <Button size="sm" variant="outline" onClick={() => setConfirmDelete(false)} disabled={deleting}>
+                        Cancelar
+                      </Button>
+                    </div>
+                  </div>
+                ) : (
+                  <button
+                    type="button"
+                    onClick={() => setConfirmDelete(true)}
+                    className="inline-flex items-center gap-2 text-sm text-rose-600 hover:text-rose-700"
+                  >
+                    <Trash2 className="h-4 w-4" />
+                    Apagar minha biometria (para refazer ou deixar de usar)
+                  </button>
+                )}
+              </div>
+            </CardContent>
+          </Card>
+        )}
       </div>
     </CitizenLayout>
   );
