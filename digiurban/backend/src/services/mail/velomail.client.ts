@@ -6,7 +6,10 @@
 import crypto from 'crypto';
 
 export interface VeloMailPayload {
+  /** só o endereço: o VeloMail recusa "Nome <endereço>" */
   from: string;
+  /** nome que aparece como remetente */
+  from_name?: string;
   to: string;
   subject: string;
   html?: string;
@@ -98,4 +101,16 @@ export function mailRetryDelay(attemptsMade: number, err?: Error) {
   const asked = (err as VeloMailError | undefined)?.retryAfterMs;
   if (asked) return Math.min(asked + 1000, 60 * 60 * 1000);
   return Math.min(60_000 * 2 ** Math.max(attemptsMade - 1, 0), 2 * 60 * 60 * 1000);
+}
+
+/** Separa `"Nome" <endereço>` (como guardamos em emails.fromEmail) em nome e endereço */
+export function splitFromAddress(value: string): { email: string; name: string | null } {
+  const match = /^\s*"?([^"<]*?)"?\s*<([^>]+)>\s*$/.exec(value || '');
+  if (!match) return { email: String(value || '').trim(), name: null };
+  return { email: match[2].trim(), name: match[1].trim() || null };
+}
+
+/** Limite por minuto/hora/dia do plano do VeloMail (espera sem gastar tentativa) */
+export function isVeloMailRateLimit(error: unknown): error is VeloMailError {
+  return error instanceof VeloMailError && error.status === 429 && error.code === 'RATE_LIMIT_EXCEEDED';
 }

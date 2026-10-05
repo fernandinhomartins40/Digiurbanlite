@@ -2,7 +2,7 @@
  * E-mail transacional (VeloMail): assinatura do webhook e espera entre tentativas.
  */
 import crypto from 'crypto';
-import { mailRetryDelay, verifyVeloMailSignature, VeloMailError } from '../../src/services/mail/velomail.client';
+import { isVeloMailRateLimit, mailRetryDelay, splitFromAddress, verifyVeloMailSignature, VeloMailError } from '../../src/services/mail/velomail.client';
 
 const secret = 'whsec_teste_1234567890';
 const body = Buffer.from(JSON.stringify({ event: 'email.delivered', data: { message_id: 'abc' }, timestamp: '2026-10-05T12:00:00Z' }));
@@ -44,5 +44,27 @@ describe('mailRetryDelay', () => {
   it('não espera mais de 1 hora mesmo se o VeloMail pedir', () => {
     const error = new VeloMailError('limite', 429, 'RATE_LIMIT_EXCEEDED', true, 24 * 3600 * 1000);
     expect(mailRetryDelay(1, error)).toBe(60 * 60 * 1000);
+  });
+});
+
+describe('splitFromAddress', () => {
+  it('separa nome e endereço (o VeloMail só aceita o endereço em "from")', () => {
+    expect(splitFromAddress('"Prefeitura de Palmital" <nao-responda@notificacoes.digiurban.com.br>')).toEqual({
+      name: 'Prefeitura de Palmital',
+      email: 'nao-responda@notificacoes.digiurban.com.br',
+    });
+    expect(splitFromAddress('DigiUrban <a@b.com>')).toEqual({ name: 'DigiUrban', email: 'a@b.com' });
+  });
+
+  it('endereço sem nome passa direto', () => {
+    expect(splitFromAddress('a@b.com')).toEqual({ name: null, email: 'a@b.com' });
+  });
+});
+
+describe('isVeloMailRateLimit', () => {
+  it('só o limite do plano conta como espera', () => {
+    expect(isVeloMailRateLimit(new VeloMailError('x', 429, 'RATE_LIMIT_EXCEEDED', true, 60_000))).toBe(true);
+    expect(isVeloMailRateLimit(new VeloMailError('x', 429, 'TENANT_POLICY_BLOCKED', true))).toBe(false);
+    expect(isVeloMailRateLimit(new Error('x'))).toBe(false);
   });
 });

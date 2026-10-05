@@ -14,7 +14,7 @@ import { prisma } from '../lib/prisma';
 import { runAsPlatform } from '../lib/tenant-context';
 import { MAIL_QUEUE, readAttachment } from '../services/mail/mailer';
 import { getPlatformMail } from '../services/mail/mail-settings.service';
-import { mailRetryDelay, sendViaVeloMail, VeloMailError } from '../services/mail/velomail.client';
+import { isVeloMailRateLimit, mailRetryDelay, sendViaVeloMail, splitFromAddress, VeloMailError } from '../services/mail/velomail.client';
 import { logger } from '../config/logger.config';
 
 const MAX_ATTEMPTS = 8;
@@ -50,9 +50,11 @@ async function processMail(job: Job<{ emailId: string }>) {
     const metadata = (email.metadata && typeof email.metadata === 'object' ? email.metadata : {}) as Record<string, any>;
     const attachments = Array.isArray(email.attachments) ? (email.attachments as any[]) : [];
 
+    const sender = splitFromAddress(email.fromEmail);
     try {
       const result = await sendViaVeloMail(platform.settings.apiBaseUrl, platform.apiKey, {
-        from: email.fromEmail,
+        from: sender.email,
+        from_name: sender.name || undefined,
         to: email.toEmail,
         subject: email.subject,
         html: email.htmlContent || undefined,
@@ -80,6 +82,13 @@ async function processMail(job: Job<{ emailId: string }>) {
       });
       await prisma.emailEvent.create({ data: { emailId: email.id, type: 'SENT', data: { velomailMessageId: result.messageId } } });
     } catch (error: any) {
+      // limite do plano do VeloMail (ex.: 2 por minuto no gratuito): pausa a fila
+      // pelo tempo pedido e devolve o e-mail sem gastar uma das tentativas
+      if (isVeloMailRateLimit(error) && worker) {
+        await prisma.email.update({ where: { id: email.id }, data: { status: 'QUEUED', errorMessage: 'Aguardando o limite de envios do plano do VeloMail' } });
+        await worker.rateLimit(Math.min((error.retryAfterMs || 60_000) + 1000, 60 * 60 * 1000));
+        throw Worker.RateLimitError();
+      }
       const veloError = error instanceof VeloMailError ? error : null;
       const message = veloError ? `${veloError.code || veloError.status}: ${veloError.message}` : String(error?.message || error);
 
