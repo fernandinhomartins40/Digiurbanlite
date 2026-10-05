@@ -37,7 +37,6 @@ import { promisify } from 'util';
 import fs from 'fs/promises';
 import path from 'path';
 import multer from 'multer';
-import emailServerRouter from './email-server';
 import {
   ACTIVE_ORGANIZATIONAL_ASSIGNMENT_STATUSES,
   extractPrimaryDepartmentIdFromOrganization,
@@ -1880,7 +1879,7 @@ router.post('/audit/export', platformConsoleAuth, async (req: Request, res: Resp
 });
 
 // Mount email server management routes
-router.use('/email-server', emailServerRouter);
+// /email-server: servidor de e-mail próprio desligado (ver index.ts — e-mail transacional pelo VeloMail)
 
 // ============================================
 // SYSTEM LOGS - Visualização de Logs Winston

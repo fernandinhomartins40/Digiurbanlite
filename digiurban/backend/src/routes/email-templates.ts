@@ -216,21 +216,9 @@ router.post('/:id/test', asyncHandler(async (req: Request, res: Response) => {
     });
   }
 
-  // Buscar EmailServer ativo
-  const emailServer = await prisma.emailServer.findFirst({
-    where: { isActive: true }
-  });
-
-  if (!emailServer) {
-    return res.status(400).json({
-      success: false,
-      message: 'Servidor de email não configurado'
-    });
-  }
-
   // Enviar email de teste
   const result = await transactionalEmailService.sendEmail({
-    emailServerId: emailServer.id,
+    emailServerId: '',
     templateName: template.name,
     to: email,
     variables: (variables || {}) as any,

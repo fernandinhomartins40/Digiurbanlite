@@ -148,7 +148,7 @@ const getSearchItems = () => [
   { title: 'Catalogo de Servicos', description: 'Configurar servicos municipais', href: '/admin/servicos', category: 'Servicos', keywords: ['servico', 'catalogo', 'configuracao'] },
   { title: 'Desempenho dos serviços', description: 'Indicadores dos serviços municipais', href: '/admin/gerenciamento-servicos', category: 'Servicos', keywords: ['gestao', 'servicos', 'indicadores'] },
   { title: 'Mensagens', description: 'Central de mensagens', href: '/admin/mensagens', category: 'Comunicacao', keywords: ['mensagem', 'chat', 'notificacao'] },
-  { title: 'Email', description: 'Email institucional', href: '/admin/email', category: 'Comunicacao', keywords: ['email', 'correio'] },
+  { title: 'E-mails do sistema', description: 'Avisos enviados por e-mail', href: '/admin/email', category: 'Comunicacao', keywords: ['email', 'e-mail', 'avisos'] },
   { title: 'Relatorios', description: 'Relatorios e BI', href: '/admin/relatorios', category: 'Analise', keywords: ['relatorio', 'bi', 'analytics'] },
   { title: 'Analytics', description: 'Analise avancada de dados', href: '/admin/analytics', category: 'Analise', keywords: ['analytics', 'dados', 'metricas'] },
   { title: 'IA Centralizada', description: 'Chat operacional e API de IA', href: '/admin/ia', category: 'Automacao', keywords: ['ia', 'chat', 'api'] },
@@ -377,9 +377,9 @@ export default function AdminPage() {
         category: 'Analise',
         section: 'Atalhos',
       },
-      hasMinRole('COORDINATOR') && {
-        title: 'Email',
-        description: 'Caixa institucional',
+      hasMinRole('MANAGER') && {
+        title: 'E-mails do sistema',
+        description: 'Avisos enviados por e-mail',
         href: '/admin/email',
         icon: Mail,
         color: 'text-cyan-600',
@@ -843,7 +843,7 @@ export default function AdminPage() {
           description="Canais, analises e administracao."
           items={[
             hasPermission('messages:read') && { title: 'Mensagens', href: '/admin/mensagens', icon: MessageCircle },
-            hasMinRole('COORDINATOR') && { title: 'Email', href: '/admin/email', icon: Mail },
+            hasMinRole('MANAGER') && { title: 'E-mails do sistema', href: '/admin/email', icon: Mail },
             (hasPermission('reports:department') || hasPermission('reports:full')) && { title: 'Relatorios', href: '/admin/relatorios', icon: BarChart3 },
             hasMinRole('ADMIN') && { title: 'Integracoes', href: '/admin/integracoes', icon: Zap },
           ]}

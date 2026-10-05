@@ -21,12 +21,16 @@ import {
 import { uploadDocuments } from '../config/upload';
 import path from 'path';
 import fs from 'fs/promises';
+import { sendMail } from '../services/mail/mailer';
 
 const router = Router();
 // Otimização VPS (docs/VPS-OPTIMIZATION-AUDIT.md, P0-2): usar o singleton de
 // src/lib/prisma — cada `new PrismaClient()` abria um pool próprio (esgotava o
 // PostgreSQL) e NÃO passava pela tenantExtension (furo de isolamento multi-tenant).
 import { prisma } from '../lib/prisma';
+
+const escapeMailHtml = (value: unknown) =>
+  String(value ?? '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
 
 // ============================================================================
 // CRUD DE TEMPLATES (ADMIN+)
@@ -827,21 +831,8 @@ router.post('/generated-documents/send-multiple', adminAuthMiddleware, uploadDoc
       // Combinar todos os anexos
       const allAttachments = [...documentAttachments, ...additionalAttachments];
 
-      // Enviar email único com todos os anexos
-      const nodemailer = require('nodemailer');
-      const { getSystemEmail } = require('../utils/email-domain.utils');
-
-      const transporter = nodemailer.createTransport({
-        host: 'ultrazend-smtp',
-        port: 587,
-        secure: false,
-        tls: { rejectUnauthorized: false }
-      });
-
-      const fromEmail = process.env.SMTP_FROM || await getSystemEmail('noreply');
-
-      const docList = documents.map(d => `• ${d.template.name}`).join('\n');
-      const fileList = additionalFiles.map(f => `• ${f.originalname}`).join('\n');
+      const docList = documents.map(d => `• ${escapeMailHtml(d.template.name)}`).join('<br>');
+      const fileList = additionalFiles.map(f => `• ${escapeMailHtml(f.originalname)}`).join('<br>');
       const totalCount = documents.length + additionalFiles.length;
 
       const htmlContent = `<!DOCTYPE html>
@@ -852,9 +843,9 @@ router.post('/generated-documents/send-multiple', adminAuthMiddleware, uploadDoc
       <h2>Documentos Disponíveis</h2>
     </div>
     <div style="padding: 20px; background: #f9f9f9;">
-      <p>Olá <strong>${recipientName}</strong>,</p>
-      ${message ? `<p>${message}</p>` : ''}
-      <p>Você recebeu <strong>${totalCount} documento(s)</strong> do protocolo <strong>${protocolNumber}</strong>:</p>
+      <p>Olá <strong>${escapeMailHtml(recipientName)}</strong>,</p>
+      ${message ? `<p>${escapeMailHtml(message)}</p>` : ''}
+      <p>Você recebeu <strong>${totalCount} documento(s)</strong> do protocolo <strong>${escapeMailHtml(protocolNumber)}</strong>:</p>
       ${documents.length > 0 ? `<p><strong>Documentos Gerados:</strong></p><p style="margin-left: 20px;">${docList}</p>` : ''}
       ${additionalFiles.length > 0 ? `<p><strong>Arquivos Adicionais:</strong></p><p style="margin-left: 20px;">${fileList}</p>` : ''}
       <p>Os documentos estão anexados a este email e também disponíveis na área "Meus Documentos".</p>
@@ -864,16 +855,22 @@ router.post('/generated-documents/send-multiple', adminAuthMiddleware, uploadDoc
   </div>
 </body></html>`;
 
-      await transporter.sendMail({
-        from: fromEmail,
+      // Fila do e-mail transacional (VeloMail). Os arquivos são lidos agora:
+      // os enviados no formulário são temporários e podem sumir antes da entrega.
+      const attachmentsWithContent = await Promise.all(
+        allAttachments.map(async (item) => ({ filename: item.filename, content: await fs.readFile(item.path) }))
+      );
+      const queued = await sendMail({
         to: recipientEmail,
         subject: subject || `Documentos do Protocolo ${protocolNumber}`,
         html: htmlContent,
-        attachments: allAttachments
+        kind: 'document',
+        attachments: attachmentsWithContent,
       });
+      if (!queued.queued) throw new Error(queued.reason || 'E-mail não enfileirado');
 
       results.emailsSent = 1;
-      console.log(`   ✓ Email enviado com ${totalCount} anexo(s)`);
+      console.log(`   ✓ Email na fila com ${totalCount} anexo(s)`);
     } catch (emailError: any) {
       console.error(`   ✗ Erro ao enviar email:`, emailError.message);
       results.errors.push(`Erro ao enviar email: ${emailError.message}`);

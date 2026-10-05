@@ -1,3 +1,4 @@
+import { tenantPortalUrl } from '../services/mail/links';
 import { Router, Request, Response, NextFunction } from 'express';
 import { prisma } from '../lib/prisma';
 import * as bcrypt from 'bcryptjs';
@@ -243,37 +244,26 @@ router.post('/register', registerRateLimiter, asyncHandler(async (req: Request, 
 
     // 📧 Enviar email de boas-vindas
     try {
-      // Buscar EmailServer ativo
-      const emailServer = await prisma.emailServer.findFirst({
-        where: { isActive: true }
+      // Multi-tenant: nome do município vem do tenant do cidadão recém-criado
+      // (carimbado pela extension), não do singleton legado.
+      const tenantOfCitizen = citizen.tenantId
+        ? await TenantService.getById(citizen.tenantId)
+        : null;
+      const portalUrl = await tenantPortalUrl(citizen.tenantId || null);
+
+      // Fila do e-mail transacional (não bloqueia a resposta nem falha o cadastro)
+      getSystemEmail('suporte').then(supportEmail =>
+        transactionalEmailService.sendWelcomeEmail(
+          '',
+          citizen.email,
+          citizen.name,
+          tenantOfCitizen?.nome || 'DigiUrban',
+          portalUrl,
+          process.env.SUPPORT_EMAIL || supportEmail
+        )
+      ).catch(error => {
+        console.error('Erro ao enviar email de boas-vindas:', error);
       });
-
-      if (emailServer) {
-        // Multi-tenant: nome do município vem do tenant do cidadão recém-criado
-        // (carimbado pela extension), não do singleton legado.
-        const tenantOfCitizen = citizen.tenantId
-          ? await TenantService.getById(citizen.tenantId)
-          : null;
-
-        // Enviar email de boas-vindas de forma assíncrona (não bloqueia resposta)
-        getSystemEmail('suporte').then(supportEmail => {
-          transactionalEmailService.sendWelcomeEmail(
-            emailServer.id,
-            citizen.email,
-            citizen.name,
-            tenantOfCitizen?.nome || 'DigiUrban',
-            process.env.FRONTEND_URL || 'https://digiurban.com.br',
-            process.env.SUPPORT_EMAIL || supportEmail
-          ).catch(error => {
-            console.error('Erro ao enviar email de boas-vindas:', error);
-            // Não falhamos o cadastro por erro de email
-          });
-        });
-
-        console.log('✅ Email de boas-vindas agendado para:', citizen.email);
-      } else {
-        console.warn('⚠️ EmailServer não configurado. Email de boas-vindas não enviado.');
-      }
     } catch (error) {
       console.error('Erro ao processar email de boas-vindas:', error);
       // Não falhamos o cadastro por erro de email

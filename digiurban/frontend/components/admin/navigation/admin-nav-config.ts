@@ -188,8 +188,7 @@ export function getAdminMainNavigation(stats?: AdminNavStats): AdminNavSection[]
           permissions: ['messages:read'],
           badge: numberBadge(stats?.unreadMessages),
         },
-        { title: 'Email', href: '/admin/email', icon: Mail, minRole: 'COORDINATOR' },
-        { title: 'Contas de Email', href: '/admin/email-accounts', icon: UserCircle, minRole: 'ADMIN' },
+        { title: 'E-mails do sistema', href: '/admin/email', icon: Mail, minRole: 'MANAGER' },
       ],
     },
 

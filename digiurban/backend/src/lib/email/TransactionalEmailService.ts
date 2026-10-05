@@ -1,5 +1,5 @@
 import { prisma } from '../prisma';
-import * as nodemailer from 'nodemailer';
+import { sendMail } from '../../services/mail/mailer';
 import {
   IEmailService,
   EmailTemplate as CentralEmailTemplate,
@@ -140,140 +140,47 @@ export class TransactionalEmailService {
   async sendEmail(
     options: SendEmailOptions
   ): Promise<{ success: boolean; messageId?: string; error?: string }> {
+    // Desde 2026-10-05 o envio é pela fila do e-mail transacional (VeloMail).
+    // emailServerId fica na assinatura só por compatibilidade com quem chama.
     try {
-      const {
-        emailServerId, // DIA 3: Changed from tenantId
-        templateName,
-        to,
-        variables,
-        from,
-        priority = 3,
-        scheduledFor,
-        tags = ['transactional'],
-        campaignId,
-        attachments = []
-        } = options;
+      const { templateName, to, variables, from, priority = 3, scheduledFor, tags = ['transactional'], attachments = [] } = options;
 
-      // DIA 3: Buscar configurações do servidor de email diretamente por ID
-      const emailServer = await prisma.emailServer.findUnique({
-        where: { id: emailServerId }, // DIA 3: Changed from tenantId
-        include: {
-          domains: { where: { isVerified: true }, take: 1 },
-          users: { where: { isAdmin: true }, take: 1 }
-        }
-        });
-
-      if (!emailServer || !emailServer.isActive) {
-        throw new Error('Email service not available');
-      }
-
-      // Single tenant: Buscar template apenas por nome
-      const template = await prisma.emailTemplate.findFirst({
-        where: {
-          name: templateName
-        }
-      });
-
+      const template = await prisma.emailTemplate.findFirst({ where: { name: templateName } });
       if (!template) {
         throw new Error(`Email template '${templateName}' not found`);
       }
 
-      // Processar variáveis no template
-      const processedSubject = this.processTemplate(template.subject, variables);
-      const processedHtml = this.processTemplate(template.htmlContent, variables);
-      const processedText = template.textContent
-        ? this.processTemplate(template.textContent, variables)
-        : this.convertHtmlToText(processedHtml);
+      const subject = this.processTemplate(template.subject, variables);
+      const html = this.processTemplate(template.htmlContent, variables);
+      const text = template.textContent ? this.processTemplate(template.textContent, variables) : this.convertHtmlToText(html);
 
-      // Configurar transporter para usar o servidor SMTP próprio
-      const adminUser = emailServer.users[0];
-      const domain = emailServer.domains[0];
-
-      if (!adminUser || !domain) {
-        throw new Error('SMTP configuration incomplete');
-      }
-
-      // Gerar ID único da mensagem
-      const messageId = `${Date.now()}-${Math.random().toString(36)}@${domain.domainName}`;
-
-      // Salvar email na base de dados primeiro
-      const email = await prisma.email.create({
-        data: {
-          emailServerId: emailServer.id,
-          domainId: domain.id,
-          userId: adminUser.id,
-          messageId,
-          fromEmail: from?.email || `noreply@${domain.domainName}`,
-          toEmail: to,
-          subject: processedSubject,
-          htmlContent: processedHtml,
-          textContent: processedText,
-          status: scheduledFor ? 'QUEUED' : 'PROCESSING',
-          priority,
-          scheduledFor,
-          campaignId: campaignId || `transactional-${templateName}`,
-          tags: tags,
-          metadata: {
-            templateName,
-            variables: Object.keys(variables),
-            isTransactional: true
-        }
-        }
-        });
-
-      // Se for agendado, não envia agora
-      if (scheduledFor && scheduledFor > new Date()) {
-        return { success: true, messageId: email.messageId };
-      }
-
-      // Configurar transporter
-      const transporter = await this.createTransporter(emailServer, adminUser, domain);
-
-      // Enviar email
-      const result = await transporter.sendMail({
-        from: from?.name
-          ? `"${from.name}" <${from.email || `noreply@${domain.domainName}`}>`
-          : `noreply@${domain.domainName}`,
+      const result = await sendMail({
         to,
-        subject: processedSubject,
-        html: processedHtml,
-        text: processedText,
-        attachments: attachments.length > 0 ? attachments : undefined,
-        headers: {
-          'X-Campaign-ID': campaignId || `transactional-${templateName}`,
-          'X-EmailServer-ID': emailServerId, // DIA 3: Changed from X-Tenant-ID
-          'X-Template': templateName
-        }
-        });
+        subject,
+        html,
+        text,
+        fromName: from?.name || null,
+        priority: priority <= 2 ? 'critical' : priority >= 5 ? 'low' : 'normal',
+        tags,
+        kind: `template:${templateName}`,
+        sendAt: scheduledFor || null,
+        attachments: attachments.map((item) => ({
+          filename: item.filename,
+          path: item.path,
+          content: item.content,
+          contentType: item.contentType,
+        })),
+      });
 
-      // Atualizar status do email
-      await prisma.email.update({
-        where: { id: email.id },
-        data: {
-          status: 'SENT',
-          sentAt: new Date()
-        }
-        });
-
-      // Registrar evento
-      await prisma.emailEvent.create({
-        data: {
-          emailId: email.id,
-          type: 'SENT',
-          timestamp: new Date()
-        }
-        });
-
-      // Incrementar contadores do usuário
-      await this.updateUserSentCount(adminUser.id);
-
-      return { success: true, messageId: email.messageId };
+      return result.queued
+        ? { success: true, messageId: result.emailId }
+        : { success: false, error: result.reason };
     } catch (error) {
       console.error('Error sending transactional email:', error);
       return {
         success: false,
         error: error instanceof Error ? error.message : 'Unknown error'
-        };
+      };
     }
   }
 
@@ -477,69 +384,6 @@ export class TransactionalEmailService {
       .replace(/&lt;/g, '<')
       .replace(/&gt;/g, '>')
       .trim();
-  }
-
-  /**
-   * Cria transporter do nodemailer
-   */
-  private async createTransporter(
-    emailServer: EmailServerWithRelations,
-    adminUser: EmailUserWithAdmin,
-    domain: EmailDomainWithVerification
-  ) {
-    // UltraZend SMTP Server: Comunicação interna Docker não requer autenticação
-    // Servidores externos (Gmail, Outlook, etc) requerem autenticação
-    const isInternalServer = emailServer.hostname === 'ultrazend-smtp' ||
-                             emailServer.hostname.includes('ultrazend');
-
-    const transportConfig: any = {
-      host: emailServer.hostname,
-      port: emailServer.submissionPort,
-      secure: false,
-      tls: {
-        rejectUnauthorized: false
-      }
-    };
-
-    // Apenas adicionar autenticação se for servidor externo
-    if (!isInternalServer) {
-      transportConfig.auth = {
-        user: adminUser.email,
-        pass: 'temp-password', // Em produção, descriptografar passwordHash
-      };
-    }
-
-    return nodemailer.createTransport(transportConfig);
-  }
-
-  /**
-   * Atualiza contadores de envio do usuário
-   */
-  private async updateUserSentCount(userId: string) {
-    try {
-      const today = new Date();
-      const startOfDay = new Date(today.getFullYear(), today.getMonth(), today.getDate());
-      const startOfMonth = new Date(today.getFullYear(), today.getMonth(), 1);
-
-      const [sentToday, sentThisMonth] = await Promise.all([
-        prisma.email.count({
-          where: { userId, sentAt: { gte: startOfDay } }
-        }),
-        prisma.email.count({
-          where: { userId, sentAt: { gte: startOfMonth } }
-        }),
-      ]);
-
-      await prisma.emailUser.update({
-        where: { id: userId },
-        data: {
-          sentToday,
-          sentThisMonth
-        }
-        });
-    } catch (error) {
-      console.error('Error updating user sent count:', error);
-    }
   }
 
   /**
@@ -975,111 +819,26 @@ Este é um email automático, não responda.
   }
 
   /**
-   * Envia email raw (sem template)
-   * Usado para recuperação de senha e outros emails transacionais diretos
+   * Envia email raw (sem template) — troca de senha e outros diretos.
+   * Vai pela fila do e-mail transacional com prioridade máxima.
    */
   async sendRawEmail({
-    from,
     to,
     subject,
     html,
     text,
-    emailServerId,
-    domainId
   }: {
-    from: string;
+    from?: string;
     to: string;
     subject: string;
     html: string;
     text: string;
-    emailServerId: string;
-    domainId: string;
+    emailServerId?: string;
+    domainId?: string;
   }): Promise<void> {
-    try {
-      // Buscar EmailServer para obter configurações
-      const emailServer = await prisma.emailServer.findUnique({
-        where: { id: emailServerId }
-      });
-
-      if (!emailServer) {
-        throw new Error(`Email server ${emailServerId} not found`);
-      }
-
-      // Buscar domínio com DKIM
-      const emailDomain = await prisma.emailDomain.findUnique({
-        where: { id: domainId }
-      });
-
-      if (!emailDomain) {
-        throw new Error(`Email domain ${domainId} not found`);
-      }
-
-      // Gerar messageId
-      const messageId = crypto.randomBytes(16).toString('hex') + '@' + emailDomain.domainName;
-
-      // Criar transporter com configurações dinâmicas do EmailServer
-      // UltraZend SMTP Server: Comunicação interna Docker não requer autenticação
-      const isInternalServer = emailServer.hostname === 'ultrazend-smtp' ||
-                               emailServer.hostname.includes('ultrazend');
-
-      const transportOptions: any = {
-        host: emailServer.hostname,
-        port: emailServer.submissionPort,
-        secure: false,
-        tls: { rejectUnauthorized: false }
-      };
-
-      // Configurar DKIM se habilitado
-      if (emailDomain.dkimEnabled && emailDomain.dkimPrivateKey) {
-        transportOptions.dkim = {
-          domainName: emailDomain.domainName,
-          keySelector: emailDomain.dkimSelector || 'default',
-          privateKey: emailDomain.dkimPrivateKey
-        };
-      }
-
-      // IMPORTANTE: Não adicionar autenticação para servidores internos Docker
-      // Apenas servidores externos (Gmail, Outlook, etc) requerem auth
-      // if (!isInternalServer) {
-      //   transportOptions.auth = { user, pass };
-      // }
-
-      const transporter = nodemailer.createTransport(transportOptions);
-
-      // Enviar email
-      await transporter.sendMail({
-        from,
-        to,
-        subject,
-        html,
-        text,
-        messageId: `<${messageId}>`,
-        headers: {
-          'X-Mailer': 'DigiUrban Mail Server',
-          'X-Email-Type': 'Transactional'
-        }
-      });
-
-      // Salvar no banco
-      await prisma.email.create({
-        data: {
-          emailServerId,
-          domainId,
-          messageId,
-          fromEmail: from,
-          toEmail: to,
-          subject,
-          htmlContent: html,
-          textContent: text,
-          status: 'SENT',
-          dkimSigned: !!emailDomain.dkimPrivateKey,
-          sentAt: new Date()
-        }
-      });
-
-    } catch (error) {
-      console.error('Error sending raw email:', error);
-      throw error;
+    const result = await sendMail({ to, subject, html, text, priority: 'critical', kind: 'raw' });
+    if (!result.queued) {
+      throw new Error(result.reason || 'E-mail não enfileirado');
     }
   }
 }

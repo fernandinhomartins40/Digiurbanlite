@@ -104,7 +104,13 @@ const conditionalBodyParser = (req: express.Request, res: express.Response, next
     return next();
   }
 
-  express.json({ limit: '50mb' })(req, res, (err) => {
+  express.json({
+    limit: '50mb',
+    verify: (request, _response, buffer) => {
+      // webhooks assinados (VeloMail): a assinatura é calculada sobre os bytes originais
+      if ((request as express.Request).url?.startsWith('/api/webhooks/')) (request as any).rawBody = Buffer.from(buffer);
+    },
+  })(req, res, (err) => {
     if (err) {
       logger.error('Body parser JSON error', { error: err.message, url: req.url });
       return next(err);
@@ -277,11 +283,18 @@ loadRoute('/api/platform', './routes/platform-panel.routes');
 const superAdminRoutes = require('./routes/super-admin').default;
 app.use('/api/super-admin', superAdminRoutes);
 
-const superAdminEmailRoutes = require('./routes/super-admin-email').default;
-app.use('/api/super-admin', superAdminEmailRoutes);
-
-const superAdminEmailPlansRoutes = require('./routes/super-admin-email-plans').default;
-app.use('/api/super-admin/email/plans', superAdminEmailPlansRoutes);
+// E-mail: só TRANSACIONAL, enviado pelo VeloMail (2026-10-05). O servidor de
+// e-mail próprio (caixas, contas, planos, relay) foi desligado: era relay aberto
+// e misturava a caixa de entrada de todos os municípios.
+{
+  const mail = require('./routes/transactional-mail.routes');
+  app.use('/api/webhooks', mail.velomailWebhookRouter);
+  app.use('/api/platform/mail', mail.platformMailRouter);
+  app.use('/api/admin/mail', mail.tenantMailRouter);
+}
+const mailboxRetired = (_req: express.Request, res: express.Response) =>
+  res.status(410).json({ error: 'Caixas de e-mail desativadas. O DigiUrban envia apenas e-mails do sistema (notificações e senhas).' });
+app.use(['/api/super-admin/email-subscriptions', '/api/super-admin/email-stats', '/api/super-admin/email/plans', '/api/super-admin/email-server'], mailboxRetired);
 
 // Email Templates
 const emailTemplatesRoutes = require('./routes/email-templates').default;
@@ -365,10 +378,7 @@ loadRoute('/api/analytics', './routes/analytics');
 // REMOVIDO (Fase 0, achado do fail-fast): ./routes/custom-modules não existe
 // no repositório — registro morto que falhava em todo boot (404 silencioso).
 loadRoute('/api/admin/face-platform', './routes/face-platform.routes');
-loadRoute('/api/admin/email', './routes/admin-email');
-loadRoute('/api/admin/email-service', './routes/admin-email');
-loadRoute('/api/admin/email-accounts', './routes/admin-email-accounts');
-loadRoute('/api/admin/email-compose', './routes/admin-email-compose');
+app.use(['/api/admin/email', '/api/admin/email-service', '/api/admin/email-accounts', '/api/admin/email-compose'], mailboxRetired);
 loadRoute('/api/integrations', './routes/integrations');
 loadRoute('/api/municipality', './routes/municipality-config');
 loadRoute('/api/apresentacao', './routes/apresentacao-export');
@@ -386,6 +396,7 @@ loadRoute('/api/notifications', './routes/notification-preferences.routes');
 
 // Workers e cron jobs
 try { require('./workers/notification.worker'); } catch (e) { logger.error('Failed to start notification worker', { error: e }); }
+try { require('./workers/mail.worker').startMailWorker(); } catch (e) { logger.error('Failed to start transactional mail worker', { error: e }); }
 try { require('./jobs/notification.jobs'); } catch (e) { logger.error('Failed to start notification cron jobs', { error: e }); }
 // Monitoramento de SLA/pendências (marca atrasos, lembretes, expiração)
 try { require('./jobs/sla-monitor.job').initSlaMonitorJob(); } catch (e) { logger.error('Failed to start SLA monitor job', { error: e }); }
@@ -495,20 +506,6 @@ const server = httpServer.listen(PORT, async () => {
     websocket: `ws://localhost:${PORT}/api/socket`
   });
 
-  // Inicializar cron jobs de email
-  try {
-    const { startEmailCronJobs } = require('./jobs/email-counters-reset');
-    startEmailCronJobs();
-  } catch (error) {
-    logger.error('Failed to start email cron jobs', { error });
-  }
-
-  try {
-    const { startEmailServerMonitoring } = require('./jobs/email-server-monitor');
-    startEmailServerMonitoring();
-  } catch (error) {
-    logger.error('Failed to start email server monitoring', { error });
-  }
 });
 
 server.on('error', (error: NodeJS.ErrnoException) => {

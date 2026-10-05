@@ -95,64 +95,9 @@ services:
       timeout: 5s
       retries: 5
 
-  ultrazend-smtp:
-    # Otimizacao VPS (docs/VPS-OPTIMIZATION-AUDIT.md, P0-4): a imagem vem PRONTA do
-    # GHCR, construida pelo GitHub Actions. A VPS so faz `pull`. O bloco `build`
-    # permanece apenas como fallback manual (docker compose build) em emergencia.
-    image: ghcr.io/fernandinhomartins40/digiurban-smtp:${RELEASE:-latest}
-    build:
-      context: ./ultrazend-smtp-server
-      dockerfile: Dockerfile
-    container_name: ultrazend-smtp
-    # Otimizacao VPS (2026-09-14): SEM isto o driver json-file cresce ILIMITADO
-    # ate encher o disco (a VPS esta a 84%). 3 arquivos x 10MB = teto de 30MB/container.
-    logging:
-      driver: "json-file"
-      options:
-        max-size: "10m"
-        max-file: "3"
-    # Otimização VPS (docs/VPS-OPTIMIZATION-AUDIT.md, P1-1): VPS COMPARTILHADA com ~30
-    # aplicações — sem mem_limit um vazamento aqui derruba as outras. Valor = ~3x o
-    # consumo NÃO MEDIDO (container em crash-loop) — revisar após o fix do P0-2.
-    mem_limit: 384m
-    # Otimizacao VPS (docs/PLANO-OTIMIZACAO-VPS.md, A1): `mem_limit` impedia que a app
-    # comesse toda a RAM, mas NADA impedia que consumisse os 4 vCPU da VPS compartilhada
-    # — que foi o incidente que motivou esta auditoria. `cpus` e TETO, nao reserva: a soma
-    # dos tetos (6.0) excede os 4 vCPU de proposito, para nao particionar a maquina.
-    # Justificativa deste valor: SMTP e I/O-bound; CPU NAO MEDIDO (estava em crash-loop).
-    # `pids_limit` barra fork bomb / vazamento de processos.
-    cpus: 0.5
-    pids_limit: 128
-    ports:
-      - "25:25"     # MX Server (receber emails externos)
-      - "587:587"   # Submission Server (enviar emails autenticados)
-    environment:
-      - NODE_ENV=production
-      # Otimizacao VPS (docs/PLANO-OTIMIZACAO-VPS.md, A1b): este era o UNICO servico Node
-      # sem teto de heap do V8 — lacuna encontrada ao conferir o dimensionamento contra a
-      # pratica corrente (heap = 60-75% do mem_limit). Sem isto o V8 cresce ate bater no
-      # mem_limit e o container morre por OOM em vez de fazer GC. 256m / 384m = 66%.
-      - NODE_OPTIONS=--max-old-space-size=256
-      - DATABASE_URL=${DATABASE_URL}
-      - SMTP_HOSTNAME=mail.digiurban.com.br
-      - MX_PORT=25
-      - SUBMISSION_PORT=587
-    volumes:
-      - smtp_data:/app/data
-      - smtp_logs:/app/logs
-      - digiurban_uploads:/app/uploads:ro  # ← Compartilhar uploads (read-only)
-    restart: unless-stopped
-    depends_on:
-      postgres:
-        condition: service_healthy
-    networks:
-      - digiurban_network
-    healthcheck:
-      test: ["CMD", "node", "-e", "require('net').connect(587, 'localhost').on('connect', () => process.exit(0)).on('error', () => process.exit(1))"]
-      interval: 30s
-      timeout: 10s
-      retries: 3
-      start_period: 60s
+  # ultrazend-smtp REMOVIDO (2026-10-05): o DigiUrban envia só e-mail transacional
+  # pelo VeloMail (API HTTPS, fila no Redis). O servidor próprio era relay aberto nas
+  # portas 25/587 e interceptava a porta 25 da VPS. O volume smtp_data fica no disco.
 
   ultrazend-messages:
     # Otimizacao VPS (docs/VPS-OPTIMIZATION-AUDIT.md, P0-4): a imagem vem PRONTA do
@@ -518,8 +463,6 @@ services:
         condition: service_healthy
       redis:
         condition: service_healthy
-      ultrazend-smtp:
-        condition: service_healthy
     healthcheck:
       test: ["CMD", "curl", "-f", "http://127.0.0.1/health"]
       interval: 30s
@@ -541,10 +484,6 @@ volumes:
   digiurban_logs:
     driver: local
   digiurban_backups:
-    driver: local
-  smtp_data:
-    driver: local
-  smtp_logs:
     driver: local
   messages_uploads:
     driver: local

@@ -14,8 +14,11 @@ import {
   generateUniqueValidationCode,
   generateDocumentHash
 } from '../utils/validation-code.utils';
-import { getSystemEmail } from '../utils/email-domain.utils';
+import { sendMail } from './mail/mailer';
 import { resolveUploadTenantId, getTenantUploadDir, getTenantUploadUrl } from '../config/upload';
+
+const escapeMailHtml = (value: unknown) =>
+  String(value ?? '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
 
 
 // ============================================================================
@@ -591,26 +594,13 @@ export async function sendDocumentByEmail(input: SendDocumentInput) {
   const emailSubject = subject || `Documento do Protocolo ${doc.protocol.number}`;
   const emailMessage = message || `Segue em anexo o documento referente ao protocolo ${doc.protocol.number} - ${doc.protocol.service.name}.`;
 
-  // 3. SOLUÇÃO COMUNIDADE: Usar PATH em vez de buffer para melhor compatibilidade com SMTP
-  const nodemailer = require('nodemailer');
-  const fromEmail = process.env.SMTP_FROM || await getSystemEmail('noreply');
-
-  // Verificar se arquivo existe
+  // 3. Verificar se arquivo existe (o anexo é lido agora e vai junto na fila)
   console.log(`📎 Verificando arquivo: ${filePath}`);
   const fileExists = await fs.access(filePath).then(() => true).catch(() => false);
   if (!fileExists) {
     throw new Error(`Arquivo não encontrado: ${filePath}`);
   }
-  console.log(`✅ Arquivo encontrado: ${filePath}`);
-
-  // Configurar transporter com pool para melhor performance
-  const transporter = nodemailer.createTransport({
-    host: 'ultrazend-smtp',
-    port: 587,
-    secure: false,
-    pool: true, // Usar pooling para melhor performance
-    tls: { rejectUnauthorized: false }
-  });
+  const fileContent = await fs.readFile(filePath);
 
   // Montar HTML
   const htmlContent = `<!DOCTYPE html>
@@ -621,9 +611,9 @@ export async function sendDocumentByEmail(input: SendDocumentInput) {
       <h2>Documento Disponível</h2>
     </div>
     <div style="padding: 20px; background: #f9f9f9;">
-      <p>Olá <strong>${recipientName}</strong>,</p>
-      <p>${emailMessage}</p>
-      <p><strong>Documento:</strong> ${doc.fileName}</p>
+      <p>Olá <strong>${escapeMailHtml(recipientName)}</strong>,</p>
+      <p>${escapeMailHtml(emailMessage)}</p>
+      <p><strong>Documento:</strong> ${escapeMailHtml(doc.fileName)}</p>
       <p>O documento está anexado a este email.</p>
       <br>
       <p>Atenciosamente,<br>Equipe de Atendimento</p>
@@ -634,21 +624,18 @@ export async function sendDocumentByEmail(input: SendDocumentInput) {
   </div>
 </body></html>`;
 
-  // USAR PATH: Recomendação da comunidade para arquivos em disco com SMTP
-  // Isso permite streaming incremental e melhor performance de memória
-  const result = await transporter.sendMail({
-    from: fromEmail,
+  // Fila do e-mail transacional (VeloMail) — entrega com novas tentativas
+  const result = await sendMail({
     to: recipientEmail,
     subject: emailSubject,
     html: htmlContent,
-    attachments: [{
-      filename: doc.fileName,
-      path: filePath, // Usar path em vez de content para streaming
-      contentType: 'application/pdf'
-    }]
+    kind: 'document',
+    attachments: [{ filename: doc.fileName, content: fileContent, contentType: 'application/pdf' }],
   });
-
-  console.log(`📧 Email enviado com anexo: messageId=${result.messageId}`);
+  if (!result.queued) {
+    throw new Error(result.reason || 'Não foi possível enviar o e-mail');
+  }
+  console.log(`📧 Email na fila com anexo: id=${result.emailId}`);
 
   // 4. Atualizar registro
   await prisma.generatedDocument.update({

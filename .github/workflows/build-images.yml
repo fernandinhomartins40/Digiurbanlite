@@ -89,9 +89,6 @@ jobs:
           - name: digiurban-messages
             context: ./ultrazend-messages-server
             dockerfile: ./ultrazend-messages-server/Dockerfile
-          - name: digiurban-smtp
-            context: ./ultrazend-smtp-server
-            dockerfile: ./ultrazend-smtp-server/Dockerfile
           - name: digiurban-face
             context: ./ultrazend-face-server
             dockerfile: ./ultrazend-face-server/Dockerfile
@@ -206,7 +203,7 @@ jobs:
 
           echo "=== Baixando imagens prontas (a VPS NAO compila) ==="
           RELEASE="${RELEASE}" docker-compose -f docker-compose.vps.yml pull \
-            digiurban ultrazend-messages ultrazend-smtp ultrazend-face ultrazend-face-engine
+            digiurban ultrazend-messages ultrazend-face ultrazend-face-engine
 
           # IA LOCAL REMOVIDA (2026-09-14): llamacpp e digiurban-ai sairam do compose
           # (a IA passa a ser externa). Containers de servicos removidos NAO somem
@@ -217,9 +214,15 @@ jobs:
           echo "=== Removendo containers da IA local (descontinuada) ==="
           docker rm -f digiurban-llamacpp digiurban-ai 2>/dev/null || true
 
-          echo "=== Subindo infraestrutura (banco, cache, SMTP) ==="
+          # SMTP PROPRIO REMOVIDO (2026-10-05): e-mail transacional vai pelo VeloMail.
+          # Mesmo motivo acima: tirar do compose nao para o container antigo, que
+          # seguiria segurando as portas 25/587 da VPS.
+          echo "=== Removendo servidor SMTP antigo (descontinuado) ==="
+          docker rm -f ultrazend-smtp 2>/dev/null || true
+
+          echo "=== Subindo infraestrutura (banco, cache) ==="
           RELEASE="${RELEASE}" docker-compose -f docker-compose.vps.yml up -d \
-            postgres redis ultrazend-smtp
+            postgres redis
 
           wait_for_container_health digiurban-postgres 30 5
           wait_for_container_health digiurban-redis 30 5

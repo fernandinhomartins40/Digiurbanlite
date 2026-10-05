@@ -6,6 +6,8 @@
 import crypto from 'crypto';
 import { prisma } from '../lib/prisma';
 import { TransactionalEmailService } from '../lib/email/TransactionalEmailService';
+import { sendMail } from './mail/mailer';
+import { tenantPortalUrl } from './mail/links';
 
 interface CreateResetTokenParams {
   email: string;
@@ -238,33 +240,9 @@ export class PasswordResetService {
     userType: 'admin' | 'citizen';
   }): Promise<void> {
     try {
-      // Buscar EmailServer ativo
-      const emailServer = await prisma.emailServer.findFirst({
-        where: { isActive: true },
-        orderBy: { createdAt: 'desc' }
-      });
-
-      if (!emailServer) {
-        console.warn('[Password Reset] Nenhum servidor de email ativo - email não será enviado');
-        return;
-      }
-
-      // Buscar domínio configurado
-      const emailDomain = await prisma.emailDomain.findFirst({
-        where: {
-          emailServerId: emailServer.id,
-          isVerified: true
-        },
-        orderBy: { createdAt: 'desc' }
-      });
-
-      if (!emailDomain) {
-        console.warn('[Password Reset] Nenhum domínio de email configurado - email não será enviado');
-        return;
-      }
-
       // URL base do frontend
-      const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:3000';
+      // link no endereço do município (a sessão e o cookie ficam presos ao subdomínio)
+      const frontendUrl = await tenantPortalUrl();
       const resetPath = userType === 'admin' ? '/admin/reset-password' : '/cidadao/reset-password';
       const resetUrl = `${frontendUrl}${resetPath}?token=${token}`;
 
@@ -296,15 +274,9 @@ Equipe DigiUrban
       `.trim();
 
       // Enviar email via TransactionalEmailService
-      await this.emailService.sendRawEmail({
-        from: `noreply@${emailDomain.domainName}`,
-        to: email,
-        subject,
-        html: htmlContent,
-        text: textContent,
-        emailServerId: emailServer.id,
-        domainId: emailDomain.id
-      });
+      // fila do e-mail transacional (VeloMail), prioridade máxima
+      const result = await sendMail({ to: email, subject, html: htmlContent, text: textContent, priority: 'critical', kind: `password-reset:${userType}` });
+      if (!result.queued) console.warn('[Password Reset] E-mail não enfileirado:', result.reason);
 
     } catch (error) {
       console.error('Error sending reset email:', error);

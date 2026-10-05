@@ -81,10 +81,6 @@ const GROUPS: Group[] = [
       { title: 'Planos', href: '/super-admin/plans', icon: Package },
       { title: 'Faturas', href: '/super-admin/billing', icon: CreditCard },
       { title: 'Leads', href: '/super-admin/leads', icon: UserPlus },
-      // Cobrança do serviço de e-mail mora junto da cobrança principal
-      { title: 'Planos de e-mail', href: '/super-admin/email-plans', icon: Package },
-      { title: 'Assinaturas de e-mail', href: '/super-admin/email-subscriptions', icon: Users },
-      { title: 'Receita de e-mail', href: '/super-admin/email-billing', icon: CreditCard },
     ],
   },
   {
@@ -118,10 +114,7 @@ const GROUPS: Group[] = [
     icon: Mail,
     color: '#12B5CB',
     items: [
-      { title: 'Visão geral', href: '/super-admin/email-server', icon: LayoutDashboard },
-      { title: 'Domínios', href: '/super-admin/email-server/domains', icon: Globe },
-      { title: 'Servidor', href: '/super-admin/email-server/config', icon: Settings },
-      { title: 'Envios', href: '/super-admin/email-server/logs', icon: FileText },
+      { title: 'Envio pelo VeloMail', href: '/super-admin/email', icon: LayoutDashboard },
       { title: 'Modelos', href: '/super-admin/email-templates', icon: ScrollText },
     ],
   },

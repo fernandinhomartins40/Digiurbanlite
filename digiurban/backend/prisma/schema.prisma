@@ -2453,6 +2453,7 @@ model Email {
   emailServer   EmailServer? @relation(fields: [emailServerId], references: [id])
 
   @@index([tenantId])
+  @@index([tenantId, createdAt])
   @@map("emails")
 }
 
@@ -11387,6 +11388,33 @@ model FaceEngineSettings {
   updatedAt           DateTime @updatedAt
 
   @@map("face_engine_settings")
+}
+
+/// E-mail transacional da plataforma (envio pelo VeloMail). Chave da API e
+/// segredo do webhook ficam cifrados em platform_secrets (velomail_*).
+model TransactionalMailSettings {
+  id        String   @id @default("singleton")
+  enabled   Boolean  @default(false)
+  fromEmail String   @default("nao-responda@notificacoes.digiurban.com.br")
+  fromName  String   @default("DigiUrban")
+  apiBaseUrl String  @default("https://www.velomail.com.br/api")
+  updatedBy String?
+  updatedAt DateTime @updatedAt
+
+  @@map("transactional_mail_settings")
+}
+
+/// Remetente e respostas dos e-mails de cada município
+model TenantMailSettings {
+  id                        String   @id @default(cuid())
+  tenantId                  String?  @unique
+  senderName                String? // ex.: "Prefeitura de Palmital"
+  replyTo                   String? // e-mail real da prefeitura (respostas do cidadão)
+  emailNotificationsEnabled Boolean  @default(true)
+  updatedAt                 DateTime @updatedAt
+
+  @@index([tenantId])
+  @@map("tenant_mail_settings")
 }
 
 model PlatformSecret {

@@ -2,7 +2,7 @@
 
 ## Visão Geral
 
-Plataforma de governo digital municipal. Monorepo com 4 serviços: Backend (Express), Frontend (Next.js), Messages Server (Socket.IO + Bot), SMTP Server. Tudo orquestrado via Docker Compose com PostgreSQL e Redis. IA por APIs externas via gateway no backend (sem IA local).
+Plataforma de governo digital municipal. Monorepo com 4 serviços: Backend (Express), Frontend (Next.js), Messages Server (Socket.IO + Bot). E-mail só transacional, pela API do VeloMail. Tudo orquestrado via Docker Compose com PostgreSQL e Redis. IA por APIs externas via gateway no backend (sem IA local).
 
 ## Estrutura do Monorepo
 
@@ -11,7 +11,6 @@ Digiurbanlite/
 ├── digiurban/backend/          # API REST Express + Prisma (porta 3001)
 ├── digiurban/frontend/         # Next.js 14 App Router (porta 3000)
 ├── ultrazend-messages-server/  # WebSocket + Bot Engine (porta 9001)
-├── ultrazend-smtp-server/      # SMTP MX + Submission (portas 25, 587)
 ├── ultrazend-face-server/      # Biometria facial: regras, consentimento, fotos cifradas (rede interna, 9006)
 ├── ultrazend-face-engine/      # Motor facial Python (UniFace + ONNX CPU) — só mede, não decide (rede interna, 8000)
 ├── docker/                     # nginx.conf, supervisord.conf, startup.sh, SQL scripts
@@ -157,12 +156,12 @@ npm run diagnose     # teste de carregamento de rotas
 /admin/templates-documentos/ — Editor WYSIWYG de templates
 /admin/organograma/         — Unidades, cargos, funções, equipes
 /admin/certificados-digitais/— Certificados
-/admin/email/               — Email (inbox, sent, drafts, trash)
+/admin/email/               — E-mails do sistema (remetente, respostas, enviados)
 /admin/digibot/             — DigiBot: mensagens, menu, perguntas, palavras, ensinar o bot (sem JSON)
 /admin/analytics/           — Dashboard analítico
 /admin/relatorios/          — Templates de relatórios
 /admin/configuracoes/       — 8 abas de configuração
-/super-admin/               — Gestão do município, email server, auditoria
+/super-admin/               — Gestão do município, e-mail transacional (/super-admin/email), auditoria
 ```
 
 ### Hooks Customizados (47)
@@ -262,13 +261,15 @@ channel:${channelId}          — Canal de broadcast
 - Socket paths: Admin `:3001/api/socket` | Messages `:9001` (path default)
 - `ProtocolEvaluationSimplified` NÃO tem campo `evaluatedBy`
 
-## SMTP Server (`ultrazend-smtp-server/src/`)
+## E-mail (transacional, VeloMail — 2026-10-05)
 
-### Funcionalidades
-- **MX Server (porta 25):** Recebe emails de servidores externos
-- **Submission Server (porta 587):** Envio autenticado por clientes
-- **MX Delivery:** Entrega direta via DNS MX records (sem relay externo)
-- **DKIM:** Assinatura automática RSA 2048
+- **Sem caixa de entrada.** O servidor SMTP próprio (`ultrazend-smtp-server`, relay aberto nas portas 25/587) foi REMOVIDO. O DigiUrban só envia: avisos, troca de senha, boas-vindas, documentos
+- **Porta única de envio:** `sendMail()` em `backend/src/services/mail/mailer.ts` → linha em `emails` (QUEUED) + job na fila BullMQ `transactional-mail` → `workers/mail.worker.ts` entrega por `POST {apiBaseUrl}/emails/send` (header `x-api-key: re_...`), até 8 tentativas, 429 respeita `retryAfter`. Nunca usar nodemailer/SMTP direto
+- `TransactionalEmailService.sendEmail/sendRawEmail` seguem existindo (templates `EmailTemplate`), mas delegam para `sendMail`; `emailServerId` é ignorado
+- Webhook `POST /api/webhooks/velomail` (HMAC `X-Webhook-Signature`, corpo cru guardado em `req.rawBody` só para `/api/webhooks/`) marca DELIVERED/FAILED
+- Configuração pelo painel: Super-admin › E-mail (`/api/platform/mail`: chave `re_` e segredo do webhook cifrados em `platform_secrets`, remetente, liga/desliga, teste). Prefeitura: `/admin/email` (`/api/admin/mail`: nome do remetente, e-mail de resposta, desligar avisos não críticos, enviados)
+- Links em e-mails usam `tenantPortalUrl()` (`services/mail/links.ts`): domínio próprio → `{slug}.TENANT_BASE_DOMAIN` → FRONTEND_URL
+- Domínio de envio: `notificacoes.digiurban.com.br` (DNS na Cloudflare, registros sem proxy)
 
 ## Docker / Deploy
 
@@ -283,7 +284,6 @@ BUILD_TIMESTAMP=$(date +%s) docker compose -f docker-compose.vps.yml up -d --bui
 |-----------|-------------|---------------|
 | digiurban-vps | 3060 | 80 (Nginx) → 3001 (backend) + 3000 (frontend) |
 | ultrazend-messages | 9001 | 9001 |
-| ultrazend-smtp | 25, 587 | 25, 587 |
 | digiurban-postgres | 5432 | 5432 |
 | digiurban-redis | 6379 | 6379 |
 | ultrazend-face | — (interna) | 9006 |
