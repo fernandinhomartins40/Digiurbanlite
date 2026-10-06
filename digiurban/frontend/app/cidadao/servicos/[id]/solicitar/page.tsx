@@ -28,6 +28,8 @@ interface Service {
   name: string;
   description: string | null;
   estimatedDays: number | null;
+  /** nível mínimo para pedir: BRONZE | SILVER | GOLD */
+  minLevel?: string;
   department: {
     name: string;
   };
@@ -379,7 +381,11 @@ export default function SolicitarServicoPage() {
   const programApiType = isProgramEnrollment && service?.moduleType ? MODULE_TO_API_TYPE[service.moduleType] : null;
 
   const hasOwnQuestions = activeFormFields.some((field) => !field.id.toLowerCase().startsWith('citizen_'));
-  const showForm = !isProgramEnrollment || selectedProgram;
+  // nível do cidadão x nível pedido pelo serviço
+  const levelRank: Record<string, number> = { BRONZE: 1, SILVER: 2, GOLD: 3 };
+  const myRank = citizen?.verificationStatus === 'GOLD' ? 3 : citizen?.verificationStatus === 'VERIFIED' ? 2 : 1;
+  const levelBlocked = !!service && (levelRank[service.minLevel || 'BRONZE'] || 1) > myRank;
+  const showForm = !levelBlocked && (!isProgramEnrollment || selectedProgram);
   const docsToSend: any[] = selectedProgram
     ? (Array.isArray(selectedProgram.requiredDocuments) ? selectedProgram.requiredDocuments : [])
     : service.requiresDocuments && Array.isArray(service.requiredDocuments)
@@ -401,6 +407,23 @@ export default function SolicitarServicoPage() {
             </p>
           )}
         </div>
+
+        {levelBlocked && (
+          <div className="rounded-2xl border border-amber-200 bg-amber-50 p-4 text-sm text-amber-900">
+            <p className="font-medium">
+              {service.minLevel === 'GOLD' ? 'Este serviço pede cadastro nível Ouro.' : 'Este serviço pede cadastro conferido (nível Prata).'}
+            </p>
+            <p className="mt-1">
+              {service.minLevel === 'GOLD'
+                ? 'Envie os seus documentos e cadastre a biometria facial para liberar.'
+                : 'Complete o seu perfil e aguarde a prefeitura conferir o seu cadastro.'}{' '}
+              Se preferir, peça este serviço no balcão da prefeitura.
+            </p>
+            <Button size="sm" className="mt-3" onClick={() => router.push('/cidadao/perfil')}>
+              Ver o que falta
+            </Button>
+          </div>
+        )}
 
         {/* inscrição em programa: primeiro escolhe o programa */}
         {isProgramEnrollment && !selectedProgram && programApiType && (

@@ -5,8 +5,8 @@
  */
 
 export const CITIZEN_DOCUMENT_TYPES = [
-  { value: 'rg_frente', label: 'RG (frente)' },
-  { value: 'rg_verso', label: 'RG (verso)' },
+  { value: 'rg_frente', label: 'RG, CIN ou CNH (frente)' },
+  { value: 'rg_verso', label: 'RG, CIN ou CNH (verso)' },
   { value: 'cpf', label: 'CPF' },
   { value: 'comprovante_residencia', label: 'Comprovante de residência' },
   { value: 'certidao_nascimento', label: 'Certidão de nascimento' },
@@ -20,8 +20,8 @@ export const CITIZEN_DOCUMENT_TYPES = [
   { value: 'outro', label: 'Outro documento' },
 ] as const;
 
-/** Os 4 que contam para o nível Ouro aparecem primeiro na escolha */
-export const GOLD_DOCUMENT_TYPES = ['rg_frente', 'rg_verso', 'cpf', 'comprovante_residencia'];
+/** Os que contam para o nível Ouro aparecem primeiro na escolha (o CPF já vem no documento de identidade) */
+export const GOLD_DOCUMENT_TYPES = ['rg_frente', 'rg_verso', 'comprovante_residencia'];
 
 export function citizenDocumentLabel(type: string | null | undefined): string {
   const key = String(type || '').toLowerCase();

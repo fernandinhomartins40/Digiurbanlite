@@ -357,6 +357,7 @@ loadRoute('/api/admin/gabinete', './routes/admin-gabinete');
 loadRoute('/api/admin/gabinete/painel-prefeito', './routes/admin-gabinete-painel');
 loadRoute('/api/admin/citizens', './routes/admin-citizens');
 loadRoute('/api/admin/citizen-documents', './routes/admin-citizen-documents');
+loadRoute('/api/admin/citizen-tags', './routes/admin-citizen-tags');
 loadRoute('/api/citizens', './routes/citizens');
 
 // Portal do cidadão

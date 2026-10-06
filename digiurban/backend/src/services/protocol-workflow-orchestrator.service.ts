@@ -19,7 +19,7 @@ import * as documentService from './protocol-document.service';
 import * as pendingService from './protocol-pending.service';
 import * as interactionService from './protocol-interaction.service';
 import { protocolStatusEngine } from './protocol-status.engine';
-import * as categoryService from './citizen-category.service';
+import { assignTagsOnProtocolConcluded } from './citizen-tags.service';
 import { matchDocumentType } from '../utils/document-mapping';
 import {
   autoAssignProtocolToStageResponsible,
@@ -807,68 +807,21 @@ export class ProtocolWorkflowOrchestrator {
    * baseado no moduleType do serviço solicitado.
    */
   private async assignCitizenCategories(protocolId: string, assignedBy: string) {
+    const assigned = await assignTagsOnProtocolConcluded(protocolId);
+    const fresh = assigned.filter((tag) => tag.isNew);
+    if (fresh.length === 0) return;
     try {
-      const protocol = await prisma.protocolSimplified.findUnique({
-        where: { id: protocolId },
-        select: {
-          id: true,
-          citizenId: true,
-          moduleType: true,
-          service: {
-            select: {
-              name: true
-            }
-          }
-        }
+      await interactionService.createInteraction({
+        protocolId,
+        type: 'NOTE',
+        authorType: 'SERVER',
+        authorId: assignedBy,
+        authorName: 'Sistema',
+        message: `Etiqueta(s) do cidadão: ${fresh.map((tag) => tag.name).join(', ')}`,
+        isInternal: true
       });
-
-      if (!protocol || !protocol.moduleType) {
-        console.log(`⚠️ [Orchestrator] Protocolo sem moduleType, pulando categorização`);
-        return;
-      }
-
-      console.log(`🏷️ [Orchestrator] Verificando categorias para moduleType: ${protocol.moduleType}`);
-
-      // Atribuir categorias automaticamente
-      const results = await categoryService.autoAssignCategoriesByProtocol(
-        protocol.id,
-        protocol.citizenId,
-        protocol.moduleType,
-        assignedBy
-      );
-
-      if (results.length > 0) {
-        const newCategories = results.filter(r => r.isNew && r.success);
-        const reactivatedCategories = results.filter(r => !r.isNew && r.success);
-
-        if (newCategories.length > 0) {
-          console.log(`✅ [Orchestrator] ${newCategories.length} categoria(s) atribuída(s) ao cidadão`);
-
-          // Criar interação informativa
-          const categoryNames = newCategories
-            .map(r => r.assignment?.category?.name || 'Categoria')
-            .join(', ');
-
-          await interactionService.createInteraction({
-            protocolId: protocol.id,
-            type: 'NOTE',
-            authorType: 'SERVER',
-            authorId: assignedBy,
-            authorName: 'Sistema',
-            message: `🏷️ Categoria(s) atribuída(s): ${categoryNames}`,
-            isInternal: true
-          });
-        }
-
-        if (reactivatedCategories.length > 0) {
-          console.log(`🔄 [Orchestrator] ${reactivatedCategories.length} categoria(s) reativada(s)`);
-        }
-      } else {
-        console.log(`ℹ️ [Orchestrator] Nenhuma categoria configurada para este serviço`);
-      }
     } catch (error) {
-      console.error(`❌ [Orchestrator] Erro ao atribuir categorias:`, error);
-      // Não falhar o workflow por erro na categorização
+      console.error('[Orchestrator] nota de etiqueta não registrada:', error);
     }
   }
 

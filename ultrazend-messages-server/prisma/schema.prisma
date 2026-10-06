@@ -660,6 +660,9 @@ model ServiceSimplified {
   enableMapSelection       Boolean @default(false) // Permite marcar localização no mapa
 
   // ✅ NOVO: Sistema de validação de unicidade de protocolos
+  // Nível mínimo do cidadão para pedir pelo portal/assistente: BRONZE (qualquer um) | SILVER | GOLD
+  minLevel String @default("BRONZE")
+
   allowMultipleActiveProtocols Boolean @default(true) // Permite múltiplos protocolos ativos do mesmo serviço por cidadão
   uniquenessScope              String? // 'CITIZEN' | 'CUSTOM' | 'CITIZEN_PER_FIELD'
   uniquenessRules              Json? // Regras JSON para validação (estrutura varia por scope)
@@ -5622,6 +5625,8 @@ model CitizenCategory {
   // Array de moduleTypes que ativam esta categoria quando protocolo aprovado
   // Ex: ["CADASTRO_PRODUTOR", "RENOVACAO_PRODUTOR"]
   triggerServices String[] @default([])
+  // Serviços (por id) que dão a etiqueta ao concluir o pedido — escolhidos na tela
+  triggerServiceIds String[] @default([])
 
   // ═══════════════════════════════════════════════════════════════════
   // RELACIONAMENTOS ENTRE CATEGORIAS

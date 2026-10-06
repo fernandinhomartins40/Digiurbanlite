@@ -13,6 +13,7 @@ import {
   approveLatestPendingFaceEnrollment,
   autoPromoteToGold,
   getCitizenAccessLevelSummary,
+  getMissingProfileFields,
   notifyCitizenLevel,
 } from '../services/citizen-verification.service';
 import { UserRole } from '@prisma/client';
@@ -300,7 +301,7 @@ router.get(
   requirePermission('citizens:read'),
   asyncHandler(async (req, res: Response): Promise<void> => {
     const authReq = req as AuthenticatedRequest;
-    const { page = '1', limit = '50', status, search } = authReq.query;
+    const { page = '1', limit = '50', status, search, tagId } = authReq.query;
 
     console.log('📋 [CITIZENS] Listando cidadãos:', { page, limit, status, search });
 
@@ -313,6 +314,11 @@ router.get(
 
     if (status) {
       where.verificationStatus = status;
+    }
+
+    // só quem tem a etiqueta
+    if (tagId && typeof tagId === 'string') {
+      where.categories = { some: { categoryId: tagId, active: true } };
     }
 
     if (search && typeof search === 'string') {
@@ -422,6 +428,10 @@ router.get(
         phone: true,
         address: true,
         birthDate: true,
+        phoneSecondary: true,
+        rg: true,
+        motherName: true,
+        verificationNotes: true,
         registrationSource: true,
         createdAt: true,
         _count: {
@@ -434,11 +444,42 @@ router.get(
       orderBy: { createdAt: 'asc' }
         });
 
+    // O que o servidor precisa ver para conferir: o que falta no perfil, os
+    // documentos enviados e o que a leitura automática achou (antes era um
+    // clique às cegas)
+    const ids = pendingCitizens.map((citizen) => citizen.id);
+    const documents = ids.length
+      ? await prisma.citizenDocument.findMany({
+          where: { citizenId: { in: ids }, ...PERSONAL_DOCUMENT_WHERE },
+          select: { id: true, citizenId: true, documentType: true, status: true },
+        })
+      : [];
+    const readings = documents.length
+      ? await prisma.documentReading.findMany({
+          where: { source: 'CITIZEN_DOCUMENT', documentId: { in: documents.map((document) => document.id) } },
+          select: { documentId: true, status: true, nameMatch: true, cpfMatch: true, birthDateMatch: true, kindMatches: true },
+        }).catch(() => [])
+      : [];
+    const readingByDocument = new Map(readings.map((reading) => [reading.documentId, reading]));
+
+    const citizens = pendingCitizens.map((citizen) => ({
+      ...citizen,
+      missingProfileFields: getMissingProfileFields(citizen as any),
+      documents: documents
+        .filter((document) => document.citizenId === citizen.id)
+        .map((document) => ({
+          id: document.id,
+          documentType: document.documentType,
+          status: document.status,
+          reading: readingByDocument.get(document.id) || null,
+        })),
+    }));
+
     res.json({
       success: true,
       data: {
-        citizens: pendingCitizens,
-        total: pendingCitizens.length
+        citizens,
+        total: citizens.length
         }
         });
   })

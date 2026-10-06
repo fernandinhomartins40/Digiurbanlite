@@ -40,6 +40,7 @@ interface ServiceFormData {
   category: string
   departmentId: string
   estimatedDays: string
+  minLevel: string
   priority: number
   icon: string
   color: string
@@ -83,6 +84,7 @@ export default function NewServicePage() {
     category: '',
     departmentId: '',
     estimatedDays: '',
+    minLevel: 'BRONZE',
     priority: 3,
     icon: '',
     color: '#3b82f6',
@@ -372,6 +374,7 @@ export default function NewServicePage() {
         requiresDocuments: formData.requiresDocuments,
         requiredDocuments: formData.requiredDocuments.length > 0 ? formData.requiredDocuments : null,
         estimatedDays: formData.estimatedDays ? parseInt(formData.estimatedDays) : null,
+        minLevel: formData.minLevel || 'BRONZE',
         priority: formData.priority,
         icon: formData.icon || null,
         color: formData.color || null,

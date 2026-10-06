@@ -33,6 +33,7 @@ import {
   ShieldAlert,
   Sparkles,
   Sprout,
+  Tag,
   TreePine,
   TrendingUp,
   Trophy,
@@ -131,6 +132,12 @@ export function getAdminMainNavigation(stats?: AdminNavStats): AdminNavSection[]
           icon: UserCheck,
           permissions: ['citizens:verify'],
           badge: numberBadge(stats?.pendingCitizens),
+        },
+        {
+          title: 'Etiquetas',
+          href: '/admin/cidadaos/etiquetas',
+          icon: Tag,
+          permissions: ['citizens:read'],
         },
         {
           title: 'Composição Familiar',

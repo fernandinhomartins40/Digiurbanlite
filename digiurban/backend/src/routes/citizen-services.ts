@@ -1,3 +1,4 @@
+import { checkServiceLevel } from '../services/service-access-level';
 import { Router, Response } from 'express';
 import { prisma } from '../lib/prisma';
 import { citizenAuthMiddleware } from '../middleware/citizen-auth';
@@ -879,6 +880,12 @@ router.post('/:id/request', (req, res, next) => {
     console.log('  - serviceId:', serviceId);
     console.log('  - customFormData:', JSON.stringify(customFormData, null, 2));
     console.log('  - moduleFormData (com citizenId):', JSON.stringify(moduleFormData, null, 2));
+
+    // Nível mínimo do serviço (Bronze/Prata/Ouro)
+    const levelBlock = await checkServiceLevel(citizenId, serviceId);
+    if (levelBlock) {
+      return res.status(403).json({ error: levelBlock.message, reason: 'LEVEL_REQUIRED', minLevel: levelBlock.minLevel });
+    }
 
     // ✅ VALIDAÇÃO DE UNICIDADE: Verificar se cidadão pode criar este protocolo
     console.log('🔍 Validando unicidade do protocolo...');

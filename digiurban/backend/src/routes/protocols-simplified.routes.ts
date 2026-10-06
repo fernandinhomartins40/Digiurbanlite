@@ -1839,24 +1839,9 @@ router.post('/:id/complete', requireMinRole(UserRole.USER), async (req, res) => 
       }
     });
 
-    // ✅ AUTO-CATEGORIZAÇÃO: Atribuir categorias automaticamente
-    if (updatedProtocol.moduleType) {
-      try {
-        const { assignCategoriesOnProtocolApproval } = await import('../services/auto-categorization.service');
-        const result = await assignCategoriesOnProtocolApproval(
-          updatedProtocol.citizenId,
-          updatedProtocol.id,
-          updatedProtocol.moduleType
-        );
-
-        if (result.categoriesAssigned > 0) {
-          console.log(`✅ ${result.categoriesAssigned} categoria(s) atribuída(s) automaticamente`);
-        }
-      } catch (error: any) {
-        console.error('⚠️ Erro na auto-categorização (não crítico):', error.message);
-        // Não falhar a conclusão do protocolo por erro na categorização
-      }
-    }
+    // Etiquetas do cidadão ligadas a este serviço (não falha a conclusão)
+    const { assignTagsOnProtocolConcluded } = await import('../services/citizen-tags.service');
+    await assignTagsOnProtocolConcluded(updatedProtocol.id);
 
     return res.json({
       success: true,

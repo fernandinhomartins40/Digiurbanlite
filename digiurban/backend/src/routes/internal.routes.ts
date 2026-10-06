@@ -2,6 +2,7 @@
  * Rotas Internas - API para chamadas de serviços internos (UltraZend)
  */
 
+import { checkServiceLevel } from '../services/service-access-level';
 import { Router, Request, Response } from 'express';
 import { ensureDefaultFaqs, getPublishedConfig, listFaqs, matchFaq, recordUnanswered, searchServicesForBot } from '../services/digibot/digibot.service';
 import { Prisma } from '@prisma/client';
@@ -500,6 +501,13 @@ router.post(
         citizenId,
         ...cleanedCustomData,
       };
+
+      // Nível mínimo do serviço (Bronze/Prata/Ouro) — mesma regra do portal
+      const levelBlock = await checkServiceLevel(citizenId, serviceId);
+      if (levelBlock) {
+        // 400 (não 403): o assistente mostra o texto do erro ao cidadão
+        return res.status(400).json({ error: levelBlock.message, reason: 'LEVEL_REQUIRED', minLevel: levelBlock.minLevel });
+      }
 
       // Validação de unicidade (mesma regra do painel do cidadão)
       const uniquenessValidation = await validateProtocolUniqueness(

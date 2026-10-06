@@ -37,8 +37,10 @@ export async function notifyCitizenLevel(
 export type RegistrationLevel = 'BRONZE' | 'SILVER' | 'GOLD';
 
 export const GOLD_REQUIREMENTS = {
-  requiredTypes: ['rg_frente', 'rg_verso', 'cpf', 'comprovante_residencia'],
-  minApprovedCount: 4,
+  // Sem o CPF como documento separado: o RG novo, a CIN e a CNH já trazem o
+  // CPF, e a leitura automática confere o número com o cadastro
+  requiredTypes: ['rg_frente', 'rg_verso', 'comprovante_residencia'],
+  minApprovedCount: 3,
   expirationDays: {
     comprovante_residencia: 90,
     comprovante_renda: 60,
@@ -158,7 +160,7 @@ function isFilled(value: unknown): boolean {
   return typeof value === 'string' ? value.trim().length > 0 : Boolean(value);
 }
 
-function getMissingProfileFields(citizen: CitizenProfileSnapshot): string[] {
+export function getMissingProfileFields(citizen: CitizenProfileSnapshot): string[] {
   const missingFields: string[] = REQUIRED_PROFILE_FIELDS
     .filter((field) => !isFilled(citizen[field.key]))
     .map((field) => field.label);

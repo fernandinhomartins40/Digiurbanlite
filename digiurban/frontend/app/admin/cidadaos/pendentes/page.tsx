@@ -40,6 +40,14 @@ interface PendingCitizen {
   birthDate: string | null
   registrationSource: string
   createdAt: string
+  verificationNotes?: string | null
+  missingProfileFields?: string[]
+  documents?: Array<{
+    id: string
+    documentType: string
+    status: string
+    reading: { status: string; nameMatch: string | null; cpfMatch: string | null; birthDateMatch: string | null; kindMatches: boolean | null } | null
+  }>
   _count: {
     protocols: number
     familyAsHead: number
@@ -429,6 +437,46 @@ export default function PendingCitizensPage() {
           </DialogHeader>
 
           <div className="space-y-4 py-4">
+            {/* o que conferir antes de aprovar */}
+            {selectedCitizen && (
+              <div className="space-y-2 rounded-lg border bg-gray-50 p-3 text-sm">
+                <p className="font-medium text-gray-900">Antes de aprovar, confira:</p>
+                {selectedCitizen.verificationNotes && (
+                  <p className="text-amber-800">Observação: {selectedCitizen.verificationNotes}</p>
+                )}
+                <p className={(selectedCitizen.missingProfileFields?.length || 0) > 0 ? 'text-amber-800' : 'text-green-700'}>
+                  {(selectedCitizen.missingProfileFields?.length || 0) > 0
+                    ? `Perfil incompleto. Falta: ${selectedCitizen.missingProfileFields!.join(', ')}.`
+                    : 'Perfil completo.'}
+                </p>
+                {(selectedCitizen.documents?.length || 0) === 0 ? (
+                  <p className="text-amber-800">Nenhum documento enviado ainda.</p>
+                ) : (
+                  <ul className="space-y-1">
+                    {selectedCitizen.documents!.map((document) => {
+                      const reading = document.reading
+                      const mismatch =
+                        reading?.status === 'DONE' &&
+                        (reading.nameMatch === 'NO_MATCH' || reading.cpfMatch === 'NO_MATCH' || reading.birthDateMatch === 'NO_MATCH' || reading.kindMatches === false)
+                      const matches = reading?.status === 'DONE' && !mismatch && (reading.nameMatch === 'MATCH' || reading.cpfMatch === 'MATCH')
+                      return (
+                        <li key={document.id} className={mismatch ? 'text-red-700' : matches ? 'text-green-700' : 'text-gray-700'}>
+                          {document.documentType.replace(/_/g, ' ')}:{' '}
+                          {mismatch
+                            ? 'a leitura automática achou diferença com o cadastro — olhe o documento'
+                            : matches
+                              ? 'a leitura automática bate com o cadastro'
+                              : 'sem leitura automática — confira olhando o documento'}
+                        </li>
+                      )
+                    })}
+                  </ul>
+                )}
+                <a href={`/admin/cidadaos/${selectedCitizen.id}`} target="_blank" rel="noreferrer" className="inline-block text-blue-700 underline">
+                  Abrir a ficha e os documentos
+                </a>
+              </div>
+            )}
             <div>
               <Label htmlFor="approval-notes">Observações (opcional)</Label>
               <Textarea

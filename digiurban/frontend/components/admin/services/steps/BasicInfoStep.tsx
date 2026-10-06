@@ -20,6 +20,7 @@ interface BasicInfoStepProps {
     category: string
     departmentId: string
     estimatedDays: string
+    minLevel?: string
     priority: number
     icon: string
     color: string
@@ -120,6 +121,21 @@ export function BasicInfoStep({ formData, departments, onChange, errors }: Basic
             placeholder="Ex: 5"
           />
           <p className="text-xs text-gray-500">Tempo médio para conclusão do serviço</p>
+        </div>
+
+        <div className="space-y-2">
+          <Label htmlFor="minLevel">Quem pode pedir pelo portal</Label>
+          <Select value={formData.minLevel || 'BRONZE'} onValueChange={(value) => onChange('minLevel', value)}>
+            <SelectTrigger id="minLevel">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="BRONZE">Qualquer cidadão cadastrado</SelectItem>
+              <SelectItem value="SILVER">Cadastro conferido (Prata ou Ouro)</SelectItem>
+              <SelectItem value="GOLD">Só nível Ouro (documentos e biometria)</SelectItem>
+            </SelectContent>
+          </Select>
+          <p className="text-xs text-gray-500">Vale para o portal e o assistente. No balcão o servidor confere a pessoa.</p>
         </div>
 
         <div className="space-y-2">

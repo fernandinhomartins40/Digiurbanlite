@@ -6,6 +6,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
+import { CitizenTagsCard } from '@/components/admin/CitizenTagsCard'
 import { CitizenFamilyCompositionEnhanced } from '@/components/admin/CitizenFamilyCompositionEnhanced'
 import { useToast } from '@/hooks/use-toast'
 import { useAdminAuth, useAdminPermissions } from '@/contexts/AdminAuthContext'
@@ -577,6 +578,7 @@ export default function CitizenDetailsPage() {
 
         {/* Dados Pessoais */}
         <TabsContent value="personal" className="space-y-4">
+          <CitizenTagsCard citizenId={citizenId} />
           <Card>
             <CardHeader>
               <CardTitle className="flex items-center gap-2">

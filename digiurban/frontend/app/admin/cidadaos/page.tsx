@@ -76,6 +76,14 @@ export default function CidadaosPage() {
   const [citizens, setCitizens] = useState<Citizen[]>([])
   const [loading, setLoading] = useState(true)
   const [activeTab, setActiveTab] = useState('all')
+  // filtro por etiqueta (vem de Cidadãos › Etiquetas ou da caixa de escolha)
+  const [tagFilter, setTagFilter] = useState('')
+  useEffect(() => {
+    // lido do endereço no navegador (sem useSearchParams, que exige Suspense no build)
+    const fromUrl = new URLSearchParams(window.location.search).get('etiqueta')
+    if (fromUrl) setTagFilter(fromUrl)
+  }, [])
+  const [tagOptions, setTagOptions] = useState<Array<{ id: string; name: string; active: boolean }>>([])
 
   // Dialogs
   const [showApproveDialog, setShowApproveDialog] = useState(false)
@@ -92,6 +100,14 @@ export default function CidadaosPage() {
       fetchCitizens()
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [user?.id, tagFilter])
+
+  useEffect(() => {
+    if (!user) return
+    apiRequest('/admin/citizen-tags')
+      .then((response: any) => setTagOptions(response?.data?.tags || []))
+      .catch(() => setTagOptions([]))
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user?.id])
 
   const fetchCitizens = async () => {
@@ -101,7 +117,8 @@ export default function CidadaosPage() {
 
     try {
       // Buscar todos os cidadãos usando o endpoint correto
-      const response = await apiRequest('/admin/citizens')
+      // limite alto: a lista filtra e conta no navegador (com o padrão de 50 sumiam cidadãos)
+      const response = await apiRequest(`/admin/citizens?limit=1000${tagFilter ? `&tagId=${encodeURIComponent(tagFilter)}` : ''}`)
 
       console.log('[CIDADÃOS] Response recebida:', response)
       console.log('[CIDADÃOS] success:', response?.success)
@@ -246,7 +263,7 @@ export default function CidadaosPage() {
 
     if (activeTab === 'all') return matchesSearch
     if (activeTab === 'pending') return matchesSearch && citizen.verificationStatus === 'PENDING'
-    if (activeTab === 'verified') return matchesSearch && citizen.verificationStatus === 'VERIFIED'
+    if (activeTab === 'verified') return matchesSearch && (citizen.verificationStatus === 'VERIFIED' || (citizen.verificationStatus as string) === 'GOLD')
     if (activeTab === 'inactive') return matchesSearch && !citizen.isActive
 
     return matchesSearch
@@ -256,7 +273,7 @@ export default function CidadaosPage() {
   const stats = {
     total: citizens.length,
     pending: citizens.filter(c => c.verificationStatus === 'PENDING').length,
-    verified: citizens.filter(c => c.verificationStatus === 'VERIFIED').length,
+    verified: citizens.filter(c => c.verificationStatus === 'VERIFIED' || (c.verificationStatus as string) === 'GOLD').length,
     selfRegistered: citizens.filter(c => c.registrationSource === 'WEB_PORTAL' || c.registrationSource === 'MOBILE_APP').length,
     inactive: citizens.filter(c => !c.isActive).length,
   }
@@ -371,6 +388,19 @@ export default function CidadaosPage() {
                   className="pl-8 w-full text-sm"
                 />
               </div>
+              {tagOptions.length > 0 && (
+                <select
+                  aria-label="Filtrar por etiqueta"
+                  value={tagFilter}
+                  onChange={(e) => setTagFilter(e.target.value)}
+                  className="h-10 shrink-0 rounded-md border border-input bg-background px-2 text-sm"
+                >
+                  <option value="">Todas as etiquetas</option>
+                  {tagOptions.filter((tag) => tag.active || tag.id === tagFilter).map((tag) => (
+                    <option key={tag.id} value={tag.id}>{tag.name}</option>
+                  ))}
+                </select>
+              )}
             </div>
           </div>
 

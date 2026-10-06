@@ -1,3 +1,4 @@
+import { normalizeLevel } from '../services/service-access-level';
 import { Router, Response } from 'express';
 import { prisma } from '../lib/prisma';
 import { generateUniqueModuleType } from '../services/service-module-type.service';
@@ -192,6 +193,8 @@ router.post('/', adminAuthMiddleware, requireMinRole(UserRole.MANAGER), async (r
       allowMultipleActiveProtocols,
       uniquenessScope,
       uniquenessRules,
+      // nível mínimo do cidadão (BRONZE | SILVER | GOLD)
+      minLevel,
 
       // Destino do pedido (FILA | APP + ação do catálogo de apps)
       destination,
@@ -411,6 +414,7 @@ router.post('/', adminAuthMiddleware, requireMinRole(UserRole.MANAGER), async (r
           formSchema: resolvedServiceType === 'COM_DADOS' ? formSchema : null,
 
           // ✅ NOVO: Configuração de unicidade de protocolos (agora obrigatório)
+          minLevel: normalizeLevel(minLevel),
           allowMultipleActiveProtocols: allowMultipleActiveProtocols,
           uniquenessScope: allowMultipleActiveProtocols === false ? uniquenessScope : null,
           uniquenessRules: allowMultipleActiveProtocols === false && uniquenessRules ? uniquenessRules : null,
@@ -633,6 +637,7 @@ router.put('/:id', adminAuthMiddleware, requireMinRole(UserRole.MANAGER), async 
       allowMultipleActiveProtocols,
       uniquenessScope,
       uniquenessRules,
+      minLevel,
 
       // Destino do pedido (FILA | APP + ação do catálogo de apps)
       destination,
@@ -748,6 +753,7 @@ router.put('/:id', adminAuthMiddleware, requireMinRole(UserRole.MANAGER), async 
         ...(enabledFields !== undefined && { enabledFields }),
 
         // Campos de unicidade
+        ...(minLevel !== undefined && { minLevel: normalizeLevel(minLevel) }),
         ...(allowMultipleActiveProtocols !== undefined && { allowMultipleActiveProtocols }),
         ...(uniquenessScope !== undefined && { uniquenessScope }),
         ...(uniquenessRules !== undefined && { uniquenessRules })

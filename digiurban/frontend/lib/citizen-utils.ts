@@ -22,22 +22,22 @@ export function getRegistrationLevelInfo(level: RegistrationLevel) {
   const info = {
     BRONZE: {
       name: 'Bronze',
-      description: 'Cadastro básico em análise administrativa',
+      description: 'Cadastro feito, ainda não conferido pela prefeitura',
       color: 'amber',
       benefits: [
-        'Acesso inicial ao portal do cidadão',
-        'Acompanhamento de protocolos e solicitações',
-        'Atualização do perfil e envio de documentos',
+        'Pedir os serviços abertos a todos os cidadãos',
+        'Acompanhar os seus pedidos',
+        'Completar o perfil e enviar documentos',
       ],
     },
     SILVER: {
       name: 'Prata',
-      description: 'Cadastro validado pela administração municipal',
+      description: 'Cadastro conferido pela prefeitura',
       color: 'gray',
       benefits: [
         'Todos os benefícios do Bronze',
-        'Maior confiança cadastral para serviços municipais',
-        'Elegibilidade para concluir os critérios do nível Ouro',
+        'Pedir os serviços que exigem cadastro conferido',
+        'Pode seguir para o nível Ouro',
       ],
     },
     GOLD: {
@@ -46,8 +46,8 @@ export function getRegistrationLevelInfo(level: RegistrationLevel) {
       color: 'yellow',
       benefits: [
         'Todos os benefícios do Prata',
-        'Identidade reforçada para o ecossistema Digiurban',
-        'Pronto para módulos que exigem biometria facial',
+        'Pedir os serviços que exigem identidade confirmada',
+        'Confirmar que é você pelo rosto, sem ir à prefeitura',
       ],
     },
   };

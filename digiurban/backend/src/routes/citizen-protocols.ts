@@ -5,6 +5,7 @@
  * Rotas para cidadãos acessarem seus protocolos
  */
 
+import { checkServiceLevel } from '../services/service-access-level';
 import { Router } from 'express';
 import { prisma } from '../lib/prisma';
 import { citizenAuthMiddleware } from '../middleware/citizen-auth';
@@ -242,6 +243,13 @@ router.post('/', upload.any(), async (req, res) => {
         success: false,
         error: 'Serviço não encontrado'
         });
+    }
+
+    // Nível mínimo do serviço (Bronze/Prata/Ouro)
+    const levelBlock = await checkServiceLevel(citizenId, serviceId);
+    if (levelBlock) {
+      cleanupTempFiles();
+      return res.status(403).json({ success: false, error: levelBlock.message, reason: 'LEVEL_REQUIRED', minLevel: levelBlock.minLevel });
     }
 
     // ✅ VALIDAÇÃO DE UNICIDADE: Verificar se cidadão pode criar este protocolo
