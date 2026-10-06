@@ -8,6 +8,7 @@
  */
 
 import { createHash } from 'crypto';
+import { effectiveDestination } from '../../config/app-catalog';
 import { ServiceDefinition } from './types';
 import { healthServices } from './health.seed';
 import { educationServices } from './education.seed';
@@ -180,12 +181,16 @@ export async function applyServiceCatalog(db: any, tenantId: string, options: { 
 
     try {
       if (!current) {
+        // destino gravado já na criação (fila ou app da secretaria, pelo catálogo de apps)
+        const route = effectiveDestination({ moduleType: def.moduleType || null });
         await db.serviceSimplified.create({
           data: {
             tenantId,
             departmentId,
             moduleType: def.moduleType || null,
             isActive: true,
+            destination: route.destination,
+            appAction: route.appAction,
             catalogKey: key,
             catalogHash: newHash,
             ...fields,

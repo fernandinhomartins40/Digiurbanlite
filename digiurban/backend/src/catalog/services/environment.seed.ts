@@ -24,24 +24,7 @@ export const environmentServices: ServiceDefinition[] = [
     color: '#16a34a',
     formSchema: {
       type: 'object',
-      citizenFields: [
-        'citizen_name',
-        'citizen_cpf',
-        'citizen_rg',
-        'citizen_birthdate',
-        'citizen_email',
-        'citizen_phone',
-        'citizen_phonesecondary',
-        'citizen_zipcode',
-        'citizen_address',
-        'citizen_addressnumber',
-        'citizen_addresscomplement',
-        'citizen_neighborhood',
-        'citizen_mothername',
-        'citizen_maritalstatus',
-        'citizen_occupation',
-        'citizen_familyincome'
-      ],
+      citizenFields: ['citizen_name', 'citizen_cpf', 'citizen_rg', 'citizen_birthdate', 'citizen_email', 'citizen_phone', 'citizen_phonesecondary', 'citizen_zipcode', 'citizen_address', 'citizen_addressnumber', 'citizen_addresscomplement', 'citizen_neighborhood'],
       properties: {
         tipoAtividade: {
           type: 'string',
@@ -81,24 +64,7 @@ export const environmentServices: ServiceDefinition[] = [
     color: '#15803d',
     formSchema: {
       type: 'object',
-      citizenFields: [
-        'citizen_name',
-        'citizen_cpf',
-        'citizen_rg',
-        'citizen_birthdate',
-        'citizen_email',
-        'citizen_phone',
-        'citizen_phonesecondary',
-        'citizen_zipcode',
-        'citizen_address',
-        'citizen_addressnumber',
-        'citizen_addresscomplement',
-        'citizen_neighborhood',
-        'citizen_mothername',
-        'citizen_maritalstatus',
-        'citizen_occupation',
-        'citizen_familyincome'
-      ],
+      citizenFields: ['citizen_name', 'citizen_cpf', 'citizen_rg', 'citizen_birthdate', 'citizen_email', 'citizen_phone', 'citizen_phonesecondary', 'citizen_zipcode', 'citizen_address', 'citizen_addressnumber', 'citizen_addresscomplement', 'citizen_neighborhood'],
       properties: {
         tipoSolicitacao: {
           type: 'string',
@@ -147,24 +113,7 @@ export const environmentServices: ServiceDefinition[] = [
     color: '#dc2626',
     formSchema: {
       type: 'object',
-      citizenFields: [
-        'citizen_name',
-        'citizen_cpf',
-        'citizen_rg',
-        'citizen_birthdate',
-        'citizen_email',
-        'citizen_phone',
-        'citizen_phonesecondary',
-        'citizen_zipcode',
-        'citizen_address',
-        'citizen_addressnumber',
-        'citizen_addresscomplement',
-        'citizen_neighborhood',
-        'citizen_mothername',
-        'citizen_maritalstatus',
-        'citizen_occupation',
-        'citizen_familyincome'
-      ],
+      citizenFields: ['citizen_name', 'citizen_cpf', 'citizen_rg', 'citizen_birthdate', 'citizen_email', 'citizen_phone', 'citizen_phonesecondary', 'citizen_zipcode', 'citizen_address', 'citizen_addressnumber', 'citizen_addresscomplement', 'citizen_neighborhood'],
       properties: {
         tipoDenuncia: {
           type: 'string',
@@ -210,24 +159,7 @@ export const environmentServices: ServiceDefinition[] = [
     allowMultipleActiveProtocols: true,
     formSchema: {
       type: 'object',
-      citizenFields: [
-        'citizen_name',
-        'citizen_cpf',
-        'citizen_rg',
-        'citizen_birthdate',
-        'citizen_email',
-        'citizen_phone',
-        'citizen_phonesecondary',
-        'citizen_zipcode',
-        'citizen_address',
-        'citizen_addressnumber',
-        'citizen_addresscomplement',
-        'citizen_neighborhood',
-        'citizen_mothername',
-        'citizen_maritalstatus',
-        'citizen_occupation',
-        'citizen_familyincome'
-      ],
+      citizenFields: ['citizen_name', 'citizen_cpf', 'citizen_rg', 'citizen_birthdate', 'citizen_email', 'citizen_phone', 'citizen_phonesecondary', 'citizen_zipcode', 'citizen_address', 'citizen_addressnumber', 'citizen_addresscomplement', 'citizen_neighborhood', 'citizen_mothername', 'citizen_maritalstatus', 'citizen_occupation', 'citizen_familyincome'],
       properties: {
         tipoPrograma: {
           type: 'string',
@@ -261,24 +193,7 @@ export const environmentServices: ServiceDefinition[] = [
     color: '#0891b2',
     formSchema: {
       type: 'object',
-      citizenFields: [
-        'citizen_name',
-        'citizen_cpf',
-        'citizen_rg',
-        'citizen_birthdate',
-        'citizen_email',
-        'citizen_phone',
-        'citizen_phonesecondary',
-        'citizen_zipcode',
-        'citizen_address',
-        'citizen_addressnumber',
-        'citizen_addresscomplement',
-        'citizen_neighborhood',
-        'citizen_mothername',
-        'citizen_maritalstatus',
-        'citizen_occupation',
-        'citizen_familyincome'
-      ],
+      citizenFields: ['citizen_name', 'citizen_cpf', 'citizen_rg', 'citizen_birthdate', 'citizen_email', 'citizen_phone', 'citizen_phonesecondary', 'citizen_zipcode', 'citizen_address', 'citizen_addressnumber', 'citizen_addresscomplement', 'citizen_neighborhood'],
       properties: {
         tipoVistoria: {
           type: 'string',
@@ -317,24 +232,7 @@ export const environmentServices: ServiceDefinition[] = [
     color: '#22c55e',
     formSchema: {
       type: 'object',
-      citizenFields: [
-        'citizen_name',
-        'citizen_cpf',
-        'citizen_rg',
-        'citizen_birthdate',
-        'citizen_email',
-        'citizen_phone',
-        'citizen_phonesecondary',
-        'citizen_zipcode',
-        'citizen_address',
-        'citizen_addressnumber',
-        'citizen_addresscomplement',
-        'citizen_neighborhood',
-        'citizen_mothername',
-        'citizen_maritalstatus',
-        'citizen_occupation',
-        'citizen_familyincome'
-      ],
+      citizenFields: ['citizen_name', 'citizen_cpf', 'citizen_rg', 'citizen_birthdate', 'citizen_email', 'citizen_phone', 'citizen_phonesecondary', 'citizen_zipcode', 'citizen_address', 'citizen_addressnumber', 'citizen_addresscomplement', 'citizen_neighborhood'],
       properties: {
         tipoAtividade: {
           type: 'string',
@@ -374,24 +272,7 @@ export const environmentServices: ServiceDefinition[] = [
     color: '#14532d',
     formSchema: {
       type: 'object',
-      citizenFields: [
-        'citizen_name',
-        'citizen_cpf',
-        'citizen_rg',
-        'citizen_birthdate',
-        'citizen_email',
-        'citizen_phone',
-        'citizen_phonesecondary',
-        'citizen_zipcode',
-        'citizen_address',
-        'citizen_addressnumber',
-        'citizen_addresscomplement',
-        'citizen_neighborhood',
-        'citizen_mothername',
-        'citizen_maritalstatus',
-        'citizen_occupation',
-        'citizen_familyincome'
-      ],
+      citizenFields: ['citizen_name', 'citizen_cpf', 'citizen_rg', 'citizen_birthdate', 'citizen_email', 'citizen_phone', 'citizen_phonesecondary', 'citizen_zipcode', 'citizen_address', 'citizen_addressnumber', 'citizen_addresscomplement', 'citizen_neighborhood'],
       properties: {
         areaSupressao: {
           type: 'number',
@@ -443,24 +324,7 @@ export const environmentServices: ServiceDefinition[] = [
     },
     formSchema: {
       type: 'object',
-      citizenFields: [
-        'citizen_name',
-        'citizen_cpf',
-        'citizen_rg',
-        'citizen_birthdate',
-        'citizen_email',
-        'citizen_phone',
-        'citizen_phonesecondary',
-        'citizen_zipcode',
-        'citizen_address',
-        'citizen_addressnumber',
-        'citizen_addresscomplement',
-        'citizen_neighborhood',
-        'citizen_mothername',
-        'citizen_maritalstatus',
-        'citizen_occupation',
-        'citizen_familyincome'
-      ],
+      citizenFields: ['citizen_name', 'citizen_cpf', 'citizen_rg', 'citizen_birthdate', 'citizen_email', 'citizen_phone', 'citizen_phonesecondary', 'citizen_zipcode', 'citizen_address', 'citizen_addressnumber', 'citizen_addresscomplement', 'citizen_neighborhood'],
       properties: {
         tipoResiduo: {
           type: 'string',
@@ -498,24 +362,7 @@ export const environmentServices: ServiceDefinition[] = [
     color: '#ef4444',
     formSchema: {
       type: 'object',
-      citizenFields: [
-        'citizen_name',
-        'citizen_cpf',
-        'citizen_rg',
-        'citizen_birthdate',
-        'citizen_email',
-        'citizen_phone',
-        'citizen_phonesecondary',
-        'citizen_zipcode',
-        'citizen_address',
-        'citizen_addressnumber',
-        'citizen_addresscomplement',
-        'citizen_neighborhood',
-        'citizen_mothername',
-        'citizen_maritalstatus',
-        'citizen_occupation',
-        'citizen_familyincome'
-      ],
+      citizenFields: ['citizen_name', 'citizen_cpf', 'citizen_rg', 'citizen_birthdate', 'citizen_email', 'citizen_phone', 'citizen_phonesecondary', 'citizen_zipcode', 'citizen_address', 'citizen_addressnumber', 'citizen_addresscomplement', 'citizen_neighborhood'],
       properties: {
         localDenuncia: {
           type: 'string',
@@ -563,24 +410,7 @@ export const environmentServices: ServiceDefinition[] = [
     color: '#dc2626',
     formSchema: {
       type: 'object',
-      citizenFields: [
-        'citizen_name',
-        'citizen_cpf',
-        'citizen_rg',
-        'citizen_birthdate',
-        'citizen_email',
-        'citizen_phone',
-        'citizen_phonesecondary',
-        'citizen_zipcode',
-        'citizen_address',
-        'citizen_addressnumber',
-        'citizen_addresscomplement',
-        'citizen_neighborhood',
-        'citizen_mothername',
-        'citizen_maritalstatus',
-        'citizen_occupation',
-        'citizen_familyincome'
-      ],
+      citizenFields: ['citizen_name', 'citizen_cpf', 'citizen_rg', 'citizen_birthdate', 'citizen_email', 'citizen_phone', 'citizen_phonesecondary', 'citizen_zipcode', 'citizen_address', 'citizen_addressnumber', 'citizen_addresscomplement', 'citizen_neighborhood'],
       properties: {
         localQueimada: {
           type: 'string',
@@ -629,24 +459,7 @@ export const environmentServices: ServiceDefinition[] = [
     color: '#047857',
     formSchema: {
       type: 'object',
-      citizenFields: [
-        'citizen_name',
-        'citizen_cpf',
-        'citizen_rg',
-        'citizen_birthdate',
-        'citizen_email',
-        'citizen_phone',
-        'citizen_phonesecondary',
-        'citizen_zipcode',
-        'citizen_address',
-        'citizen_addressnumber',
-        'citizen_addresscomplement',
-        'citizen_neighborhood',
-        'citizen_mothername',
-        'citizen_maritalstatus',
-        'citizen_occupation',
-        'citizen_familyincome'
-      ],
+      citizenFields: ['citizen_name', 'citizen_cpf', 'citizen_rg', 'citizen_birthdate', 'citizen_email', 'citizen_phone', 'citizen_phonesecondary', 'citizen_zipcode', 'citizen_address', 'citizen_addressnumber', 'citizen_addresscomplement', 'citizen_neighborhood'],
       properties: {
         tipoManejo: {
           type: 'string',
@@ -691,24 +504,7 @@ export const environmentServices: ServiceDefinition[] = [
     color: '#0d9488',
     formSchema: {
       type: 'object',
-      citizenFields: [
-        'citizen_name',
-        'citizen_cpf',
-        'citizen_rg',
-        'citizen_birthdate',
-        'citizen_email',
-        'citizen_phone',
-        'citizen_phonesecondary',
-        'citizen_zipcode',
-        'citizen_address',
-        'citizen_addressnumber',
-        'citizen_addresscomplement',
-        'citizen_neighborhood',
-        'citizen_mothername',
-        'citizen_maritalstatus',
-        'citizen_occupation',
-        'citizen_familyincome'
-      ],
+      citizenFields: ['citizen_name', 'citizen_cpf', 'citizen_rg', 'citizen_birthdate', 'citizen_email', 'citizen_phone', 'citizen_phonesecondary', 'citizen_zipcode', 'citizen_address', 'citizen_addressnumber', 'citizen_addresscomplement', 'citizen_neighborhood', 'citizen_mothername'],
       properties: {
         enderecoImovel: {
           type: 'string',
@@ -747,24 +543,7 @@ export const environmentServices: ServiceDefinition[] = [
     color: '#7c2d12',
     formSchema: {
       type: 'object',
-      citizenFields: [
-        'citizen_name',
-        'citizen_cpf',
-        'citizen_rg',
-        'citizen_birthdate',
-        'citizen_email',
-        'citizen_phone',
-        'citizen_phonesecondary',
-        'citizen_zipcode',
-        'citizen_address',
-        'citizen_addressnumber',
-        'citizen_addresscomplement',
-        'citizen_neighborhood',
-        'citizen_mothername',
-        'citizen_maritalstatus',
-        'citizen_occupation',
-        'citizen_familyincome'
-      ],
+      citizenFields: ['citizen_name', 'citizen_cpf', 'citizen_rg', 'citizen_birthdate', 'citizen_email', 'citizen_phone', 'citizen_phonesecondary', 'citizen_zipcode', 'citizen_address', 'citizen_addressnumber', 'citizen_addresscomplement', 'citizen_neighborhood'],
       properties: {
         nomeEmpreendimento: {
           type: 'string',
@@ -809,24 +588,7 @@ export const environmentServices: ServiceDefinition[] = [
     color: '#0284c7',
     formSchema: {
       type: 'object',
-      citizenFields: [
-        'citizen_name',
-        'citizen_cpf',
-        'citizen_rg',
-        'citizen_birthdate',
-        'citizen_email',
-        'citizen_phone',
-        'citizen_phonesecondary',
-        'citizen_zipcode',
-        'citizen_address',
-        'citizen_addressnumber',
-        'citizen_addresscomplement',
-        'citizen_neighborhood',
-        'citizen_mothername',
-        'citizen_maritalstatus',
-        'citizen_occupation',
-        'citizen_familyincome'
-      ],
+      citizenFields: ['citizen_name', 'citizen_cpf', 'citizen_rg', 'citizen_birthdate', 'citizen_email', 'citizen_phone', 'citizen_phonesecondary', 'citizen_zipcode', 'citizen_address', 'citizen_addressnumber', 'citizen_addresscomplement', 'citizen_neighborhood'],
       properties: {
         tipoCaptacao: {
           type: 'string',
@@ -876,24 +638,7 @@ export const environmentServices: ServiceDefinition[] = [
     },
     formSchema: {
       type: 'object',
-      citizenFields: [
-        'citizen_name',
-        'citizen_cpf',
-        'citizen_rg',
-        'citizen_birthdate',
-        'citizen_email',
-        'citizen_phone',
-        'citizen_phonesecondary',
-        'citizen_zipcode',
-        'citizen_address',
-        'citizen_addressnumber',
-        'citizen_addresscomplement',
-        'citizen_neighborhood',
-        'citizen_mothername',
-        'citizen_maritalstatus',
-        'citizen_occupation',
-        'citizen_familyincome'
-      ],
+      citizenFields: ['citizen_name', 'citizen_cpf', 'citizen_rg', 'citizen_birthdate', 'citizen_email', 'citizen_phone', 'citizen_phonesecondary', 'citizen_zipcode', 'citizen_address', 'citizen_addressnumber', 'citizen_addresscomplement', 'citizen_neighborhood'],
       properties: {
         nomeViveiro: {
           type: 'string',
@@ -936,24 +681,7 @@ export const environmentServices: ServiceDefinition[] = [
     color: '#dc2626',
     formSchema: {
       type: 'object',
-      citizenFields: [
-        'citizen_name',
-        'citizen_cpf',
-        'citizen_rg',
-        'citizen_birthdate',
-        'citizen_email',
-        'citizen_phone',
-        'citizen_phonesecondary',
-        'citizen_zipcode',
-        'citizen_address',
-        'citizen_addressnumber',
-        'citizen_addresscomplement',
-        'citizen_neighborhood',
-        'citizen_mothername',
-        'citizen_maritalstatus',
-        'citizen_occupation',
-        'citizen_familyincome'
-      ],
+      citizenFields: ['citizen_name', 'citizen_cpf', 'citizen_rg', 'citizen_birthdate', 'citizen_email', 'citizen_phone', 'citizen_phonesecondary', 'citizen_zipcode', 'citizen_address', 'citizen_addressnumber', 'citizen_addresscomplement', 'citizen_neighborhood'],
       properties: {
         localDescarte: {
           type: 'string',

@@ -506,7 +506,7 @@ router.post(
       const levelBlock = await checkServiceLevel(citizenId, serviceId);
       if (levelBlock) {
         // 400 (não 403): o assistente mostra o texto do erro ao cidadão
-        return res.status(400).json({ error: levelBlock.message, reason: 'LEVEL_REQUIRED', minLevel: levelBlock.minLevel });
+        return res.status(400).json({ error: levelBlock.message, reason: levelBlock.reason || 'LEVEL_REQUIRED', minLevel: levelBlock.minLevel });
       }
 
       // Validação de unicidade (mesma regra do painel do cidadão)

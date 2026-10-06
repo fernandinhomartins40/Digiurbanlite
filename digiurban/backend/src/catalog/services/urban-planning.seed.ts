@@ -25,24 +25,7 @@ export const urbanPlanningServices: ServiceDefinition[] = [
     color: '#ec4899',
     formSchema: {
       type: 'object',
-      citizenFields: [
-        'citizen_name',
-        'citizen_cpf',
-        'citizen_rg',
-        'citizen_birthdate',
-        'citizen_email',
-        'citizen_phone',
-        'citizen_phonesecondary',
-        'citizen_zipcode',
-        'citizen_address',
-        'citizen_addressnumber',
-        'citizen_addresscomplement',
-        'citizen_neighborhood',
-        'citizen_mothername',
-        'citizen_maritalstatus',
-        'citizen_occupation',
-        'citizen_familyincome'
-      ],
+      citizenFields: ['citizen_name', 'citizen_cpf', 'citizen_rg', 'citizen_birthdate', 'citizen_email', 'citizen_phone', 'citizen_phonesecondary', 'citizen_zipcode', 'citizen_address', 'citizen_addressnumber', 'citizen_addresscomplement', 'citizen_neighborhood'],
       properties: {
         tipoParcelamento: {
           type: 'string',
@@ -112,24 +95,7 @@ export const urbanPlanningServices: ServiceDefinition[] = [
     color: '#06b6d4',
     formSchema: {
       type: 'object',
-      citizenFields: [
-        'citizen_name',
-        'citizen_cpf',
-        'citizen_rg',
-        'citizen_birthdate',
-        'citizen_email',
-        'citizen_phone',
-        'citizen_phonesecondary',
-        'citizen_zipcode',
-        'citizen_address',
-        'citizen_addressnumber',
-        'citizen_addresscomplement',
-        'citizen_neighborhood',
-        'citizen_mothername',
-        'citizen_maritalstatus',
-        'citizen_occupation',
-        'citizen_familyincome'
-      ],
+      citizenFields: ['citizen_name', 'citizen_cpf', 'citizen_rg', 'citizen_birthdate', 'citizen_email', 'citizen_phone', 'citizen_phonesecondary', 'citizen_zipcode', 'citizen_address', 'citizen_addressnumber', 'citizen_addresscomplement', 'citizen_neighborhood'],
       properties: {
         tipoEmpreendimento: {
           type: 'string',
@@ -184,24 +150,7 @@ export const urbanPlanningServices: ServiceDefinition[] = [
     color: '#4f46e5',
     formSchema: {
       type: 'object',
-      citizenFields: [
-        'citizen_name',
-        'citizen_cpf',
-        'citizen_rg',
-        'citizen_birthdate',
-        'citizen_email',
-        'citizen_phone',
-        'citizen_phonesecondary',
-        'citizen_zipcode',
-        'citizen_address',
-        'citizen_addressnumber',
-        'citizen_addresscomplement',
-        'citizen_neighborhood',
-        'citizen_mothername',
-        'citizen_maritalstatus',
-        'citizen_occupation',
-        'citizen_familyincome'
-      ],
+      citizenFields: ['citizen_name', 'citizen_cpf', 'citizen_rg', 'citizen_birthdate', 'citizen_email', 'citizen_phone', 'citizen_phonesecondary', 'citizen_zipcode', 'citizen_address', 'citizen_addressnumber', 'citizen_addresscomplement', 'citizen_neighborhood'],
       properties: {
         enderecoObra: {
           type: 'string',
@@ -271,24 +220,7 @@ export const urbanPlanningServices: ServiceDefinition[] = [
     color: '#4338ca',
     formSchema: {
       type: 'object',
-      citizenFields: [
-        'citizen_name',
-        'citizen_cpf',
-        'citizen_rg',
-        'citizen_birthdate',
-        'citizen_email',
-        'citizen_phone',
-        'citizen_phonesecondary',
-        'citizen_zipcode',
-        'citizen_address',
-        'citizen_addressnumber',
-        'citizen_addresscomplement',
-        'citizen_neighborhood',
-        'citizen_mothername',
-        'citizen_maritalstatus',
-        'citizen_occupation',
-        'citizen_familyincome'
-      ],
+      citizenFields: ['citizen_name', 'citizen_cpf', 'citizen_rg', 'citizen_birthdate', 'citizen_email', 'citizen_phone', 'citizen_phonesecondary', 'citizen_zipcode', 'citizen_address', 'citizen_addressnumber', 'citizen_addresscomplement', 'citizen_neighborhood'],
       properties: {
         enderecoObra: {
           type: 'string',
@@ -348,7 +280,7 @@ export const urbanPlanningServices: ServiceDefinition[] = [
   },
 
   {
-    name: 'Alvará de Funcionamento',
+    name: 'Alvará de Localização (Uso do Solo)',
     description: 'Licença comercial para estabelecimentos',
     departmentCode: 'PLANEJAMENTO_URBANO',
     serviceType: 'COM_DADOS',
@@ -363,24 +295,7 @@ export const urbanPlanningServices: ServiceDefinition[] = [
     color: '#3730a3',
     formSchema: {
       type: 'object',
-      citizenFields: [
-        'citizen_name',
-        'citizen_cpf',
-        'citizen_rg',
-        'citizen_birthdate',
-        'citizen_email',
-        'citizen_phone',
-        'citizen_phonesecondary',
-        'citizen_zipcode',
-        'citizen_address',
-        'citizen_addressnumber',
-        'citizen_addresscomplement',
-        'citizen_neighborhood',
-        'citizen_mothername',
-        'citizen_maritalstatus',
-        'citizen_occupation',
-        'citizen_familyincome'
-      ],
+      citizenFields: ['citizen_name', 'citizen_cpf', 'citizen_rg', 'citizen_birthdate', 'citizen_email', 'citizen_phone', 'citizen_phonesecondary', 'citizen_zipcode', 'citizen_address', 'citizen_addressnumber', 'citizen_addresscomplement', 'citizen_neighborhood'],
       properties: {
         razaoSocial: {
           type: 'string',
@@ -443,11 +358,7 @@ export const urbanPlanningServices: ServiceDefinition[] = [
     color: '#dc2626',
     formSchema: {
       type: 'object',
-      citizenFields: [
-        'citizen_name',
-        'citizen_cpf',
-        'citizen_phone'
-      ],
+      citizenFields: ['citizen_name', 'citizen_cpf', 'citizen_phone'],
       properties: {
         enderecoObraIrregular: {
           type: 'string',
@@ -494,16 +405,7 @@ export const urbanPlanningServices: ServiceDefinition[] = [
     color: '#7c3aed',
     formSchema: {
       type: 'object',
-      citizenFields: [
-        'citizen_name',
-        'citizen_cpf',
-        'citizen_rg',
-        'citizen_email',
-        'citizen_phone',
-        'citizen_address',
-        'citizen_addressnumber',
-        'citizen_neighborhood'
-      ],
+      citizenFields: ['citizen_name', 'citizen_cpf', 'citizen_rg', 'citizen_email', 'citizen_phone', 'citizen_address', 'citizen_addressnumber', 'citizen_neighborhood'],
       properties: {
         numeroLotes: {
           type: 'integer',
@@ -568,12 +470,7 @@ export const urbanPlanningServices: ServiceDefinition[] = [
     color: '#ea580c',
     formSchema: {
       type: 'object',
-      citizenFields: [
-        'citizen_name',
-        'citizen_cpf',
-        'citizen_email',
-        'citizen_phone'
-      ],
+      citizenFields: ['citizen_name', 'citizen_cpf', 'citizen_email', 'citizen_phone'],
       properties: {
         nomeEmpreendimento: {
           type: 'string',
@@ -643,14 +540,7 @@ export const urbanPlanningServices: ServiceDefinition[] = [
     color: '#059669',
     formSchema: {
       type: 'object',
-      citizenFields: [
-        'citizen_name',
-        'citizen_cpf',
-        'citizen_rg',
-        'citizen_email',
-        'citizen_phone',
-        'citizen_address'
-      ],
+      citizenFields: ['citizen_name', 'citizen_cpf', 'citizen_rg', 'citizen_email', 'citizen_phone', 'citizen_address'],
       properties: {
         nomeProjeto: {
           type: 'string',
@@ -715,7 +605,7 @@ export const urbanPlanningServices: ServiceDefinition[] = [
     description: 'Consulta de informações sobre Plano Diretor, zoneamento e uso do solo',
     departmentCode: 'PLANEJAMENTO_URBANO',
     serviceType: 'SEM_DADOS',
-    serviceSubtype: ServiceSubtype.CONSULTIVO,
+    serviceSubtype: ServiceSubtype.CONSULTA_PUBLICA,
     moduleType: null,
     requiresDocuments: false,
     estimatedDays: null,
@@ -796,7 +686,7 @@ export const urbanPlanningServices: ServiceDefinition[] = [
     description: 'Consulta rápida de zoneamento informando apenas o endereço',
     departmentCode: 'PLANEJAMENTO_URBANO',
     serviceType: 'SEM_DADOS',
-    serviceSubtype: ServiceSubtype.CONSULTIVO,
+    serviceSubtype: ServiceSubtype.CONSULTA_PUBLICA,
     moduleType: null,
     requiresDocuments: false,
     estimatedDays: null,
@@ -826,7 +716,7 @@ export const urbanPlanningServices: ServiceDefinition[] = [
     description: 'Acesso ao mapa digital de zoneamento do município',
     departmentCode: 'PLANEJAMENTO_URBANO',
     serviceType: 'SEM_DADOS',
-    serviceSubtype: ServiceSubtype.CONSULTIVO,
+    serviceSubtype: ServiceSubtype.CONSULTA_PUBLICA,
     moduleType: null,
     requiresDocuments: false,
     estimatedDays: null,
@@ -841,7 +731,7 @@ export const urbanPlanningServices: ServiceDefinition[] = [
     description: 'Acesso às leis e normas urbanísticas municipais',
     departmentCode: 'PLANEJAMENTO_URBANO',
     serviceType: 'SEM_DADOS',
-    serviceSubtype: ServiceSubtype.CONSULTIVO,
+    serviceSubtype: ServiceSubtype.CONSULTA_PUBLICA,
     moduleType: null,
     requiresDocuments: false,
     estimatedDays: null,
@@ -856,7 +746,7 @@ export const urbanPlanningServices: ServiceDefinition[] = [
     description: 'Consulta ao Plano Diretor Municipal e suas diretrizes',
     departmentCode: 'PLANEJAMENTO_URBANO',
     serviceType: 'SEM_DADOS',
-    serviceSubtype: ServiceSubtype.CONSULTIVO,
+    serviceSubtype: ServiceSubtype.CONSULTA_PUBLICA,
     moduleType: null,
     requiresDocuments: false,
     estimatedDays: null,

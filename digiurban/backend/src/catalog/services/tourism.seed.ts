@@ -27,7 +27,7 @@ export const tourismServices: ServiceDefinition[] = [
     allowMultipleActiveProtocols: true,
     formSchema: {
       type: 'object',
-      citizenFields: ['citizen_name', 'citizen_cpf', 'citizen_rg', 'citizen_birthdate', 'citizen_email', 'citizen_phone', 'citizen_phonesecondary', 'citizen_zipcode', 'citizen_address', 'citizen_addressnumber', 'citizen_addresscomplement', 'citizen_neighborhood', 'citizen_mothername', 'citizen_maritalstatus', 'citizen_occupation', 'citizen_familyincome'],
+      citizenFields: ['citizen_name', 'citizen_cpf', 'citizen_rg', 'citizen_birthdate', 'citizen_email', 'citizen_phone', 'citizen_phonesecondary', 'citizen_zipcode', 'citizen_address', 'citizen_addressnumber', 'citizen_addresscomplement', 'citizen_neighborhood'],
       properties: {
         tipoEstabelecimento: { type: 'string', title: 'Tipo de Estabelecimento', enum: ['Hotel', 'Pousada', 'Hostel', 'Restaurante', 'Agência de Turismo', 'Atração Turística', 'Outro'] },
         nomeEstabelecimento: { type: 'string', title: 'Nome do Estabelecimento', maxLength: 200 },
@@ -63,7 +63,7 @@ export const tourismServices: ServiceDefinition[] = [
     },
     formSchema: {
       type: 'object',
-      citizenFields: ['citizen_name', 'citizen_cpf', 'citizen_rg', 'citizen_birthdate', 'citizen_email', 'citizen_phone', 'citizen_phonesecondary', 'citizen_zipcode', 'citizen_address', 'citizen_addressnumber', 'citizen_addresscomplement', 'citizen_neighborhood', 'citizen_mothername', 'citizen_maritalstatus', 'citizen_occupation', 'citizen_familyincome'],
+      citizenFields: ['citizen_name', 'citizen_cpf', 'citizen_rg', 'citizen_birthdate', 'citizen_email', 'citizen_phone', 'citizen_phonesecondary', 'citizen_zipcode', 'citizen_address', 'citizen_addressnumber', 'citizen_addresscomplement', 'citizen_neighborhood'],
       properties: {
         numeroCadtur: { type: 'string', title: 'Número CADASTUR (se possuir)', maxLength: 50 },
         idiomas: { type: 'string', title: 'Idiomas que Domina', maxLength: 200 },
@@ -90,7 +90,7 @@ export const tourismServices: ServiceDefinition[] = [
     color: '#ec4899',
     formSchema: {
       type: 'object',
-      citizenFields: ['citizen_name', 'citizen_cpf', 'citizen_rg', 'citizen_birthdate', 'citizen_email', 'citizen_phone', 'citizen_phonesecondary', 'citizen_zipcode', 'citizen_address', 'citizen_addressnumber', 'citizen_addresscomplement', 'citizen_neighborhood', 'citizen_mothername', 'citizen_maritalstatus', 'citizen_occupation', 'citizen_familyincome'],
+      citizenFields: ['citizen_name', 'citizen_cpf', 'citizen_rg', 'citizen_birthdate', 'citizen_email', 'citizen_phone', 'citizen_phonesecondary', 'citizen_zipcode', 'citizen_address', 'citizen_addressnumber', 'citizen_addresscomplement', 'citizen_neighborhood'],
       properties: {
         nomeEvento: { type: 'string', title: 'Nome do Evento', maxLength: 200 },
         tipoEvento: { type: 'string', title: 'Tipo de Evento', enum: ['Festa Popular', 'Festival Cultural', 'Evento Gastronômico', 'Evento Esportivo', 'Exposição', 'Outro'] },
@@ -298,7 +298,7 @@ export const tourismServices: ServiceDefinition[] = [
     description: 'Consulta ao guia turístico oficial do município',
     departmentCode: 'TURISMO',
     serviceType: 'SEM_DADOS',
-    serviceSubtype: ServiceSubtype.CONSULTIVO,
+    serviceSubtype: ServiceSubtype.CONSULTA_PUBLICA,
     moduleType: null,
     requiresDocuments: false,
     estimatedDays: null,
@@ -347,7 +347,7 @@ export const tourismServices: ServiceDefinition[] = [
     description: 'Consulta ao calendário oficial de eventos turísticos do município',
     departmentCode: 'TURISMO',
     serviceType: 'SEM_DADOS',
-    serviceSubtype: ServiceSubtype.CONSULTIVO,
+    serviceSubtype: ServiceSubtype.CONSULTA_PUBLICA,
     moduleType: null,
     requiresDocuments: false,
     estimatedDays: null,

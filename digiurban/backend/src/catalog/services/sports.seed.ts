@@ -23,7 +23,7 @@ export const sportsServices: ServiceDefinition[] = [
     color: '#10b981',
     formSchema: {
       type: 'object',
-      citizenFields: ['citizen_name', 'citizen_cpf', 'citizen_rg', 'citizen_birthdate', 'citizen_email', 'citizen_phone', 'citizen_phonesecondary', 'citizen_zipcode', 'citizen_address', 'citizen_addressnumber', 'citizen_addresscomplement', 'citizen_neighborhood', 'citizen_mothername', 'citizen_maritalstatus', 'citizen_occupation', 'citizen_familyincome'],
+      citizenFields: ['citizen_name', 'citizen_cpf', 'citizen_rg', 'citizen_birthdate', 'citizen_email', 'citizen_phone', 'citizen_phonesecondary', 'citizen_zipcode', 'citizen_address', 'citizen_addressnumber', 'citizen_addresscomplement', 'citizen_neighborhood'],
       properties: {
         tipoEspaco: { type: 'string', title: 'Tipo de Espaço', enum: ['Quadra de Futebol', 'Quadra Poliesportiva', 'Campo de Futebol', 'Ginásio', 'Pista de Atletismo', 'Outro'] },
         dataReserva: { type: 'string', format: 'date', title: 'Data da Reserva' },
@@ -51,7 +51,7 @@ export const sportsServices: ServiceDefinition[] = [
     color: '#eab308',
     formSchema: {
       type: 'object',
-      citizenFields: ['citizen_name', 'citizen_cpf', 'citizen_rg', 'citizen_birthdate', 'citizen_email', 'citizen_phone', 'citizen_phonesecondary', 'citizen_zipcode', 'citizen_address', 'citizen_addressnumber', 'citizen_addresscomplement', 'citizen_neighborhood', 'citizen_mothername', 'citizen_maritalstatus', 'citizen_occupation', 'citizen_familyincome'],
+      citizenFields: ['citizen_name', 'citizen_cpf', 'citizen_rg', 'citizen_birthdate', 'citizen_email', 'citizen_phone', 'citizen_phonesecondary', 'citizen_zipcode', 'citizen_address', 'citizen_addressnumber', 'citizen_addresscomplement', 'citizen_neighborhood'],
       properties: {
         nomeCompeticao: { type: 'string', title: 'Nome da Competição', maxLength: 200 },
         modalidade: { type: 'string', title: 'Modalidade', maxLength: 100 },
@@ -86,7 +86,7 @@ export const sportsServices: ServiceDefinition[] = [
     },
     formSchema: {
       type: 'object',
-      citizenFields: ['citizen_name', 'citizen_cpf', 'citizen_rg', 'citizen_birthdate', 'citizen_email', 'citizen_phone', 'citizen_phonesecondary', 'citizen_zipcode', 'citizen_address', 'citizen_addressnumber', 'citizen_addresscomplement', 'citizen_neighborhood', 'citizen_mothername', 'citizen_maritalstatus', 'citizen_occupation', 'citizen_familyincome'],
+      citizenFields: ['citizen_name', 'citizen_cpf', 'citizen_rg', 'citizen_birthdate', 'citizen_email', 'citizen_phone', 'citizen_phonesecondary', 'citizen_zipcode', 'citizen_address', 'citizen_addressnumber', 'citizen_addresscomplement', 'citizen_neighborhood'],
       properties: {
         modalidadePrincipal: { type: 'string', title: 'Modalidade Principal', maxLength: 100 },
         nivelCompetitivo: { type: 'string', title: 'Nível Competitivo', enum: ['Iniciante', 'Amador', 'Profissional'] },
@@ -113,7 +113,7 @@ export const sportsServices: ServiceDefinition[] = [
     color: '#10b981',
     formSchema: {
       type: 'object',
-      citizenFields: ['citizen_name', 'citizen_cpf', 'citizen_rg', 'citizen_birthdate', 'citizen_email', 'citizen_phone', 'citizen_phonesecondary', 'citizen_zipcode', 'citizen_address', 'citizen_addressnumber', 'citizen_addresscomplement', 'citizen_neighborhood', 'citizen_mothername', 'citizen_maritalstatus', 'citizen_occupation', 'citizen_familyincome'],
+      citizenFields: ['citizen_name', 'citizen_cpf', 'citizen_rg', 'citizen_birthdate', 'citizen_email', 'citizen_phone', 'citizen_phonesecondary', 'citizen_zipcode', 'citizen_address', 'citizen_addressnumber', 'citizen_addresscomplement', 'citizen_neighborhood'],
       properties: {
         categoria: { type: 'string', title: 'Categoria', enum: ['Sub-7', 'Sub-9', 'Sub-11', 'Sub-13', 'Sub-15', 'Sub-17'] },
         turno: { type: 'string', title: 'Turno de Preferência', enum: ['Manhã', 'Tarde'] },
@@ -139,7 +139,7 @@ export const sportsServices: ServiceDefinition[] = [
     color: '#ea580c',
     formSchema: {
       type: 'object',
-      citizenFields: ['citizen_name', 'citizen_cpf', 'citizen_rg', 'citizen_birthdate', 'citizen_email', 'citizen_phone', 'citizen_phonesecondary', 'citizen_zipcode', 'citizen_address', 'citizen_addressnumber', 'citizen_addresscomplement', 'citizen_neighborhood', 'citizen_mothername', 'citizen_maritalstatus', 'citizen_occupation', 'citizen_familyincome'],
+      citizenFields: ['citizen_name', 'citizen_cpf', 'citizen_rg', 'citizen_birthdate', 'citizen_email', 'citizen_phone', 'citizen_phonesecondary', 'citizen_zipcode', 'citizen_address', 'citizen_addressnumber', 'citizen_addresscomplement', 'citizen_neighborhood'],
       properties: {
         categoria: { type: 'string', title: 'Categoria', enum: ['Infantil', 'Juvenil', 'Adulto'] },
         turno: { type: 'string', title: 'Turno de Preferência', enum: ['Manhã', 'Tarde', 'Noite'] }
@@ -164,7 +164,7 @@ export const sportsServices: ServiceDefinition[] = [
     color: '#f59e0b',
     formSchema: {
       type: 'object',
-      citizenFields: ['citizen_name', 'citizen_cpf', 'citizen_rg', 'citizen_birthdate', 'citizen_email', 'citizen_phone', 'citizen_phonesecondary', 'citizen_zipcode', 'citizen_address', 'citizen_addressnumber', 'citizen_addresscomplement', 'citizen_neighborhood', 'citizen_mothername', 'citizen_maritalstatus', 'citizen_occupation', 'citizen_familyincome'],
+      citizenFields: ['citizen_name', 'citizen_cpf', 'citizen_rg', 'citizen_birthdate', 'citizen_email', 'citizen_phone', 'citizen_phonesecondary', 'citizen_zipcode', 'citizen_address', 'citizen_addressnumber', 'citizen_addresscomplement', 'citizen_neighborhood'],
       properties: {
         categoria: { type: 'string', title: 'Categoria', enum: ['Infantil', 'Juvenil', 'Adulto'] },
         turno: { type: 'string', title: 'Turno de Preferência', enum: ['Manhã', 'Tarde', 'Noite'] }
@@ -189,7 +189,7 @@ export const sportsServices: ServiceDefinition[] = [
     color: '#0ea5e9',
     formSchema: {
       type: 'object',
-      citizenFields: ['citizen_name', 'citizen_cpf', 'citizen_rg', 'citizen_birthdate', 'citizen_email', 'citizen_phone', 'citizen_phonesecondary', 'citizen_zipcode', 'citizen_address', 'citizen_addressnumber', 'citizen_addresscomplement', 'citizen_neighborhood', 'citizen_mothername', 'citizen_maritalstatus', 'citizen_occupation', 'citizen_familyincome'],
+      citizenFields: ['citizen_name', 'citizen_cpf', 'citizen_rg', 'citizen_birthdate', 'citizen_email', 'citizen_phone', 'citizen_phonesecondary', 'citizen_zipcode', 'citizen_address', 'citizen_addressnumber', 'citizen_addresscomplement', 'citizen_neighborhood'],
       properties: {
         nivel: { type: 'string', title: 'Nível', enum: ['Iniciante', 'Intermediário', 'Avançado'] },
         turno: { type: 'string', title: 'Turno de Preferência', enum: ['Manhã', 'Tarde'] }
@@ -214,7 +214,7 @@ export const sportsServices: ServiceDefinition[] = [
     color: '#6366f1',
     formSchema: {
       type: 'object',
-      citizenFields: ['citizen_name', 'citizen_cpf', 'citizen_rg', 'citizen_birthdate', 'citizen_email', 'citizen_phone', 'citizen_phonesecondary', 'citizen_zipcode', 'citizen_address', 'citizen_addressnumber', 'citizen_addresscomplement', 'citizen_neighborhood', 'citizen_mothername', 'citizen_maritalstatus', 'citizen_occupation', 'citizen_familyincome'],
+      citizenFields: ['citizen_name', 'citizen_cpf', 'citizen_rg', 'citizen_birthdate', 'citizen_email', 'citizen_phone', 'citizen_phonesecondary', 'citizen_zipcode', 'citizen_address', 'citizen_addressnumber', 'citizen_addresscomplement', 'citizen_neighborhood'],
       properties: {
         categoria: { type: 'string', title: 'Categoria', enum: ['Infantil', 'Juvenil', 'Adulto'] },
         turno: { type: 'string', title: 'Turno de Preferência', enum: ['Manhã', 'Tarde', 'Noite'] }
@@ -239,7 +239,7 @@ export const sportsServices: ServiceDefinition[] = [
     color: '#eab308',
     formSchema: {
       type: 'object',
-      citizenFields: ['citizen_name', 'citizen_cpf', 'citizen_rg', 'citizen_birthdate', 'citizen_email', 'citizen_phone', 'citizen_phonesecondary', 'citizen_zipcode', 'citizen_address', 'citizen_addressnumber', 'citizen_addresscomplement', 'citizen_neighborhood', 'citizen_mothername', 'citizen_maritalstatus', 'citizen_occupation', 'citizen_familyincome'],
+      citizenFields: ['citizen_name', 'citizen_cpf', 'citizen_rg', 'citizen_birthdate', 'citizen_email', 'citizen_phone', 'citizen_phonesecondary', 'citizen_zipcode', 'citizen_address', 'citizen_addressnumber', 'citizen_addresscomplement', 'citizen_neighborhood'],
       properties: {
         categoria: { type: 'string', title: 'Categoria', enum: ['Infantil', 'Juvenil', 'Adulto'] },
         turno: { type: 'string', title: 'Turno de Preferência', enum: ['Manhã', 'Tarde', 'Noite'] }
@@ -264,7 +264,7 @@ export const sportsServices: ServiceDefinition[] = [
     color: '#ec4899',
     formSchema: {
       type: 'object',
-      citizenFields: ['citizen_name', 'citizen_cpf', 'citizen_rg', 'citizen_birthdate', 'citizen_email', 'citizen_phone', 'citizen_phonesecondary', 'citizen_zipcode', 'citizen_address', 'citizen_addressnumber', 'citizen_addresscomplement', 'citizen_neighborhood', 'citizen_mothername', 'citizen_maritalstatus', 'citizen_occupation', 'citizen_familyincome'],
+      citizenFields: ['citizen_name', 'citizen_cpf', 'citizen_rg', 'citizen_birthdate', 'citizen_email', 'citizen_phone', 'citizen_phonesecondary', 'citizen_zipcode', 'citizen_address', 'citizen_addressnumber', 'citizen_addresscomplement', 'citizen_neighborhood'],
       properties: {
         tipoGinastica: { type: 'string', title: 'Tipo de Ginástica', enum: ['Artística', 'Rítmica', 'Aeróbica', 'Localizada'] },
         turno: { type: 'string', title: 'Turno de Preferência', enum: ['Manhã', 'Tarde', 'Noite'] }
@@ -289,7 +289,7 @@ export const sportsServices: ServiceDefinition[] = [
     color: '#14b8a6',
     formSchema: {
       type: 'object',
-      citizenFields: ['citizen_name', 'citizen_cpf', 'citizen_rg', 'citizen_birthdate', 'citizen_email', 'citizen_phone', 'citizen_phonesecondary', 'citizen_zipcode', 'citizen_address', 'citizen_addressnumber', 'citizen_addresscomplement', 'citizen_neighborhood', 'citizen_mothername', 'citizen_maritalstatus', 'citizen_occupation', 'citizen_familyincome'],
+      citizenFields: ['citizen_name', 'citizen_cpf', 'citizen_rg', 'citizen_birthdate', 'citizen_email', 'citizen_phone', 'citizen_phonesecondary', 'citizen_zipcode', 'citizen_address', 'citizen_addressnumber', 'citizen_addresscomplement', 'citizen_neighborhood'],
       properties: {
         nomeCorrida: { type: 'string', title: 'Nome da Corrida', maxLength: 200 },
         distancia: { type: 'string', title: 'Distância', enum: ['5km', '10km', 'Meia Maratona', 'Maratona'] },
@@ -315,7 +315,7 @@ export const sportsServices: ServiceDefinition[] = [
     color: '#8b5cf6',
     formSchema: {
       type: 'object',
-      citizenFields: ['citizen_name', 'citizen_cpf', 'citizen_rg', 'citizen_birthdate', 'citizen_email', 'citizen_phone', 'citizen_phonesecondary', 'citizen_zipcode', 'citizen_address', 'citizen_addressnumber', 'citizen_addresscomplement', 'citizen_neighborhood', 'citizen_mothername', 'citizen_maritalstatus', 'citizen_occupation', 'citizen_familyincome'],
+      citizenFields: ['citizen_name', 'citizen_cpf', 'citizen_rg', 'citizen_birthdate', 'citizen_email', 'citizen_phone', 'citizen_phonesecondary', 'citizen_zipcode', 'citizen_address', 'citizen_addressnumber', 'citizen_addresscomplement', 'citizen_neighborhood'],
       properties: {
         tipoMaterial: { type: 'string', title: 'Tipo de Material', enum: ['Bolas', 'Redes', 'Cones', 'Coletes', 'Arcos', 'Cordas', 'Outro'] },
         quantidade: { type: 'integer', title: 'Quantidade', minimum: 1 },
@@ -343,7 +343,7 @@ export const sportsServices: ServiceDefinition[] = [
     color: '#3b82f6',
     formSchema: {
       type: 'object',
-      citizenFields: ['citizen_name', 'citizen_cpf', 'citizen_rg', 'citizen_birthdate', 'citizen_email', 'citizen_phone', 'citizen_phonesecondary', 'citizen_zipcode', 'citizen_address', 'citizen_addressnumber', 'citizen_addresscomplement', 'citizen_neighborhood', 'citizen_mothername', 'citizen_maritalstatus', 'citizen_occupation', 'citizen_familyincome'],
+      citizenFields: ['citizen_name', 'citizen_cpf', 'citizen_rg', 'citizen_birthdate', 'citizen_email', 'citizen_phone', 'citizen_phonesecondary', 'citizen_zipcode', 'citizen_address', 'citizen_addressnumber', 'citizen_addresscomplement', 'citizen_neighborhood'],
       properties: {
         modalidade: { type: 'string', title: 'Modalidade', maxLength: 200 },
         numeroCREF: { type: 'string', title: 'Número do CREF', maxLength: 50 },
@@ -370,7 +370,7 @@ export const sportsServices: ServiceDefinition[] = [
     color: '#f97316',
     formSchema: {
       type: 'object',
-      citizenFields: ['citizen_name', 'citizen_cpf', 'citizen_rg', 'citizen_birthdate', 'citizen_email', 'citizen_phone', 'citizen_phonesecondary', 'citizen_zipcode', 'citizen_address', 'citizen_addressnumber', 'citizen_addresscomplement', 'citizen_neighborhood', 'citizen_mothername', 'citizen_maritalstatus', 'citizen_occupation', 'citizen_familyincome'],
+      citizenFields: ['citizen_name', 'citizen_cpf', 'citizen_rg', 'citizen_birthdate', 'citizen_email', 'citizen_phone', 'citizen_phonesecondary', 'citizen_zipcode', 'citizen_address', 'citizen_addressnumber', 'citizen_addresscomplement', 'citizen_neighborhood'],
       properties: {
         nomeEvento: { type: 'string', title: 'Nome do Evento', maxLength: 200 },
         dataEvento: { type: 'string', format: 'date', title: 'Data do Evento' },
@@ -398,7 +398,7 @@ export const sportsServices: ServiceDefinition[] = [
     color: '#eab308',
     formSchema: {
       type: 'object',
-      citizenFields: ['citizen_name', 'citizen_cpf', 'citizen_rg', 'citizen_birthdate', 'citizen_email', 'citizen_phone', 'citizen_phonesecondary', 'citizen_zipcode', 'citizen_address', 'citizen_addressnumber', 'citizen_addresscomplement', 'citizen_neighborhood', 'citizen_mothername', 'citizen_maritalstatus', 'citizen_occupation', 'citizen_familyincome'],
+      citizenFields: ['citizen_name', 'citizen_cpf', 'citizen_rg', 'citizen_birthdate', 'citizen_email', 'citizen_phone', 'citizen_phonesecondary', 'citizen_zipcode', 'citizen_address', 'citizen_addressnumber', 'citizen_addresscomplement', 'citizen_neighborhood'],
       properties: {
         nomeCampeonato: { type: 'string', title: 'Nome do Campeonato', maxLength: 200 },
         modalidade: { type: 'string', title: 'Modalidade', maxLength: 100 },
@@ -491,7 +491,7 @@ export const sportsServices: ServiceDefinition[] = [
     description: 'Consulta ao ranking oficial de atletas do município (usa dados do perfil do cidadão)',
     departmentCode: 'ESPORTES',
     serviceType: 'SEM_DADOS',
-    serviceSubtype: ServiceSubtype.SOLICITACAO_SIMPLES,
+    serviceSubtype: ServiceSubtype.CONSULTA_PUBLICA,
     moduleType: null,
     requiresDocuments: false,
     requiredDocuments: [],

@@ -23,24 +23,7 @@ export const publicWorksServices: ServiceDefinition[] = [
     color: '#f97316',
     formSchema: {
       type: 'object',
-      citizenFields: [
-        'citizen_name',
-        'citizen_cpf',
-        'citizen_rg',
-        'citizen_birthdate',
-        'citizen_email',
-        'citizen_phone',
-        'citizen_phonesecondary',
-        'citizen_zipcode',
-        'citizen_address',
-        'citizen_addressnumber',
-        'citizen_addresscomplement',
-        'citizen_neighborhood',
-        'citizen_mothername',
-        'citizen_maritalstatus',
-        'citizen_occupation',
-        'citizen_familyincome'
-      ],
+      citizenFields: ['citizen_name', 'citizen_cpf', 'citizen_rg', 'citizen_birthdate', 'citizen_email', 'citizen_phone', 'citizen_phonesecondary', 'citizen_zipcode', 'citizen_address', 'citizen_addressnumber', 'citizen_addresscomplement', 'citizen_neighborhood'],
       properties: {
         tipoReparo: {
           type: 'string',
@@ -85,24 +68,7 @@ export const publicWorksServices: ServiceDefinition[] = [
     color: '#dc2626',
     formSchema: {
       type: 'object',
-      citizenFields: [
-        'citizen_name',
-        'citizen_cpf',
-        'citizen_rg',
-        'citizen_birthdate',
-        'citizen_email',
-        'citizen_phone',
-        'citizen_phonesecondary',
-        'citizen_zipcode',
-        'citizen_address',
-        'citizen_addressnumber',
-        'citizen_addresscomplement',
-        'citizen_neighborhood',
-        'citizen_mothername',
-        'citizen_maritalstatus',
-        'citizen_occupation',
-        'citizen_familyincome'
-      ],
+      citizenFields: ['citizen_name', 'citizen_cpf', 'citizen_rg', 'citizen_birthdate', 'citizen_email', 'citizen_phone', 'citizen_phonesecondary', 'citizen_zipcode', 'citizen_address', 'citizen_addressnumber', 'citizen_addresscomplement', 'citizen_neighborhood'],
       properties: {
         enderecoImovel: {
           type: 'string',
@@ -150,24 +116,7 @@ export const publicWorksServices: ServiceDefinition[] = [
     color: '#f59e0b',
     formSchema: {
       type: 'object',
-      citizenFields: [
-        'citizen_name',
-        'citizen_cpf',
-        'citizen_rg',
-        'citizen_birthdate',
-        'citizen_email',
-        'citizen_phone',
-        'citizen_phonesecondary',
-        'citizen_zipcode',
-        'citizen_address',
-        'citizen_addressnumber',
-        'citizen_addresscomplement',
-        'citizen_neighborhood',
-        'citizen_mothername',
-        'citizen_maritalstatus',
-        'citizen_occupation',
-        'citizen_familyincome'
-      ],
+      citizenFields: ['citizen_name', 'citizen_cpf', 'citizen_rg', 'citizen_birthdate', 'citizen_email', 'citizen_phone', 'citizen_phonesecondary', 'citizen_zipcode', 'citizen_address', 'citizen_addressnumber', 'citizen_addresscomplement', 'citizen_neighborhood'],
       properties: {
         tipoIntervencao: {
           type: 'string',
@@ -217,24 +166,7 @@ export const publicWorksServices: ServiceDefinition[] = [
     color: '#3b82f6',
     formSchema: {
       type: 'object',
-      citizenFields: [
-        'citizen_name',
-        'citizen_cpf',
-        'citizen_rg',
-        'citizen_birthdate',
-        'citizen_email',
-        'citizen_phone',
-        'citizen_phonesecondary',
-        'citizen_zipcode',
-        'citizen_address',
-        'citizen_addressnumber',
-        'citizen_addresscomplement',
-        'citizen_neighborhood',
-        'citizen_mothername',
-        'citizen_maritalstatus',
-        'citizen_occupation',
-        'citizen_familyincome'
-      ],
+      citizenFields: ['citizen_name', 'citizen_cpf', 'citizen_rg', 'citizen_birthdate', 'citizen_email', 'citizen_phone', 'citizen_phonesecondary', 'citizen_zipcode', 'citizen_address', 'citizen_addressnumber', 'citizen_addresscomplement', 'citizen_neighborhood'],
       properties: {
         enderecoImovel: { type: 'string', title: 'Endereço do Imóvel', maxLength: 300 },
         tipoObra: { type: 'string', title: 'Tipo de Obra', enum: ['Residencial', 'Comercial', 'Industrial', 'Mista'] },
@@ -264,24 +196,7 @@ export const publicWorksServices: ServiceDefinition[] = [
     color: '#10b981',
     formSchema: {
       type: 'object',
-      citizenFields: [
-        'citizen_name',
-        'citizen_cpf',
-        'citizen_rg',
-        'citizen_birthdate',
-        'citizen_email',
-        'citizen_phone',
-        'citizen_phonesecondary',
-        'citizen_zipcode',
-        'citizen_address',
-        'citizen_addressnumber',
-        'citizen_addresscomplement',
-        'citizen_neighborhood',
-        'citizen_mothername',
-        'citizen_maritalstatus',
-        'citizen_occupation',
-        'citizen_familyincome'
-      ],
+      citizenFields: ['citizen_name', 'citizen_cpf', 'citizen_rg', 'citizen_birthdate', 'citizen_email', 'citizen_phone', 'citizen_phonesecondary', 'citizen_zipcode', 'citizen_address', 'citizen_addressnumber', 'citizen_addresscomplement', 'citizen_neighborhood'],
       properties: {
         enderecoObra: { type: 'string', title: 'Endereço da Obra', maxLength: 300 },
         numeroProtocoloProjeto: { type: 'string', title: 'Número do Protocolo do Projeto Aprovado', maxLength: 50 },
@@ -310,24 +225,7 @@ export const publicWorksServices: ServiceDefinition[] = [
     color: '#f59e0b',
     formSchema: {
       type: 'object',
-      citizenFields: [
-        'citizen_name',
-        'citizen_cpf',
-        'citizen_rg',
-        'citizen_birthdate',
-        'citizen_email',
-        'citizen_phone',
-        'citizen_phonesecondary',
-        'citizen_zipcode',
-        'citizen_address',
-        'citizen_addressnumber',
-        'citizen_addresscomplement',
-        'citizen_neighborhood',
-        'citizen_mothername',
-        'citizen_maritalstatus',
-        'citizen_occupation',
-        'citizen_familyincome'
-      ],
+      citizenFields: ['citizen_name', 'citizen_cpf', 'citizen_rg', 'citizen_birthdate', 'citizen_email', 'citizen_phone', 'citizen_phonesecondary', 'citizen_zipcode', 'citizen_address', 'citizen_addressnumber', 'citizen_addresscomplement', 'citizen_neighborhood'],
       properties: {
         enderecoImovel: { type: 'string', title: 'Endereço do Imóvel', maxLength: 300 },
         tipoReforma: { type: 'string', title: 'Tipo de Reforma', enum: ['Ampliação', 'Modificação Interna', 'Fachada', 'Estrutural', 'Outro'] },
@@ -356,24 +254,7 @@ export const publicWorksServices: ServiceDefinition[] = [
     color: '#8b5cf6',
     formSchema: {
       type: 'object',
-      citizenFields: [
-        'citizen_name',
-        'citizen_cpf',
-        'citizen_rg',
-        'citizen_birthdate',
-        'citizen_email',
-        'citizen_phone',
-        'citizen_phonesecondary',
-        'citizen_zipcode',
-        'citizen_address',
-        'citizen_addressnumber',
-        'citizen_addresscomplement',
-        'citizen_neighborhood',
-        'citizen_mothername',
-        'citizen_maritalstatus',
-        'citizen_occupation',
-        'citizen_familyincome'
-      ],
+      citizenFields: ['citizen_name', 'citizen_cpf', 'citizen_rg', 'citizen_birthdate', 'citizen_email', 'citizen_phone', 'citizen_phonesecondary', 'citizen_zipcode', 'citizen_address', 'citizen_addressnumber', 'citizen_addresscomplement', 'citizen_neighborhood'],
       properties: {
         nomeLoteamento: { type: 'string', title: 'Nome do Loteamento', maxLength: 200 },
         localizacao: { type: 'string', title: 'Localização', maxLength: 300 },
@@ -403,24 +284,7 @@ export const publicWorksServices: ServiceDefinition[] = [
     color: '#f97316',
     formSchema: {
       type: 'object',
-      citizenFields: [
-        'citizen_name',
-        'citizen_cpf',
-        'citizen_rg',
-        'citizen_birthdate',
-        'citizen_email',
-        'citizen_phone',
-        'citizen_phonesecondary',
-        'citizen_zipcode',
-        'citizen_address',
-        'citizen_addressnumber',
-        'citizen_addresscomplement',
-        'citizen_neighborhood',
-        'citizen_mothername',
-        'citizen_maritalstatus',
-        'citizen_occupation',
-        'citizen_familyincome'
-      ],
+      citizenFields: ['citizen_name', 'citizen_cpf', 'citizen_rg', 'citizen_birthdate', 'citizen_email', 'citizen_phone', 'citizen_phonesecondary', 'citizen_zipcode', 'citizen_address', 'citizen_addressnumber', 'citizen_addresscomplement', 'citizen_neighborhood'],
       properties: {
         enderecoImovel: { type: 'string', title: 'Endereço do Imóvel', maxLength: 300 },
         anoConstructao: { type: 'integer', title: 'Ano de Construção', minimum: 1900 },
@@ -450,24 +314,7 @@ export const publicWorksServices: ServiceDefinition[] = [
     color: '#dc2626',
     formSchema: {
       type: 'object',
-      citizenFields: [
-        'citizen_name',
-        'citizen_cpf',
-        'citizen_rg',
-        'citizen_birthdate',
-        'citizen_email',
-        'citizen_phone',
-        'citizen_phonesecondary',
-        'citizen_zipcode',
-        'citizen_address',
-        'citizen_addressnumber',
-        'citizen_addresscomplement',
-        'citizen_neighborhood',
-        'citizen_mothername',
-        'citizen_maritalstatus',
-        'citizen_occupation',
-        'citizen_familyincome'
-      ],
+      citizenFields: ['citizen_name', 'citizen_cpf', 'citizen_rg', 'citizen_birthdate', 'citizen_email', 'citizen_phone', 'citizen_phonesecondary', 'citizen_zipcode', 'citizen_address', 'citizen_addressnumber', 'citizen_addresscomplement', 'citizen_neighborhood'],
       properties: {
         enderecoImovel: { type: 'string', title: 'Endereço do Imóvel', maxLength: 300 },
         areaDemolir: { type: 'number', title: 'Área a Demolir (m²)', minimum: 1 },

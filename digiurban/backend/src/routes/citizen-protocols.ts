@@ -249,7 +249,7 @@ router.post('/', upload.any(), async (req, res) => {
     const levelBlock = await checkServiceLevel(citizenId, serviceId);
     if (levelBlock) {
       cleanupTempFiles();
-      return res.status(403).json({ success: false, error: levelBlock.message, reason: 'LEVEL_REQUIRED', minLevel: levelBlock.minLevel });
+      return res.status(403).json({ success: false, error: levelBlock.message, reason: levelBlock.reason || 'LEVEL_REQUIRED', minLevel: levelBlock.minLevel });
     }
 
     // ✅ VALIDAÇÃO DE UNICIDADE: Verificar se cidadão pode criar este protocolo

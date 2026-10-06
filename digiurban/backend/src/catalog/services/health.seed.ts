@@ -24,7 +24,7 @@ export const healthServices: ServiceDefinition[] = [
     color: '#10b981',
     formSchema: {
       type: 'object',
-      citizenFields: ['citizen_name', 'citizen_cpf', 'citizen_rg', 'citizen_birthdate', 'citizen_email', 'citizen_phone', 'citizen_phonesecondary', 'citizen_zipcode', 'citizen_address', 'citizen_addressnumber', 'citizen_addresscomplement', 'citizen_neighborhood', 'citizen_mothername', 'citizen_maritalstatus', 'citizen_occupation', 'citizen_familyincome'],
+      citizenFields: ['citizen_name', 'citizen_cpf', 'citizen_rg', 'citizen_birthdate', 'citizen_email', 'citizen_phone', 'citizen_phonesecondary', 'citizen_zipcode', 'citizen_address', 'citizen_addressnumber', 'citizen_addresscomplement', 'citizen_neighborhood'],
       properties: {
         cartaoSUS: { type: 'string', title: 'Número do Cartão SUS', pattern: '^\\d{15}$', minLength: 15, maxLength: 15 },
         especialidade: { type: 'string', title: 'Especialidade', enum: ['Clínico Geral', 'Pediatria', 'Ginecologia', 'Cardiologia', 'Psicologia', 'Fisioterapia', 'Outro'] },
@@ -51,7 +51,7 @@ export const healthServices: ServiceDefinition[] = [
     color: '#06b6d4',
     formSchema: {
       type: 'object',
-      citizenFields: ['citizen_name', 'citizen_cpf', 'citizen_rg', 'citizen_birthdate', 'citizen_email', 'citizen_phone', 'citizen_phonesecondary', 'citizen_zipcode', 'citizen_address', 'citizen_addressnumber', 'citizen_addresscomplement', 'citizen_neighborhood', 'citizen_mothername', 'citizen_maritalstatus', 'citizen_occupation', 'citizen_familyincome'],
+      citizenFields: ['citizen_name', 'citizen_cpf', 'citizen_rg', 'citizen_birthdate', 'citizen_email', 'citizen_phone', 'citizen_phonesecondary', 'citizen_zipcode', 'citizen_address', 'citizen_addressnumber', 'citizen_addresscomplement', 'citizen_neighborhood'],
       properties: {
         cartaoSUS: { type: 'string', title: 'Número do Cartão SUS', pattern: '^\\d{15}$', minLength: 15, maxLength: 15 },
         tipoAtendimento: { type: 'string', title: 'Tipo de Atendimento', enum: ['Primeira Consulta', 'Limpeza', 'Extração', 'Obturação', 'Prótese', 'Urgência/Dor'] },
@@ -78,7 +78,7 @@ export const healthServices: ServiceDefinition[] = [
     color: '#3b82f6',
     formSchema: {
       type: 'object',
-      citizenFields: ['citizen_name', 'citizen_cpf', 'citizen_rg', 'citizen_birthdate', 'citizen_email', 'citizen_phone', 'citizen_phonesecondary', 'citizen_zipcode', 'citizen_address', 'citizen_addressnumber', 'citizen_addresscomplement', 'citizen_neighborhood', 'citizen_mothername', 'citizen_maritalstatus', 'citizen_occupation', 'citizen_familyincome'],
+      citizenFields: ['citizen_name', 'citizen_cpf', 'citizen_rg', 'citizen_birthdate', 'citizen_email', 'citizen_phone', 'citizen_phonesecondary', 'citizen_zipcode', 'citizen_address', 'citizen_addressnumber', 'citizen_addresscomplement', 'citizen_neighborhood'],
       properties: {
         cartaoSUS: { type: 'string', title: 'Número do Cartão SUS', pattern: '^\\d{15}$', minLength: 15, maxLength: 15 },
         tipoExame: { type: 'string', title: 'Tipo de Exame', enum: ['Laboratorial (Sangue, Urina)', 'Imagem (Raio-X, Ultrassom)', 'Outros Exames'] },
@@ -105,7 +105,7 @@ export const healthServices: ServiceDefinition[] = [
     color: '#dc2626',
     formSchema: {
       type: 'object',
-      citizenFields: ['citizen_name', 'citizen_cpf', 'citizen_rg', 'citizen_birthdate', 'citizen_email', 'citizen_phone', 'citizen_phonesecondary', 'citizen_zipcode', 'citizen_address', 'citizen_addressnumber', 'citizen_addresscomplement', 'citizen_neighborhood', 'citizen_mothername', 'citizen_maritalstatus', 'citizen_occupation', 'citizen_familyincome'],
+      citizenFields: ['citizen_name', 'citizen_cpf', 'citizen_rg', 'citizen_birthdate', 'citizen_email', 'citizen_phone', 'citizen_phonesecondary', 'citizen_zipcode', 'citizen_address', 'citizen_addressnumber', 'citizen_addresscomplement', 'citizen_neighborhood'],
       properties: {
         cartaoSUS: { type: 'string', title: 'Número do Cartão SUS', pattern: '^\\d{15}$', minLength: 15, maxLength: 15 },
         medicamento: { type: 'string', title: 'Medicamento Solicitado', maxLength: 200 },
@@ -163,7 +163,7 @@ export const healthServices: ServiceDefinition[] = [
     color: '#8b5cf6',
     formSchema: {
       type: 'object',
-      citizenFields: ['citizen_name', 'citizen_cpf', 'citizen_rg', 'citizen_birthdate', 'citizen_email', 'citizen_phone', 'citizen_phonesecondary', 'citizen_zipcode', 'citizen_address', 'citizen_addressnumber', 'citizen_addresscomplement', 'citizen_neighborhood', 'citizen_mothername', 'citizen_maritalstatus', 'citizen_occupation', 'citizen_familyincome'],
+      citizenFields: ['citizen_name', 'citizen_cpf', 'citizen_rg', 'citizen_birthdate', 'citizen_email', 'citizen_phone', 'citizen_phonesecondary', 'citizen_zipcode', 'citizen_address', 'citizen_addressnumber', 'citizen_addresscomplement', 'citizen_neighborhood'],
       properties: {
         tipoVacina: { type: 'string', title: 'Tipo de Vacina', enum: ['COVID-19', 'Influenza (Gripe)', 'Tríplice Viral', 'Hepatite B', 'Febre Amarela', 'Outra'] },
         grupoAlvo: { type: 'string', title: 'Grupo Alvo', enum: ['Criança', 'Adolescente', 'Adulto', 'Idoso', 'Gestante', 'Profissional de Saúde'] },
@@ -251,7 +251,7 @@ export const healthServices: ServiceDefinition[] = [
     color: '#a855f7',
     formSchema: {
       type: 'object',
-      citizenFields: ['citizen_name', 'citizen_cpf', 'citizen_rg', 'citizen_birthdate', 'citizen_email', 'citizen_phone', 'citizen_phonesecondary', 'citizen_zipcode', 'citizen_address', 'citizen_addressnumber', 'citizen_addresscomplement', 'citizen_neighborhood', 'citizen_mothername', 'citizen_maritalstatus', 'citizen_occupation', 'citizen_familyincome'],
+      citizenFields: ['citizen_name', 'citizen_cpf', 'citizen_rg', 'citizen_birthdate', 'citizen_email', 'citizen_phone', 'citizen_phonesecondary', 'citizen_zipcode', 'citizen_address', 'citizen_addressnumber', 'citizen_addresscomplement', 'citizen_neighborhood'],
       properties: {
         cartaoSUS: { type: 'string', title: 'Número do Cartão SUS', pattern: '^\\d{15}$', minLength: 15, maxLength: 15 },
         tipoAtendimento: { type: 'string', title: 'Tipo de Atendimento', enum: ['Primeira Consulta', 'Acompanhamento', 'Urgência'] },
@@ -279,7 +279,7 @@ export const healthServices: ServiceDefinition[] = [
     color: '#f97316',
     formSchema: {
       type: 'object',
-      citizenFields: ['citizen_name', 'citizen_cpf', 'citizen_rg', 'citizen_birthdate', 'citizen_email', 'citizen_phone', 'citizen_phonesecondary', 'citizen_zipcode', 'citizen_address', 'citizen_addressnumber', 'citizen_addresscomplement', 'citizen_neighborhood', 'citizen_mothername', 'citizen_maritalstatus', 'citizen_occupation', 'citizen_familyincome'],
+      citizenFields: ['citizen_name', 'citizen_cpf', 'citizen_rg', 'citizen_birthdate', 'citizen_email', 'citizen_phone', 'citizen_phonesecondary', 'citizen_zipcode', 'citizen_address', 'citizen_addressnumber', 'citizen_addresscomplement', 'citizen_neighborhood'],
       properties: {
         cartaoSUS: { type: 'string', title: 'Número do Cartão SUS', pattern: '^\\d{15}$', minLength: 15, maxLength: 15 },
         tipoTransporte: { type: 'string', title: 'Tipo de Transporte', enum: ['Ambulância', 'Veículo Adaptado', 'Transporte Coletivo'] },
@@ -309,7 +309,7 @@ export const healthServices: ServiceDefinition[] = [
     color: '#0891b2',
     formSchema: {
       type: 'object',
-      citizenFields: ['citizen_name', 'citizen_cpf', 'citizen_rg', 'citizen_birthdate', 'citizen_email', 'citizen_phone', 'citizen_phonesecondary', 'citizen_zipcode', 'citizen_address', 'citizen_addressnumber', 'citizen_addresscomplement', 'citizen_neighborhood', 'citizen_mothername', 'citizen_maritalstatus', 'citizen_occupation', 'citizen_familyincome'],
+      citizenFields: ['citizen_name', 'citizen_cpf', 'citizen_rg', 'citizen_birthdate', 'citizen_email', 'citizen_phone', 'citizen_phonesecondary', 'citizen_zipcode', 'citizen_address', 'citizen_addressnumber', 'citizen_addresscomplement', 'citizen_neighborhood'],
       properties: {
         cartaoSUS: { type: 'string', title: 'Número do Cartão SUS', pattern: '^\\d{15}$', minLength: 15, maxLength: 15 },
         nomePaciente: { type: 'string', title: 'Nome do Paciente (se diferente do solicitante)', maxLength: 200 },
@@ -339,7 +339,7 @@ export const healthServices: ServiceDefinition[] = [
     color: '#22c55e',
     formSchema: {
       type: 'object',
-      citizenFields: ['citizen_name', 'citizen_cpf', 'citizen_rg', 'citizen_birthdate', 'citizen_email', 'citizen_phone', 'citizen_phonesecondary', 'citizen_zipcode', 'citizen_address', 'citizen_addressnumber', 'citizen_addresscomplement', 'citizen_neighborhood', 'citizen_mothername', 'citizen_maritalstatus', 'citizen_occupation', 'citizen_familyincome'],
+      citizenFields: ['citizen_name', 'citizen_cpf', 'citizen_rg', 'citizen_birthdate', 'citizen_email', 'citizen_phone', 'citizen_phonesecondary', 'citizen_zipcode', 'citizen_address', 'citizen_addressnumber', 'citizen_addresscomplement', 'citizen_neighborhood'],
       properties: {
         cartaoSUS: { type: 'string', title: 'Número do Cartão SUS', pattern: '^\\d{15}$', minLength: 15, maxLength: 15 },
         diagnostico: { type: 'string', title: 'Diagnóstico Médico', maxLength: 300 },
@@ -368,7 +368,7 @@ export const healthServices: ServiceDefinition[] = [
     color: '#14b8a6',
     formSchema: {
       type: 'object',
-      citizenFields: ['citizen_name', 'citizen_cpf', 'citizen_rg', 'citizen_birthdate', 'citizen_email', 'citizen_phone', 'citizen_phonesecondary', 'citizen_zipcode', 'citizen_address', 'citizen_addressnumber', 'citizen_addresscomplement', 'citizen_neighborhood', 'citizen_mothername', 'citizen_maritalstatus', 'citizen_occupation', 'citizen_familyincome'],
+      citizenFields: ['citizen_name', 'citizen_cpf', 'citizen_rg', 'citizen_birthdate', 'citizen_email', 'citizen_phone', 'citizen_phonesecondary', 'citizen_zipcode', 'citizen_address', 'citizen_addressnumber', 'citizen_addresscomplement', 'citizen_neighborhood', 'citizen_mothername'],
       properties: {
         tipoSolicitacao: { type: 'string', title: 'Tipo de Solicitação', enum: ['Primeira Via', 'Segunda Via (Perda/Roubo)', 'Atualização de Dados'] },
         unidadeSaudeRetirada: { type: 'string', title: 'Unidade de Saúde para Retirada', maxLength: 200 },
@@ -382,13 +382,13 @@ export const healthServices: ServiceDefinition[] = [
 
   {
     name: 'Solicitação de Ambulância (Urgência)',
-    description: 'Solicite ambulância para situações de urgência ou emergência',
+    description: 'Com risco de vida, ligue já 192 (SAMU). Use este pedido para transporte de paciente em urgência sem risco imediato',
     departmentCode: 'SAUDE',
     serviceType: 'COM_DADOS',
     serviceSubtype: ServiceSubtype.SOLICITACAO_SIMPLES,
     moduleType: 'SOLICITACAO_AMBULANCIA',
     requiresDocuments: false,
-    estimatedDays: null,
+    estimatedDays: 1,
     priority: 5,
     category: 'Urgência',
     icon: 'Siren',
@@ -472,7 +472,7 @@ export const healthServices: ServiceDefinition[] = [
     description: 'Consulte seu histórico completo de atendimentos no SUS municipal',
     departmentCode: 'SAUDE',
     serviceType: 'SEM_DADOS',
-    serviceSubtype: ServiceSubtype.CONSULTIVO,
+    serviceSubtype: ServiceSubtype.CONSULTA_AUTENTICADA,
     moduleType: null,
     requiresDocuments: false,
     requiredDocuments: [],
@@ -488,7 +488,7 @@ export const healthServices: ServiceDefinition[] = [
     description: 'Consulte quais medicamentos estão disponíveis na farmácia básica',
     departmentCode: 'SAUDE',
     serviceType: 'SEM_DADOS',
-    serviceSubtype: ServiceSubtype.CONSULTIVO,
+    serviceSubtype: ServiceSubtype.CONSULTA_PUBLICA,
     moduleType: null,
     requiresDocuments: false,
     requiredDocuments: [],
@@ -504,7 +504,7 @@ export const healthServices: ServiceDefinition[] = [
     description: 'Consulte resultados de exames realizados',
     departmentCode: 'SAUDE',
     serviceType: 'SEM_DADOS',
-    serviceSubtype: ServiceSubtype.CONSULTIVO,
+    serviceSubtype: ServiceSubtype.CONSULTA_AUTENTICADA,
     moduleType: null,
     requiresDocuments: false,
     requiredDocuments: [],

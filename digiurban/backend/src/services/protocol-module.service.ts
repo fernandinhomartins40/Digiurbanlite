@@ -7,6 +7,7 @@
  * Implementa o fluxo: Protocolo COM_DADOS → customData (entidade virtual) → Aprovação
  */
 
+import { INFORMATION_ONLY_MESSAGE, isInformationOnly } from './service-access-level';
 import { runConclusionHooks } from './protocol-conclusion-hooks';
 import { ProtocolStatus, Prisma, UserRole } from '@prisma/client';
 import { prisma } from '../lib/prisma';
@@ -144,6 +145,10 @@ export class ProtocolModuleService {
 
     if (!service.isActive) {
       throw new Error('Serviço inativo');
+    }
+    // item só de informação (consulta) não abre pedido, em nenhum canal
+    if (isInformationOnly(service.serviceSubtype)) {
+      throw new Error(INFORMATION_ONLY_MESSAGE);
     }
 
     // 2. Verificar tipo de serviço

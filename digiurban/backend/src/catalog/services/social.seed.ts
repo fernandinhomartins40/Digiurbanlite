@@ -317,7 +317,7 @@ export const socialServices: ServiceDefinition[] = [
     estimatedDays: 30,
     priority: 5,
     category: 'Acolhimento',
-    icon: 'HomeHeart',
+    icon: 'HeartHandshake',
     color: '#7c2d12',
     formSchema: {
       type: 'object',
@@ -559,7 +559,7 @@ export const socialServices: ServiceDefinition[] = [
     description: 'Consulta de benefícios sociais ativos do cidadão (usa dados do perfil)',
     departmentCode: 'ASSISTENCIA_SOCIAL',
     serviceType: 'SEM_DADOS',
-    serviceSubtype: ServiceSubtype.CONSULTIVO,
+    serviceSubtype: ServiceSubtype.CONSULTA_AUTENTICADA,
     moduleType: null,
     requiresDocuments: false,
     requiredDocuments: [],

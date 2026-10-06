@@ -30,6 +30,7 @@ interface Service {
   estimatedDays: number | null;
   /** nível mínimo para pedir: BRONZE | SILVER | GOLD */
   minLevel?: string;
+  serviceSubtype?: string | null;
   department: {
     name: string;
   };
@@ -385,7 +386,9 @@ export default function SolicitarServicoPage() {
   const levelRank: Record<string, number> = { BRONZE: 1, SILVER: 2, GOLD: 3 };
   const myRank = citizen?.verificationStatus === 'GOLD' ? 3 : citizen?.verificationStatus === 'VERIFIED' ? 2 : 1;
   const levelBlocked = !!service && (levelRank[service.minLevel || 'BRONZE'] || 1) > myRank;
-  const showForm = !levelBlocked && (!isProgramEnrollment || selectedProgram);
+  // item só de informação (consulta): não abre pedido
+  const informationOnly = service?.serviceSubtype === 'CONSULTA_PUBLICA' || service?.serviceSubtype === 'CONSULTA_AUTENTICADA';
+  const showForm = !informationOnly && !levelBlocked && (!isProgramEnrollment || selectedProgram);
   const docsToSend: any[] = selectedProgram
     ? (Array.isArray(selectedProgram.requiredDocuments) ? selectedProgram.requiredDocuments : [])
     : service.requiresDocuments && Array.isArray(service.requiredDocuments)
@@ -408,7 +411,25 @@ export default function SolicitarServicoPage() {
           )}
         </div>
 
-        {levelBlocked && (
+        {informationOnly && (
+          <div className="rounded-2xl border border-blue-200 bg-blue-50 p-4 text-sm text-blue-900">
+            <p className="font-medium">Este item é de informação e não abre pedido.</p>
+            <p className="mt-1">
+              {/protocolo|solicita|manifesta|atendimentos/i.test(service.name)
+                ? 'Os seus pedidos e o andamento de cada um ficam em "Meus pedidos".'
+                : 'Tem dúvida ou quer saber mais? Pergunte ao assistente ou procure a secretaria.'}
+            </p>
+            <div className="mt-3 flex flex-wrap gap-2">
+              {/protocolo|solicita|manifesta|atendimentos/i.test(service.name) ? (
+                <Button size="sm" onClick={() => router.push('/cidadao/protocolos')}>Abrir Meus pedidos</Button>
+              ) : (
+                <Button size="sm" onClick={() => router.push('/cidadao/assistente')}>Perguntar ao assistente</Button>
+              )}
+            </div>
+          </div>
+        )}
+
+        {!informationOnly && levelBlocked && (
           <div className="rounded-2xl border border-amber-200 bg-amber-50 p-4 text-sm text-amber-900">
             <p className="font-medium">
               {service.minLevel === 'GOLD' ? 'Este serviço pede cadastro nível Ouro.' : 'Este serviço pede cadastro conferido (nível Prata).'}

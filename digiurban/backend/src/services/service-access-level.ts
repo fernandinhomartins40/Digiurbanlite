@@ -35,13 +35,30 @@ export function levelBlockMessage(minLevel: unknown): string {
     : 'Este serviço pede cadastro conferido pela prefeitura (nível Prata). Complete o seu perfil e aguarde a conferência.';
 }
 
-/** Confere no banco. `null` = pode pedir; texto = motivo para mostrar ao cidadão. */
-export async function checkServiceLevel(citizenId: string, serviceId: string): Promise<{ minLevel: CitizenLevel; message: string } | null> {
+/** Item do catálogo que é só informação (consulta): não abre pedido */
+export function isInformationOnly(serviceSubtype: string | null | undefined): boolean {
+  return serviceSubtype === 'CONSULTA_PUBLICA' || serviceSubtype === 'CONSULTA_AUTENTICADA';
+}
+
+export const INFORMATION_ONLY_MESSAGE =
+  'Este item é só de informação e não abre pedido. Para dúvidas, fale com o assistente ou procure a secretaria.';
+
+/**
+ * Confere se o cidadão pode pedir o serviço: nível mínimo e se o item abre
+ * pedido. `null` = pode pedir; senão o motivo para mostrar ao cidadão.
+ */
+export async function checkServiceLevel(
+  citizenId: string,
+  serviceId: string
+): Promise<{ minLevel: CitizenLevel; message: string; reason?: 'INFO_ONLY' } | null> {
   const [citizen, service] = await Promise.all([
     prisma.citizen.findUnique({ where: { id: citizenId }, select: { verificationStatus: true } }),
-    prisma.serviceSimplified.findFirst({ where: { id: serviceId }, select: { minLevel: true } }),
+    prisma.serviceSimplified.findFirst({ where: { id: serviceId }, select: { minLevel: true, serviceSubtype: true } }),
   ]);
   if (!citizen || !service) return null; // quem chamou já trata "não encontrado"
+  if (isInformationOnly(service.serviceSubtype)) {
+    return { minLevel: normalizeLevel(service.minLevel), message: INFORMATION_ONLY_MESSAGE, reason: 'INFO_ONLY' };
+  }
   if (meetsLevel(citizen.verificationStatus, service.minLevel)) return null;
   return { minLevel: normalizeLevel(service.minLevel), message: levelBlockMessage(service.minLevel) };
 }

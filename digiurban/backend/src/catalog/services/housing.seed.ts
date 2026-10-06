@@ -438,7 +438,7 @@ export const housingServices: ServiceDefinition[] = [
     estimatedDays: 30,
     priority: 4,
     category: 'Assistência',
-    icon: 'Tool',
+    icon: 'Wrench',
     color: '#0891b2',
     formSchema: {
       type: 'object',

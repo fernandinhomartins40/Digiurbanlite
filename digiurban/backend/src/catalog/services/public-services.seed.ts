@@ -21,7 +21,7 @@ export const publicServices: ServiceDefinition[] = [
     color: '#facc15',
     formSchema: {
       type: 'object',
-      citizenFields: ['citizen_name', 'citizen_cpf', 'citizen_rg', 'citizen_birthdate', 'citizen_email', 'citizen_phone', 'citizen_phonesecondary', 'citizen_zipcode', 'citizen_address', 'citizen_addressnumber', 'citizen_addresscomplement', 'citizen_neighborhood', 'citizen_mothername', 'citizen_maritalstatus', 'citizen_occupation', 'citizen_familyincome'],
+      citizenFields: ['citizen_name', 'citizen_cpf', 'citizen_rg', 'citizen_birthdate', 'citizen_email', 'citizen_phone', 'citizen_phonesecondary', 'citizen_zipcode', 'citizen_address', 'citizen_addressnumber', 'citizen_addresscomplement', 'citizen_neighborhood'],
       properties: {
         enderecoPoste: { type: 'string', title: 'Endereço do Poste', maxLength: 300 },
         numeroPoste: { type: 'string', title: 'Número do Poste (se visível)', maxLength: 50 },
@@ -47,7 +47,7 @@ export const publicServices: ServiceDefinition[] = [
     color: '#84cc16',
     formSchema: {
       type: 'object',
-      citizenFields: ['citizen_name', 'citizen_cpf', 'citizen_rg', 'citizen_birthdate', 'citizen_email', 'citizen_phone', 'citizen_phonesecondary', 'citizen_zipcode', 'citizen_address', 'citizen_addressnumber', 'citizen_addresscomplement', 'citizen_neighborhood', 'citizen_mothername', 'citizen_maritalstatus', 'citizen_occupation', 'citizen_familyincome'],
+      citizenFields: ['citizen_name', 'citizen_cpf', 'citizen_rg', 'citizen_birthdate', 'citizen_email', 'citizen_phone', 'citizen_phonesecondary', 'citizen_zipcode', 'citizen_address', 'citizen_addressnumber', 'citizen_addresscomplement', 'citizen_neighborhood'],
       properties: {
         tipoSolicitacao: { type: 'string', title: 'Tipo de Solicitação', enum: ['Coleta Não Realizada', 'Coleta Especial (Entulho)', 'Coleta de Móveis', 'Limpeza de Terreno', 'Outro'] },
         enderecoProblema: { type: 'string', title: 'Endereço', maxLength: 300 },
@@ -72,7 +72,7 @@ export const publicServices: ServiceDefinition[] = [
     color: '#65a30d',
     formSchema: {
       type: 'object',
-      citizenFields: ['citizen_name', 'citizen_cpf', 'citizen_rg', 'citizen_birthdate', 'citizen_email', 'citizen_phone', 'citizen_phonesecondary', 'citizen_zipcode', 'citizen_address', 'citizen_addressnumber', 'citizen_addresscomplement', 'citizen_neighborhood', 'citizen_mothername', 'citizen_maritalstatus', 'citizen_occupation', 'citizen_familyincome'],
+      citizenFields: ['citizen_name', 'citizen_cpf', 'citizen_rg', 'citizen_birthdate', 'citizen_email', 'citizen_phone', 'citizen_phonesecondary', 'citizen_zipcode', 'citizen_address', 'citizen_addressnumber', 'citizen_addresscomplement', 'citizen_neighborhood'],
       properties: {
         tipoArea: { type: 'string', title: 'Tipo de Área', enum: ['Terreno Baldio', 'Calçada', 'Praça', 'Via Pública', 'Outro'] },
         enderecoArea: { type: 'string', title: 'Endereço da Área', maxLength: 300 },
@@ -97,7 +97,7 @@ export const publicServices: ServiceDefinition[] = [
     color: '#06b6d4',
     formSchema: {
       type: 'object',
-      citizenFields: ['citizen_name', 'citizen_cpf', 'citizen_rg', 'citizen_birthdate', 'citizen_email', 'citizen_phone', 'citizen_phonesecondary', 'citizen_zipcode', 'citizen_address', 'citizen_addressnumber', 'citizen_addresscomplement', 'citizen_neighborhood', 'citizen_mothername', 'citizen_maritalstatus', 'citizen_occupation', 'citizen_familyincome'],
+      citizenFields: ['citizen_name', 'citizen_cpf', 'citizen_rg', 'citizen_birthdate', 'citizen_email', 'citizen_phone', 'citizen_phonesecondary', 'citizen_zipcode', 'citizen_address', 'citizen_addressnumber', 'citizen_addresscomplement', 'citizen_neighborhood'],
       properties: {
         enderecoBueiro: { type: 'string', title: 'Endereço do Bueiro', maxLength: 300 },
         gravidade: { type: 'string', title: 'Gravidade', enum: ['Normal', 'Urgente (Alagamento)'] },
@@ -125,7 +125,7 @@ export const publicServices: ServiceDefinition[] = [
     allowMultipleActiveProtocols: true,
     formSchema: {
       type: 'object',
-      citizenFields: ['citizen_name', 'citizen_cpf', 'citizen_rg', 'citizen_birthdate', 'citizen_email', 'citizen_phone', 'citizen_phonesecondary', 'citizen_zipcode', 'citizen_address', 'citizen_addressnumber', 'citizen_addresscomplement', 'citizen_neighborhood', 'citizen_mothername', 'citizen_maritalstatus', 'citizen_occupation', 'citizen_familyincome'],
+      citizenFields: ['citizen_name', 'citizen_cpf', 'citizen_rg', 'citizen_birthdate', 'citizen_email', 'citizen_phone', 'citizen_phonesecondary', 'citizen_zipcode', 'citizen_address', 'citizen_addressnumber', 'citizen_addresscomplement', 'citizen_neighborhood'],
       properties: {
         categoriaProblema: { type: 'string', title: 'Categoria do Problema', enum: ['Iluminação', 'Limpeza', 'Via Pública', 'Drenagem', 'Sinalização', 'Outro'] },
         enderecoProblema: { type: 'string', title: 'Endereço do Problema', maxLength: 300 },
@@ -297,7 +297,7 @@ export const publicServices: ServiceDefinition[] = [
     estimatedDays: 15,
     priority: 3,
     category: 'Infraestrutura',
-    icon: 'BinRecycle',
+    icon: 'Trash2',
     color: '#78716c',
     formSchema: {
       type: 'object',
@@ -348,7 +348,7 @@ export const publicServices: ServiceDefinition[] = [
     estimatedDays: 5,
     priority: 3,
     category: 'Limpeza',
-    icon: 'Broom',
+    icon: 'Brush',
     color: '#a16207',
     formSchema: {
       type: 'object',
@@ -482,7 +482,7 @@ export const publicServices: ServiceDefinition[] = [
     color: '#7c3aed',
     formSchema: {
       type: 'object',
-      citizenFields: ['citizen_name', 'citizen_cpf', 'citizen_rg', 'citizen_birthdate', 'citizen_email', 'citizen_phone', 'citizen_phonesecondary', 'citizen_zipcode', 'citizen_address', 'citizen_addressnumber', 'citizen_addresscomplement', 'citizen_neighborhood', 'citizen_mothername', 'citizen_maritalstatus', 'citizen_occupation', 'citizen_familyincome'],
+      citizenFields: ['citizen_name', 'citizen_cpf', 'citizen_rg', 'citizen_birthdate', 'citizen_email', 'citizen_phone', 'citizen_phonesecondary', 'citizen_zipcode', 'citizen_address', 'citizen_addressnumber', 'citizen_addresscomplement', 'citizen_neighborhood'],
       properties: {
         nomePraca: { type: 'string', title: 'Nome da Praça', maxLength: 200 },
         enderecoPraca: { type: 'string', title: 'Endereço da Praça', maxLength: 300 },
@@ -527,7 +527,7 @@ export const publicServices: ServiceDefinition[] = [
     description: 'Consulta de horários de coleta regular de lixo (usa dados de endereço do perfil)',
     departmentCode: 'SERVICOS_PUBLICOS',
     serviceType: 'SEM_DADOS',
-    serviceSubtype: ServiceSubtype.CONSULTIVO,
+    serviceSubtype: ServiceSubtype.CONSULTA_PUBLICA,
     moduleType: null,
     requiresDocuments: false,
     requiredDocuments: [],
@@ -543,7 +543,7 @@ export const publicServices: ServiceDefinition[] = [
     description: 'Consulta de mapa com locais de serviços públicos próximos (usa dados de endereço do perfil)',
     departmentCode: 'SERVICOS_PUBLICOS',
     serviceType: 'SEM_DADOS',
-    serviceSubtype: ServiceSubtype.CONSULTIVO,
+    serviceSubtype: ServiceSubtype.CONSULTA_PUBLICA,
     moduleType: null,
     requiresDocuments: false,
     requiredDocuments: [],
@@ -559,7 +559,7 @@ export const publicServices: ServiceDefinition[] = [
     description: 'Consulta histórico de solicitações de serviços públicos (usa dados do perfil)',
     departmentCode: 'SERVICOS_PUBLICOS',
     serviceType: 'SEM_DADOS',
-    serviceSubtype: ServiceSubtype.CONSULTIVO,
+    serviceSubtype: ServiceSubtype.CONSULTA_AUTENTICADA,
     moduleType: null,
     requiresDocuments: false,
     requiredDocuments: [],
