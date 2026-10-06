@@ -210,10 +210,11 @@ router.post('/members', async (req, res) => {
  */
 router.put('/members/:memberId', async (req, res) => {
   try {
+    const { citizen } = req as unknown as TenantCitizenAuthenticatedRequest
     const { memberId } = req.params
     const data = updateMemberSchema.parse(req.body)
 
-    const result = await familyService.updateFamilyMember(memberId, data as any)
+    const result = await familyService.updateFamilyMember(memberId, data as any, { headId: citizen.id })
 
     if (!result.success) {
       const statusCode = result.error?.includes('não encontrad') ? 404 : 400
@@ -249,9 +250,10 @@ router.put('/members/:memberId', async (req, res) => {
  */
 router.delete('/members/:memberId', async (req, res) => {
   try {
+    const { citizen } = req as unknown as TenantCitizenAuthenticatedRequest
     const { memberId } = req.params
 
-    const result = await familyService.removeFamilyMember(memberId)
+    const result = await familyService.removeFamilyMember(memberId, citizen.id)
 
     if (!result.success) {
       const statusCode = result.error?.includes('não encontrad') ? 404 : 400

@@ -2,6 +2,7 @@
 // CITIZEN-DOCUMENTS.TS - ISOLAMENTO PROFISSIONAL COMPLETO
 // ============================================================================
 
+import { canActForFamilyMember } from '../services/family-access';
 import { Router, Request, Response, NextFunction, RequestHandler } from 'express';
 import { Prisma } from '@prisma/client';
 import { prisma } from '../lib/prisma';
@@ -336,12 +337,7 @@ router.post(
       // Verificar autorização familiar
       const hasAccess =
         protocol.citizenId === citizen.id ||
-        (await prisma.familyComposition.findFirst({
-          where: {
-            headId: citizen.id,
-            memberId: protocol.citizenId
-        }
-        }));
+        (await canActForFamilyMember(citizen.id, protocol.citizenId));
 
       if (!hasAccess) {
         cleanupTempFiles(files);
@@ -445,12 +441,7 @@ router.get(
     // Verificar autorização familiar
     const hasAccess =
       protocol.citizenId === citizen.id ||
-      (await prisma.familyComposition.findFirst({
-        where: {
-          headId: citizen.id,
-          memberId: protocol.citizenId
-        }
-        }));
+      (await canActForFamilyMember(citizen.id, protocol.citizenId));
 
     if (!hasAccess) {
       return res.status(403).json(createErrorResponse('ACCESS_DENIED', 'Acesso negado'));
@@ -521,12 +512,7 @@ router.get(
     // Verificar autorização familiar
     const hasAccess =
       protocol.citizenId === citizen.id ||
-      (await prisma.familyComposition.findFirst({
-        where: {
-          headId: citizen.id,
-          memberId: protocol.citizenId
-        }
-        }));
+      (await canActForFamilyMember(citizen.id, protocol.citizenId));
 
     if (!hasAccess) {
       return res.status(403).json(createErrorResponse('ACCESS_DENIED', 'Acesso negado'));
@@ -588,12 +574,7 @@ router.delete(
     // Verificar autorização familiar
     const hasAccess =
       protocol.citizenId === citizen.id ||
-      (await prisma.familyComposition.findFirst({
-        where: {
-          headId: citizen.id,
-          memberId: protocol.citizenId
-        }
-        }));
+      (await canActForFamilyMember(citizen.id, protocol.citizenId, { requireDependent: true }));
 
     if (!hasAccess) {
       return res.status(403).json(createErrorResponse('ACCESS_DENIED', 'Acesso negado'));

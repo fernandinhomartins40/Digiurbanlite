@@ -3,7 +3,7 @@ import { Router, Request, Response, NextFunction } from 'express';
 import { prisma } from '../lib/prisma';
 import * as bcrypt from 'bcryptjs';
 import * as jwt from 'jsonwebtoken';
-import { DEFAULT_TENANT_ID, runAsPlatform } from '../lib/tenant-context';
+import { DEFAULT_TENANT_ID, runAsPlatform, runAsTenant } from '../lib/tenant-context';
 import { TenantService } from '../services/tenant.service';
 import { z } from 'zod';
 import { AuthenticatedRequest, SuccessResponse, ErrorResponse } from '../types';
@@ -24,6 +24,7 @@ async function contactEmailFor(tenantId: string | null) {
   return tenant?.replyTo || platform.settings.teamEmail || 'suporte@digiurban.com.br';
 }
 import { syncCitizenPersonIdentity } from '../services/person-identity.service';
+import { sendTemplatedMail } from '../services/mail/templated';
 import { isCpfLike, normalizeCpf, normalizeEmail, normalizeNullableString } from '../utils/identity';
 import { citizenAuthMiddleware } from '../middleware/citizen-auth';
 import facePlatformClientService from '../services/face-platform-client.service';
@@ -75,12 +76,13 @@ function issueCitizenSession(res: Response, citizen: { id: string; tenantId: str
  * Um item por município onde o CPF tem cadastro ativo.
  */
 async function findCitizenLinksByCpf(cpf: string): Promise<
-  Array<{ id: string; tenantId: string | null; name: string; email: string; password: string | null }>
+  Array<{ id: string; tenantId: string | null; name: string; email: string; password: string | null; isActive: boolean; personId: string | null }>
 > {
+  // inclui desativados só para dizer "procure a prefeitura" (nunca entram)
   return runAsPlatform(async () =>
     prisma.citizen.findMany({
-      where: { cpf, isActive: true },
-      select: { id: true, tenantId: true, name: true, email: true, password: true },
+      where: { cpf },
+      select: { id: true, tenantId: true, name: true, email: true, password: true, isActive: true, personId: true },
     })
   );
 }
@@ -90,12 +92,12 @@ async function findCitizenLinksByCpf(cpf: string): Promise<
  * Email pode repetir entre municípios; mesma semântica de escolha do CPF.
  */
 async function findCitizenLinksByEmail(email: string): Promise<
-  Array<{ id: string; tenantId: string | null; name: string; email: string; password: string | null }>
+  Array<{ id: string; tenantId: string | null; name: string; email: string; password: string | null; isActive: boolean; personId: string | null }>
 > {
   return runAsPlatform(async () =>
     prisma.citizen.findMany({
-      where: { email, isActive: true },
-      select: { id: true, tenantId: true, name: true, email: true, password: true },
+      where: { email },
+      select: { id: true, tenantId: true, name: true, email: true, password: true, isActive: true, personId: true },
     })
   );
 }
@@ -371,10 +373,20 @@ router.post('/login', loginRateLimiter, accountLockoutMiddleware('citizen'), asy
     // Vínculos cuja senha confere (o cidadão pode ter senhas diferentes por
     // município — só entram os que ele consegue autenticar)
     const authenticated: typeof allLinks = [];
+    let inactiveMatch = false;
     for (const link of allLinks) {
       if (link.password && (await bcrypt.compare(data.password, link.password))) {
-        authenticated.push(link);
+        if (link.isActive) authenticated.push(link);
+        else inactiveMatch = true;
       }
+    }
+
+    if (authenticated.length === 0 && inactiveMatch) {
+      await logLoginFailed(req, loginIdentifier, 'Cadastro desativado');
+      return res.status(403).json({
+        error: 'Seu cadastro está desativado. Procure a prefeitura para reativar.',
+        code: 'ACCOUNT_INACTIVE',
+      });
     }
 
     if (authenticated.length === 0) {
@@ -428,6 +440,29 @@ router.post('/login', loginRateLimiter, accountLockoutMiddleware('citizen'), asy
     await logLoginSuccess(req, 'citizen', chosen.id);
 
     issueCitizenSession(res, { id: chosen.id, tenantId: chosen.tenantId });
+
+    // Cadastro antigo sem a identidade única (Person): completa agora — a
+    // biometria e a busca por CPF entre municípios dependem dela
+    if (!chosen.personId && chosen.tenantId) {
+      const linked = chosen;
+      void runAsTenant(linked.tenantId!, async () => {
+        const full = await prisma.citizen.findUnique({ where: { id: linked.id } });
+        if (!full || full.personId) return;
+        await prisma.$transaction((tx) =>
+          syncCitizenPersonIdentity(tx, {
+            citizenId: full.id,
+            currentPersonId: null,
+            cpf: full.cpf,
+            name: full.name,
+            email: full.email,
+            phone: full.phone,
+            birthDate: full.birthDate,
+            rg: full.rg,
+            isActive: full.isActive,
+          })
+        );
+      }).catch((error: unknown) => console.warn('[citizen-auth] identidade não completada:', error instanceof Error ? error.message : error));
+    }
 
     // Retornar o cidadão do município escolhido (sem senha)
     const citizenData = await runAsPlatform(async () =>
@@ -794,6 +829,41 @@ router.delete(
   })
 );
 
+// POST /api/auth/citizen/verification/resubmit - Pedir nova conferência depois de recusado
+router.post(
+  '/verification/resubmit',
+  citizenAuthMiddleware,
+  asyncHandler(async (req: Request, res: Response) => {
+    const citizenId = (req as any).citizenId as string | undefined;
+    if (!citizenId) return res.status(401).json({ error: 'Cidadão não autenticado' });
+
+    const citizen = await prisma.citizen.findUnique({ where: { id: citizenId }, select: { verificationStatus: true, verificationNotes: true } });
+    if (!citizen || citizen.verificationStatus !== 'REJECTED') {
+      return res.status(400).json({ error: 'Seu cadastro não está recusado.' });
+    }
+
+    await prisma.citizen.update({
+      where: { id: citizenId },
+      data: {
+        verificationStatus: 'PENDING',
+        verificationNotes: `Nova conferência pedida pelo cidadão em ${new Date().toLocaleDateString('pt-BR')}. Motivo anterior: ${citizen.verificationNotes || '-'}`.slice(0, 500),
+      },
+    });
+    await logAuditEvent({
+      citizenId,
+      action: 'CITIZEN_VERIFICATION_RESUBMITTED',
+      resource: '/api/auth/citizen/verification/resubmit',
+      method: 'POST',
+      details: { previousReason: citizen.verificationNotes || null },
+      ip: req.ip || req.socket.remoteAddress,
+      userAgent: req.headers['user-agent'],
+      success: true,
+    });
+
+    return res.json({ success: true, message: 'Pronto! A prefeitura vai conferir o seu cadastro de novo.' });
+  })
+);
+
 // POST /api/auth/citizen/change-password - Trocar senha
 router.post('/change-password', asyncHandler(async (req: Request, res: Response) => {
   try {
@@ -985,6 +1055,24 @@ router.put('/profile', asyncHandler(async (req: Request, res: Response) => {
 
     console.log('✅ Dados preparados para Prisma:', sanitizeForLog(updateData));
 
+    // Nome, nascimento, RG e nome da mãe já conferidos pela prefeitura: mudar
+    // é permitido, mas o cadastro volta para nova conferência (antes continuava
+    // Prata/Ouro com dados que ninguém conferiu)
+    const dayOf = (value: Date | string | null | undefined) => (value ? new Date(value).toISOString().slice(0, 10) : '');
+    const plain = (value: string | null | undefined) => String(value || '').trim().toLowerCase();
+    const identityChanged =
+      (updateData.name !== undefined && plain(updateData.name) !== plain(citizen.name)) ||
+      (updateData.birthDate !== undefined && dayOf(updateData.birthDate) !== dayOf(citizen.birthDate)) ||
+      (updateData.rg !== undefined && plain(updateData.rg).replace(/\W/g, '') !== plain(citizen.rg).replace(/\W/g, '')) ||
+      (updateData.motherName !== undefined && plain(updateData.motherName) !== plain(citizen.motherName));
+    const needsReview = identityChanged && (citizen.verificationStatus === 'VERIFIED' || citizen.verificationStatus === 'GOLD');
+    if (needsReview) {
+      updateData.verificationStatus = 'PENDING';
+      updateData.verificationNotes = `Dados conferidos alterados pelo cidadão em ${new Date().toLocaleDateString('pt-BR')} (era ${citizen.verificationStatus === 'GOLD' ? 'Ouro' : 'Prata'}).`;
+    }
+    const previousEmail = citizen.email;
+    const emailChanged = updateData.email !== undefined && plain(updateData.email) !== plain(previousEmail);
+
     // Mesclar endereço existente com novos dados
     if (data.address) {
       updateData.address = {
@@ -1029,12 +1117,29 @@ router.put('/profile', asyncHandler(async (req: Request, res: Response) => {
       success: true
         });
 
+    // E-mail trocado: avisa o endereço antigo (se não foi a pessoa, ela fica sabendo)
+    if (emailChanged && previousEmail) {
+      sendTemplatedMail({
+        template: 'notification',
+        to: previousEmail,
+        priority: 'critical',
+        variables: {
+          recipientName: (updatedCitizen.name || '').split(' ')[0],
+          title: 'O e-mail do seu cadastro foi trocado',
+          message: `O e-mail do seu cadastro no Portal do Cidadão foi trocado para ${updatedCitizen.email}. Se não foi você, troque a sua senha e procure a prefeitura.`,
+        },
+      }).catch((error) => console.warn('[citizen-auth] aviso de troca de e-mail não enviado:', error?.message || error));
+    }
+
     // Remover senha da resposta
     const { password: _, ...citizenData } = updatedCitizen;
 
     return res.json({
       success: true,
-      message: 'Perfil atualizado com sucesso',
+      message: needsReview
+        ? 'Dados salvos. Como você mudou dados já conferidos, a prefeitura vai conferir de novo o seu cadastro.'
+        : 'Perfil atualizado com sucesso',
+      reviewRequired: needsReview,
       citizen: citizenData
         });
   } catch (error: unknown) {

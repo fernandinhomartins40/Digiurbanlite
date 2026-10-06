@@ -33,6 +33,8 @@ interface Citizen {
   address?: Address; // ✅ Tipo padronizado: cep, logradouro, numero, complemento, bairro, cidade, uf, pontoReferencia
   isActive: boolean;
   verificationStatus: 'PENDING' | 'VERIFIED' | 'GOLD' | 'REJECTED';
+  /** motivo da recusa / observação da conferência */
+  verificationNotes?: string | null;
   createdAt: string;
   updatedAt?: string;
   lastLogin?: string;

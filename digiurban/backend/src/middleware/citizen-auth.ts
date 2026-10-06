@@ -1,3 +1,4 @@
+import { canActForFamilyMember } from '../services/family-access';
 import { Request, Response, NextFunction } from 'express';
 import * as jwt from 'jsonwebtoken';
 import { prisma } from '../lib/prisma';
@@ -174,14 +175,8 @@ export const familyAuthMiddleware = async (
     }
 
     // Verificar se é membro da família com segurança
-    const familyRelation = await prisma.familyComposition.findFirst({
-      where: {
-        headId: citizen.id,
-        memberId: citizenId
-      }
-    });
-
-    if (!familyRelation) {
+    // só vínculo confirmado pelo familiar
+    if (!(await canActForFamilyMember(citizen.id, String(citizenId)))) {
       res.status(403).json({
         error: 'Acesso negado: você só pode acessar dados seus ou de familiares'
       });

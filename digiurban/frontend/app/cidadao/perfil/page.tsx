@@ -73,7 +73,22 @@ function Field({ id, label, children, wide }: { id: string; label: string; child
 }
 
 export default function PerfilPage() {
-  const { citizen, updateProfile, apiRequest } = useCitizenAuth();
+  const { citizen, updateProfile, apiRequest, refreshCitizenData } = useCitizenAuth();
+  const [resubmitting, setResubmitting] = useState(false);
+
+  // recusado: depois de corrigir, a pessoa pede nova conferência (antes a conta era desativada)
+  const handleResubmit = async () => {
+    try {
+      setResubmitting(true);
+      const response = await apiRequest('/citizen/auth/verification/resubmit', { method: 'POST' });
+      toast.success(response?.message || 'Pedido enviado. A prefeitura vai conferir de novo.');
+      await refreshCitizenData();
+    } catch (error: any) {
+      toast.error(error?.message || 'Não foi possível pedir agora. Tente de novo.');
+    } finally {
+      setResubmitting(false);
+    }
+  };
   const { searchByCEP, loading: cepLoading, error: cepError, clearError } = useViaCEP();
   const [accessLevel, setAccessLevel] = useState<CitizenAccessLevelSummary | null>(null);
   const [isEditing, setIsEditing] = useState(false);
@@ -153,6 +168,24 @@ export default function PerfilPage() {
     setFormError(null);
     if (formData.name.trim().length < 2) return setFormError('Informe o nome completo.');
     if (!formData.email.includes('@')) return setFormError('Informe um e-mail válido.');
+    // dados já conferidos pela prefeitura: avisar que mudar volta para conferência
+    if (citizen && (citizen.verificationStatus === 'VERIFIED' || citizen.verificationStatus === 'GOLD')) {
+      const same = (a?: string | null, b?: string | null) => String(a || '').trim().toLowerCase() === String(b || '').trim().toLowerCase();
+      const day = (value?: string | null) => (value ? new Date(value).toISOString().slice(0, 10) : '');
+      const changed =
+        !same(formData.name, citizen.name) ||
+        !same(formData.rg, (citizen as any).rg) ||
+        !same(formData.motherName, (citizen as any).motherName) ||
+        (formData.birthDate ? day(formData.birthDate) : '') !== day((citizen as any).birthDate);
+      if (
+        changed &&
+        !window.confirm(
+          'Nome, data de nascimento, RG e nome da mãe já foram conferidos pela prefeitura. Se mudar, o seu cadastro volta para conferência. Quer continuar?'
+        )
+      ) {
+        return;
+      }
+    }
     try {
       setIsSaving(true);
       const trim = (v: string) => v?.trim() || undefined;
@@ -179,7 +212,7 @@ export default function PerfilPage() {
         },
       } as any);
       if (result.success) {
-        toast.success('Dados atualizados!');
+        toast.success(result.message && result.message !== 'Perfil atualizado com sucesso' ? result.message : 'Dados atualizados!');
         setIsEditing(false);
       } else {
         setFormError(result.message || 'Não foi possível salvar.');
@@ -253,6 +286,18 @@ export default function PerfilPage() {
               </div>
             </div>
           </div>
+
+          {citizen?.verificationStatus === 'REJECTED' && (
+            <div className="mt-4 rounded-xl border border-red-200 bg-red-50 p-3 text-sm text-red-800">
+              <p className="font-medium">A prefeitura não conseguiu conferir o seu cadastro.</p>
+              {citizen.verificationNotes && <p className="mt-1">Motivo: {citizen.verificationNotes}</p>}
+              <p className="mt-1 text-red-700">Corrija os seus dados abaixo e peça uma nova conferência.</p>
+              <Button size="sm" className="mt-2" onClick={handleResubmit} disabled={resubmitting}>
+                {resubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                Pedir nova conferência
+              </Button>
+            </div>
+          )}
 
           {todo.length > 0 && (
             <div className="mt-4 border-t pt-4">

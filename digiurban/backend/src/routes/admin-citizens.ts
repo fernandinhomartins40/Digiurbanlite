@@ -13,8 +13,34 @@ import {
   approveLatestPendingFaceEnrollment,
   autoPromoteToGold,
   getCitizenAccessLevelSummary,
+  notifyCitizenLevel,
 } from '../services/citizen-verification.service';
 import { UserRole } from '@prisma/client';
+import { randomBytes } from 'crypto';
+import { validateCPF } from '../utils/validators';
+
+/** Aceita o endereço nos dois formatos e devolve o do sistema (cep, logradouro, numero...) */
+function normalizeCitizenAddress(raw: any): Record<string, string> | undefined {
+  if (!raw || typeof raw !== 'object') return undefined;
+  const pick = (...keys: string[]) => {
+    for (const key of keys) {
+      const value = raw[key];
+      if (typeof value === 'string' && value.trim()) return value.trim();
+    }
+    return '';
+  };
+  const address = {
+    cep: pick('cep', 'zipCode').replace(/\D/g, ''),
+    logradouro: pick('logradouro', 'street'),
+    numero: pick('numero', 'number'),
+    complemento: pick('complemento', 'complement'),
+    bairro: pick('bairro', 'neighborhood'),
+    cidade: pick('cidade', 'city'),
+    uf: pick('uf', 'state').toUpperCase().slice(0, 2),
+    pontoReferencia: pick('pontoReferencia'),
+  };
+  return Object.values(address).some(Boolean) ? address : undefined;
+}
 
 const router = Router();
 
@@ -46,14 +72,22 @@ router.post(
   requirePermission('citizens:create'),
   asyncHandler(async (req, res: Response): Promise<void> => {
     const authReq = req as AuthenticatedRequest;
-    const { cpf, name, email, phone, birthDate, password, address } = authReq.body;
+    const { cpf, name, email: rawEmail, phone, birthDate, address: rawAddress } = authReq.body;
+    const email = typeof rawEmail === 'string' ? rawEmail.trim() : '';
+    // endereço sempre com os nomes usados no resto do sistema (cep, logradouro...)
+    const address = normalizeCitizenAddress(rawAddress);
 
     // Validações básicas
-    if (!cpf || !name || !email) {
+    // e-mail é opcional: idosos e quem não tem e-mail são atendidos pelo balcão
+    if (!cpf || !name) {
       res.status(400).json({
         success: false,
-        error: 'CPF, nome e email são obrigatórios'
+        error: 'CPF e nome são obrigatórios'
         });
+      return;
+    }
+    if (email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+      res.status(400).json({ success: false, error: 'E-mail inválido' });
       return;
     }
 
@@ -63,7 +97,7 @@ router.post(
     const normalizedName = normalizeNullableString(name);
     const normalizedPhone = normalizeNullableString(phone);
 
-    if (!cleanCpf || cleanCpf.length !== 11) {
+    if (!cleanCpf || !validateCPF(cleanCpf)) {
       res.status(400).json({
         success: false,
         error: 'CPF inválido'
@@ -87,7 +121,7 @@ router.post(
     }
 
     // Verificar se email já existe
-    const existingEmail = await prisma.citizen.findFirst({
+    const existingEmail = email && await prisma.citizen.findFirst({
       where: {
           email: {
             equals: normalizedEmail || email,
@@ -104,16 +138,9 @@ router.post(
       return;
     }
 
-    // Gerar senha hash (ou senha temporária se não fornecida)
-    let hashedPassword: string;
-    const createdWithoutPassword = !(password && password.length >= 8);
-    if (password && password.length >= 8) {
-      hashedPassword = await bcrypt.hash(password, BCRYPT_ROUNDS);
-    } else {
-      // Senha temporária aleatória (cidadão pode redefinir depois)
-      const tempPassword = Math.random().toString(36).slice(-12) + 'Aa1!';
-      hashedPassword = await bcrypt.hash(tempPassword, BCRYPT_ROUNDS);
-    }
+    // O servidor não define a senha de ninguém: senha aleatória que ninguém
+    // conhece; com e-mail, o cidadão recebe o link para criar a dele
+    const hashedPassword = await bcrypt.hash(randomBytes(24).toString('base64url'), BCRYPT_ROUNDS);
 
     // Criar cidadão
     const newCitizen = await prisma.$transaction(async (tx) => {
@@ -121,11 +148,11 @@ router.post(
         data: {
           cpf: cleanCpf,
           name: normalizedName || name,
-          email: normalizedEmail || email,
+          email: email ? normalizedEmail || email : '',
           phone: normalizedPhone,
           birthDate: birthDate ? new Date(birthDate) : null,
           password: hashedPassword,
-          address: address || null,
+          address: address || undefined,
           verificationStatus: 'VERIFIED',
           registrationSource: 'ADMIN',
           verifiedAt: new Date(),
@@ -161,16 +188,16 @@ router.post(
       return createdCitizen;
     });
 
-    // Sem senha definida no balcão: o cidadão recebe o link para criar a dele
-    if (createdWithoutPassword) {
+    // O cidadão recebe o link para criar a senha dele
+    if (newCitizen.email) {
       void new PasswordResetService().sendCitizenAccountCreated(newCitizen);
     }
 
     res.status(201).json({
       success: true,
-      message: createdWithoutPassword
+      message: newCitizen.email
         ? 'Cidadão cadastrado como Prata (Verificado). Enviamos um e-mail para ele criar a senha.'
-        : 'Cidadão cadastrado como Prata (Verificado)',
+        : 'Cidadão cadastrado como Prata (Verificado). Sem e-mail, o acesso ao portal pode ser criado depois.',
       data: { citizen: newCitizen }
         });
   })
@@ -806,20 +833,15 @@ router.put(
         }
       });
 
-      // 2. Criar notificação para o cidadão
-      await tx.notification.create({
-        data: {
-          citizenId: id,
-          title: 'Cadastro Aprovado! 🎉',
-          message:
-            'Seu cadastro foi verificado e aprovado pela administração. Agora você tem acesso completo a todos os serviços municipais.',
-          type: 'VERIFICATION_APPROVED',
-          isRead: false
-        }
-        });
-
       return updated;
     });
+
+    await notifyCitizenLevel(
+      id,
+      'VERIFICATION_APPROVED',
+      'Cadastro conferido: nível Prata',
+      'A prefeitura conferiu o seu cadastro. Agora você pode pedir os serviços que exigem nível Prata.'
+    );
 
     res.json({
       success: true,
@@ -861,30 +883,24 @@ router.put(
       return;
     }
 
-    await prisma.$transaction(async (tx) => {
-      // 1. Atualizar status
-      await tx.citizen.update({
-        where: { id },
-        data: {
-          verificationStatus: 'REJECTED',
-          verifiedAt: new Date(),
-          verifiedBy: authReq.user.id,
-          verificationNotes: reason,
-          isActive: false, // Desativa o cadastro
-        }
-        });
-
-      // 2. Notificar cidadão
-      await tx.notification.create({
-        data: {
-          citizenId: id,
-          title: 'Cadastro Não Aprovado',
-          message: `Seu cadastro não foi aprovado. Motivo: ${reason}. Por favor, entre em contato com a prefeitura para mais informações.`,
-          type: 'VERIFICATION_REJECTED',
-          isRead: false
-        }
-        });
+    // A conta continua ativa (antes era desativada para sempre e a pessoa não
+    // conseguia nem entrar para corrigir): ela corrige e pede nova análise.
+    await prisma.citizen.update({
+      where: { id },
+      data: {
+        verificationStatus: 'REJECTED',
+        verifiedAt: new Date(),
+        verifiedBy: authReq.user.id,
+        verificationNotes: String(reason).slice(0, 500),
+      }
     });
+
+    await notifyCitizenLevel(
+      id,
+      'VERIFICATION_REJECTED',
+      'Seu cadastro precisa de correção',
+      `A prefeitura não conseguiu conferir o seu cadastro. Motivo: ${String(reason).slice(0, 300)}. Corrija no seu perfil e toque em "Pedir nova conferência".`
+    );
 
     res.json({
       success: true,
@@ -1175,15 +1191,20 @@ router.post(
     // Importar serviço centralizado
     const { familyService } = require('../services/family.service');
 
-    const result = await familyService.addFamilyMember(id, {
-      memberId,
-      relationship,
-      isDependent: isDependent || false,
-      monthlyIncome,
-      occupation,
-      education,
-      hasDisability
-    });
+    // no balcão o servidor confere a pessoa: o vínculo já nasce confirmado
+    const result = await familyService.addFamilyMember(
+      id,
+      {
+        memberId,
+        relationship,
+        isDependent: isDependent || false,
+        monthlyIncome,
+        occupation,
+        education,
+        hasDisability
+      },
+      { confirmedByStaff: true }
+    );
 
     if (!result.success) {
       const statusCode = result.error?.includes('não encontrado') ? 404 : 400;
@@ -1205,17 +1226,52 @@ router.post(
   })
 );
 
+// PUT /api/admin/citizens/:id/family/:memberId - Alterar parentesco/dados do membro
+// (a tela já chamava esta rota, que não existia: editar dava erro)
+router.put(
+  '/:id/family/:memberId',
+  requirePermission('citizens:update'),
+  asyncHandler(async (req, res: Response): Promise<void> => {
+    const authReq = req as AuthenticatedRequest;
+    const { id, memberId } = authReq.params;
+    const { relationship, isDependent, monthlyIncome, occupation, education, hasDisability } = authReq.body || {};
+
+    const { familyService } = require('../services/family.service');
+
+    const result = await familyService.updateFamilyMember(
+      memberId,
+      {
+        relationship,
+        isDependent: typeof isDependent === 'boolean' ? isDependent : undefined,
+        monthlyIncome: monthlyIncome === '' || monthlyIncome == null ? undefined : Number(monthlyIncome),
+        occupation,
+        education,
+        hasDisability: typeof hasDisability === 'boolean' ? hasDisability : undefined,
+      },
+      { headId: id }
+    );
+
+    if (!result.success) {
+      res.status(result.error?.includes('não encontrad') ? 404 : 400).json({ success: false, error: result.error });
+      return;
+    }
+
+    res.json({ success: true, message: 'Membro atualizado', data: { member: result.data, warnings: result.warnings } });
+  })
+);
+
 // DELETE /api/admin/citizens/:id/family/:memberId - Remover membro (REFATORADO)
 router.delete(
   '/:id/family/:memberId',
   requirePermission('citizens:update'),
   asyncHandler(async (req, res: Response): Promise<void> => {
     const authReq = req as AuthenticatedRequest;
-    const { memberId } = authReq.params;
+    const { id, memberId } = authReq.params;
 
     const { familyService } = require('../services/family.service');
 
-    const result = await familyService.removeFamilyMember(memberId);
+    // o vínculo precisa ser deste cidadão
+    const result = await familyService.removeFamilyMember(memberId, id);
 
     if (!result.success) {
       res.status(404).json({

@@ -9,8 +9,7 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Textarea } from '@/components/ui/textarea'
 import { useToast } from '@/hooks/use-toast'
-import { UserPlus, ArrowLeft, ShieldCheck, Eye, EyeOff } from 'lucide-react'
-import { PasswordStrengthIndicator } from '@/components/ui/password-strength-indicator'
+import { UserPlus, ArrowLeft, ShieldCheck } from 'lucide-react'
 
 export default function NovoCidadaoPage() {
   const router = useRouter()
@@ -37,62 +36,31 @@ export default function NovoCidadaoPage() {
   })
 
   const [loadingCep, setLoadingCep] = useState(false)
-  const [showPassword, setShowPassword] = useState(false)
-  const [showConfirmPassword, setShowConfirmPassword] = useState(false)
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
 
     // Validações
-    if (!formData.cpf || !formData.name || !formData.email) {
+    if (!formData.cpf || !formData.name) {
       toast({
         variant: 'destructive',
         title: 'Campos obrigatórios',
-        description: 'Preencha CPF, nome e email',
+        description: 'Preencha CPF e nome',
       })
       return
-    }
-
-    // Validação de senha forte
-    if (formData.password) {
-      const passwordRequirements = [
-        formData.password.length >= 8,
-        /[A-Z]/.test(formData.password),
-        /[a-z]/.test(formData.password),
-        /\d/.test(formData.password),
-        /[!@#$%^&*(),.?":{}|<>]/.test(formData.password),
-      ]
-
-      if (!passwordRequirements.every(req => req)) {
-        toast({
-          variant: 'destructive',
-          title: 'Senha fraca',
-          description: 'A senha não atende aos requisitos de segurança',
-        })
-        return
-      }
-
-      if (formData.password !== formData.confirmPassword) {
-        toast({
-          variant: 'destructive',
-          title: 'Senhas não coincidem',
-          description: 'As senhas devem ser iguais',
-        })
-        return
-      }
     }
 
     setLoading(true)
 
     try {
       const address = {
-        street: formData.street,
-        number: formData.number,
-        complement: formData.complement,
-        neighborhood: formData.neighborhood,
-        city: formData.city,
-        state: formData.state,
-        zipCode: formData.zipCode,
+        cep: formData.zipCode.replace(/\D/g, ''),
+        logradouro: formData.street,
+        numero: formData.number,
+        complemento: formData.complement,
+        bairro: formData.neighborhood,
+        cidade: formData.city,
+        uf: formData.state.toUpperCase(),
       }
 
       console.log('Enviando dados:', {
@@ -106,10 +74,9 @@ export default function NovoCidadaoPage() {
         body: JSON.stringify({
           cpf: formData.cpf.replace(/\D/g, ''),
           name: formData.name,
-          email: formData.email,
+          email: formData.email.trim() || undefined,
           phone: formData.phone || undefined,
           birthDate: formData.birthDate || undefined,
-          password: formData.password || undefined,
           address: Object.values(address).some(v => v) ? address : undefined,
         }),
       })
@@ -119,7 +86,7 @@ export default function NovoCidadaoPage() {
       if (response.success) {
         toast({
           title: 'Cidadão cadastrado! ✅',
-          description: `${formData.name} foi cadastrado como Prata (verificado)`,
+          description: response.message || `${formData.name} foi cadastrado como Prata (verificado)`,
         })
 
         router.push('/admin/cidadaos')
@@ -300,7 +267,7 @@ export default function NovoCidadaoPage() {
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
-                  <Label htmlFor="email">Email *</Label>
+                  <Label htmlFor="email">E-mail</Label>
                   <Input
                     id="email"
                     type="email"
@@ -308,8 +275,7 @@ export default function NovoCidadaoPage() {
                     onChange={(e) =>
                       setFormData({ ...formData, email: e.target.value })
                     }
-                    placeholder="email@exemplo.com"
-                    required
+                    placeholder="email@exemplo.com (se tiver)"
                   />
                 </div>
 
@@ -449,77 +415,13 @@ export default function NovoCidadaoPage() {
             <CardHeader>
               <CardTitle>Acesso ao Portal do Cidadão</CardTitle>
               <CardDescription>
-                Defina uma senha se desejar criar acesso ao portal (opcional)
+                Como o cidadão entra no portal
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div>
-                  <Label htmlFor="password">Senha</Label>
-                  <div className="relative">
-                    <Input
-                      id="password"
-                      type={showPassword ? "text" : "password"}
-                      value={formData.password}
-                      onChange={(e) =>
-                        setFormData({ ...formData, password: e.target.value })
-                      }
-                      placeholder="Mínimo 8 caracteres"
-                      className="pr-10"
-                    />
-                    <button
-                      type="button"
-                      onClick={() => setShowPassword(!showPassword)}
-                      className="absolute inset-y-0 right-0 pr-3 flex items-center text-gray-400 hover:text-gray-600"
-                    >
-                      {showPassword ? (
-                        <EyeOff className="h-4 w-4" />
-                      ) : (
-                        <Eye className="h-4 w-4" />
-                      )}
-                    </button>
-                  </div>
-                </div>
-
-                <div>
-                  <Label htmlFor="confirmPassword">Confirmar Senha</Label>
-                  <div className="relative">
-                    <Input
-                      id="confirmPassword"
-                      type={showConfirmPassword ? "text" : "password"}
-                      value={formData.confirmPassword}
-                      onChange={(e) =>
-                        setFormData({ ...formData, confirmPassword: e.target.value })
-                      }
-                      placeholder="Digite a senha novamente"
-                      className="pr-10"
-                    />
-                    <button
-                      type="button"
-                      onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-                      className="absolute inset-y-0 right-0 pr-3 flex items-center text-gray-400 hover:text-gray-600"
-                    >
-                      {showConfirmPassword ? (
-                        <EyeOff className="h-4 w-4" />
-                      ) : (
-                        <Eye className="h-4 w-4" />
-                      )}
-                    </button>
-                  </div>
-                </div>
-              </div>
-
-              {/* Indicador de força de senha */}
-              {formData.password && (
-                <PasswordStrengthIndicator
-                  password={formData.password}
-                  confirmPassword={formData.confirmPassword}
-                  showConfirmation={true}
-                />
-              )}
-
               <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 text-sm text-blue-900">
-                💡 <strong>Dica:</strong> Se não definir uma senha, o cidadão pode criar conta no Portal do Cidadão usando o email cadastrado.
+                💡 Com e-mail, o cidadão recebe um link para criar a própria senha (o servidor não define senha de ninguém).
+                Sem e-mail, ele é atendido pelo balcão e pode criar o acesso depois, quando informar um e-mail.
               </div>
             </CardContent>
           </Card>

@@ -136,7 +136,8 @@ export class FamilyService {
    */
   async addFamilyMember(
     headId: string,
-    data: AddFamilyMemberRequest
+    data: AddFamilyMemberRequest,
+    options: { confirmedByStaff?: boolean } = {}
   ): Promise<FamilyMemberResult> {
     try {
       // Validar que o responsável existe
@@ -208,14 +209,14 @@ export class FamilyService {
         });
       }
 
-      // Criar vínculo familiar (com status PENDING aguardando confirmação do membro)
+      // Pelo app o familiar confirma; no balcão o servidor já conferiu a pessoa
       const familyComposition = await prisma.familyComposition.create({
         data: {
           headId,
           memberId: data.memberId,
           relationship: data.relationship,
           isDependent: data.isDependent,
-          status: FamilyLinkStatus.PENDING,
+          status: options.confirmedByStaff ? FamilyLinkStatus.ACTIVE : FamilyLinkStatus.PENDING,
           monthlyIncome: data.monthlyIncome,
           occupation: data.occupation,
           education: data.education,
@@ -236,7 +237,7 @@ export class FamilyService {
       })
 
       // Criar notificação para o membro
-      await this.notifyFamilyLink(headId, data.memberId, data.relationship, 'CREATED')
+      await this.notifyFamilyLink(headId, data.memberId, data.relationship, options.confirmedByStaff ? 'ADDED_BY_STAFF' : 'CREATED')
 
       return {
         success: true,
@@ -255,9 +256,15 @@ export class FamilyService {
   // COMPOSIÇÃO FAMILIAR - ATUALIZAR MEMBRO
   // ==========================================================================
 
+  /**
+   * `owner`: cidadão logado (só o responsável altera) ou ficha do servidor
+   * (o vínculo precisa ser daquele cidadão). Antes qualquer cidadão alterava
+   * o vínculo de qualquer família pelo id.
+   */
   async updateFamilyMember(
     compositionId: string,
-    data: UpdateFamilyMemberRequest
+    data: UpdateFamilyMemberRequest,
+    owner: { headId: string }
   ): Promise<FamilyMemberResult> {
     try {
       const composition = await prisma.familyComposition.findUnique({
@@ -268,7 +275,7 @@ export class FamilyService {
         }
       })
 
-      if (!composition) {
+      if (!composition || composition.headId !== owner.headId) {
         return {
           success: false,
           error: 'Composição familiar não encontrada'
@@ -338,14 +345,15 @@ export class FamilyService {
   // COMPOSIÇÃO FAMILIAR - REMOVER MEMBRO
   // ==========================================================================
 
-  async removeFamilyMember(compositionId: string): Promise<FamilyMemberResult> {
+  /** Remove o vínculo: só quem é parte dele (o responsável ou o próprio familiar, que pode sair). */
+  async removeFamilyMember(compositionId: string, partyId: string): Promise<FamilyMemberResult> {
     try {
       const composition = await prisma.familyComposition.findUnique({
         where: { id: compositionId },
         select: { headId: true, memberId: true, relationship: true }
       })
 
-      if (!composition) {
+      if (!composition || (composition.headId !== partyId && composition.memberId !== partyId)) {
         return {
           success: false,
           error: 'Composição familiar não encontrada'
@@ -612,6 +620,18 @@ export class FamilyService {
         }
       }
 
+      if (invite.headId === citizenId) {
+        return { success: false, error: 'Você não pode aceitar o seu próprio convite' }
+      }
+
+      // Convite feito para um CPF: só aquela pessoa aceita
+      if (invite.cpf) {
+        const me = await prisma.citizen.findUnique({ where: { id: citizenId }, select: { cpf: true } })
+        if (!me || me.cpf.replace(/\D/g, '') !== invite.cpf.replace(/\D/g, '')) {
+          return { success: false, error: 'Este convite foi feito para outra pessoa' }
+        }
+      }
+
       if (data.accept) {
         // Aceitar convite - criar vínculo familiar
         await prisma.$transaction(async (tx) => {
@@ -621,19 +641,20 @@ export class FamilyService {
             data: { status: InviteStatus.ACCEPTED }
           })
 
-          // Criar composição familiar (já ativo)
-          await tx.familyComposition.create({
-            data: {
-              headId: invite.headId,
-              memberId: citizenId,
-              relationship: invite.relationship,
-              isDependent: invite.isDependent,
-              status: FamilyLinkStatus.ACTIVE,
-              monthlyIncome: invite.monthlyIncome,
-              occupation: invite.occupation,
-              education: invite.education,
-              hasDisability: invite.hasDisability
-            }
+          // Criar composição familiar (já ativo); se já havia vínculo pendente, confirma
+          const linkData = {
+            relationship: invite.relationship,
+            isDependent: invite.isDependent,
+            status: FamilyLinkStatus.ACTIVE,
+            monthlyIncome: invite.monthlyIncome,
+            occupation: invite.occupation,
+            education: invite.education,
+            hasDisability: invite.hasDisability
+          }
+          await tx.familyComposition.upsert({
+            where: { headId_memberId: { headId: invite.headId, memberId: citizenId } },
+            create: { headId: invite.headId, memberId: citizenId, ...linkData },
+            update: linkData
           })
         })
 
@@ -818,7 +839,7 @@ export class FamilyService {
     headId: string,
     memberId: string,
     relationship: FamilyRelationship,
-    action: 'CREATED' | 'REMOVED' | 'CONFIRMED' | 'REJECTED' | 'ACCEPTED' | 'INVITE_REJECTED'
+    action: 'CREATED' | 'ADDED_BY_STAFF' | 'REMOVED' | 'CONFIRMED' | 'REJECTED' | 'ACCEPTED' | 'INVITE_REJECTED'
   ) {
     const head = await prisma.citizen.findUnique({
       where: { id: headId },
@@ -832,7 +853,7 @@ export class FamilyService {
 
     if (!head || !member) return
 
-    const relationshipLabel = relationship // TODO: traduzir usando constants
+    const relationshipLabel = (RELATIONSHIP_LABELS[String(relationship)] || 'familiar').toLowerCase()
 
     let titleForHead = ''
     let messageForHead = ''
@@ -843,6 +864,10 @@ export class FamilyService {
       case 'CREATED':
         titleForMember = 'Novo vínculo familiar'
         messageForMember = `${head.name} adicionou você como ${relationshipLabel} na composição familiar. Confirme o vínculo.`
+        break
+      case 'ADDED_BY_STAFF':
+        titleForMember = 'Vínculo familiar registrado'
+        messageForMember = `A prefeitura registrou você como ${relationshipLabel} na família de ${head.name}. Se não estiver certo, você pode sair em "Minha família".`
         break
       case 'CONFIRMED':
         titleForHead = 'Vínculo confirmado'

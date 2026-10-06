@@ -7,6 +7,32 @@ import {
   type VerificationStatus,
 } from '@prisma/client';
 import { prisma } from '../lib/prisma';
+import notificationService from './notification.service';
+
+/**
+ * Aviso de nível pelo serviço central (sino + push + e-mail). Antes era só uma
+ * linha gravada direto no banco: o cidadão nunca recebia e-mail nem push.
+ * Nunca falha quem chamou.
+ */
+export async function notifyCitizenLevel(
+  citizenId: string,
+  type: 'VERIFICATION_APPROVED' | 'VERIFICATION_REJECTED' | 'VERIFICATION_UPGRADED' | 'VERIFICATION_REVIEW' | 'FACE_BIOMETRY_CONFIRMED',
+  title: string,
+  message: string
+): Promise<void> {
+  try {
+    await notificationService.notify({
+      recipientType: 'citizen',
+      recipientId: citizenId,
+      type,
+      title,
+      message,
+      data: { actionUrl: '/cidadao/perfil' },
+    });
+  } catch (error) {
+    console.warn('[citizen-verification] aviso de nível não enviado:', error instanceof Error ? error.message : error);
+  }
+}
 
 export type RegistrationLevel = 'BRONZE' | 'SILVER' | 'GOLD';
 
@@ -214,45 +240,26 @@ export function getDocumentLabel(type: string): string {
   return labels[type] || type;
 }
 
-export async function checkGoldEligibility(citizenId: string): Promise<GoldEligibilityResult> {
-  const citizen = await prisma.citizen.findUnique({
-    where: { id: citizenId },
-  });
+type GoldCitizen = CitizenProfileSnapshot & { verificationStatus: VerificationStatus; isActive: boolean };
+type GoldFaceIdentity = Parameters<typeof buildBiometricStatus>[0];
 
-  if (!citizen) {
-    return {
-      eligible: false,
-      approvedDocs: [],
-      missingTypes: [...GOLD_REQUIREMENTS.requiredTypes],
-      missingProfileFields: [...REQUIRED_PROFILE_FIELDS.map((field) => field.label), 'Telefone principal ou secundário', 'Endereço completo'],
-      profileComplete: false,
-      biometric: buildBiometricStatus(null),
-      currentStatus: 'UNKNOWN',
-      reason: 'Cidadão não encontrado',
-    };
-  }
+const GOLD_CITIZEN_SELECT = {
+  id: true,
+  name: true,
+  cpf: true,
+  email: true,
+  phone: true,
+  phoneSecondary: true,
+  birthDate: true,
+  rg: true,
+  motherName: true,
+  address: true,
+  verificationStatus: true,
+  isActive: true,
+} as const;
 
-  const [documents, faceIdentity] = await Promise.all([
-    prisma.citizenDocument.findMany({
-      where: {
-        citizenId,
-        status: 'APPROVED',
-        ...PERSONAL_DOCUMENT_WHERE,
-      },
-    }),
-    prisma.faceRecognitionIdentity.findFirst({
-      where: { citizenId },
-      include: {
-        enrollments: {
-          orderBy: { createdAt: 'desc' },
-        },
-        embeddings: {
-          where: { isActive: true },
-        },
-      },
-    }),
-  ]);
-
+/** Regra do Ouro sem banco (a mesma para um cidadão ou para a lista inteira) */
+function evaluateGold(citizen: GoldCitizen, documents: CitizenDocument[], faceIdentity: GoldFaceIdentity): GoldEligibilityResult {
   const missingProfileFields = getMissingProfileFields(citizen);
   const profileComplete = missingProfileFields.length === 0;
   const biometric = buildBiometricStatus(faceIdentity);
@@ -329,6 +336,85 @@ export async function checkGoldEligibility(citizenId: string): Promise<GoldEligi
     currentStatus: citizen.verificationStatus,
     reason,
   };
+}
+
+export async function checkGoldEligibility(citizenId: string): Promise<GoldEligibilityResult> {
+  const citizen = await prisma.citizen.findUnique({
+    where: { id: citizenId },
+    select: GOLD_CITIZEN_SELECT,
+  });
+
+  if (!citizen) {
+    return {
+      eligible: false,
+      approvedDocs: [],
+      missingTypes: [...GOLD_REQUIREMENTS.requiredTypes],
+      missingProfileFields: [...REQUIRED_PROFILE_FIELDS.map((field) => field.label), 'Telefone principal ou secundário', 'Endereço completo'],
+      profileComplete: false,
+      biometric: buildBiometricStatus(null),
+      currentStatus: 'UNKNOWN',
+      reason: 'Cidadão não encontrado',
+    };
+  }
+
+  const [documents, faceIdentity] = await Promise.all([
+    prisma.citizenDocument.findMany({
+      where: {
+        citizenId,
+        status: 'APPROVED',
+        ...PERSONAL_DOCUMENT_WHERE,
+      },
+    }),
+    prisma.faceRecognitionIdentity.findFirst({
+      where: { citizenId },
+      include: {
+        enrollments: {
+          orderBy: { createdAt: 'desc' },
+        },
+        embeddings: {
+          where: { isActive: true },
+        },
+      },
+    }),
+  ]);
+
+  return evaluateGold(citizen, documents, faceIdentity);
+}
+
+/**
+ * Avalia o Ouro de vários cidadãos com 3 consultas no total (antes eram 3 por
+ * cidadão — a tela de documentos ficava cada vez mais lenta).
+ */
+async function evaluateGoldForPrata(): Promise<Array<{ citizen: { id: string; name: string; cpf: string; email: string; verificationStatus: VerificationStatus }; result: GoldEligibilityResult }>> {
+  const citizens = await prisma.citizen.findMany({
+    where: { verificationStatus: 'VERIFIED', isActive: true },
+    select: GOLD_CITIZEN_SELECT,
+  });
+  if (citizens.length === 0) return [];
+  const ids = citizens.map((citizen) => citizen.id);
+  const [documents, identities] = await Promise.all([
+    prisma.citizenDocument.findMany({
+      where: { citizenId: { in: ids }, status: 'APPROVED', ...PERSONAL_DOCUMENT_WHERE },
+    }),
+    prisma.faceRecognitionIdentity.findMany({
+      where: { citizenId: { in: ids } },
+      include: {
+        enrollments: { orderBy: { createdAt: 'desc' } },
+        embeddings: { where: { isActive: true } },
+      },
+    }),
+  ]);
+  const docsByCitizen = new Map<string, CitizenDocument[]>();
+  for (const document of documents) {
+    const list = docsByCitizen.get(document.citizenId) || [];
+    list.push(document);
+    docsByCitizen.set(document.citizenId, list);
+  }
+  const identityByCitizen = new Map(identities.map((identity) => [identity.citizenId, identity]));
+  return citizens.map((citizen) => ({
+    citizen: { id: citizen.id, name: citizen.name, cpf: citizen.cpf, email: citizen.email, verificationStatus: citizen.verificationStatus },
+    result: evaluateGold(citizen, docsByCitizen.get(citizen.id) || [], identityByCitizen.get(citizen.id) || null),
+  }));
 }
 
 export async function getCitizenAccessLevelSummary(citizenId: string): Promise<CitizenAccessLevelSummary> {
@@ -414,17 +500,6 @@ export async function autoPromoteToGold(
       },
     });
 
-    await tx.notification.create({
-      data: {
-        citizenId,
-        title: 'Cadastro promovido para Ouro',
-        message:
-          'Seu cadastro agora está no nível Ouro. Os documentos obrigatórios, o perfil e a biometria facial foram confirmados.',
-        type: 'VERIFICATION_UPGRADED',
-        isRead: false,
-      },
-    });
-
     await tx.auditLog.create({
       data: {
         userId: approvedBy || null,
@@ -463,6 +538,13 @@ export async function autoPromoteToGold(
       message: 'Cidadão promovido para o nível ouro com sucesso',
     };
   });
+
+  await notifyCitizenLevel(
+    citizenId,
+    'VERIFICATION_UPGRADED',
+    'Seu cadastro chegou ao nível Ouro',
+    'Seus documentos, seu perfil e sua biometria facial foram confirmados. Agora você pode usar todos os serviços que pedem nível Ouro.'
+  );
 
   return result;
 }
@@ -521,17 +603,6 @@ export async function approveLatestPendingFaceEnrollment(
       },
     });
 
-    await tx.notification.create({
-      data: {
-        citizenId,
-        title: 'Biometria facial confirmada',
-        message:
-          'Sua biometria facial foi validada por um servidor e já pode ser usada nas funcionalidades do ecossistema Digiurban.',
-        type: 'SUCCESS',
-        isRead: false,
-      },
-    });
-
     await tx.auditLog.create({
       data: {
         userId: approvedById,
@@ -545,6 +616,13 @@ export async function approveLatestPendingFaceEnrollment(
       },
     });
   });
+
+  await notifyCitizenLevel(
+    citizenId,
+    'FACE_BIOMETRY_CONFIRMED',
+    'Biometria facial confirmada',
+    'Um servidor da prefeitura confirmou a sua biometria facial.'
+  );
 
   const eligibility = await checkGoldEligibility(citizenId);
   let promotedToGold = false;
@@ -572,19 +650,7 @@ export async function getDocumentStats() {
     prisma.citizenDocument.count({ where: { status: 'REJECTED', ...PERSONAL_DOCUMENT_WHERE } }),
   ]);
 
-  const verifiedCitizens = await prisma.citizen.findMany({
-    where: { verificationStatus: 'VERIFIED' },
-    select: { id: true },
-  });
-
-  let eligibleForGold = 0;
-
-  for (const citizen of verifiedCitizens) {
-    const result = await checkGoldEligibility(citizen.id);
-    if (result.eligible) {
-      eligibleForGold += 1;
-    }
-  }
+  const eligibleForGold = (await evaluateGoldForPrata()).filter((item) => item.result.eligible).length;
 
   return {
     pending,
@@ -597,34 +663,13 @@ export async function getDocumentStats() {
 }
 
 export async function getEligibleCitizensForGold() {
-  const verifiedCitizens = await prisma.citizen.findMany({
-    where: {
-      verificationStatus: 'VERIFIED',
-      isActive: true,
-    },
-    select: {
-      id: true,
-      name: true,
-      cpf: true,
-      email: true,
-      verificationStatus: true,
-    },
-  });
-
-  const eligible = [];
-
-  for (const citizen of verifiedCitizens) {
-    const result = await checkGoldEligibility(citizen.id);
-    if (result.eligible) {
-      eligible.push({
-        citizen,
-        approvedDocsCount: result.approvedDocs.length,
-        biometric: result.biometric,
-        missingTypes: result.missingTypes,
-        missingProfileFields: result.missingProfileFields,
-      });
-    }
-  }
-
-  return eligible;
+  return (await evaluateGoldForPrata())
+    .filter((item) => item.result.eligible)
+    .map(({ citizen, result }) => ({
+      citizen,
+      approvedDocsCount: result.approvedDocs.length,
+      biometric: result.biometric,
+      missingTypes: result.missingTypes,
+      missingProfileFields: result.missingProfileFields,
+    }));
 }
