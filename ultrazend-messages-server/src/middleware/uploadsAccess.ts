@@ -1,19 +1,32 @@
 /**
- * Gate de leitura de /uploads (documentos e imagens enviados ao bot).
+ * Gate de leitura de /uploads (documentos e imagens enviados no chat e ao bot).
  *
- * Antes, express.static servia a pasta SEM autenticação e a porta 9001 é
- * exposta — documentos de cidadãos (RG, comprovantes) ficavam acessíveis a
- * quem acertasse o nome do arquivo (timestamp + 6 caracteres). LGPD art. 46.
+ * Histórico: antes era público (LGPD art. 46); depois passou a exigir login —
+ * mas QUALQUER login abria QUALQUER arquivo (os nomes antigos são previsíveis).
  *
- * Agora: exige JWT válido (cidadão, servidor ou equipe da plataforma) por
- * cookie httpOnly ou Bearer. Arquivos novos usam UUID (impossível adivinhar).
- * Como no backend (middleware/uploads-access.ts), path traversal é barrado.
+ * Agora o arquivo precisa estar numa mensagem de uma conversa que a pessoa
+ * pode ver:
+ *  - cidadão: conversas em que ele participa;
+ *  - servidor: conversas do próprio município;
+ *  - equipe da plataforma: qualquer uma (suporte).
+ * Arquivo que não está em mensagem nenhuma (ex.: temporário do bot) não abre.
  */
 
 import { Request, Response, NextFunction } from 'express';
+import prisma from '../utils/prisma';
 import { verifyToken } from '../utils/jwt';
+import { normalizeChatPayload, pickSessionToken, portalFrom } from '../utils/authToken';
+import { DEFAULT_TENANT_ID } from '../utils/tenant';
 
-export function uploadsAccess(req: Request, res: Response, next: NextFunction): void {
+interface Holder {
+  tenantId: string | null;
+  participant1Id: string;
+  participant1Type: string;
+  participant2Id: string;
+  participant2Type: string;
+}
+
+export async function uploadsAccess(req: Request, res: Response, next: NextFunction): Promise<void> {
   let rawPath = '';
   try {
     rawPath = decodeURIComponent(req.path);
@@ -21,27 +34,59 @@ export function uploadsAccess(req: Request, res: Response, next: NextFunction): 
     res.status(400).json({ error: 'Caminho inválido' });
     return;
   }
-  if (rawPath.includes('..') || rawPath.includes('\0')) {
+  // "%" é curinga do LIKE abaixo; os arquivos gerados não usam
+  if (rawPath.includes('..') || rawPath.includes('\0') || rawPath.includes('%')) {
     res.status(400).json({ error: 'Caminho inválido' });
+    return;
+  }
+  if (rawPath.startsWith('/bot-temp/')) {
+    res.status(404).end();
     return;
   }
 
   const auth = req.headers.authorization;
   const token =
     (auth?.startsWith('Bearer ') ? auth.substring(7) : undefined) ||
-    req.cookies?.digiurban_admin_token ||
-    req.cookies?.digiurban_citizen_token ||
-    req.cookies?.digiurban_platform_token;
+    pickSessionToken(req.cookies || {}, portalFrom(undefined, req.get('referer')));
 
   if (!token) {
     res.status(401).json({ error: 'Faça login para ver este arquivo' });
     return;
   }
+  let user: any;
   try {
-    verifyToken(token);
+    user = normalizeChatPayload(verifyToken(token) as any);
   } catch {
     res.status(401).json({ error: 'Sessão expirada' });
     return;
+  }
+
+  if (!user.isPlatformOperator) {
+    const needle = `%/uploads${rawPath.replace(/\\/g, '').replace(/_/g, '\\_')}%`;
+    let holders: Holder[] = [];
+    try {
+      holders = await prisma.$queryRaw<Holder[]>`
+      SELECT c."tenantId", c."participant1Id", c."participant1Type", c."participant2Id", c."participant2Type"
+      FROM messages m
+      JOIN conversations c ON c.id = m."conversationId"
+      WHERE m.attachments::text LIKE ${needle}
+      LIMIT 20
+    `;
+    } catch {
+      res.status(500).json({ error: 'Não foi possível conferir o acesso ao arquivo' });
+      return;
+    }
+    const tenant = user.tenantId || DEFAULT_TENANT_ID;
+    const allowed = holders.some((h) =>
+      user.userType === 'CITIZEN'
+        ? (h.participant1Id === user.userId && h.participant1Type === 'CITIZEN') ||
+          (h.participant2Id === user.userId && h.participant2Type === 'CITIZEN')
+        : (h.tenantId || DEFAULT_TENANT_ID) === tenant
+    );
+    if (!allowed) {
+      res.status(404).json({ error: 'Arquivo não encontrado' });
+      return;
+    }
   }
 
   // Documento pessoal: nunca em cache compartilhado (proxy/CDN)

@@ -243,13 +243,8 @@ export function getConversationStatus(conversation: any): 'bot' | 'human' | 'clo
   if (conversation.status === 'CLOSED') return 'closed';
 
   if (isBotConversation(conversation)) {
-    if (
-      conversation.metadata?.botStatus === 'PAUSED' ||
-      conversation.metadata?.botStatus === 'HUMAN_TAKEOVER'
-    ) {
-      return 'human';
-    }
-    return 'bot';
+    // alguém da prefeitura assumiu a conversa do assistente
+    return conversation.metadata?.takenOverBy ? 'human' : 'bot';
   }
 
   return 'human';

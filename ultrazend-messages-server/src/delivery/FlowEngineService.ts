@@ -11,6 +11,7 @@ import { citizenAiOrchestrator } from '../bot/ai/CitizenAiOrchestrator';
 import prisma from '../utils/prisma';
 import { WebSocketServer } from '../server/WebSocketServer';
 import { HandoverService } from './HandoverService'; // ✅ NOVO
+import { emitToTenantServers, notifyIfOffline } from './chatDelivery';
 import fs from 'fs/promises';
 import path from 'path';
 import { ensureActiveMessageServerId } from '../utils/messageServer';
@@ -558,7 +559,13 @@ export class FlowEngineService {
       },
     });
 
-    // 3. Processar mensagem pelo orquestrador hibrido ou pelo fluxo legado
+    // 3. Atendimento humano em andamento: o assistente NÃO responde (antes
+    //    respondia junto com o atendente e gastava créditos de IA); a mensagem
+    //    vai para o atendente (ou para a fila, se ninguém assumiu ainda).
+    const humanReply = await this.relayToHumanIfPaused(citizenId, conversationId, userMessage);
+    if (humanReply) return humanReply;
+
+    // Processar mensagem pelo orquestrador hibrido ou pelo fluxo legado
     let activeExecution = await this.getActiveExecution(citizenId);
     const aiExecutionActive = this.isAiExecution(activeExecution as any);
 
@@ -727,7 +734,6 @@ export class FlowEngineService {
     });
 
     // Atualizar metadata da conversa (apenas status visual)
-    let conversation = null;
     if (conversationId) {
       const currentConversation = await prisma.conversation.findUnique({
         where: { id: conversationId },
@@ -737,7 +743,7 @@ export class FlowEngineService {
         },
       });
 
-      conversation = await prisma.conversation.update({
+      await prisma.conversation.update({
         where: { id: conversationId },
         data: {
           metadata: this.mergeConversationMetadata(currentConversation?.metadata as Record<string, any> | null, {
@@ -752,14 +758,9 @@ export class FlowEngineService {
         },
       });
 
-      // ✅ NOVO: Notificar departamento via HandoverService
-      if (conversation.departmentId) {
-        await this.handoverService.notifyDepartmentHandover(
-          conversationId,
-          conversation.departmentId,
-          reason || 'human_needed'
-        );
-      }
+      // Avisa todos os servidores do município (e a secretaria, se houver).
+      // Antes só avisava a secretaria — e a conversa do assistente não tem.
+      await this.handoverService.notifyHandoverRequested(conversationId, reason || 'human_needed');
     }
 
     return { success: true, executionId: execution.id };
@@ -768,7 +769,12 @@ export class FlowEngineService {
   /**
    * Retoma execução - ✅ REFATORADO
    */
-  async resumeExecution(citizenId: string, conversationId?: string, resumedBy?: string) {
+  async resumeExecution(
+    citizenId: string,
+    conversationId?: string,
+    resumedBy?: string,
+    options: { attendantName?: string | null } = {}
+  ) {
     const execution = await this.getActiveExecution(citizenId);
     if (!execution) {
       throw new Error('Nenhuma execução ativa encontrada para este cidadão');
@@ -784,29 +790,96 @@ export class FlowEngineService {
       },
     });
 
-    // Atualizar metadata da conversa
     if (conversationId) {
       const currentConversation = await prisma.conversation.findUnique({
         where: { id: conversationId },
-        select: {
-          metadata: true,
-        },
+        select: { metadata: true, tenantId: true },
       });
+      const previous = (currentConversation?.metadata as Record<string, any> | null) || {};
 
       await prisma.conversation.update({
         where: { id: conversationId },
         data: {
-          metadata: this.mergeConversationMetadata(currentConversation?.metadata as Record<string, any> | null, {
+          metadata: this.mergeConversationMetadata(previous, {
             botStatus: 'ACTIVE',
             botStatusUpdatedAt: new Date().toISOString(),
+            // atendimento humano encerrado: a conversa sai da lista do atendente
+            takenOverBy: null,
+            takenOverAt: null,
+            lastAttendantId: previous.takenOverBy || previous.lastAttendantId || null,
           }),
         },
       });
+
+      if (previous.takenOverBy || options.attendantName) {
+        const who = options.attendantName ? `${options.attendantName.split(' ')[0]} encerrou` : 'O atendente encerrou';
+        await this.handoverService.systemMessage(
+          conversationId,
+          `${who} o atendimento. Obrigado pelo contato! Se precisar de mais alguma coisa, é só escrever aqui.`,
+          { handover: 'ended' }
+        );
+        this.wsServer?.sendMessageToUser(citizenId, 'CITIZEN', 'handover:ended', { conversationId });
+        emitToTenantServers(currentConversation?.tenantId || null, 'handover:ended', { conversationId });
+      }
 
       await this.scheduleBotInactivityTimeout(conversationId, citizenId, 'ACTIVE');
     }
 
     return { success: true, executionId: execution.id };
+  }
+
+  /**
+   * Atendimento humano: guarda a mensagem do cidadão, avisa o atendente (ou a
+   * fila) e NÃO chama o assistente. Devolve null se o assistente está ativo.
+   */
+  private async relayToHumanIfPaused(citizenId: string, conversationId: string, userMessage: any) {
+    const execution = await this.getActiveExecution(citizenId);
+    const conversation = await prisma.conversation.findUnique({
+      where: { id: conversationId },
+      select: { id: true, tenantId: true, metadata: true },
+    });
+    const metadata = (conversation?.metadata as Record<string, any> | null) || {};
+    if (!conversation || !execution?.isPaused) return null;
+
+    await prisma.conversation.update({
+      where: { id: conversationId },
+      data: {
+        lastMessageAt: new Date(),
+        lastMessagePreview: String(userMessage.content || '').substring(0, 100),
+        totalMessages: { increment: 1 },
+        unreadCount2: { increment: 1 },
+      },
+    });
+
+    const payload = { conversationId, message: userMessage };
+    this.wsServer?.sendMessageToConversation(conversationId, 'message:new', payload);
+    this.wsServer?.sendMessageToUser(citizenId, 'CITIZEN', 'message:new', payload);
+
+    const attendantId = metadata.takenOverBy ? String(metadata.takenOverBy) : null;
+    if (attendantId) {
+      this.wsServer?.sendMessageToUser(attendantId, 'SERVER', 'message:new', payload);
+      void notifyIfOffline({
+        recipientId: attendantId,
+        recipientType: 'SERVER',
+        tenantId: conversation.tenantId,
+        conversationId,
+        sender: { userId: citizenId, userType: 'CITIZEN' },
+        preview: String(userMessage.content || ''),
+      }).catch(() => undefined);
+    } else {
+      // ninguém assumiu ainda: a fila mostra a mensagem nova
+      emitToTenantServers(conversation.tenantId, 'handover:update', {
+        conversationId,
+        lastMessage: String(userMessage.content || '').substring(0, 100),
+      });
+    }
+
+    return {
+      response: { message: '', humanMode: true },
+      conversationId,
+      userMessage,
+      botMessage: null,
+    };
   }
 
   /**
@@ -913,6 +986,9 @@ export class FlowEngineService {
         sentAt: new Date(),
       },
     });
+
+    const humanUploadReply = await this.relayToHumanIfPaused(citizenId, conversationId, userMessage);
+    if (humanUploadReply) return humanUploadReply;
 
     const activeExecution = await this.getActiveExecution(citizenId);
     const aiExecutionActive = this.isAiExecution(activeExecution as any);

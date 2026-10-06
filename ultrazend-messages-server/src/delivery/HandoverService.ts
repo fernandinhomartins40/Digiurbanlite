@@ -1,15 +1,33 @@
 /**
- * HandoverService
- * Gerencia transição bot → humano → bot
+ * Atendimento humano na conversa do assistente (bot → atendente → bot).
+ *
+ * - Fila: conversas pausadas pedindo atendente, do município, ainda sem dono.
+ * - Assumir: trava para dois atendentes não pegarem a mesma conversa; quem
+ *   assume passa a poder responder (ver canWriteConversation) e a conversa
+ *   aparece na lista dele.
+ * - Aviso de chegada vai para TODOS os servidores do município (antes ia só
+ *   para a secretaria da conversa — e a do assistente não tem secretaria).
+ * - Ninguém assumiu no tempo do painel (DigiBot › atendimento humano): volta
+ *   para o assistente com aviso. Conferido por horário gravado, a cada minuto
+ *   (antes era um cronômetro em memória que sumia a cada reinício).
  */
 
 import prisma from '../utils/prisma';
+import logger from '../utils/logger';
 import { WebSocketServer } from '../server/WebSocketServer';
-import { resolveTenantId } from '../utils/tenant';
+import { resolveTenantId, DEFAULT_TENANT_ID } from '../utils/tenant';
+import { runWithTenant } from '../bot/tenant-context';
+import { botConfig, ensureBotKnowledge } from '../bot/ai/botKnowledge';
+import { emitToTenantServers } from './chatDelivery';
+
+export class HandoverError extends Error {
+  constructor(message: string, public status = 400) {
+    super(message);
+  }
+}
 
 export class HandoverService {
   private wsServer: WebSocketServer | null = null;
-  private autoResumeTimeouts: Map<string, NodeJS.Timeout> = new Map();
 
   constructor(wsServer?: WebSocketServer) {
     if (wsServer) {
@@ -21,274 +39,224 @@ export class HandoverService {
     this.wsServer = wsServer;
   }
 
-  /**
-   * Lista conversas aguardando atendimento humano (fila de handover)
-   */
-  async getPendingHandoverQueue(departmentId?: string, tenantId?: string) {
-    const where: any = {
-      // isolamento por município (antes a fila misturava todas as prefeituras)
-      ...(tenantId ? { tenantId } : {}),
-      isBotConversation: true,
-      status: 'ACTIVE',
-      activeFlowExecution: {
-        isPaused: true,
-      },
-    };
-
-    if (departmentId) {
-      where.departmentId = departmentId;
-    }
-
-    const conversations = await prisma.conversation.findMany({
-      where,
-      include: {
-        activeFlowExecution: {
-          select: {
-            id: true,
-            isPaused: true,
-            pausedAt: true,
-            pausedBy: true,
-            pauseReason: true,
-            currentNodeId: true,
-          },
-        },
-      },
-      orderBy: {
-        updatedAt: 'asc', // FIFO: primeiro que pausou é atendido primeiro
+  /** Mensagem do sistema na conversa (entra no histórico e chega na hora) */
+  async systemMessage(conversationId: string, content: string, extra: Record<string, unknown> = {}) {
+    const message = await prisma.message.create({
+      data: {
+        tenantId: await resolveTenantId({ conversationId }),
+        conversationId,
+        senderId: 'DIGIBOT_SYSTEM',
+        senderType: 'SYSTEM',
+        content,
+        contentType: 'TEXT',
+        status: 'SENT',
+        sentAt: new Date(),
+        isBotMessage: true,
+        botInteractionType: 'system_message',
+        metadata: extra as any,
       },
     });
-
-    // Buscar dados dos cidadãos
-    const conversationsWithCitizen = await Promise.all(
-      conversations.map(async (conv) => {
-        const citizen = await prisma.citizen.findUnique({
-          where: { id: conv.participant1Id },
-          select: {
-            id: true,
-            name: true,
-            email: true,
-            phone: true,
-          },
-        });
-
-        const waitTime = conv.activeFlowExecution?.pausedAt
-          ? Math.floor((Date.now() - conv.activeFlowExecution.pausedAt.getTime()) / 1000)
-          : 0;
-
-        return {
-          conversationId: conv.id,
-          citizenId: citizen?.id || conv.participant1Id,
-          citizenName: citizen?.name || 'Cidadão',
-          citizenEmail: citizen?.email,
-          citizenPhone: citizen?.phone,
-          lastMessage: conv.lastMessagePreview,
-          pausedAt: conv.activeFlowExecution?.pausedAt,
-          pausedBy: conv.activeFlowExecution?.pausedBy,
-          pauseReason: conv.activeFlowExecution?.pauseReason,
-          waitTime, // segundos
-          departmentId: conv.departmentId,
-          protocolId: conv.protocolId,
-        };
-      })
-    );
-
-    return conversationsWithCitizen;
-  }
-
-  /**
-   * Servidor assume conversa (takeover)
-   */
-  async takeoverConversation(conversationId: string, serverId: string) {
-    const conversation = await prisma.conversation.findUnique({
-      where: { id: conversationId },
-      include: {
-        activeFlowExecution: true,
-      },
-    });
-
-    if (!conversation) {
-      throw new Error('Conversa não encontrada');
-    }
-
-    if (!conversation.activeFlowExecution?.isPaused) {
-      throw new Error('Conversa não está aguardando atendimento humano');
-    }
-
-    // Atualizar metadata da conversa
     await prisma.conversation.update({
       where: { id: conversationId },
-      data: {
-        metadata: {
-          ...((conversation.metadata as any) || {}),
-          botStatus: 'HUMAN_TAKEOVER',
-          takenOverBy: serverId,
-          takenOverAt: new Date().toISOString(),
+      data: { lastMessageAt: new Date(), lastMessagePreview: content.substring(0, 100), totalMessages: { increment: 1 } },
+    });
+    this.wsServer?.sendMessageToConversation(conversationId, 'message:new', { conversationId, message });
+    const conv = await prisma.conversation.findUnique({ where: { id: conversationId }, select: { participant1Id: true } });
+    if (conv) this.wsServer?.sendMessageToUser(conv.participant1Id, 'CITIZEN', 'message:new', { conversationId, message });
+    return message;
+  }
+
+  /** Fila do município: pediram atendente e ninguém assumiu ainda */
+  async getPendingHandoverQueue(departmentId?: string, tenantId?: string) {
+    const conversations = await prisma.conversation.findMany({
+      where: {
+        tenantId: tenantId || DEFAULT_TENANT_ID,
+        isBotConversation: true,
+        status: 'ACTIVE',
+        activeFlowExecution: { isPaused: true },
+        ...(departmentId ? { departmentId } : {}),
+      },
+      include: {
+        activeFlowExecution: {
+          select: { id: true, isPaused: true, pausedAt: true, pausedBy: true, pauseReason: true },
         },
       },
+      take: 200,
     });
 
-    // Cancelar auto-resume se existir
-    this.cancelAutoResume(conversationId);
-
-    // Notificar cidadão via WebSocket
-    if (this.wsServer) {
-      this.wsServer.sendMessageToUser(
-        conversation.participant1Id,
-        'CITIZEN',
-        'handover:takeover',
-        {
-          conversationId,
-          message: 'Um atendente humano assumiu sua conversa',
-        }
+    const waiting = conversations
+      .filter((conv) => !((conv.metadata as Record<string, any> | null) || {}).takenOverBy)
+      .sort(
+        (a, b) =>
+          (a.activeFlowExecution?.pausedAt?.getTime() || 0) - (b.activeFlowExecution?.pausedAt?.getTime() || 0)
       );
-    }
 
-    return {
-      success: true,
-      conversationId,
-      serverId,
-    };
+    const citizens = await prisma.citizen.findMany({
+      where: { id: { in: waiting.map((conv) => conv.participant1Id) } },
+      select: { id: true, name: true, email: true, phone: true },
+    });
+    const byId = new Map(citizens.map((c) => [c.id, c]));
+
+    return waiting.map((conv) => {
+      const citizen = byId.get(conv.participant1Id);
+      const pausedAt = conv.activeFlowExecution?.pausedAt;
+      return {
+        conversationId: conv.id,
+        citizenId: conv.participant1Id,
+        citizenName: citizen?.name || 'Cidadão',
+        citizenEmail: citizen?.email,
+        citizenPhone: citizen?.phone,
+        lastMessage: conv.lastMessagePreview,
+        pausedAt,
+        pausedBy: conv.activeFlowExecution?.pausedBy,
+        pauseReason: conv.activeFlowExecution?.pauseReason,
+        waitTime: pausedAt ? Math.floor((Date.now() - pausedAt.getTime()) / 1000) : 0, // segundos
+        departmentId: conv.departmentId,
+        protocolId: conv.protocolId,
+      };
+    });
   }
 
   /**
-   * Notificar departamento sobre nova conversa aguardando
+   * Servidor assume a conversa. Se o assistente ainda não estava pausado
+   * (servidor que viu a conversa e resolveu entrar), pausa agora.
    */
-  async notifyDepartmentHandover(
-    conversationId: string,
-    departmentId: string | null,
-    reason: string
-  ) {
+  async takeoverConversation(conversationId: string, server: { userId: string; tenantId: string; name?: string | null }) {
     const conversation = await prisma.conversation.findUnique({
       where: { id: conversationId },
-      select: {
-        id: true,
-        participant1Id: true,
-        lastMessagePreview: true,
-      },
+      include: { activeFlowExecution: true },
     });
-
-    if (!conversation) {
-      return;
+    if (!conversation || !conversation.isBotConversation || (conversation.tenantId || DEFAULT_TENANT_ID) !== server.tenantId) {
+      throw new HandoverError('Conversa não encontrada', 404);
+    }
+    const metadata = (conversation.metadata as Record<string, any> | null) || {};
+    if (metadata.takenOverBy === server.userId) return { success: true, conversationId, alreadyMine: true };
+    if (metadata.takenOverBy) {
+      const other = await prisma.user.findUnique({ where: { id: String(metadata.takenOverBy) }, select: { name: true } }).catch(() => null);
+      throw new HandoverError(`${other?.name?.split(' ')[0] || 'Outro atendente'} já está atendendo esta conversa`, 409);
     }
 
-    const citizen = await prisma.citizen.findUnique({
-      where: { id: conversation.participant1Id },
-      select: { name: true },
-    });
+    const attendant = server.name || (await prisma.user.findUnique({ where: { id: server.userId }, select: { name: true } }))?.name || 'Atendente';
+    const firstName = attendant.split(' ')[0];
+    const now = new Date();
 
-    // Emitir WebSocket para todos os servidores do departamento
-    if (this.wsServer && departmentId) {
-      this.wsServer.broadcastToDepartment(departmentId, 'handover:new', {
-        conversationId: conversation.id,
-        citizenName: citizen?.name || 'Cidadão',
-        lastMessage: conversation.lastMessagePreview,
-        reason,
-        timestamp: new Date().toISOString(),
+    // trava: só grava se a conversa não mudou desde a leitura (dois cliques ao mesmo tempo)
+    const taken = await prisma.conversation.updateMany({
+      where: { id: conversationId, updatedAt: conversation.updatedAt },
+      data: {
+        metadata: {
+          ...metadata,
+          botStatus: 'HUMAN_TAKEOVER',
+          botStatusUpdatedAt: now.toISOString(),
+          takenOverBy: server.userId,
+          takenOverAt: now.toISOString(),
+        },
+        // o atendente vê a conversa como "lado 2": zera o contador dele
+        unreadCount2: 0,
+      },
+    });
+    if (taken.count === 0) throw new HandoverError('Outro atendente acabou de assumir esta conversa', 409);
+
+    if (conversation.activeFlowExecution && !conversation.activeFlowExecution.isPaused) {
+      await prisma.flowExecution.update({
+        where: { id: conversation.activeFlowExecution.id },
+        data: { isPaused: true, pausedAt: now, pausedBy: server.userId, pauseReason: 'server_takeover' },
       });
     }
 
-    // Agendar auto-resume (10 minutos)
-    this.scheduleAutoResume(conversationId, conversation.participant1Id, 10 * 60 * 1000);
+    await this.systemMessage(conversationId, `${firstName}, da prefeitura, assumiu o atendimento e vai continuar a conversa por aqui.`, {
+      handover: 'taken',
+      attendantName: firstName,
+    });
+
+    this.wsServer?.sendMessageToUser(conversation.participant1Id, 'CITIZEN', 'handover:takeover', {
+      conversationId,
+      attendantName: firstName,
+      message: `${firstName} assumiu o atendimento`,
+    });
+    emitToTenantServers(server.tenantId, 'handover:taken', { conversationId, attendantId: server.userId, attendantName: firstName });
+
+    return { success: true, conversationId, attendantName: firstName };
+  }
+
+  /** O assistente pediu atendente: avisa todos os servidores do município (e a secretaria, se houver) */
+  async notifyHandoverRequested(conversationId: string, reason: string) {
+    const conversation = await prisma.conversation.findUnique({
+      where: { id: conversationId },
+      select: { id: true, tenantId: true, departmentId: true, participant1Id: true, lastMessagePreview: true },
+    });
+    if (!conversation) return;
+    const citizen = await prisma.citizen.findUnique({ where: { id: conversation.participant1Id }, select: { name: true } });
+    const payload = {
+      conversationId: conversation.id,
+      citizenName: citizen?.name || 'Cidadão',
+      lastMessage: conversation.lastMessagePreview,
+      reason,
+      timestamp: new Date().toISOString(),
+    };
+    emitToTenantServers(conversation.tenantId, 'handover:new', payload);
+    if (conversation.departmentId && this.wsServer) {
+      await this.wsServer.broadcastToDepartment(conversation.departmentId, 'handover:new', payload);
+    }
   }
 
   /**
-   * Agendar retomada automática do bot (timeout)
+   * Rotina de 1 minuto: quem espera há mais que o tempo do painel sem ninguém
+   * assumir volta para o assistente, com aviso honesto.
    */
-  private scheduleAutoResume(conversationId: string, _citizenId: string, delay: number) {
-    // Cancelar timeout existente
-    this.cancelAutoResume(conversationId);
+  async returnExpiredToBot(): Promise<number> {
+    const waiting = await prisma.conversation.findMany({
+      where: {
+        isBotConversation: true,
+        status: 'ACTIVE',
+        activeFlowExecution: { isPaused: true, pausedAt: { lt: new Date(Date.now() - 60_000) } },
+      },
+      select: {
+        id: true,
+        tenantId: true,
+        metadata: true,
+        activeFlowExecution: { select: { id: true, pausedAt: true } },
+      },
+      take: 200,
+    });
 
-    // Criar novo timeout
-    const timeout = setTimeout(async () => {
+    let returned = 0;
+    for (const conv of waiting) {
+      const metadata = (conv.metadata as Record<string, any> | null) || {};
+      if (metadata.takenOverBy || !conv.activeFlowExecution?.pausedAt) continue;
+      const tenantId = conv.tenantId || DEFAULT_TENANT_ID;
       try {
-        // Verificar se ainda está pausado
-        const conversation = await prisma.conversation.findUnique({
-          where: { id: conversationId },
-          include: {
-            activeFlowExecution: true,
-          },
-        });
+        await runWithTenant(tenantId, async () => {
+          await ensureBotKnowledge();
+          const human = botConfig().human;
+          const limitMin = Number(human.maxWaitMinutes) || 0;
+          if (limitMin <= 0) return; // município escolheu esperar sem limite
+          if (Date.now() - conv.activeFlowExecution!.pausedAt!.getTime() < limitMin * 60_000) return;
 
-        if (conversation?.activeFlowExecution?.isPaused) {
-          // Retomar execução
           await prisma.flowExecution.update({
-            where: { id: conversation.activeFlowExecution.id },
-            data: {
-              isPaused: false,
-              resumedAt: new Date(),
-              resumedBy: 'SYSTEM_AUTO_RESUME',
-            },
+            where: { id: conv.activeFlowExecution!.id },
+            data: { isPaused: false, resumedAt: new Date(), resumedBy: 'SYSTEM_AUTO_RESUME' },
           });
-
-          // Atualizar conversa
           await prisma.conversation.update({
-            where: { id: conversationId },
+            where: { id: conv.id },
             data: {
               metadata: {
-                ...((conversation.metadata as any) || {}),
+                ...metadata,
                 botStatus: 'ACTIVE',
                 botStatusUpdatedAt: new Date().toISOString(),
-                autoResumeReason: 'timeout_10min',
+                autoResumeReason: `sem atendente em ${limitMin} min`,
               },
             },
           });
-
-          // Enviar mensagem ao cidadão
-          const botMessage = await prisma.message.create({
-            data: {
-              // Fase 5 multi-tenant: mensagem herda o tenant (ALS ou conversa)
-              tenantId: await resolveTenantId({ conversationId }),
-              conversationId,
-              senderId: 'DIGIBOT_SYSTEM',
-              senderType: 'SYSTEM',
-              content:
-                '⏰ Desculpe pela espera. Retomando atendimento automático. Como posso ajudar?',
-              contentType: 'TEXT',
-              status: 'SENT',
-              sentAt: new Date(),
-              isBotMessage: true,
-              botInteractionType: 'system_message',
-            },
-          });
-
-          // Notificar via WebSocket
-          if (this.wsServer) {
-            this.wsServer.sendMessageToConversation(conversationId, 'message:new', {
-              conversationId,
-              message: botMessage,
-            });
-          }
-        }
-
-        // Remover timeout do map
-        this.autoResumeTimeouts.delete(conversationId);
+          await this.systemMessage(conv.id, human.noAttendantMessage, { handover: 'expired' });
+          emitToTenantServers(tenantId, 'handover:taken', { conversationId: conv.id, expired: true });
+          returned += 1;
+        });
       } catch (error) {
-        console.error('[HandoverService] Erro no auto-resume:', error);
+        logger.error('[handover] falha ao devolver conversa ao assistente', { conversationId: conv.id, error });
       }
-    }, delay);
-
-    this.autoResumeTimeouts.set(conversationId, timeout);
-  }
-
-  /**
-   * Cancelar auto-resume agendado
-   */
-  private cancelAutoResume(conversationId: string) {
-    const existing = this.autoResumeTimeouts.get(conversationId);
-    if (existing) {
-      clearTimeout(existing);
-      this.autoResumeTimeouts.delete(conversationId);
     }
-  }
-
-  /**
-   * Limpar todos os timeouts (cleanup ao fechar servidor)
-   */
-  cleanup() {
-    for (const timeout of this.autoResumeTimeouts.values()) {
-      clearTimeout(timeout);
-    }
-    this.autoResumeTimeouts.clear();
+    return returned;
   }
 }
 

@@ -25,6 +25,12 @@ export interface Conversation {
     citizenName?: string;
     serverName?: string;
     avatar?: string;
+    /** servidor que assumiu a conversa do assistente */
+    takenOverBy?: string;
+    attendantName?: string | null;
+    /** conversa "Avisos da Prefeitura" (só leitura) */
+    isNotices?: boolean;
+    systemName?: string;
   };
   // Campos enriquecidos pelo frontend
   title?: string;
@@ -35,7 +41,22 @@ export interface Conversation {
   avatar?: string;
   isPinned?: boolean;
   isBot?: boolean;
+  isNotices?: boolean;
 }
+
+/** Portal aberto no navegador: o servidor de mensagens usa a sessão certa (cidadão x servidor) */
+export function currentChatPortal(): 'citizen' | 'admin' {
+  if (typeof window === 'undefined') return 'admin';
+  return /^\/(cidadao|convites)(\/|$)/.test(window.location.pathname) ? 'citizen' : 'admin';
+}
+
+const byRecent = (a: Conversation, b: Conversation) => {
+  if (a.isBotConversation && !b.isBotConversation) return -1;
+  if (!a.isBotConversation && b.isBotConversation) return 1;
+  const dateA = a.lastMessageAt ? new Date(a.lastMessageAt).getTime() : 0;
+  const dateB = b.lastMessageAt ? new Date(b.lastMessageAt).getTime() : 0;
+  return dateB - dateA;
+};
 
 export interface Message {
   id: string;
@@ -85,6 +106,7 @@ interface UseConversationsOptions {
   onNewConversation?: (conversation: Conversation) => void;
   onNewMessage?: (message: Message, conversationId: string) => void;
   onHandoverNew?: (handoverItem: HandoverQueueItem) => void; // ✅ NOVO
+  onMessageDeleted?: (messageId: string, conversationId: string) => void;
 }
 
 /**
@@ -100,6 +122,7 @@ export function useConversations({
   onNewConversation,
   onNewMessage,
   onHandoverNew,
+  onMessageDeleted,
 }: UseConversationsOptions) {
   const { toast } = useToast();
 
@@ -121,6 +144,7 @@ export function useConversations({
   const onNewMessageRef = useRef(onNewMessage);
   const onNewConversationRef = useRef(onNewConversation);
   const onHandoverNewRef = useRef(onHandoverNew); // ✅ NOVO
+  const onMessageDeletedRef = useRef(onMessageDeleted);
   const userIdRef = useRef(userId);
   const userTypeRef = useRef(userType);
   const departmentIdRef = useRef(departmentId); // ✅ NOVO
@@ -164,6 +188,10 @@ export function useConversations({
   useEffect(() => {
     onHandoverNewRef.current = onHandoverNew; // ✅ NOVO
   }, [onHandoverNew]);
+
+  useEffect(() => {
+    onMessageDeletedRef.current = onMessageDeleted;
+  }, [onMessageDeleted]);
 
   useEffect(() => {
     userIdRef.current = userId;
@@ -244,6 +272,36 @@ export function useConversations({
       const otherParticipantId = isParticipant1 ? conv.participant2Id : conv.participant1Id;
       const otherParticipantType = isParticipant1 ? conv.participant2Type : conv.participant1Type;
 
+      // Avisos da Prefeitura: só leitura
+      if (conv.metadata?.isNotices) {
+        return {
+          ...conv,
+          title: 'Avisos da Prefeitura',
+          citizenName: 'Avisos da Prefeitura',
+          isBot: false,
+          isNotices: true,
+          isPinned: false,
+          conversationStatus: 'closed',
+          unreadCount: isParticipant1 ? (conv.unreadCount1 || 0) : (conv.unreadCount2 || 0),
+        };
+      }
+
+      // Servidor vendo a conversa de um cidadão com o assistente (assumida ou na fila)
+      if (conv.isBotConversation && currentUserType === 'SERVER') {
+        const meta = conv.metadata as any;
+        const name = meta?.citizen1Name || meta?.citizenName || 'Cidadão';
+        return {
+          ...conv,
+          title: name,
+          citizenName: name,
+          avatar: meta?.citizen1Avatar || meta?.avatar,
+          isBot: false,
+          isPinned: false,
+          conversationStatus: meta?.takenOverBy ? 'human' : 'bot',
+          unreadCount: conv.unreadCount2 || 0,
+        };
+      }
+
       // Se é bot/sistema
       if (otherParticipantType === 'SYSTEM' || conv.isBotConversation) {
         return {
@@ -253,9 +311,7 @@ export function useConversations({
           isBot: true,
           isPinned: true,
           avatar: '/bot-avatar.png',
-          conversationStatus: conv.metadata?.botStatus === 'PAUSED' || conv.metadata?.botStatus === 'HUMAN_TAKEOVER'
-            ? 'human'
-            : 'bot',
+          conversationStatus: conv.metadata?.takenOverBy ? 'human' : 'bot',
           unreadCount: isParticipant1 ? (conv.unreadCount1 || 0) : (conv.unreadCount2 || 0),
         };
       }
@@ -348,35 +404,40 @@ export function useConversations({
         body: JSON.stringify({ conversationId }),
       });
 
+      const data = await response.json().catch(() => ({}));
       if (!response.ok) {
-        throw new Error('Erro ao assumir conversa');
+        throw new Error(data?.error || 'Não foi possível assumir a conversa');
       }
-
-      const data = await response.json();
 
       toast({
         title: 'Conversa assumida',
-        description: 'Você assumiu o atendimento desta conversa.',
+        description: 'Você assumiu o atendimento. O cidadão já foi avisado.',
       });
 
       // Remover da fila
       setHandoverQueue(prev => prev.filter(item => item.conversationId !== conversationId));
 
-      // Recarregar conversas para atualizar status
-      const sorted = await fetchConversations();
-      setConversations(sorted);
+      // A conversa assumida entra (ou é atualizada) na lista na hora
+      let enriched: Conversation | null = null;
+      if (data?.conversation) {
+        enriched = await enrichConversation(data.conversation);
+        const conv = enriched;
+        setConversations(prev => [conv, ...prev.filter(c => c.id !== conv.id)].sort(byRecent));
+        socketRef.current?.emit('conversation:join', { conversationId: conv.id });
+      }
 
-      return data;
-    } catch (error) {
+      return { ...data, conversation: enriched };
+    } catch (error: any) {
       console.error('[useConversations] Erro ao assumir conversa:', error);
       toast({
-        title: 'Erro',
-        description: 'Não foi possível assumir a conversa',
+        title: 'Não foi possível assumir',
+        description: error?.message || 'Tente novamente.',
         variant: 'destructive',
       });
+      fetchHandoverQueue();
       throw error;
     }
-  }, [MESSAGES_API_URL, toast]);
+  }, [MESSAGES_API_URL, toast, enrichConversation, fetchHandoverQueue]);
 
   /**
    * ✅ NOVO: Pausar bot
@@ -438,34 +499,30 @@ export function useConversations({
       });
 
       if (!response.ok) {
-        throw new Error('Erro ao retomar bot');
+        const data = await response.json().catch(() => ({}));
+        throw new Error(data?.error || 'Não foi possível encerrar o atendimento');
       }
 
       toast({
-        title: 'Bot retomado',
-        description: 'O DigiBot voltou a atender esta conversa.',
+        title: 'Atendimento encerrado',
+        description: 'O assistente voltou a atender o cidadão.',
       });
 
-      // Atualizar status da conversa localmente
+      // Servidor: a conversa sai da lista (volta a ser só do cidadão com o assistente)
       setConversations(prev =>
-        prev.map(conv =>
-          conv.id === conversationId
-            ? {
-                ...conv,
-                metadata: {
-                  ...conv.metadata,
-                  botStatus: 'ACTIVE',
-                },
-                conversationStatus: 'bot',
-              }
-            : conv
-        )
+        userTypeRef.current === 'SERVER'
+          ? prev.filter(conv => conv.id !== conversationId)
+          : prev.map(conv =>
+              conv.id === conversationId
+                ? { ...conv, metadata: { ...conv.metadata, takenOverBy: undefined, attendantName: null }, conversationStatus: 'bot' }
+                : conv
+            )
       );
-    } catch (error) {
-      console.error('[useConversations] Erro ao retomar bot:', error);
+    } catch (error: any) {
+      console.error('[useConversations] Erro ao encerrar atendimento:', error);
       toast({
         title: 'Erro',
-        description: 'Não foi possível retomar o bot',
+        description: error?.message || 'Não foi possível encerrar o atendimento',
         variant: 'destructive',
       });
       throw error;
@@ -548,6 +605,8 @@ export function useConversations({
 
     const newSocket = io(MESSAGES_WS_URL, {
       withCredentials: true,
+      // qual sessão usar quando há login de cidadão e de servidor no mesmo navegador
+      auth: { portal: currentChatPortal() },
       transports: ['websocket', 'polling'],
       reconnection: true,
       reconnectionAttempts: MAX_RECONNECT_ATTEMPTS,
@@ -760,14 +819,47 @@ export function useConversations({
       fetchHandoverQueue();
     });
 
-    // ✅ NOVO: Event: Conversa assumida por outro servidor
-    newSocket.on('handover:takeover', (data: { conversationId: string; serverId: string }) => {
+    // Conversa da fila assumida por alguém (ou devolvida ao assistente por tempo)
+    newSocket.on('handover:taken', (data: { conversationId: string; attendantName?: string }) => {
       if (userTypeRef.current !== 'SERVER') return;
-
-      console.log('[useConversations] Conversa assumida por outro servidor:', data);
-
-      // Remover da fila local
       setHandoverQueue(prev => prev.filter(item => item.conversationId !== data.conversationId));
+    });
+
+    // Mensagem nova numa conversa da fila
+    newSocket.on('handover:update', () => {
+      if (userTypeRef.current !== 'SERVER') return;
+      fetchHandoverQueue();
+    });
+
+    // Cidadão: alguém da prefeitura assumiu a conversa do assistente
+    newSocket.on('handover:takeover', (data: { conversationId: string; attendantName?: string }) => {
+      if (userTypeRef.current !== 'CITIZEN') return;
+      setConversations(prev =>
+        prev.map(c =>
+          c.id === data.conversationId
+            ? { ...c, metadata: { ...c.metadata, attendantName: data.attendantName || null }, conversationStatus: 'human' }
+            : c
+        )
+      );
+    });
+
+    // Atendimento encerrado: a conversa volta para o assistente
+    newSocket.on('handover:ended', (data: { conversationId: string }) => {
+      setHandoverQueue(prev => prev.filter(item => item.conversationId !== data.conversationId));
+      setConversations(prev =>
+        userTypeRef.current === 'SERVER'
+          ? prev.filter(c => !(c.id === data.conversationId && c.isBotConversation))
+          : prev.map(c =>
+              c.id === data.conversationId
+                ? { ...c, metadata: { ...c.metadata, takenOverBy: undefined, attendantName: null }, conversationStatus: 'bot' }
+                : c
+            )
+      );
+    });
+
+    // Mensagem apagada por quem enviou
+    newSocket.on('message:deleted', (data: { conversationId: string; messageId: string }) => {
+      if (onMessageDeletedRef.current) onMessageDeletedRef.current(data.messageId, data.conversationId);
     });
 
     setSocket(newSocket);
@@ -856,8 +948,8 @@ export function useConversations({
           (response: any) => {
             if (response?.error) {
               toast({
-                title: 'Erro',
-                description: 'Não foi possível enviar a mensagem',
+                title: 'Mensagem não enviada',
+                description: typeof response.error === 'string' ? response.error : 'Não foi possível enviar a mensagem',
                 variant: 'destructive',
               });
               resolve({ success: false, error: response.error });
@@ -965,8 +1057,8 @@ export function useConversations({
     } catch (error: any) {
       console.error('[useConversations] Falha ao enviar mensagem (HTTP fallback):', error);
       toast({
-        title: 'Erro',
-        description: 'Não foi possível enviar a mensagem',
+        title: 'Mensagem não enviada',
+        description: error?.message || 'Não foi possível enviar a mensagem',
         variant: 'destructive',
       });
       return { success: false, error: error?.message || 'Falha ao enviar mensagem' };

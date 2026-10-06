@@ -3,66 +3,73 @@ import logger from '../utils/logger';
 import { ParticipantType, ConversationType } from '@prisma/client';
 import { ensureActiveMessageServerId } from '../utils/messageServer';
 import { resolveTenantId } from '../utils/tenant';
+import { canReadConversation, isAttendant, NOTICES_PARTICIPANT_ID } from '../server/accessControl';
+
+/** Até quantas conversas a lista traz (as mais recentes primeiro) */
+const LIST_LIMIT = 100;
 
 export class ConversationService {
   /**
-   * Enriquecer conversa com nomes dos participantes
+   * Nomes dos participantes de VÁRIAS conversas com 2 consultas (antes eram
+   * 2 consultas por conversa — a lista de um servidor com 100 conversas fazia 200).
    */
-  private async enrichConversationWithNames(conversation: any) {
-    try {
-      const metadata: any = conversation.metadata || {};
-
-      // Buscar nome do participante 1
-      if (conversation.participant1Type === 'CITIZEN') {
-        const citizen = await prisma.citizen.findUnique({
-          where: { id: conversation.participant1Id },
-          select: { name: true, avatar: true },
-        });
-        if (citizen) {
-          metadata.citizen1Name = citizen.name;
-          if (citizen.avatar) metadata.citizen1Avatar = citizen.avatar;
-        }
-      } else if (conversation.participant1Type === 'SERVER') {
-        const user = await prisma.user.findUnique({
-          where: { id: conversation.participant1Id },
-          select: { name: true },
-        });
-        if (user) {
-          metadata.server1Name = user.name;
-        }
+  private async enrichMany(conversations: any[]) {
+    const citizenIds = new Set<string>();
+    const userIds = new Set<string>();
+    for (const c of conversations) {
+      for (const [id, type] of [
+        [c.participant1Id, c.participant1Type],
+        [c.participant2Id, c.participant2Type],
+      ]) {
+        if (type === 'CITIZEN') citizenIds.add(id);
+        if (type === 'SERVER') userIds.add(id);
       }
+      if (c.metadata?.takenOverBy) userIds.add(String(c.metadata.takenOverBy));
+    }
+    const [citizens, users] = await Promise.all([
+      citizenIds.size
+        ? prisma.citizen.findMany({ where: { id: { in: [...citizenIds] } }, select: { id: true, name: true, avatar: true } })
+        : Promise.resolve([] as Array<{ id: string; name: string; avatar: string | null }>),
+      userIds.size
+        ? prisma.user.findMany({ where: { id: { in: [...userIds] } }, select: { id: true, name: true } })
+        : Promise.resolve([] as Array<{ id: string; name: string }>),
+    ]);
+    const citizenById = new Map(citizens.map((c) => [c.id, c]));
+    const userById = new Map(users.map((u) => [u.id, u]));
 
-      // Buscar nome do participante 2
-      if (conversation.participant2Type === 'CITIZEN') {
-        const citizen = await prisma.citizen.findUnique({
-          where: { id: conversation.participant2Id },
-          select: { name: true, avatar: true },
-        });
-        if (citizen) {
-          metadata.citizen2Name = citizen.name;
-          if (citizen.avatar) metadata.citizen2Avatar = citizen.avatar;
+    return conversations.map((conversation) => {
+      const metadata: any = { ...(conversation.metadata || {}) };
+      const fill = (n: 1 | 2) => {
+        const id = conversation[`participant${n}Id`];
+        const type = conversation[`participant${n}Type`];
+        if (type === 'CITIZEN') {
+          const citizen = citizenById.get(id);
+          if (citizen) {
+            metadata[`citizen${n}Name`] = citizen.name;
+            if (citizen.avatar) metadata[`citizen${n}Avatar`] = citizen.avatar;
+          }
+        } else if (type === 'SERVER') {
+          const user = userById.get(id);
+          if (user) metadata[`server${n}Name`] = user.name;
+        } else if (id === NOTICES_PARTICIPANT_ID) {
+          metadata.systemName = 'Avisos da Prefeitura';
         }
-      } else if (conversation.participant2Type === 'SERVER') {
-        const user = await prisma.user.findUnique({
-          where: { id: conversation.participant2Id },
-          select: { name: true },
-        });
-        if (user) {
-          metadata.server2Name = user.name;
-        }
-      }
-
-      // ✅ CORRIGIDO: Para compatibilidade com código existente
-      // SEMPRE colocar os nomes de AMBOS os participantes, não só de um tipo
-      // O frontend vai decidir qual nome mostrar baseado em quem está logado
+      };
+      fill(1);
+      fill(2);
+      // O frontend decide qual nome mostrar conforme quem está logado
       metadata.citizenName = metadata.citizen1Name || metadata.citizen2Name;
       metadata.serverName = metadata.server1Name || metadata.server2Name;
       metadata.avatar = metadata.citizen1Avatar || metadata.citizen2Avatar;
+      if (metadata.takenOverBy) metadata.attendantName = userById.get(String(metadata.takenOverBy))?.name || null;
+      metadata.isNotices = conversation.participant2Id === NOTICES_PARTICIPANT_ID;
+      return { ...conversation, metadata };
+    });
+  }
 
-      return {
-        ...conversation,
-        metadata,
-      };
+  private async enrichConversationWithNames(conversation: any) {
+    try {
+      return (await this.enrichMany([conversation]))[0];
     } catch (error) {
       logger.error('Error enriching conversation with names', { error, conversationId: conversation.id });
       return conversation;
@@ -77,6 +84,8 @@ export class ConversationService {
     protocolId?: string;
     departmentId?: string;
     type?: ConversationType;
+    /** município de quem abre a conversa (vale quando não há cidadão nela) */
+    tenantId?: string;
   }) {
     try {
       const { participant1Id, participant1Type, participant2Id, participant2Type, protocolId, departmentId } = params;
@@ -119,7 +128,10 @@ export class ConversationService {
           participant1Type === 'CITIZEN' ? participant1Id
           : participant2Type === 'CITIZEN' ? participant2Id
           : null;
-        const tenantId = await resolveTenantId({ citizenId: citizenParticipantId });
+        // conversa só entre servidores: município de quem abriu (antes caía no padrão)
+        const tenantId = citizenParticipantId
+          ? await resolveTenantId({ citizenId: citizenParticipantId })
+          : params.tenantId || (await resolveTenantId({}));
 
         conversation = await prisma.conversation.create({
           data: {
@@ -154,6 +166,11 @@ export class ConversationService {
     }
   }
 
+  /** Conversa com os nomes dos participantes (para a tela) */
+  async getEnrichedConversation(conversationId: string) {
+    return this.enrichConversationWithNames(await this.getConversationById(conversationId));
+  }
+
   async getConversationById(conversationId: string) {
     try {
       const conversation = await prisma.conversation.findUnique({
@@ -177,7 +194,7 @@ export class ConversationService {
     }
   }
 
-  async getConversationsByUser(userId: string, userType: ParticipantType) {
+  async getConversationsByUser(userId: string, userType: ParticipantType, tenantId?: string) {
     try {
       const conversations = await prisma.conversation.findMany({
         where: {
@@ -186,6 +203,10 @@ export class ConversationService {
             { participant1Id: userId, participant1Type: userType, deletedAt1: null },
             // Participante 2: mostrar se não excluiu (deletedAt2 = null)
             { participant2Id: userId, participant2Type: userType, deletedAt2: null },
+            // Atendimento humano: conversas do assistente que este servidor assumiu
+            ...(userType === 'SERVER' && tenantId
+              ? [{ isBotConversation: true, tenantId, metadata: { path: ['takenOverBy'], equals: userId } }]
+              : []),
           ],
           status: { in: ['ACTIVE', 'ARCHIVED'] },
         },
@@ -198,14 +219,10 @@ export class ConversationService {
         orderBy: {
           lastMessageAt: 'desc',
         },
+        take: LIST_LIMIT,
       });
 
-      // Enriquecer todas as conversas com nomes dos participantes
-      const enriched = await Promise.all(
-        conversations.map(conv => this.enrichConversationWithNames(conv))
-      );
-
-      return enriched;
+      return await this.enrichMany(conversations);
     } catch (error) {
       logger.error('Error getting conversations', { error, userId });
       throw error;
@@ -285,48 +302,6 @@ export class ConversationService {
       logger.info('Conversation archived', { conversationId, userId });
     } catch (error) {
       logger.error('Error archiving conversation', { error, conversationId });
-      throw error;
-    }
-  }
-
-  async clearMessages(conversationId: string, userId: string, userType: ParticipantType) {
-    try {
-      const conversation = await prisma.conversation.findUnique({
-        where: { id: conversationId },
-      });
-
-      if (!conversation) {
-        throw new Error('Conversation not found');
-      }
-
-      // Proteger conversas do bot: apenas "apagar para mim" é permitido
-      if (conversation.isBotConversation) {
-        throw new Error('Bot conversations cannot have messages cleared for all. Use clear for me instead.');
-      }
-
-      const isParticipant =
-        (conversation.participant1Id === userId && conversation.participant1Type === userType) ||
-        (conversation.participant2Id === userId && conversation.participant2Type === userType);
-
-      if (!isParticipant) {
-        throw new Error('Unauthorized');
-      }
-
-      // Soft delete de todas as mensagens
-      await prisma.message.updateMany({
-        where: { conversationId },
-        data: { isDeleted: true, deletedAt: new Date(), deletedBy: userId },
-      });
-
-      // Limpar preview
-      await prisma.conversation.update({
-        where: { id: conversationId },
-        data: { lastMessagePreview: null, totalMessages: 0 },
-      });
-
-      logger.info('Conversation messages cleared', { conversationId, userId });
-    } catch (error) {
-      logger.error('Error clearing conversation messages', { error, conversationId });
       throw error;
     }
   }
@@ -433,42 +408,36 @@ export class ConversationService {
     }
   }
 
-  async markConversationAsRead(conversationId: string, userId: string, userType: ParticipantType) {
-    try {
-      const conversation = await prisma.conversation.findUnique({
-        where: { id: conversationId },
-      });
-
-      if (!conversation) {
-        throw new Error('Conversation not found');
-      }
-
-      // Resetar contador de não lidas
-      const isParticipant1 = conversation.participant1Id === userId && conversation.participant1Type === userType;
-
-      await prisma.conversation.update({
-        where: { id: conversationId },
-        data: isParticipant1 ? { unreadCount1: 0 } : { unreadCount2: 0 },
-      });
-
-      // Marcar mensagens como lidas
-      await prisma.message.updateMany({
-        where: {
-          conversationId,
-          senderId: { not: userId },
-          status: { in: ['SENT', 'DELIVERED'] },
-        },
-        data: {
-          status: 'READ',
-          readAt: new Date(),
-        },
-      });
-
-      logger.debug('Conversation marked as read', { conversationId, userId });
-    } catch (error) {
-      logger.error('Error marking conversation as read', { error, conversationId });
-      throw error;
+  async markConversationAsRead(conversationId: string, userId: string, userType: ParticipantType, tenantId?: string) {
+    const conversation = await prisma.conversation.findUnique({
+      where: { id: conversationId },
+    });
+    const user = { userId, userType, tenantId };
+    if (!conversation || !canReadConversation(conversation as any, user)) {
+      throw new Error('Conversation not found');
     }
+
+    const isParticipant1 = conversation.participant1Id === userId && conversation.participant1Type === userType;
+    const isParticipant2 = conversation.participant2Id === userId && conversation.participant2Type === userType;
+    // quem só supervisiona a conversa do assistente não zera o contador de ninguém
+    if (!isParticipant1 && !isParticipant2 && !isAttendant(conversation as any, user)) return;
+
+    await prisma.conversation.update({
+      where: { id: conversationId },
+      data: isParticipant1 ? { unreadCount1: 0 } : { unreadCount2: 0 },
+    });
+
+    await prisma.message.updateMany({
+      where: {
+        conversationId,
+        NOT: { senderId: userId, senderType: userType },
+        status: { in: ['SENT', 'DELIVERED'] },
+      },
+      data: {
+        status: 'READ',
+        readAt: new Date(),
+      },
+    });
   }
 }
 

@@ -49,6 +49,29 @@ export function canReadConversation(c: ConversationLike, u: AccessUser): boolean
   return Boolean(c.isBotConversation) || c.metadata?.takenOverBy === u.userId;
 }
 
+/** Mesmo município (conversas antigas sem município contam como o padrão) */
+export const sameTenant = (c: ConversationLike, u: AccessUser) => (c.tenantId || DEFAULT_TENANT_ID) === tenantOf(u);
+
+/** Servidor que assumiu a conversa do assistente (atendimento humano) */
+export const isAttendant = (c: ConversationLike, u: AccessUser) =>
+  isServer(u) && sameTenant(c, u) && Boolean(c.isBotConversation) && Boolean(u.userId) && c.metadata?.takenOverBy === u.userId;
+
+/** Conversa só de avisos da prefeitura: o cidadão lê, ninguém responde */
+export const NOTICES_PARTICIPANT_ID = 'PREFEITURA_AVISOS';
+export const isNoticesConversation = (c: ConversationLike) =>
+  c.participant2Id === NOTICES_PARTICIPANT_ID || c.participant1Id === NOTICES_PARTICIPANT_ID;
+
+/**
+ * Pode ESCREVER: participante (fora a conversa do assistente, que passa pelo
+ * bot, e a de avisos) ou o atendente que assumiu a conversa do assistente.
+ * Antes o atendente que clicava em "Assumir" não conseguia responder.
+ */
+export function canWriteConversation(c: ConversationLike, u: AccessUser): boolean {
+  if (isNoticesConversation(c)) return false;
+  if (c.isBotConversation) return isAttendant(c, u);
+  return isParticipant(c, u);
+}
+
 /** CPF parcialmente oculto (LGPD — minimização): 123.***.***-09 */
 export function maskCpf(cpf?: string | null): string | null {
   if (!cpf) return null;

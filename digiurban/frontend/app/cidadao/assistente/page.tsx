@@ -98,7 +98,7 @@ export default function CitizenAssistantPage() {
   // respostas que chegaram AGORA (animadas); as do histórico aparecem prontas
   const liveBotIdsRef = useRef<Set<string>>(new Set());
   const [confirmAction, setConfirmAction] = useState<{
-    type: 'clear-for-me' | 'clear' | 'archive' | 'delete';
+    type: 'clear-for-me' | 'archive' | 'delete';
     conversationId: string;
     title: string;
   } | null>(null);
@@ -147,6 +147,11 @@ export default function CitizenAssistantPage() {
       }
       // mensagem de um atendente: a situação do atendimento pode ter mudado
       if (message.senderType === 'SERVER') void refreshAttendance();
+    },
+    onMessageDeleted: (messageId, conversationId) => {
+      if (selectedConversation?.id === conversationId) {
+        setMessages(prev => prev.map(m => (m.id === messageId ? { ...m, isDeleted: true, content: '' } : m)));
+      }
     },
   });
 
@@ -527,7 +532,7 @@ export default function CitizenAssistantPage() {
   const handleSendMessage = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    if (!newMessage.trim() || !selectedConversation || !citizen) return;
+    if (!newMessage.trim() || !selectedConversation || !citizen || isNoticesConversation) return;
 
     const messageContent = newMessage.trim();
     setNewMessage('');
@@ -619,27 +624,6 @@ export default function CitizenAssistantPage() {
     setConfirmAction(null);
   };
 
-  const handleClearMessages = async (conversationId: string) => {
-    try {
-      const response = await fetch(`${MESSAGES_API_URL}/conversations/${conversationId}/clear`, {
-        method: 'POST',
-        credentials: 'include',
-      });
-      if (!response.ok) {
-        const data = await response.json().catch(() => ({}));
-        throw new Error(data.error || 'Erro ao limpar mensagens');
-      }
-      if (selectedConversation?.id === conversationId) {
-        setMessages([]);
-      }
-      await loadConversations();
-      toast({ title: 'Mensagens limpas', description: 'Todas as mensagens foram removidas.' });
-    } catch (err: any) {
-      toast({ title: 'Erro', description: err.message || 'Não foi possível limpar as mensagens', variant: 'destructive' });
-    }
-    setConfirmAction(null);
-  };
-
   const handleArchiveConversation = async (conversationId: string) => {
     try {
       const response = await fetch(`${MESSAGES_API_URL}/conversations/${conversationId}/archive`, {
@@ -684,13 +668,18 @@ export default function CitizenAssistantPage() {
     if (!confirmAction) return;
     switch (confirmAction.type) {
       case 'clear-for-me': handleClearForMe(confirmAction.conversationId); break;
-      case 'clear': handleClearMessages(confirmAction.conversationId); break;
       case 'archive': handleArchiveConversation(confirmAction.conversationId); break;
       case 'delete': handleDeleteConversation(confirmAction.conversationId); break;
     }
   };
 
   const isProtectedConversation = selectedConversation?.isBotConversation;
+  // "Avisos da Prefeitura": só leitura (a prefeitura avisa sobre os pedidos)
+  const isNoticesConversation = Boolean(
+    selectedConversation?.isNotices ||
+      selectedConversation?.metadata?.isNotices ||
+      selectedConversation?.participant2Id === 'PREFEITURA_AVISOS'
+  );
 
   /**
    * Voltar para lista (mobile)
@@ -1078,20 +1067,6 @@ export default function CitizenAssistantPage() {
                       {isProtectedConversation ? 'Apagar conversa' : 'Apagar para mim'}
                     </DropdownMenuItem>
                     {!isProtectedConversation && (
-                    <DropdownMenuItem
-                      onClick={() =>
-                        setConfirmAction({
-                          type: 'clear',
-                          conversationId: selectedConversation.id,
-                          title: 'Apagar para todos?',
-                        })
-                      }
-                    >
-                      <Trash2 className="w-4 h-4 mr-2" />
-                      Apagar para todos
-                    </DropdownMenuItem>
-                    )}
-                    {!isProtectedConversation && (
                       <>
                         <DropdownMenuSeparator />
                         <DropdownMenuItem
@@ -1251,6 +1226,11 @@ export default function CitizenAssistantPage() {
             </div>
 
             {/* Input de Mensagem */}
+            {isNoticesConversation ? (
+              <div className="lg-glass lg-bar m-3 mt-0 rounded-[28px] p-3 text-center text-sm text-gray-500">
+                Aqui chegam os avisos dos seus pedidos. Para falar com a prefeitura, use o Assistente.
+              </div>
+            ) : (
             <form onSubmit={handleSendMessage} className="lg-glass lg-bar m-3 mt-0 rounded-[28px] p-3">
               {botInputHint && (
                 <div className="flex items-center justify-center gap-2 py-2">
@@ -1310,6 +1290,7 @@ export default function CitizenAssistantPage() {
                 )}
               </div>
             </form>
+            )}
           </>
         ) : (
           <div className="flex-1 flex items-center justify-center text-gray-500">
@@ -1374,8 +1355,6 @@ export default function CitizenAssistantPage() {
             <AlertDialogDescription>
               {confirmAction?.type === 'clear-for-me' &&
                 'As mensagens serão removidas apenas para você. O outro participante continuará vendo as mensagens.'}
-              {confirmAction?.type === 'clear' &&
-                'Todas as mensagens desta conversa serão removidas para todos os participantes.'}
               {confirmAction?.type === 'archive' &&
                 'A conversa será movida para a aba Arquivadas. Você poderá acessá-la novamente quando quiser.'}
               {confirmAction?.type === 'delete' &&
@@ -1387,11 +1366,10 @@ export default function CitizenAssistantPage() {
             <AlertDialogAction
               onClick={executeConfirmAction}
               className={cn(
-                (confirmAction?.type === 'delete' || confirmAction?.type === 'clear') && 'bg-red-600 hover:bg-red-700'
+                confirmAction?.type === 'delete' && 'bg-red-600 hover:bg-red-700'
               )}
             >
               {confirmAction?.type === 'clear-for-me' && 'Apagar para mim'}
-              {confirmAction?.type === 'clear' && 'Apagar para todos'}
               {confirmAction?.type === 'archive' && 'Arquivar'}
               {confirmAction?.type === 'delete' && 'Excluir'}
             </AlertDialogAction>

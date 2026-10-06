@@ -14,7 +14,7 @@ export interface BotConfig {
   tone: 'simples' | 'formal';
   aiCallsPerConversation: number;
   menu: BotMenuItem[];
-  human: { hours: string; waitMessage: string; outOfHoursMessage: string };
+  human: { hours: string; waitMessage: string; outOfHoursMessage: string; maxWaitMinutes: number; noAttendantMessage: string };
 }
 
 export interface BotSettingsResponse {

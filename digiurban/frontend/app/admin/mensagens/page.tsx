@@ -101,7 +101,7 @@ export default function AdminMessagesPage() {
   const [showStats, setShowStats] = useState(false);
   const [loadingMessages, setLoadingMessages] = useState(false);
   const [confirmAction, setConfirmAction] = useState<{
-    type: 'clear-for-me' | 'clear' | 'archive' | 'delete';
+    type: 'clear-for-me' | 'archive' | 'delete';
     conversationId: string;
     title: string;
   } | null>(null);
@@ -139,7 +139,6 @@ export default function AdminMessagesPage() {
     loadConversations,
     fetchHandoverQueue, // ✅ NOVO
     takeoverConversation, // ✅ NOVO
-    pauseBot, // ✅ NOVO
     resumeBot, // ✅ NOVO
     sendMessage,
     markConversationAsRead,
@@ -169,6 +168,11 @@ export default function AdminMessagesPage() {
       // ✅ NOVO: Callback quando nova conversa entra na fila
       console.log('[Admin] Nova conversa na fila:', handoverItem);
     },
+    onMessageDeleted: (messageId, conversationId) => {
+      if (selectedConversation?.id === conversationId) {
+        setMessages(prev => prev.map(m => (m.id === messageId ? { ...m, isDeleted: true, content: '' } : m)));
+      }
+    },
   });
 
   // Detectar mobile
@@ -187,10 +191,31 @@ export default function AdminMessagesPage() {
     }
   }, [isMobileView, selectedConversation]);
 
-  // Carregar estatísticas
+  // Estatísticas contadas pela lista de conversas
   useEffect(() => {
-    loadStats();
-  }, []);
+    const active = conversations.filter(c => c.status !== 'CLOSED' && c.status !== 'ARCHIVED');
+    const human = active.filter(c => getConversationStatus(c) === 'human').length;
+    setStats(prev => ({
+      ...prev,
+      totalConversations: conversations.length,
+      activeConversations: active.length,
+      botConversations: active.length - human,
+      humanConversations: human,
+    }));
+  }, [conversations]);
+
+  // A conversa aberta acompanha as mudanças da lista (assumida, encerrada, nome do atendente)
+  useEffect(() => {
+    if (!selectedConversation) return;
+    const fresh = conversations.find(c => c.id === selectedConversation.id);
+    if (fresh && fresh !== selectedConversation) {
+      setSelectedConversation(fresh);
+    } else if (!fresh && selectedConversation.isBotConversation) {
+      // atendimento encerrado: a conversa voltou a ser só do cidadão com o assistente
+      setSelectedConversation(null);
+      setMessages([]);
+    }
+  }, [conversations]);
 
   // Carregar mensagens quando conversa é selecionada
   useEffect(() => {
@@ -203,31 +228,6 @@ export default function AdminMessagesPage() {
   useEffect(() => {
     scrollToBottom();
   }, [messages]);
-
-  /**
-   * Carregar estatísticas
-   */
-  const loadStats = async () => {
-    try {
-      const response = await fetch(`${MESSAGES_API_URL}/admin/stats`, {
-        credentials: 'include'
-      });
-
-      if (response.ok) {
-        const data = await response.json();
-        setStats({
-          totalConversations: data.totalConversations || 0,
-          activeConversations: data.activeConversations || 0,
-          botConversations: data.botConversations || 0,
-          humanConversations: data.humanConversations || 0,
-          averageResponseTime: data.averageResponseTime || '0s',
-          satisfactionRate: data.satisfactionRate || 0
-        });
-      }
-    } catch (err) {
-      console.error('Erro ao carregar estatísticas:', err);
-    }
-  };
 
   /**
    * Carregar mensagens de uma conversa
@@ -290,6 +290,7 @@ export default function AdminMessagesPage() {
     e.preventDefault();
     if (!newMessage.trim() || !selectedConversation || !socket) return;
 
+    if (!canReply) return;
     const result = await sendMessage(selectedConversation.id, newMessage.trim());
 
     if (result.success) {
@@ -304,27 +305,27 @@ export default function AdminMessagesPage() {
     if (!selectedConversation) return;
 
     try {
-      await pauseBot(selectedConversation.id, 'server_takeover');
-
-      // Enviar mensagem de boas-vindas
-      if (socket) {
-        await sendMessage(selectedConversation.id, 'Um atendente assumiu a conversa. Como posso ajudar?');
-      }
+      // o servidor pausa o assistente e avisa o cidadão ("Fulano assumiu o atendimento")
+      const result = await takeoverConversation(selectedConversation.id);
+      if (result?.conversation) setSelectedConversation(result.conversation);
     } catch (err) {
       console.error('Erro ao assumir conversa:', err);
     }
   };
 
   /**
-   * ✅ ATUALIZADO: Devolver ao bot usando função do hook
+   * Encerrar atendimento: a conversa volta para o assistente
    */
   const handleHandBackToBot = async () => {
     if (!selectedConversation) return;
 
     try {
       await resumeBot(selectedConversation.id);
+      setSelectedConversation(null);
+      setMessages([]);
+      if (isMobileView) setShowConversationsList(true);
     } catch (err) {
-      console.error('Erro ao retornar ao bot:', err);
+      console.error('Erro ao encerrar atendimento:', err);
     }
   };
 
@@ -333,10 +334,10 @@ export default function AdminMessagesPage() {
    */
   const handleTakeoverFromQueue = async (conversationId: string) => {
     try {
-      await takeoverConversation(conversationId);
+      const result = await takeoverConversation(conversationId);
 
-      // Encontrar e selecionar a conversa
-      const conv = conversations.find(c => c.id === conversationId);
+      // Selecionar a conversa assumida (vem pronta do servidor)
+      const conv = result?.conversation || conversations.find(c => c.id === conversationId);
       if (conv) {
         setSelectedConversation(conv);
         if (isMobileView) {
@@ -373,27 +374,6 @@ export default function AdminMessagesPage() {
       }
       await loadConversations();
       toast({ title: 'Mensagens limpas', description: 'As mensagens foram apagadas para você.' });
-    } catch (err: any) {
-      toast({ title: 'Erro', description: err.message || 'Não foi possível limpar as mensagens', variant: 'destructive' });
-    }
-    setConfirmAction(null);
-  };
-
-  const handleClearMessages = async (conversationId: string) => {
-    try {
-      const response = await fetch(`${MESSAGES_API_URL}/conversations/${conversationId}/clear`, {
-        method: 'POST',
-        credentials: 'include',
-      });
-      if (!response.ok) {
-        const data = await response.json().catch(() => ({}));
-        throw new Error(data.error || 'Erro ao limpar mensagens');
-      }
-      if (selectedConversation?.id === conversationId) {
-        setMessages([]);
-      }
-      await loadConversations();
-      toast({ title: 'Mensagens limpas', description: 'Todas as mensagens foram removidas.' });
     } catch (err: any) {
       toast({ title: 'Erro', description: err.message || 'Não foi possível limpar as mensagens', variant: 'destructive' });
     }
@@ -444,13 +424,16 @@ export default function AdminMessagesPage() {
     if (!confirmAction) return;
     switch (confirmAction.type) {
       case 'clear-for-me': handleClearForMe(confirmAction.conversationId); break;
-      case 'clear': handleClearMessages(confirmAction.conversationId); break;
       case 'archive': handleArchiveConversation(confirmAction.conversationId); break;
       case 'delete': handleDeleteConversation(confirmAction.conversationId); break;
     }
   };
 
   const isProtectedConversation = selectedConversation?.isBotConversation;
+  // conversa do assistente: só quem assumiu responde
+  const takenBy = selectedConversation?.metadata?.takenOverBy;
+  const takenByMe = !!takenBy && takenBy === user?.id;
+  const canReply = !!selectedConversation && (!selectedConversation.isBotConversation || takenByMe);
 
   /**
    * Voltar para lista (mobile)
@@ -953,13 +936,19 @@ export default function AdminMessagesPage() {
                     "text-xs",
                     selectedConversation.isBotConversation ? "text-blue-100" : "text-gray-500"
                   )}>
-                    {selectedConversation.isBotConversation ? 'Sempre disponível' : (isConnected ? 'Online' : 'Offline')}
+                    {selectedConversation.isBotConversation
+                      ? takenByMe
+                        ? 'Você está atendendo'
+                        : takenBy
+                          ? `Em atendimento com ${selectedConversation.metadata?.attendantName || 'outro servidor'}`
+                          : 'Com o assistente'
+                      : (isConnected ? 'Online' : 'Offline')}
                   </p>
                 </div>
               </div>
 
               <div className="flex flex-wrap items-center gap-2 lg:justify-end">
-                {getConversationStatus(selectedConversation) === 'bot' ? (
+                {!selectedConversation.isBotConversation ? null : !takenBy ? (
                   <Button
                     size="sm"
                     onClick={handleTakeOver}
@@ -968,7 +957,7 @@ export default function AdminMessagesPage() {
                     <UserCheck className="w-4 h-4" />
                     Assumir
                   </Button>
-                ) : getConversationStatus(selectedConversation) === 'human' ? (
+                ) : takenByMe ? (
                   <Button
                     size="sm"
                     variant="outline"
@@ -976,7 +965,7 @@ export default function AdminMessagesPage() {
                     className="gap-2 whitespace-nowrap"
                   >
                     <Bot className="w-4 h-4" />
-                    Devolver ao Bot
+                    Encerrar atendimento
                   </Button>
                 ) : null}
 
@@ -998,18 +987,6 @@ export default function AdminMessagesPage() {
                     >
                       <Eraser className="w-4 h-4 mr-2" />
                       Apagar para mim
-                    </DropdownMenuItem>
-                    <DropdownMenuItem
-                      onClick={() =>
-                        setConfirmAction({
-                          type: 'clear',
-                          conversationId: selectedConversation.id,
-                          title: 'Apagar para todos?',
-                        })
-                      }
-                    >
-                      <Trash2 className="w-4 h-4 mr-2" />
-                      Apagar para todos
                     </DropdownMenuItem>
                     {!isProtectedConversation && (
                       <>
@@ -1153,15 +1130,16 @@ export default function AdminMessagesPage() {
 
                 <Input
                   type="text"
-                  placeholder="Digite uma mensagem..."
+                  placeholder={canReply ? 'Digite uma mensagem...' : 'Assuma o atendimento para responder'}
                   value={newMessage}
                   onChange={(e) => setNewMessage(e.target.value)}
                   className="min-w-0 flex-1"
-                  disabled={!isConnected || selectedConversation.status === 'CLOSED'}
+                  maxLength={4000}
+                  disabled={!isConnected || !canReply || selectedConversation.status === 'CLOSED'}
                 />
 
                 {newMessage.trim() ? (
-                  <Button type="submit" size="icon" className="bg-blue-600 hover:bg-blue-700" disabled={!isConnected}>
+                  <Button type="submit" size="icon" className="bg-blue-600 hover:bg-blue-700" disabled={!isConnected || !canReply}>
                     <Send className="w-5 h-5" />
                   </Button>
                 ) : (
@@ -1220,8 +1198,6 @@ export default function AdminMessagesPage() {
             <AlertDialogDescription>
               {confirmAction?.type === 'clear-for-me' &&
                 'As mensagens serão removidas apenas para você. O outro participante continuará vendo as mensagens.'}
-              {confirmAction?.type === 'clear' &&
-                'Todas as mensagens desta conversa serão removidas para todos os participantes.'}
               {confirmAction?.type === 'archive' &&
                 'A conversa será movida para a aba Arquivadas. Você poderá acessá-la novamente quando quiser.'}
               {confirmAction?.type === 'delete' &&
@@ -1233,11 +1209,10 @@ export default function AdminMessagesPage() {
             <AlertDialogAction
               onClick={executeConfirmAction}
               className={cn(
-                (confirmAction?.type === 'delete' || confirmAction?.type === 'clear') && 'bg-red-600 hover:bg-red-700'
+                confirmAction?.type === 'delete' && 'bg-red-600 hover:bg-red-700'
               )}
             >
               {confirmAction?.type === 'clear-for-me' && 'Apagar para mim'}
-              {confirmAction?.type === 'clear' && 'Apagar para todos'}
               {confirmAction?.type === 'archive' && 'Arquivar'}
               {confirmAction?.type === 'delete' && 'Excluir'}
             </AlertDialogAction>

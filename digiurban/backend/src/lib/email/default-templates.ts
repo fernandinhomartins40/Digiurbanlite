@@ -60,6 +60,11 @@ export const EMAIL_TEMPLATE_INFO: Record<string, EmailTemplateInfo> = {
   'protocol-pending-expired': { label: 'Pendência sem resposta', when: 'O prazo da pendência acaba sem resposta', audience: 'cidadão' },
   'document-delivery': { label: 'Documento enviado por e-mail', when: 'O servidor envia o documento do pedido por e-mail (vai anexado)', audience: 'cidadão' },
   'document-rejected': { label: 'Documento recusado', when: 'Um documento pessoal enviado pelo cidadão é recusado', audience: 'cidadão' },
+  'chat-message': {
+    label: 'Resposta no chat',
+    when: 'A prefeitura responde o cidadão no chat e ele não está com o chat aberto (no máximo um a cada 30 min por conversa)',
+    audience: 'cidadão',
+  },
   'family-invite': { label: 'Convite para a família', when: 'O cidadão convida alguém para a composição familiar', audience: 'convidado' },
   'server-protocol-assigned': { label: 'Pedido passado para você', when: 'Um pedido é atribuído, delegado ou encaminhado a um servidor', audience: 'servidor' },
   'server-pending-answered': { label: 'Cidadão respondeu a pendência', when: 'O cidadão responde uma pendência de um pedido do servidor', audience: 'servidor' },
@@ -83,6 +88,7 @@ export const NOTIFICATION_TEMPLATE_BY_TYPE: Record<string, string> = {
   PROTOCOL_PENDING_RESOLVED: 'server-pending-answered',
   PROTOCOL_OVERDUE_DIGEST: 'server-overdue-digest',
   AI_CREDITS_LOW: 'ai-credits-low',
+  CHAT_MESSAGE: 'chat-message',
 };
 
 export function buildDefaultTemplates(): DefaultEmailTemplate[] {
@@ -337,6 +343,26 @@ export function buildDefaultTemplates(): DefaultEmailTemplate[] {
         'Olá, {{citizenName}}!\n\nSeu documento "{{documentName}}" foi recusado.\nMotivo: {{reason}}\n\nEnvie de novo em: {{actionUrl}}\n\n{{senderName}}',
       variables: ['citizenName', 'documentName', 'reason', 'actionUrl', 'senderName'],
       category: 'documentos',
+      isActive: true,
+    },
+    {
+      name: 'chat-message',
+      subject: 'Você recebeu uma resposta da prefeitura',
+      htmlContent: renderMailLayout({
+        title: 'Nova mensagem no chat',
+        preheader: '{{message}}',
+        senderName: sender,
+        bodyHtml:
+          hello('citizenName') +
+          mailParagraph('A prefeitura respondeu você no chat do portal:') +
+          mailInfoBox([['Mensagem', '{{message}}']]) +
+          mailParagraph('Para continuar a conversa, abra o assistente no portal.'),
+        button: { label: 'Abrir o chat', url: '{{actionUrl}}' },
+        footerNote: 'Mensagem automática. Você pode desligar os avisos por e-mail nas preferências da sua conta.',
+      }),
+      textContent: 'Olá, {{citizenName}}!\n\nA prefeitura respondeu você no chat:\n{{message}}\n\nAbra o chat em: {{actionUrl}}\n\n{{senderName}}',
+      variables: ['citizenName', 'message', 'actionUrl', 'senderName'],
+      category: 'cidadao',
       isActive: true,
     },
     {

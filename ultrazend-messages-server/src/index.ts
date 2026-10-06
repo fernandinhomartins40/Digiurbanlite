@@ -87,198 +87,23 @@ class UltraZendMessagesServer {
   }
 
   private scheduleJobs() {
-    // Processar mensagens agendadas a cada minuto
+    // Fila de atendimento humano: quem espera além do tempo do painel volta
+    // para o assistente (conferido por horário gravado, sobrevive a reinícios)
+    let running = false;
     setInterval(async () => {
+      if (running) return;
+      running = true;
       try {
-        const now = new Date();
-
-        // Buscar mensagens agendadas para enviar
-        const scheduledMessages = await prisma.channelMessage.findMany({
-          where: {
-            status: 'SCHEDULED',
-            scheduledFor: {
-              lte: now,
-            },
-          },
-        });
-
-        for (const message of scheduledMessages) {
-          logger.info('Processing scheduled message', { messageId: message.id });
-
-          // Atualizar status para SENDING
-          await prisma.channelMessage.update({
-            where: { id: message.id },
-            data: { status: 'SENDING' },
-          });
-
-          // Importar dynamicamente para evitar circular dependency
-          const { default: channelService } = await import('./delivery/ChannelService');
-          await channelService.deliverBroadcast(message.id);
-        }
+        const returned = await this.expressServer.getHandoverService().returnExpiredToBot();
+        if (returned > 0) logger.info(`Atendimento humano: ${returned} conversa(s) devolvida(s) ao assistente por espera`);
       } catch (error) {
-        logger.error('Error processing scheduled messages', { error });
+        logger.error('Error returning expired handovers', { error });
+      } finally {
+        running = false;
       }
-    }, 60000); // 1 minuto
-
-    // Coletar estatísticas a cada hora
-    setInterval(async () => {
-      await this.collectHourlyStats();
-    }, 3600000); // 1 hora
-
-    // Limpar sessões WebSocket antigas
-    setInterval(async () => {
-      await this.cleanupOldSessions();
-    }, 300000); // 5 minutos
+    }, 60000);
 
     logger.info('✅ Scheduled jobs configured');
-  }
-
-  private async collectHourlyStats() {
-    try {
-      const now = new Date();
-      const date = new Date(now.getFullYear(), now.getMonth(), now.getDate());
-      const hour = now.getHours();
-
-      const messageServer = await prisma.messageServer.findFirst({
-        where: { isActive: true },
-      });
-
-      if (!messageServer) return;
-
-      // Contar mensagens da última hora
-      const oneHourAgo = new Date(now.getTime() - 3600000);
-
-      const [
-        totalMessages,
-        textMessages,
-        mediaMessages,
-        deletedMessages,
-        totalConversations,
-        newConversations,
-        closedConversations,
-        activeUsers,
-        activeCitizens,
-        onlineUsers,
-        channelMessages,
-        reportsCreated,
-      ] = await Promise.all([
-        prisma.message.count({
-          where: { createdAt: { gte: oneHourAgo } },
-        }),
-        prisma.message.count({
-          where: { createdAt: { gte: oneHourAgo }, contentType: 'TEXT' },
-        }),
-        prisma.message.count({
-          where: { createdAt: { gte: oneHourAgo }, contentType: { not: 'TEXT' } },
-        }),
-        prisma.message.count({
-          where: { deletedAt: { gte: oneHourAgo } },
-        }),
-        prisma.conversation.count({
-          where: { updatedAt: { gte: oneHourAgo } },
-        }),
-        prisma.conversation.count({
-          where: { createdAt: { gte: oneHourAgo } },
-        }),
-        prisma.conversation.count({
-          where: { closedAt: { gte: oneHourAgo } },
-        }),
-        prisma.message.groupBy({
-          by: ['senderId'],
-          where: {
-            createdAt: { gte: oneHourAgo },
-            senderType: 'SERVER',
-          },
-        }).then((result: unknown[]) => result.length),
-        prisma.message.groupBy({
-          by: ['senderId'],
-          where: {
-            createdAt: { gte: oneHourAgo },
-            senderType: 'CITIZEN',
-          },
-        }).then((result: unknown[]) => result.length),
-        prisma.webSocketSession.count({
-          where: { isOnline: true },
-        }),
-        prisma.channelMessage.count({
-          where: { createdAt: { gte: oneHourAgo } },
-        }),
-        prisma.messageReport.count({
-          where: { createdAt: { gte: oneHourAgo } },
-        }),
-      ]);
-
-      // Salvar estatísticas
-      await prisma.messageStats.upsert({
-        where: {
-          messageServerId_date_hour: {
-            messageServerId: messageServer.id,
-            date,
-            hour,
-          },
-        },
-        create: {
-          messageServerId: messageServer.id,
-          date,
-          hour,
-          totalMessages,
-          textMessages,
-          mediaMessages,
-          deletedMessages,
-          totalConversations,
-          newConversations,
-          closedConversations,
-          activeUsers,
-          activeCitizens,
-          onlineUsers,
-          channelMessages,
-          reportsCreated,
-        },
-        update: {
-          totalMessages,
-          textMessages,
-          mediaMessages,
-          deletedMessages,
-          totalConversations,
-          newConversations,
-          closedConversations,
-          activeUsers,
-          activeCitizens,
-          onlineUsers,
-          channelMessages,
-          reportsCreated,
-        },
-      });
-
-      logger.info('Hourly stats collected', { date, hour, totalMessages });
-    } catch (error) {
-      logger.error('Error collecting stats', { error });
-    }
-  }
-
-  private async cleanupOldSessions() {
-    try {
-      const fifteenMinutesAgo = new Date(Date.now() - 15 * 60 * 1000);
-
-      const result = await prisma.webSocketSession.updateMany({
-        where: {
-          isOnline: true,
-          lastPingAt: {
-            lt: fifteenMinutesAgo,
-          },
-        },
-        data: {
-          isOnline: false,
-          disconnectedAt: new Date(),
-        },
-      });
-
-      if (result.count > 0) {
-        logger.info(`Cleaned up ${result.count} stale WebSocket sessions`);
-      }
-    } catch (error) {
-      logger.error('Error cleaning up sessions', { error });
-    }
   }
 
   private setupGracefulShutdown() {

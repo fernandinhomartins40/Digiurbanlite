@@ -17,7 +17,14 @@ export interface BotKnowledgeConfig {
   /** máximo de usos de IA por conversa (1 hora); 0 = bot sem IA */
   aiCallsPerConversation: number;
   menu: Array<{ id: string; label: string; description?: string; enabled: boolean }>;
-  human: { hours: string; waitMessage: string; outOfHoursMessage: string };
+  human: {
+    hours: string;
+    waitMessage: string;
+    outOfHoursMessage: string;
+    /** minutos na fila até devolver ao assistente (0 = espera sem limite) */
+    maxWaitMinutes: number;
+    noAttendantMessage: string;
+  };
 }
 
 export interface BotFaqItem {
@@ -44,6 +51,9 @@ const DEFAULT_CONFIG: BotKnowledgeConfig = {
     hours: 'Segunda a sexta, das 8h às 17h',
     waitMessage: 'Certo! Vou chamar um atendente da prefeitura. Assim que alguém assumir, ele continua a conversa por aqui.',
     outOfHoursMessage: 'Nosso atendimento humano funciona de segunda a sexta, das 8h às 17h.',
+    maxWaitMinutes: 15,
+    noAttendantMessage:
+      'Nenhum atendente conseguiu assumir agora. Você pode tentar de novo mais tarde ou abrir um pedido pelo portal. Posso ajudar com outra coisa?',
   },
 };
 

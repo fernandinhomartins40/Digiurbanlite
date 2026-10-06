@@ -153,7 +153,34 @@ export function HumanTab({ config, onChange }: { config: BotConfig; onChange: Ch
           <Label htmlFor="wait">Mensagem ao chamar um atendente</Label>
           <Textarea id="wait" rows={2} maxLength={300} value={config.human.waitMessage} onChange={(e) => set({ waitMessage: e.target.value })} />
         </div>
-        <p className="text-xs text-gray-500">As conversas que pedem atendente aparecem para os servidores em Mensagens › Fila de atendimento.</p>
+        <div className="space-y-1">
+          <Label htmlFor="maxwait">Tempo máximo de espera (minutos)</Label>
+          <p className="text-xs text-gray-500">
+            Se ninguém assumir nesse tempo, a conversa volta para o bot com a mensagem abaixo. Use 0 para esperar sem limite.
+          </p>
+          <Input
+            id="maxwait"
+            type="number"
+            min={0}
+            max={240}
+            className="w-32"
+            value={config.human.maxWaitMinutes ?? 15}
+            onChange={(e) => set({ maxWaitMinutes: Math.max(0, Math.min(240, Number(e.target.value) || 0)) })}
+          />
+        </div>
+        <div className="space-y-1">
+          <Label htmlFor="noattendant">Mensagem quando ninguém assume</Label>
+          <Textarea
+            id="noattendant"
+            rows={2}
+            maxLength={300}
+            value={config.human.noAttendantMessage ?? ''}
+            onChange={(e) => set({ noAttendantMessage: e.target.value })}
+          />
+        </div>
+        <p className="text-xs text-gray-500">
+          As conversas que pedem atendente aparecem para todos os servidores em Mensagens › Fila de atendimento, com aviso na hora.
+        </p>
       </CardContent>
     </Card>
   );

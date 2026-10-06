@@ -58,6 +58,11 @@ export function getMessagesSocket(): Socket {
       timeout: 10000,
       autoConnect: true,
       withCredentials: true, // envia o cookie httpOnly no handshake
+      // portal aberto: no /cidadao vale a sessão de cidadão mesmo com login de servidor no navegador
+      auth: {
+        portal:
+          typeof window !== 'undefined' && /^\/(cidadao|convites)(\/|$)/.test(window.location.pathname) ? 'citizen' : 'admin',
+      },
     })
 
     instance.on('connect_error', (err) => {

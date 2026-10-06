@@ -127,8 +127,10 @@ services:
     # `pids_limit` barra fork bomb / vazamento de processos.
     cpus: 1.0
     pids_limit: 256
-    ports:
-      - "9001:9001"  # WebSocket + HTTP API
+    # Sem porta publica (2026-10-06): o acesso e so pelo nginx (/socket.io/,
+    # /messages-api/, /uploads/bot/) e pela rede interna (backend).
+    expose:
+      - "9001"
     environment:
       - NODE_ENV=production
       - PORT=9001

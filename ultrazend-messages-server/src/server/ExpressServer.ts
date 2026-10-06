@@ -1,5 +1,5 @@
 import express, { Request, Response, NextFunction, Application } from 'express';
-import { canReadConversation, isServer, isServerAdmin, maskCpf, tenantOf } from './accessControl';
+import { canReadConversation, canWriteConversation, isServer, maskCpf, tenantOf } from './accessControl';
 import { uploadsAccess } from '../middleware/uploadsAccess';
 import cors from 'cors';
 import helmet from 'helmet';
@@ -11,12 +11,13 @@ import logger from '../utils/logger';
 import { verifyToken, JwtPayload } from '../utils/jwt';
 import { runWithTenant } from '../bot/tenant-context';
 import conversationService from '../delivery/ConversationService';
-import channelService from '../delivery/ChannelService';
-import fileStorage from '../storage/FileStorage';
 import prisma from '../utils/prisma';
 import { FlowEngineService } from '../delivery/FlowEngineService';
 import { acquireBotLock, releaseBotLock, type BotLock } from '../utils/botLock';
-import messageAnalyticsRoutes from '../routes/message-analytics.routes';
+import { ChatError, deliverChatMessage } from '../delivery/chatDelivery';
+import { HandoverError } from '../delivery/HandoverService';
+import { normalizeChatPayload, pickSessionToken, portalFrom } from '../utils/authToken';
+import internalNoticesRoutes from '../routes/internal-notices.routes';
 
 export interface AuthRequest extends Request {
   user?: JwtPayload;
@@ -97,26 +98,22 @@ export class ExpressServer {
       });
     });
 
+    // Chamadas internas do sistema principal (avisos no chat). Fora de /api:
+    // o nginx só repassa /messages-api/* → /api/*, então isto não é alcançável
+    // de fora (e a porta 9001 não é mais publicada).
+    this.app.use('/internal', internalNoticesRoutes);
+
     // API routes
     this.app.use('/api/conversations', this.authMiddleware.bind(this), this.conversationRoutes());
     this.app.use('/api/messages', this.authMiddleware.bind(this), this.messageRoutes());
-    this.app.use('/api/channels', this.authMiddleware.bind(this), this.channelRoutes());
-    this.app.use('/api/uploads', this.authMiddleware.bind(this), this.uploadRoutes());
-    this.app.use('/api/reports', this.authMiddleware.bind(this), this.reportRoutes());
     this.app.use('/api/contacts', this.authMiddleware.bind(this), this.contactRoutes());
     this.app.use('/api/users', this.authMiddleware.bind(this), this.userRoutes());
 
     // Bot Flow routes
     this.app.use('/api/bot-flow', this.authMiddleware.bind(this), this.botTenantMiddleware.bind(this), this.botFlowRoutes());
 
-    // ✅ NOVO: Handover routes (bot → humano)
+    // Atendimento humano (bot → atendente)
     this.app.use('/api/handover', this.authMiddleware.bind(this), this.handoverRoutes());
-
-    // ✅ NOVO: Message Analytics routes (ETAPA 4 - campos queryable)
-    this.app.use('/api/message-analytics', this.authMiddleware.bind(this), this.messageAnalyticsRoutes());
-
-    // Admin routes
-    this.app.use('/api/admin', this.authMiddleware.bind(this), this.adminRoutes());
 
     // 404
     this.app.use((_req: Request, res: Response) => {
@@ -126,25 +123,47 @@ export class ExpressServer {
 
   private authMiddleware(req: AuthRequest, res: Response, next: NextFunction): void {
     try {
-      // Tentar obter token do cookie primeiro (DigiUrban usa cookies httpOnly)
-      let token = req.cookies?.digiurban_admin_token || req.cookies?.digiurban_citizen_token;
-
-      // Se não tiver no cookie, tentar o header Authorization (fallback)
-      if (!token) {
-        token = req.headers.authorization?.replace('Bearer ', '');
-      }
+      // Sessão do portal em que a pessoa está (servidor que também usa o portal
+      // do cidadão: antes a sessão de servidor sempre vencia)
+      const bearer = req.headers.authorization?.startsWith('Bearer ') ? req.headers.authorization.substring(7) : undefined;
+      const token = bearer || pickSessionToken(req.cookies || {}, portalFrom(req.get('x-digiurban-portal'), req.get('referer')));
 
       if (!token) {
         res.status(401).json({ error: 'Authentication token required' });
         return;
       }
 
-      const payload = verifyToken(token);
-      req.user = payload;
+      const payload = normalizeChatPayload(verifyToken(token) as any);
+      if (!payload.userId || !payload.userType) {
+        res.status(401).json({ error: 'Invalid token payload' });
+        return;
+      }
+      req.user = payload as JwtPayload;
       next();
     } catch (error) {
       res.status(401).json({ error: 'Invalid or expired token' });
     }
+  }
+
+  /** Destinatário existe, é do mesmo município e a combinação é permitida */
+  private async checkRecipient(user: JwtPayload, participant2Id: unknown, participant2Type: unknown): Promise<string | null> {
+    if (typeof participant2Id !== 'string' || !participant2Id || (participant2Type !== 'CITIZEN' && participant2Type !== 'SERVER')) {
+      return 'Destinatário inválido';
+    }
+    if (user.userType === 'CITIZEN' && participant2Type === 'CITIZEN') {
+      return 'Cidadãos conversam com a prefeitura, não com outros cidadãos';
+    }
+    if (participant2Id === user.userId && participant2Type === user.userType) {
+      return 'Escolha outra pessoa para conversar';
+    }
+    const target =
+      participant2Type === 'CITIZEN'
+        ? await prisma.citizen.findUnique({ where: { id: participant2Id }, select: { tenantId: true, isActive: true } })
+        : await prisma.user.findUnique({ where: { id: participant2Id }, select: { tenantId: true, isActive: true } });
+    if (!target || target.isActive === false || (target.tenantId || tenantOf(undefined)) !== tenantOf(user as any)) {
+      return 'Destinatário não encontrado';
+    }
+    return null;
   }
 
   // Fase 6 Multi-Tenant: estabelece o tenant (claim do JWT) para toda a request
@@ -163,7 +182,8 @@ export class ExpressServer {
       try {
         const conversations = await conversationService.getConversationsByUser(
           req.user!.userId,
-          req.user!.userType
+          req.user!.userType,
+          tenantOf(req.user as any)
         );
         res.json(conversations);
       } catch (error) {
@@ -176,21 +196,9 @@ export class ExpressServer {
     router.post('/find-or-create', async (req: AuthRequest, res: Response) => {
       try {
         const { participant2Id, participant2Type, protocolId, departmentId } = req.body;
-
-        if (!participant2Id || !['CITIZEN', 'SERVER'].includes(participant2Type)) {
-          res.status(400).json({ error: 'Destinatário inválido' });
-          return;
-        }
-        if (req.user!.userType === 'CITIZEN' && participant2Type === 'CITIZEN') {
-          res.status(403).json({ error: 'Cidadãos conversam com a prefeitura, não com outros cidadãos' });
-          return;
-        }
-        const target =
-          participant2Type === 'CITIZEN'
-            ? await prisma.citizen.findUnique({ where: { id: participant2Id }, select: { tenantId: true } })
-            : await prisma.user.findUnique({ where: { id: participant2Id }, select: { tenantId: true } });
-        if (!target || (target.tenantId || tenantOf(undefined)) !== tenantOf(req.user as any)) {
-          res.status(404).json({ error: 'Destinatário não encontrado' });
+        const problem = await this.checkRecipient(req.user!, participant2Id, participant2Type);
+        if (problem) {
+          res.status(problem === 'Destinatário não encontrado' ? 404 : 400).json({ error: problem });
           return;
         }
 
@@ -199,8 +207,9 @@ export class ExpressServer {
           participant1Type: req.user!.userType,
           participant2Id,
           participant2Type,
-          protocolId,
-          departmentId,
+          protocolId: typeof protocolId === 'string' ? protocolId : undefined,
+          departmentId: typeof departmentId === 'string' ? departmentId : undefined,
+          tenantId: tenantOf(req.user as any),
         });
 
         res.json(conversation);
@@ -257,22 +266,10 @@ export class ExpressServer {
       }
     });
 
-    // Limpar mensagens da conversa (para todos)
-    router.post('/:conversationId/clear', async (req: AuthRequest, res: Response) => {
-      try {
-        const { conversationId } = req.params;
-
-        await conversationService.clearMessages(
-          conversationId,
-          req.user!.userId,
-          req.user!.userType
-        );
-
-        res.json({ success: true });
-      } catch (error) {
-        logger.error('Error in POST /conversations/:id/clear', { error });
-        res.status(500).json({ error: 'Internal server error' });
-      }
+    // "Apagar para todos" foi retirado: o histórico de um atendimento público
+    // não pode ser apagado por uma das partes (registro e LGPD). Fica só "apagar para mim".
+    router.post('/:conversationId/clear', (_req: AuthRequest, res: Response) => {
+      res.status(410).json({ error: 'O histórico do atendimento não pode ser apagado para todos. Use "apagar para mim".' });
     });
 
     // Arquivar conversa
@@ -319,11 +316,16 @@ export class ExpressServer {
         await conversationService.markConversationAsRead(
           conversationId,
           req.user!.userId,
-          req.user!.userType
+          req.user!.userType,
+          tenantOf(req.user as any)
         );
 
         res.json({ success: true });
       } catch (error) {
+        if (error instanceof Error && error.message === 'Conversation not found') {
+          res.status(404).json({ error: 'Conversa não encontrada' });
+          return;
+        }
         logger.error('Error in POST /conversations/:id/read', { error });
         res.status(500).json({ error: 'Internal server error' });
       }
@@ -349,174 +351,80 @@ export class ExpressServer {
   private messageRoutes() {
     const router = express.Router();
 
-    // Enviar mensagem via HTTP (alternativa ao WebSocket)
+    // Enviar mensagem via HTTP (quando o tempo real cai)
     router.post('/send', async (req: AuthRequest, res: Response) => {
       try {
-        const { conversationId, content, replyToId, attachments } = req.body;
-
-        if (!conversationId || !content) {
-          res.status(400).json({ error: 'conversationId and content are required' });
+        const { conversationId } = req.body || {};
+        const conversation =
+          typeof conversationId === 'string' ? await prisma.conversation.findUnique({ where: { id: conversationId } }) : null;
+        const user = { userId: req.user!.userId, userType: req.user!.userType, tenantId: tenantOf(req.user as any) };
+        if (!conversation || !canReadConversation(conversation as any, user)) {
+          res.status(404).json({ error: 'Conversa não encontrada' });
+          return;
+        }
+        if (!canWriteConversation(conversation as any, user)) {
+          res.status(403).json({
+            error: conversation.isBotConversation
+              ? 'Assuma o atendimento para responder esta conversa'
+              : 'Esta conversa não aceita respostas',
+          });
           return;
         }
 
-        const conversation = await prisma.conversation.findUnique({
-          where: { id: conversationId },
-        });
-
-        if (!conversation) {
-          res.status(404).json({ error: 'Conversation not found' });
-          return;
-        }
-
-        const isParticipant1 = conversation.participant1Id === req.user!.userId &&
-          conversation.participant1Type === req.user!.userType;
-
-        const isParticipant2 = conversation.participant2Id === req.user!.userId &&
-          conversation.participant2Type === req.user!.userType;
-
-        if (!isParticipant1 && !isParticipant2) {
-          res.status(403).json({ error: 'Unauthorized' });
-          return;
-        }
-
-        const now = new Date();
-
-        const message = await prisma.message.create({
-          data: {
-            conversationId,
-            senderId: req.user!.userId,
-            senderType: req.user!.userType,
-            content,
-            replyToId,
-            attachments: attachments || [],
-            status: 'SENT',
-            sentAt: now,
-          },
-        });
-
-        // Atualizar conversa (limpar deletedAt do destinatário para ressurgir conversa)
-        await prisma.conversation.update({
-          where: { id: conversationId },
-          data: {
-            lastMessageAt: now,
-            lastMessagePreview: content.substring(0, 100),
-            totalMessages: { increment: 1 },
-            ...(isParticipant1
-              ? { unreadCount2: { increment: 1 }, deletedAt2: null }
-              : { unreadCount1: { increment: 1 }, deletedAt1: null }),
-          },
-        });
-
-        // Emitir para sala da conversa + sala pessoal do destinatário
-        if (this.wsServer) {
-          const messagePayload = { conversationId, message };
-          this.wsServer.io.to(`conversation:${conversationId}`).emit('message:new', messagePayload);
-
-          const recipientId = isParticipant1 ? conversation.participant2Id : conversation.participant1Id;
-          const recipientType = isParticipant1 ? conversation.participant2Type : conversation.participant1Type;
-          this.wsServer.io.to(`user:${recipientId}:${recipientType}`).emit('message:new', messagePayload);
-        }
-
+        const message = await deliverChatMessage(conversation, user, req.body || {});
         res.json(message);
       } catch (error) {
+        if (error instanceof ChatError) {
+          res.status(error.status).json({ error: error.message });
+          return;
+        }
         logger.error('Error in POST /messages/send', { error });
         res.status(500).json({ error: 'Internal server error' });
       }
     });
 
-    // NOVO: Enviar mensagem com criação automática de conversa
+    // Enviar mensagem criando a conversa se preciso (mesmas regras do find-or-create)
     router.post('/send-auto', async (req: AuthRequest, res: Response) => {
       try {
-        const { recipientId, recipientType, content, contentType = 'TEXT', attachments } = req.body;
-
-        if (!recipientId || !recipientType || !content) {
-          res.status(400).json({ error: 'recipientId, recipientType and content are required' });
+        const { recipientId, recipientType } = req.body || {};
+        const problem = await this.checkRecipient(req.user!, recipientId, recipientType);
+        if (problem) {
+          res.status(problem === 'Destinatário não encontrado' ? 404 : 400).json({ error: problem });
           return;
         }
 
-        // 1. Buscar ou criar conversa automaticamente
-        const conversation = await conversationService.findOrCreateConversation({
+        const enriched = await conversationService.findOrCreateConversation({
           participant1Id: req.user!.userId,
           participant1Type: req.user!.userType,
           participant2Id: recipientId,
           participant2Type: recipientType,
+          tenantId: tenantOf(req.user as any),
         });
+        const conversation = await prisma.conversation.findUnique({ where: { id: enriched.id } });
+        if (!conversation) {
+          res.status(404).json({ error: 'Conversa não encontrada' });
+          return;
+        }
+        const user = { userId: req.user!.userId, userType: req.user!.userType, tenantId: tenantOf(req.user as any) };
+        const message = await deliverChatMessage(conversation, user, req.body || {});
 
-        logger.info('Conversation found or created', {
-          conversationId: conversation.id,
-          senderId: req.user!.userId,
-          recipientId,
-        });
-
-        // 2. Criar mensagem
-        const now = new Date();
-        const message = await prisma.message.create({
-          data: {
-            conversationId: conversation.id,
-            senderId: req.user!.userId,
-            senderType: req.user!.userType,
-            content,
-            contentType,
-            attachments: attachments || [],
-            status: 'SENT',
-            sentAt: now,
-          },
-        });
-
-        const isParticipant1 = conversation.participant1Id === req.user!.userId &&
-          conversation.participant1Type === req.user!.userType;
-        const actualRecipientId = isParticipant1 ? conversation.participant2Id : conversation.participant1Id;
-        const actualRecipientType = isParticipant1 ? conversation.participant2Type : conversation.participant1Type;
-
-        // 3. Atualizar conversa (limpar deletedAt do destinatário para ressurgir conversa)
-        await prisma.conversation.update({
-          where: { id: conversation.id },
-          data: {
-            lastMessageAt: now,
-            lastMessagePreview: content.substring(0, 100),
-            totalMessages: { increment: 1 },
-            ...(isParticipant1
-              ? { unreadCount2: { increment: 1 }, deletedAt2: null }
-              : { unreadCount1: { increment: 1 }, deletedAt1: null }),
-          },
-        });
-
-        // 4. Emitir via WebSocket GARANTINDO entrega
+        // a conversa aparece na lista de quem recebe
         if (this.wsServer) {
-          const messagePayload = {
-            conversationId: conversation.id,
-            message,
-          };
-
-          // Emitir para sala da conversa + sala pessoal do destinatário
-          this.wsServer.io.to(`conversation:${conversation.id}`).emit('message:new', messagePayload);
-          this.wsServer.io.to(`user:${actualRecipientId}:${actualRecipientType}`).emit('message:new', messagePayload);
-
-          // Notificar nova conversa para o destinatário (sala pessoal)
-          const conversationWithDetails = await conversationService.getConversationById(conversation.id);
-          this.wsServer.io.to(`user:${actualRecipientId}:${actualRecipientType}`).emit('conversation:new', {
-            conversation: conversationWithDetails,
-          });
-
-          logger.info('WebSocket events emitted', {
-            conversationId: conversation.id,
-            messageId: message.id,
-            recipientId: actualRecipientId,
-          });
+          this.wsServer.io.to(`user:${recipientId}:${recipientType}`).emit('conversation:new', { conversation: enriched });
         }
 
-        res.json({
-          success: true,
-          conversation,
-          message,
-        });
+        res.json({ success: true, conversation: enriched, message });
       } catch (error) {
+        if (error instanceof ChatError) {
+          res.status(error.status).json({ error: error.message });
+          return;
+        }
         logger.error('Error in POST /messages/send-auto', { error });
         res.status(500).json({ error: 'Internal server error' });
       }
     });
 
-    // Deletar mensagem
+    // Apagar a própria mensagem (o outro lado vê sumir na hora)
     router.delete('/:messageId', async (req: AuthRequest, res: Response): Promise<void> => {
       try {
         const { messageId } = req.params;
@@ -525,12 +433,12 @@ export class ExpressServer {
           where: { id: messageId },
         });
 
-        if (!message) {
+        if (!message || message.isDeleted) {
           res.status(404).json({ error: 'Message not found' });
           return;
         }
 
-        if (message.senderId !== req.user!.userId) {
+        if (message.senderId !== req.user!.userId || message.senderType !== req.user!.userType) {
           res.status(403).json({ error: 'Unauthorized' });
           return;
         }
@@ -544,224 +452,22 @@ export class ExpressServer {
           },
         });
 
+        if (this.wsServer) {
+          const conversation = await prisma.conversation.findUnique({
+            where: { id: message.conversationId },
+            select: { participant1Id: true, participant1Type: true, participant2Id: true, participant2Type: true },
+          });
+          const event = { conversationId: message.conversationId, messageId };
+          this.wsServer.io.to(`conversation:${message.conversationId}`).emit('message:deleted', event);
+          if (conversation) {
+            this.wsServer.io.to(`user:${conversation.participant1Id}:${conversation.participant1Type}`).emit('message:deleted', event);
+            this.wsServer.io.to(`user:${conversation.participant2Id}:${conversation.participant2Type}`).emit('message:deleted', event);
+          }
+        }
+
         res.json({ success: true });
       } catch (error) {
         logger.error('Error in DELETE /messages/:id', { error });
-        res.status(500).json({ error: 'Internal server error' });
-      }
-    });
-
-    return router;
-  }
-
-  private channelRoutes() {
-    const router = express.Router();
-
-    // Listar canais públicos
-    router.get('/', async (_req: AuthRequest, res: Response) => {
-      try {
-        const channels = await channelService.getChannels({ isActive: true, isPublic: true });
-        res.json(channels);
-      } catch (error) {
-        logger.error('Error in GET /channels', { error });
-        res.status(500).json({ error: 'Internal server error' });
-      }
-    });
-
-    // Inscrever-se em canal
-    router.post('/:channelId/subscribe', async (req: AuthRequest, res: Response): Promise<void> => {
-      try {
-        const { channelId } = req.params;
-
-        if (req.user!.userType !== 'CITIZEN') {
-          res.status(403).json({ error: 'Only citizens can subscribe to channels' });
-          return;
-        }
-
-        const result = await channelService.subscribeToChannel(channelId, req.user!.userId);
-        res.json(result);
-      } catch (error) {
-        logger.error('Error in POST /channels/:id/subscribe', { error });
-        res.status(500).json({ error: 'Internal server error' });
-      }
-    });
-
-    // Cancelar inscrição
-    router.post('/:channelId/unsubscribe', async (req: AuthRequest, res: Response): Promise<void> => {
-      try {
-        const { channelId } = req.params;
-
-        if (req.user!.userType !== 'CITIZEN') {
-          res.status(403).json({ error: 'Unauthorized' });
-          return;
-        }
-
-        await channelService.unsubscribeFromChannel(channelId, req.user!.userId);
-        res.json({ success: true });
-      } catch (error) {
-        logger.error('Error in POST /channels/:id/unsubscribe', { error });
-        res.status(500).json({ error: 'Internal server error' });
-      }
-    });
-
-    // Mensagens do canal
-    router.get('/:channelId/messages', async (req: AuthRequest, res: Response) => {
-      try {
-        const { channelId } = req.params;
-        const limit = parseInt(req.query.limit as string || '50', 10);
-        const offset = parseInt(req.query.offset as string || '0', 10);
-
-        const messages = await channelService.getChannelMessages(channelId, limit, offset);
-        res.json(messages);
-      } catch (error) {
-        logger.error('Error in GET /channels/:id/messages', { error });
-        res.status(500).json({ error: 'Internal server error' });
-      }
-    });
-
-    // Minhas inscrições
-    router.get('/my-subscriptions', async (req: AuthRequest, res: Response): Promise<void> => {
-      try {
-        if (req.user!.userType !== 'CITIZEN') {
-          res.status(403).json({ error: 'Unauthorized' });
-          return;
-        }
-
-        const subscriptions = await channelService.getUserSubscriptions(req.user!.userId);
-        res.json(subscriptions);
-      } catch (error) {
-        logger.error('Error in GET /channels/my-subscriptions', { error });
-        res.status(500).json({ error: 'Internal server error' });
-      }
-    });
-
-    // Enviar broadcast (apenas gerentes)
-    router.post('/:channelId/broadcast', async (req: AuthRequest, res: Response) => {
-      try {
-        if (!isServer(req.user as any)) {
-          res.status(403).json({ error: 'Apenas servidores enviam comunicados' });
-          return;
-        }
-        const { channelId } = req.params;
-        const { title, content, attachments, scheduledFor, priority } = req.body;
-
-        const message = await channelService.broadcastMessage({
-          channelId,
-          authorId: req.user!.userId,
-          title,
-          content,
-          attachments,
-          scheduledFor: scheduledFor ? new Date(scheduledFor) : undefined,
-          priority,
-        });
-
-        res.json(message);
-      } catch (error) {
-        logger.error('Error in POST /channels/:id/broadcast', { error });
-        res.status(500).json({ error: error instanceof Error ? error.message : 'Internal server error' });
-      }
-    });
-
-    return router;
-  }
-
-  private uploadRoutes() {
-    const router = express.Router();
-
-    const upload = multer({
-      storage: multer.memoryStorage(),
-      limits: {
-        fileSize: parseInt(process.env.MAX_FILE_SIZE || '10485760', 10),
-      },
-    });
-
-    router.post('/', upload.single('file'), async (req: AuthRequest, res: Response): Promise<void> => {
-      try {
-        if (!req.file) {
-          res.status(400).json({ error: 'No file uploaded' });
-          return;
-        }
-
-        const uploadedFile = await fileStorage.uploadFile(req.file);
-        res.json(uploadedFile);
-      } catch (error) {
-        logger.error('Error in POST /uploads', { error });
-        res.status(500).json({ error: error instanceof Error ? error.message : 'Internal server error' });
-      }
-    });
-
-    return router;
-  }
-
-  private reportRoutes() {
-    const router = express.Router();
-
-    // Criar denúncia
-    router.post('/', async (req: AuthRequest, res: Response) => {
-      try {
-        const { messageId, reason, description, screenshots } = req.body;
-
-        const report = await prisma.messageReport.create({
-          data: {
-            messageId,
-            reportedBy: req.user!.userId,
-            reporterType: req.user!.userType,
-            reason,
-            description,
-            screenshots: screenshots || [],
-            status: 'PENDING',
-          },
-        });
-
-        res.json(report);
-      } catch (error) {
-        logger.error('Error in POST /reports', { error });
-        res.status(500).json({ error: 'Internal server error' });
-      }
-    });
-
-    return router;
-  }
-
-  private adminRoutes() {
-    const router = express.Router();
-
-    // Estatísticas
-    // Área administrativa do chat: só gestores (antes, qualquer usuário logado criava canais)
-    router.use((req: AuthRequest, res: Response, next: NextFunction) => {
-      if (!isServerAdmin(req.user as any)) {
-        res.status(403).json({ error: 'Acesso restrito a gestores' });
-        return;
-      }
-      next();
-    });
-
-    router.get('/stats', async (_req: AuthRequest, res: Response) => {
-      try {
-        const today = new Date();
-        today.setHours(0, 0, 0, 0);
-
-        const stats = await prisma.messageStats.findFirst({
-          where: {
-            date: today,
-            hour: null,
-          },
-        });
-
-        res.json(stats || {});
-      } catch (error) {
-        logger.error('Error in GET /admin/stats', { error });
-        res.status(500).json({ error: 'Internal server error' });
-      }
-    });
-
-    // Criar canal
-    router.post('/channels', async (req: AuthRequest, res: Response) => {
-      try {
-        const channel = await channelService.createChannel(req.body);
-        res.json(channel);
-      } catch (error) {
-        logger.error('Error in POST /admin/channels', { error });
         res.status(500).json({ error: 'Internal server error' });
       }
     });
@@ -905,6 +611,7 @@ export class ExpressServer {
             where: { id: userId },
             select: {
               id: true,
+              tenantId: true,
               name: true,
               email: true,
               role: true,
@@ -917,12 +624,14 @@ export class ExpressServer {
             },
           });
 
-          if (!user) {
+          if (!user || (!self && (user.tenantId || tenantOf(undefined)) !== tenantOf(me))) {
             res.status(404).json({ error: 'User not found' });
             return;
           }
 
-          res.json(user);
+          const { tenantId: _ut, ...publicUser } = user as any;
+          // cidadão vê só o nome e a secretaria do servidor (sem e-mail de trabalho)
+          res.json(isServer(me) || self ? publicUser : { id: publicUser.id, name: publicUser.name, department: publicUser.department });
         } else {
           res.status(400).json({ error: 'Invalid userType. Must be CITIZEN or SERVER' });
         }
@@ -937,6 +646,16 @@ export class ExpressServer {
 
   private botFlowRoutes() {
     const router = express.Router();
+
+    // conversa com o assistente é do cidadão (servidor só pausa/retoma)
+    const citizenOnly = (req: AuthRequest, res: Response, next: NextFunction) => {
+      if (req.user?.userType !== 'CITIZEN') {
+        res.status(403).json({ error: 'Rota do portal do cidadão' });
+        return;
+      }
+      next();
+    };
+    router.use(['/start', '/message', '/active-execution', '/upload', '/cancel', '/reset'], citizenOnly);
 
     // Configuração do multer para upload de arquivos
     const upload = multer({
@@ -1119,29 +838,22 @@ export class ExpressServer {
         let citizenId = req.user!.userId;
 
         if (req.user!.userType === 'SERVER') {
-          if (bodyCitizenId) {
-            citizenId = bodyCitizenId;
-          } else if (conversationId) {
-            const conversation = await prisma.conversation.findUnique({
-              where: { id: conversationId },
-              select: {
-                participant1Id: true,
-                participant1Type: true,
-                participant2Id: true,
-                participant2Type: true,
-              },
-            });
-
-            if (!conversation) {
-              res.status(404).json({ error: 'Conversation not found' });
-              return;
-            }
-
-            if (conversation.participant1Type === 'CITIZEN') {
-              citizenId = conversation.participant1Id;
-            } else if (conversation.participant2Type === 'CITIZEN') {
-              citizenId = conversation.participant2Id;
-            }
+          // servidor: só conversa/cidadão do próprio município
+          const resolved = await this.resolveCitizenForServer(req.user!, conversationId, bodyCitizenId);
+          if (!resolved) {
+            res.status(404).json({ error: 'Conversa não encontrada' });
+            return;
+          }
+          citizenId = resolved;
+        } else if (typeof conversationId === 'string' && conversationId) {
+          // cidadão: só a própria conversa com o assistente
+          const own = await prisma.conversation.findUnique({
+            where: { id: conversationId },
+            select: { participant1Id: true, participant1Type: true, isBotConversation: true },
+          });
+          if (!own || !own.isBotConversation || own.participant1Id !== citizenId || own.participant1Type !== 'CITIZEN') {
+            res.status(404).json({ error: 'Conversa não encontrada' });
+            return;
           }
         }
 
@@ -1150,7 +862,12 @@ export class ExpressServer {
           return;
         }
 
-        await this.flowEngineService.pauseExecution(citizenId, conversationId);
+        await this.flowEngineService.pauseExecution(
+          citizenId,
+          conversationId,
+          req.user!.userType === 'SERVER' ? req.user!.userId : undefined,
+          req.user!.userType === 'SERVER' ? 'server_takeover' : 'citizen_request'
+        );
         res.json({ success: true });
       } catch (error) {
         logger.error('Error in POST /bot-flow/pause', { error: error instanceof Error ? { message: error.message, stack: error.stack } : error });
@@ -1165,29 +882,22 @@ export class ExpressServer {
         let citizenId = req.user!.userId;
 
         if (req.user!.userType === 'SERVER') {
-          if (bodyCitizenId) {
-            citizenId = bodyCitizenId;
-          } else if (conversationId) {
-            const conversation = await prisma.conversation.findUnique({
-              where: { id: conversationId },
-              select: {
-                participant1Id: true,
-                participant1Type: true,
-                participant2Id: true,
-                participant2Type: true,
-              },
-            });
-
-            if (!conversation) {
-              res.status(404).json({ error: 'Conversation not found' });
-              return;
-            }
-
-            if (conversation.participant1Type === 'CITIZEN') {
-              citizenId = conversation.participant1Id;
-            } else if (conversation.participant2Type === 'CITIZEN') {
-              citizenId = conversation.participant2Id;
-            }
+          // servidor: só conversa/cidadão do próprio município
+          const resolved = await this.resolveCitizenForServer(req.user!, conversationId, bodyCitizenId);
+          if (!resolved) {
+            res.status(404).json({ error: 'Conversa não encontrada' });
+            return;
+          }
+          citizenId = resolved;
+        } else if (typeof conversationId === 'string' && conversationId) {
+          // cidadão: só a própria conversa com o assistente
+          const own = await prisma.conversation.findUnique({
+            where: { id: conversationId },
+            select: { participant1Id: true, participant1Type: true, isBotConversation: true },
+          });
+          if (!own || !own.isBotConversation || own.participant1Id !== citizenId || own.participant1Type !== 'CITIZEN') {
+            res.status(404).json({ error: 'Conversa não encontrada' });
+            return;
           }
         }
 
@@ -1196,7 +906,16 @@ export class ExpressServer {
           return;
         }
 
-        await this.flowEngineService.resumeExecution(citizenId, conversationId);
+        const attendant =
+          req.user!.userType === 'SERVER'
+            ? await prisma.user.findUnique({ where: { id: req.user!.userId }, select: { name: true } }).catch(() => null)
+            : null;
+        await this.flowEngineService.resumeExecution(
+          citizenId,
+          conversationId,
+          req.user!.userType === 'SERVER' ? req.user!.userId : 'CITIZEN',
+          { attendantName: attendant?.name || null }
+        );
         res.json({ success: true });
       } catch (error) {
         logger.error('Error in POST /bot-flow/resume', { error: error instanceof Error ? { message: error.message, stack: error.stack } : error });
@@ -1217,11 +936,22 @@ export class ExpressServer {
     return router;
   }
 
-  /**
-   * ✅ NOVO: Rotas de Analytics (ETAPA 4 - campos queryable)
-   */
-  private messageAnalyticsRoutes() {
-    return messageAnalyticsRoutes;
+  /** Cidadão da conversa do assistente, se for do município do servidor */
+  private async resolveCitizenForServer(user: JwtPayload, conversationId?: unknown, bodyCitizenId?: unknown): Promise<string | null> {
+    const tenant = tenantOf(user as any);
+    if (typeof conversationId === 'string' && conversationId) {
+      const conversation = await prisma.conversation.findUnique({
+        where: { id: conversationId },
+        select: { tenantId: true, isBotConversation: true, participant1Id: true, participant1Type: true },
+      });
+      if (!conversation || !conversation.isBotConversation || (conversation.tenantId || tenantOf(undefined)) !== tenant) return null;
+      return conversation.participant1Type === 'CITIZEN' ? conversation.participant1Id : null;
+    }
+    if (typeof bodyCitizenId === 'string' && bodyCitizenId) {
+      const citizen = await prisma.citizen.findUnique({ where: { id: bodyCitizenId }, select: { tenantId: true } });
+      return citizen && (citizen.tenantId || tenantOf(undefined)) === tenant ? bodyCitizenId : null;
+    }
+    return null;
   }
 
   /**
@@ -1269,22 +999,21 @@ export class ExpressServer {
           return;
         }
 
-        const conv = await prisma.conversation.findUnique({ where: { id: conversationId }, select: { tenantId: true } });
-        if (!conv || (conv.tenantId || tenantOf(undefined)) !== tenantOf(req.user as any)) {
-          res.status(404).json({ error: 'Conversa não encontrada' });
+        const handoverService = this.flowEngineService.getHandoverService();
+        const result = await handoverService.takeoverConversation(String(conversationId), {
+          userId: req.user!.userId,
+          tenantId: tenantOf(req.user as any),
+          name: (req.user as any).name || null,
+        });
+        const conversation = await conversationService.getEnrichedConversation(String(conversationId));
+        res.json({ ...result, conversation });
+      } catch (error: any) {
+        if (error instanceof HandoverError) {
+          res.status(error.status).json({ error: error.message });
           return;
         }
-
-        const handoverService = this.flowEngineService.getHandoverService();
-        const result = await handoverService.takeoverConversation(
-          conversationId,
-          req.user!.userId
-        );
-
-        res.json(result);
-      } catch (error: any) {
         logger.error('Erro ao assumir conversa', { error });
-        res.status(500).json({ error: error.message });
+        res.status(500).json({ error: 'Não foi possível assumir a conversa' });
       }
     });
 
@@ -1296,6 +1025,10 @@ export class ExpressServer {
       logger.error('Unhandled error', { error: err, path: _req.path });
       res.status(500).json({ error: 'Internal server error' });
     });
+  }
+
+  public getHandoverService() {
+    return this.flowEngineService.getHandoverService();
   }
 
   public getApp(): Application {

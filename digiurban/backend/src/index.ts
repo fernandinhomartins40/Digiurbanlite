@@ -244,7 +244,6 @@ loadRoute('/api/admin/flows', './routes/admin-flows.routes');
 loadRoute('/api/admin/digibot', './routes/admin-digibot.routes');
 
 // Mensagens (conversas)
-loadRoute('/api/messages', './routes/messages');
 
 // Agenda centralizada
 loadRoute('/api/agenda', './routes/agenda.routes');

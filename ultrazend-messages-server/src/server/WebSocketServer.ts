@@ -1,5 +1,7 @@
 import { Server as SocketIOServer, Socket } from 'socket.io';
-import { canReadConversation } from './accessControl';
+import { canReadConversation, canWriteConversation } from './accessControl';
+import { ChatError, deliverChatMessage, setChatIO } from '../delivery/chatDelivery';
+import { normalizeChatPayload, parseCookieHeader, pickSessionToken, portalFrom } from '../utils/authToken';
 import { createAdapter } from '@socket.io/redis-adapter';
 import { createClient, RedisClientType } from 'redis';
 import { Server as HTTPServer } from 'http';
@@ -38,6 +40,7 @@ export class WebSocketServer {
       pingInterval: 25000,
     });
 
+    setChatIO(this.io);
     this.setupRedisAdapter();
     this.setupAuthentication();
     this.setupEventHandlers();
@@ -65,61 +68,20 @@ export class WebSocketServer {
   private setupAuthentication() {
     this.io.use(async (socket: Socket, next) => {
       try {
-        // Tentar obter token de múltiplas fontes (mesmo comportamento do Express REST API)
-        let token = socket.handshake.auth.token; // 1. Auth object (cidadão)
-
-        if (!token) {
-          // 2. Authorization header (fallback)
-          token = socket.handshake.headers.authorization?.replace('Bearer ', '');
-        }
-
-        if (!token) {
-          // 3. Cookies (admin) - parsear manualmente do header Cookie
-          const cookieHeader = socket.handshake.headers.cookie;
-          if (cookieHeader) {
-            const cookies = cookieHeader.split(';').reduce((acc, cookie) => {
-              const [key, value] = cookie.trim().split('=');
-              acc[key] = value;
-              return acc;
-            }, {} as Record<string, string>);
-
-            // Console da plataforma: o Suporte só tem o cookie de plataforma
-            token = cookies.digiurban_admin_token || cookies.digiurban_citizen_token || cookies.digiurban_platform_token;
-          }
-        }
+        // Sessão do portal em que a pessoa está (ver utils/authToken.ts)
+        const portal = portalFrom(socket.handshake.auth?.portal, socket.handshake.headers.referer);
+        const token =
+          socket.handshake.auth?.token ||
+          socket.handshake.headers.authorization?.replace('Bearer ', '') ||
+          pickSessionToken(parseCookieHeader(socket.handshake.headers.cookie), portal);
 
         if (!token) {
           return next(new Error('Authentication token required'));
         }
 
-        // Verificar token JWT
-        const payload = verifyToken(token);
-
-        // ⚠️ COMPATIBILIDADE DE PAYLOAD (corrigido 2026-09-15)
-        //
-        // O backend emite tokens com `type` ('admin' | 'citizen'), NÃO com
-        // `userType`. Como a validação abaixo exigia `userType`, TODA conexão
-        // vinda de um admin era rejeitada em silêncio — o erro ocorre antes do
-        // log de "authenticated", então nem aparecia nos logs. Foi o que impedia
-        // a assistência remota de funcionar (zero conexões no servidor), e afeta
-        // igualmente qualquer uso do chat por administradores.
-        //
-        // Mapeamos aqui, sem mexer no emissor do token: 'admin' é um SERVER
-        // (servidor público) na taxonomia do messages-server; 'citizen' é
-        // CITIZEN. Tokens que já trazem `userType` seguem valendo.
-        // Operador da plataforma (cookie digiurban_platform_token): identidade
-        // própria, sem município. Entra como SERVER com id "platform:<id>".
-        const platformUserId = (payload as any).type === 'platform' ? (payload as any).platformUserId : null;
-        if (platformUserId) {
-          payload.userId = `platform:${platformUserId}`;
-          payload.userType = 'SERVER' as ParticipantType;
-          payload.name = payload.name || 'Equipe DigiUrban';
-        }
-
-        if (!payload.userType && (payload as any).type) {
-          const tipo = (payload as any).type;
-          payload.userType = (tipo === 'citizen' ? 'CITIZEN' : 'SERVER') as ParticipantType;
-        }
+        // O backend emite `type`; o chat usa `userType` (ver normalizeChatPayload)
+        const payload = normalizeChatPayload(verifyToken(token) as any) as JwtPayload & { isPlatformOperator?: boolean };
+        const platformUserId = payload.isPlatformOperator ? payload.userId : null;
 
         // Validar tipo de participante
         if (!payload.userId || !payload.userType) {
@@ -139,18 +101,6 @@ export class WebSocketServer {
         (socket as AuthenticatedSocket).tenantId = (payload as { tenantId?: string }).tenantId;
         (socket as AuthenticatedSocket).userData = payload;
         (socket as AuthenticatedSocket).isPlatformOperator = Boolean(platformUserId) || payload.role === 'SUPER_ADMIN';
-
-        // Registrar sessão WebSocket
-        await prisma.webSocketSession.create({
-          data: {
-            socketId: socket.id,
-            userId: payload.userId,
-            userType: payload.userType,
-            ipAddress: socket.handshake.address,
-            userAgent: socket.handshake.headers['user-agent'] || 'unknown',
-            isOnline: true,
-          },
-        });
 
         logger.info('User authenticated via WebSocket', {
           socketId: socket.id,
@@ -214,11 +164,7 @@ export class WebSocketServer {
       registerRemoteAssistHandlers(this.io, authSocket);
 
       // Event: ping (manter conexão viva)
-      socket.on('ping', async () => {
-        await prisma.webSocketSession.updateMany({
-          where: { socketId: socket.id },
-          data: { lastPingAt: new Date() },
-        });
+      socket.on('ping', () => {
         socket.emit('pong');
       });
 
@@ -229,8 +175,6 @@ export class WebSocketServer {
           userId: authSocket.userId,
           reason,
         });
-
-        await this.handleDisconnect(authSocket, reason);
 
         // Encerra sessões de assistência remota deste usuário. Sem isto, fechar
         // a aba deixaria a sessão ATIVA para sempre e bloquearia novos convites
@@ -259,6 +203,10 @@ export class WebSocketServer {
       // broadcasts direcionados por tenant nunca cruzem municipios.
       if (socket.tenantId) {
         socket.join(`t:${socket.tenantId}:user:${socket.userId}`);
+        // servidores do município: fila de atendimento humano (chegada e quem assumiu)
+        if (socket.userType === 'SERVER' && !String(socket.userId).startsWith('platform:')) {
+          socket.join(`t:${socket.tenantId}:servers`);
+        }
       }
 
       // Buscar conversas do usuário
@@ -278,21 +226,6 @@ export class WebSocketServer {
         socket.join(`conversation:${conv.id}`);
       }
 
-      // Se for cidadão, buscar canais inscritos
-      if (socket.userType === 'CITIZEN') {
-        const subscriptions = await prisma.channelSubscription.findMany({
-          where: {
-            citizenId: socket.userId,
-            status: 'ACTIVE',
-          },
-          select: { channelId: true },
-        });
-
-        for (const sub of subscriptions) {
-          socket.join(`channel:${sub.channelId}`);
-        }
-      }
-
       logger.debug('User joined rooms', {
         userId: socket.userId,
         conversations: conversations.length,
@@ -308,91 +241,29 @@ export class WebSocketServer {
     callback?: (response: any) => void
   ) {
     try {
-      const { conversationId, content, replyToId, attachments } = data;
-
-      // Validar conversa
-      const conversation = await prisma.conversation.findUnique({
-        where: { id: conversationId },
-        include: {
-          messages: {
-            orderBy: { sentAt: 'desc' },
-            take: 1,
-          },
-        },
-      });
-
-      if (!conversation) {
-        callback?.({ error: 'Conversation not found' });
+      const conversationId = typeof data?.conversationId === 'string' ? data.conversationId : '';
+      const conversation = conversationId ? await prisma.conversation.findUnique({ where: { id: conversationId } }) : null;
+      const user = { userId: socket.userId, userType: socket.userType, tenantId: socket.tenantId };
+      if (!conversation || !canReadConversation(conversation as any, user)) {
+        callback?.({ error: 'Conversa não encontrada' });
+        return;
+      }
+      if (!canWriteConversation(conversation as any, user)) {
+        callback?.({
+          error: conversation.isBotConversation
+            ? 'Assuma o atendimento para responder esta conversa'
+            : 'Esta conversa não aceita respostas',
+        });
         return;
       }
 
-      // Verificar se o usuário participa da conversa
-      const isParticipant =
-        (conversation.participant1Id === socket.userId && conversation.participant1Type === socket.userType) ||
-        (conversation.participant2Id === socket.userId && conversation.participant2Type === socket.userType);
-
-      if (!isParticipant) {
-        callback?.({ error: 'Unauthorized' });
-        return;
-      }
-
-      // Criar mensagem
-      const message = await prisma.message.create({
-        data: {
-          conversationId,
-          senderId: socket.userId,
-          senderType: socket.userType,
-          content,
-          contentType: attachments?.length > 0 ? 'IMAGE' : 'TEXT',
-          attachments: attachments || [],
-          replyToId,
-          status: 'SENT',
-        },
-      });
-
-      // Atualizar conversa
-      const isP1Sender = conversation.participant1Id === socket.userId && conversation.participant1Type === socket.userType;
-      await prisma.conversation.update({
-        where: { id: conversationId },
-        data: {
-          lastMessageAt: new Date(),
-          lastMessagePreview: content.substring(0, 100),
-          totalMessages: { increment: 1 },
-          // Incrementar unread para o outro participante
-          ...(isP1Sender
-            ? { unreadCount2: { increment: 1 }, deletedAt2: null }
-            : { unreadCount1: { increment: 1 }, deletedAt1: null }),
-        },
-      });
-
-      // Emitir para a sala da conversa
-      const messagePayload = { conversationId, message };
-      this.io.to(`conversation:${conversationId}`).emit('message:new', messagePayload);
-
-      // Também emitir para a sala pessoal do destinatário
-      // (garante entrega quando ele ainda não entrou na sala da conversa, ex: conversa recém-criada)
-      const isP1 = conversation.participant1Id === socket.userId && conversation.participant1Type === socket.userType;
-      const recipientId = isP1 ? conversation.participant2Id : conversation.participant1Id;
-      const recipientType = isP1 ? conversation.participant2Type : conversation.participant1Type;
-      this.io.to(`user:${recipientId}:${recipientType}`).emit('message:new', messagePayload);
-
-      // Log
-      await prisma.messageLog.create({
-        data: {
-          level: 'INFO',
-          event: 'message-sent',
-          userId: socket.userType === 'SERVER' ? socket.userId : undefined,
-          citizenId: socket.userType === 'CITIZEN' ? socket.userId : undefined,
-          conversationId,
-          messageId: message.id,
-          message: 'Message sent successfully',
-          ipAddress: socket.handshake.address,
-          userAgent: socket.handshake.headers['user-agent'],
-        },
-      });
-
+      const message = await deliverChatMessage(conversation, user, data || {});
       callback?.({ success: true, message });
     } catch (error) {
+      if (error instanceof ChatError) {
+        callback?.({ error: error.message });
+        return;
+      }
       logger.error('Error sending message', { error, userId: socket.userId });
       callback?.({ error: 'Failed to send message' });
     }
@@ -404,28 +275,36 @@ export class WebSocketServer {
     callback?: (response: any) => void
   ) {
     try {
-      const { messageId, conversationId } = data;
+      const messageId = typeof data?.messageId === 'string' ? data.messageId : '';
+      const conversationId = typeof data?.conversationId === 'string' ? data.conversationId : '';
+      const conversation = conversationId ? await prisma.conversation.findUnique({ where: { id: conversationId } }) : null;
+      // só quem pode ler a conversa marca como lida (antes qualquer conexão marcava qualquer mensagem)
+      if (
+        !conversation ||
+        !canReadConversation(conversation as any, { userId: socket.userId, userType: socket.userType, tenantId: socket.tenantId })
+      ) {
+        callback?.({ error: 'Conversa não encontrada' });
+        return;
+      }
 
-      // Atualizar status da mensagem
-      await prisma.message.updateMany({
+      const readAt = new Date();
+      const result = await prisma.message.updateMany({
         where: {
           id: messageId,
           conversationId,
-          senderId: { not: socket.userId }, // Não é do próprio usuário
+          NOT: { senderId: socket.userId, senderType: socket.userType },
         },
-        data: {
-          status: 'READ',
-          readAt: new Date(),
-        },
+        data: { status: 'READ', readAt },
       });
 
-      // Emitir confirmação de leitura
-      this.io.to(`conversation:${conversationId}`).emit('message:read', {
-        messageId,
-        conversationId,
-        readBy: socket.userId,
-        readAt: new Date(),
-      });
+      if (result.count > 0) {
+        this.io.to(`conversation:${conversationId}`).emit('message:read', {
+          messageId,
+          conversationId,
+          readBy: socket.userId,
+          readAt,
+        });
+      }
 
       callback?.({ success: true });
     } catch (error) {
@@ -497,33 +376,6 @@ export class WebSocketServer {
     }
   }
 
-  private async handleDisconnect(socket: AuthenticatedSocket, reason: string) {
-    try {
-      // Atualizar sessão WebSocket
-      await prisma.webSocketSession.updateMany({
-        where: { socketId: socket.id },
-        data: {
-          isOnline: false,
-          disconnectedAt: new Date(),
-        },
-      });
-
-      // Log
-      await prisma.messageLog.create({
-        data: {
-          level: 'INFO',
-          event: 'user-disconnected',
-          userId: socket.userType === 'SERVER' ? socket.userId : undefined,
-          citizenId: socket.userType === 'CITIZEN' ? socket.userId : undefined,
-          message: `User disconnected: ${reason}`,
-          data: { reason },
-        },
-      });
-    } catch (error) {
-      logger.error('Error handling disconnect', { error });
-    }
-  }
-
   // Métodos públicos para enviar mensagens externamente
   public async sendMessageToUser(userId: string, userType: ParticipantType, event: string, data: any) {
     // Emitir para sala específica (com userType)
@@ -534,14 +386,6 @@ export class WebSocketServer {
 
   public async sendMessageToConversation(conversationId: string, event: string, data: any) {
     this.io.to(`conversation:${conversationId}`).emit(event, data);
-  }
-
-  public async sendMessageToChannel(channelId: string, event: string, data: any) {
-    this.io.to(`channel:${channelId}`).emit(event, data);
-  }
-
-  public async broadcastToAll(event: string, data: any) {
-    this.io.emit(event, data);
   }
 
   /**

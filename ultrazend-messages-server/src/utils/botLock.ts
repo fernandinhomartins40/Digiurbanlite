@@ -16,7 +16,7 @@ const memory = new Map<string, { token: string; at: number }>();
 let client: RedisClientType | null = null;
 let connecting: Promise<RedisClientType | null> | null = null;
 
-async function redis(): Promise<RedisClientType | null> {
+export async function redis(): Promise<RedisClientType | null> {
   if (client?.isReady) return client;
   if (!connecting) {
     connecting = (async () => {

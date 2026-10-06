@@ -104,7 +104,6 @@ Terminais: `CONCLUIDO`, `CANCELADO`.
 | `/saude/tfd` | saude-tfd.routes.ts | ~52 endpoints TFD |
 | `/notifications` | notifications.routes.ts | SSE notifications |
 | `/internal` | internal.routes.ts | API para Messages Server |
-| `/messages` | messages.ts | Mensagens |
 | `/super-admin` | super-admin.ts | Gerenciamento município |
 
 ### Convenções do Backend
@@ -250,8 +249,18 @@ ping/pong
 ```
 user:${userId}:${userType}    — Sala pessoal (CITIZEN/SERVER)
 conversation:${conversationId} — Sala de conversa
-channel:${channelId}          — Canal de broadcast
+t:${tenantId}:servers         — Todos os servidores do município (fila de atendimento)
 ```
+Eventos de atendimento: `handover:new` / `handover:update` / `handover:taken` (servidores), `handover:takeover` (cidadão), `handover:ended` (todos), `message:deleted`.
+
+### Chat e atendimento humano (refeito 2026-10-06)
+- **Atendente**: "Assumir" = `POST /api/handover/takeover` (pausa o assistente, grava `metadata.takenOverBy`, avisa o cidadão; quem chega depois recebe 409). Só quem assumiu escreve na conversa do assistente (`canWriteConversation`). Com o atendimento pausado o bot NÃO responde: a mensagem do cidadão vai para o atendente (`relayToHumanIfPaused`). "Encerrar atendimento" = `/api/bot-flow/resume`
+- Fila avisa TODOS os servidores do município (sala `t:{tenant}:servers`); ninguém assumiu em `human.maxWaitMinutes` (painel DigiBot) → volta ao bot com `noAttendantMessage` (job de 1 min)
+- **Toda mensagem do chat passa por `deliverChatMessage()`** (`delivery/chatDelivery.ts`): valida, grava `tenantId`, contadores, eventos e aviso fora do app (`CHAT_MESSAGE` pelo `/api/internal/notifications/dispatch`, no máx. 1 a cada 30 min por conversa/pessoa)
+- **Avisos dos pedidos** chegam na conversa "Avisos da Prefeitura" (participante `PREFEITURA_AVISOS`, só leitura) via `POST /internal/notices` com o token interno (backend: `services/chat-notices.service.ts`). Nunca inventar sessão de servidor para isso
+- Sessão por portal: `/cidadao` usa o cookie de cidadão, `/admin` o de servidor (socket manda `auth.portal`; HTTP usa o Referer). `utils/authToken.ts`
+- Arquivos `/uploads/bot/*` passam pelo nginx para o messages-server, que confere se a pessoa pode ver a conversa do anexo
+- Removidos: canais, analytics, relatórios, "apagar para todos", rota `/api/messages` do backend e `UltraZendMessagesAdapter`
 
 ### Convenções Messages Server
 - Action `startFlow` é especial — handled pelo FlowEngine, não pelos ActionHandlers
@@ -259,7 +268,7 @@ channel:${channelId}          — Canal de broadcast
 - Erros amigáveis em pt-BR com fallback ao menu principal
 - Upload permanente em `uploads/bot/` com metadata
 - Conversa bot protegida contra delete/archive
-- Socket paths: Admin `:3001/api/socket` | Messages `:9001` (path default)
+- Socket paths: Admin `:3001/api/socket` | Messages `/socket.io/` (path default, pelo nginx; porta 9001 não é pública)
 - `ProtocolEvaluationSimplified` NÃO tem campo `evaluatedBy`
 
 ## E-mail (transacional, VeloMail — 2026-10-05)
@@ -286,7 +295,7 @@ BUILD_TIMESTAMP=$(date +%s) docker compose -f docker-compose.vps.yml up -d --bui
 | Container | Porta externa | Porta interna |
 |-----------|-------------|---------------|
 | digiurban-vps | 3060 | 80 (Nginx) → 3001 (backend) + 3000 (frontend) |
-| ultrazend-messages | 9001 | 9001 |
+| ultrazend-messages | — (interna, via nginx) | 9001 |
 | digiurban-postgres | 5432 | 5432 |
 | digiurban-redis | 6379 | 6379 |
 | ultrazend-face | — (interna) | 9006 |

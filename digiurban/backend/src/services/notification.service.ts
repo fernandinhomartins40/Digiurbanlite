@@ -30,6 +30,7 @@ const EMAIL_TYPES: Record<'citizen' | 'user', string[]> = {
     'PROTOCOL_PENDING_OVERDUE',
     'PROTOCOL_PENDING_EXPIRED',
     NotificationType.DOCUMENT_REJECTED,
+    'CHAT_MESSAGE',
     NotificationType.APPOINTMENT_REMINDER,
     NotificationType.EXAM_RESULT,
     NotificationType.SYSTEM_MAINTENANCE,

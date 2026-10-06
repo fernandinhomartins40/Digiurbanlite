@@ -37,6 +37,9 @@ export interface BotConfig {
     hours: string;
     waitMessage: string;
     outOfHoursMessage: string;
+    /** minutos na fila até voltar para o assistente (0 = sem limite) */
+    maxWaitMinutes: number;
+    noAttendantMessage: string;
   };
 }
 
@@ -66,6 +69,8 @@ export const DEFAULT_CONFIG: BotConfig = {
     hours: 'Segunda a sexta, das 8h às 17h',
     waitMessage: 'Certo! Vou chamar um atendente da prefeitura. Assim que alguém assumir, ele continua a conversa por aqui.',
     outOfHoursMessage: 'Nosso atendimento humano funciona de segunda a sexta, das 8h às 17h. Deixe sua mensagem que respondemos assim que possível.',
+    maxWaitMinutes: 15,
+    noAttendantMessage: 'Nenhum atendente conseguiu assumir agora. Você pode tentar de novo mais tarde ou abrir um pedido pelo portal. Posso ajudar com outra coisa?',
   },
 };
 
@@ -107,6 +112,10 @@ export function sanitizeConfig(input: unknown): BotConfig {
       hours: clip(human.hours, 120, DEFAULT_CONFIG.human.hours),
       waitMessage: clip(human.waitMessage, 300, DEFAULT_CONFIG.human.waitMessage),
       outOfHoursMessage: clip(human.outOfHoursMessage, 300, DEFAULT_CONFIG.human.outOfHoursMessage),
+      maxWaitMinutes: Number.isFinite(Number(human.maxWaitMinutes))
+        ? Math.max(0, Math.min(240, Math.round(Number(human.maxWaitMinutes))))
+        : DEFAULT_CONFIG.human.maxWaitMinutes,
+      noAttendantMessage: clip(human.noAttendantMessage, 300, DEFAULT_CONFIG.human.noAttendantMessage),
     },
   };
 }
