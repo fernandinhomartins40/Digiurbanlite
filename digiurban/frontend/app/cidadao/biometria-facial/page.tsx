@@ -101,10 +101,6 @@ export default function CitizenFaceBiometryPage() {
     <CitizenLayout>
       <div className="mx-auto w-full max-w-2xl space-y-5">
         <div className="space-y-2">
-          <Link href="/cidadao/perfil" className="inline-flex items-center gap-1.5 text-sm text-slate-500 hover:text-slate-700">
-            <ArrowLeft className="h-4 w-4" />
-            Voltar ao perfil
-          </Link>
           <h1 className="text-2xl font-bold text-slate-900">Biometria facial</h1>
           <p className="text-sm leading-6 text-slate-600">
             Seu rosto confirma que é você mesmo usando a conta. Você pode apagar quando quiser.
@@ -169,13 +165,13 @@ export default function CitizenFaceBiometryPage() {
 
             {justEnrolled && (
               <div className="flex flex-col gap-3 sm:flex-row">
-                <Button asChild size="lg" className="h-12 flex-1 text-base">
+                <Button asChild size="lg" className="h-12 text-base sm:flex-1">
                   <Link href="/cidadao/biometria-facial/leitura">
                     <UserRoundSearch className="mr-2 h-5 w-5" />
                     Testar o reconhecimento
                   </Link>
                 </Button>
-                <Button asChild size="lg" variant="outline" className="h-12 flex-1 text-base">
+                <Button asChild size="lg" variant="outline" className="h-12 text-base sm:flex-1">
                   <Link href="/cidadao/perfil">Voltar ao perfil</Link>
                 </Button>
               </div>

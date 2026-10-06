@@ -22,15 +22,8 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { useCitizenAuth } from '@/contexts/CitizenAuthContext';
 import { useCitizenServices } from '@/hooks/useCitizenServices';
 import { useCitizenProtocols } from '@/hooks/useCitizenProtocols';
+import { citizenStatusInfo } from '@/lib/citizen-protocol-status';
 
-const STATUS: Record<string, { label: string; className: string }> = {
-  VINCULADO: { label: 'Recebido', className: 'bg-yellow-100 text-yellow-800' },
-  PROGRESSO: { label: 'Em andamento', className: 'bg-blue-100 text-blue-800' },
-  ATUALIZACAO: { label: 'Em andamento', className: 'bg-blue-100 text-blue-800' },
-  PENDENCIA: { label: 'Aguardando você', className: 'bg-orange-100 text-orange-800' },
-  CONCLUIDO: { label: 'Concluído', className: 'bg-green-100 text-green-800' },
-  CANCELADO: { label: 'Cancelado', className: 'bg-gray-100 text-gray-700' },
-};
 
 const normalize = (text: string) => text.toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '');
 
@@ -188,7 +181,7 @@ export default function CitizenHomePage() {
             ) : (
               <div className="divide-y rounded-lg border">
                 {recent.protocols.map((protocol) => {
-                  const status = STATUS[protocol.status] || { label: protocol.status, className: 'bg-gray-100 text-gray-700' };
+                  const status = citizenStatusInfo(protocol.status, protocol.openCitizenPendingsCount || 0);
                   return (
                     <Link
                       key={protocol.id}

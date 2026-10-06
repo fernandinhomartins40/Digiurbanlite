@@ -1,6 +1,5 @@
 'use client';
 
-import { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Edit, Trash2, Heart, Baby, User, Users } from 'lucide-react';
@@ -53,18 +52,6 @@ export function FamilyTree({
   onRemoveMember,
   onViewMember
 }: FamilyTreeProps) {
-  const [expandedMembers, setExpandedMembers] = useState<Set<string>>(new Set());
-
-  const toggleMemberExpansion = (memberId: string) => {
-    const newExpanded = new Set(expandedMembers);
-    if (newExpanded.has(memberId)) {
-      newExpanded.delete(memberId);
-    } else {
-      newExpanded.add(memberId);
-    }
-    setExpandedMembers(newExpanded);
-  };
-
   const getRelationshipLabel = (relationship: string) => {
     const labels: Record<string, string> = {
       'SPOUSE': 'Cônjuge',
@@ -131,250 +118,90 @@ export function FamilyTree({
     return phone.replace(/(\d{2})(\d{5})(\d{4})/, '($1) $2-$3');
   };
 
+  const describe = (familyMember: FamilyMember) => {
+    const age = calculateAge(familyMember?.member?.birthDate);
+    return [
+      getRelationshipLabel(familyMember.relationship),
+      age !== null ? `${age} ano${age === 1 ? '' : 's'}` : null,
+      familyMember.isDependent ? 'dependente' : null,
+      familyMember.hasDisability ? 'PcD' : null,
+    ]
+      .filter(Boolean)
+      .join(' · ');
+  };
+
+  // Uma lista só: você (responsável) e cada pessoa da casa. Antes: quadro grande
+  // do responsável, botão "Adicionar" repetido e detalhes escondidos atrás de ▶.
   return (
-    <div className="space-y-6">
-      {/* Responsável da Família */}
-      <Card className="border-2 border-primary/20">
-        <CardHeader>
-          <div className="flex items-center justify-between">
-            <div className="flex items-center space-x-3">
-              <span className="text-2xl">👑</span>
-              <div>
-                <CardTitle className="text-lg">Responsável da Família</CardTitle>
-                <p className="text-sm text-muted-foreground">
-                  Você é o responsável pela composição familiar
-                </p>
-              </div>
-            </div>
+    <div className="space-y-5">
+      <ul className="divide-y overflow-hidden rounded-2xl border bg-white">
+        <li className="flex items-center gap-3 px-4 py-3.5">
+          <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-blue-600 text-white">
+            <User className="h-5 w-5" />
           </div>
-        </CardHeader>
+          <div className="min-w-0 flex-1">
+            <p className="truncate font-medium text-gray-900">{family.head.name}</p>
+            <p className="text-sm text-gray-500">Você · responsável pela família</p>
+          </div>
+        </li>
 
-        <CardContent>
-          <div className="space-y-2">
-            <div className="flex items-center justify-between">
-              <span className="text-sm text-muted-foreground">Nome:</span>
-              <span className="font-medium">{family.head.name}</span>
+        {family.members.map((familyMember) => (
+          <li key={familyMember.id} className="flex items-center gap-3 px-4 py-3.5">
+            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-gray-100 [&>svg]:h-5 [&>svg]:w-5">
+              {getRelationshipIcon(familyMember.relationship)}
             </div>
-            <div className="flex items-center justify-between">
-              <span className="text-sm text-muted-foreground">CPF:</span>
-              <span className="font-medium">{formatCPF(family.head.cpf)}</span>
-            </div>
-            <div className="flex items-center justify-between">
-              <span className="text-sm text-muted-foreground">Email:</span>
-              <span className="font-medium">{family.head.email}</span>
-            </div>
-            {family.head.phone && (
-              <div className="flex items-center justify-between">
-                <span className="text-sm text-muted-foreground">Telefone:</span>
-                <span className="font-medium">{formatPhone(family.head.phone)}</span>
-              </div>
+            <button
+              type="button"
+              className="min-w-0 flex-1 text-left"
+              onClick={() => (onViewMember && familyMember?.member?.id ? onViewMember(familyMember.member.id) : onEditMember?.(familyMember.id))}
+            >
+              <p className="truncate font-medium text-gray-900">{familyMember?.member?.name || 'Nome não disponível'}</p>
+              <p className="truncate text-sm text-gray-500">{describe(familyMember)}</p>
+            </button>
+            {onEditMember && (
+              <Button variant="ghost" size="icon" aria-label={`Editar ${familyMember?.member?.name || ''}`} onClick={() => onEditMember(familyMember.id)}>
+                <Edit className="h-4 w-4" />
+              </Button>
             )}
-          </div>
-        </CardContent>
-      </Card>
+            {onRemoveMember && (
+              <Button
+                variant="ghost"
+                size="icon"
+                aria-label={`Remover ${familyMember?.member?.name || ''}`}
+                onClick={() => onRemoveMember(familyMember.id)}
+                className="text-red-600 hover:bg-red-50 hover:text-red-700"
+              >
+                <Trash2 className="h-4 w-4" />
+              </Button>
+            )}
+          </li>
+        ))}
+      </ul>
 
-      {/* Membros da Família */}
-      <div>
-        <div className="flex items-center justify-between mb-4">
-          <h3 className="text-lg font-semibold">
-            Membros da Família ({family.members.length})
-          </h3>
+      {family.members.length === 0 && (
+        <div className="rounded-2xl border border-dashed px-4 py-8 text-center text-sm text-gray-500">
+          <Users className="mx-auto mb-2 h-8 w-8 text-gray-300" />
+          Ninguém foi adicionado ainda.
           {onAddMember && (
-            <Button onClick={onAddMember} size="sm">
-              Adicionar Membro
-            </Button>
+            <button type="button" onClick={onAddMember} className="ml-1 font-medium text-blue-600 hover:underline">
+              Adicionar pessoa
+            </button>
           )}
         </div>
+      )}
 
-        {family.members.length === 0 ? (
-          <Card>
-            <CardContent className="text-center py-8">
-              <div className="flex items-center justify-center gap-1 mb-4">
-                <Users className="h-10 w-10 text-gray-400" />
-              </div>
-              <p className="text-muted-foreground mb-4">
-                Você ainda não adicionou nenhum membro à sua família.
-              </p>
-              {onAddMember && (
-                <Button onClick={onAddMember} variant="outline">
-                  Adicionar Primeiro Membro
-                </Button>
-              )}
-            </CardContent>
-          </Card>
-        ) : (
-          <div className="grid gap-4 md:grid-cols-2">
-            {family.members.map((familyMember) => (
-              <Card key={familyMember.id} className="relative">
-                <CardHeader className="pb-3">
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center space-x-3">
-                      <div className="flex items-center justify-center h-10 w-10 rounded-full bg-gray-100">
-                        {getRelationshipIcon(familyMember.relationship)}
-                      </div>
-                      <div>
-                        <CardTitle className="text-base">
-                          {familyMember?.member?.name || 'Nome não disponível'}
-                        </CardTitle>
-                        <p className="text-sm text-muted-foreground">
-                          {getRelationshipLabel(familyMember.relationship)}
-                          {familyMember.isDependent && (
-                            <span className="ml-2 px-2 py-1 bg-blue-100 text-blue-800 text-xs rounded-full">
-                              Dependente
-                            </span>
-                          )}
-                          {familyMember.hasDisability && (
-                            <span className="ml-2 px-2 py-1 bg-purple-100 text-purple-800 text-xs rounded-full">
-                              PCD
-                            </span>
-                          )}
-                        </p>
-                      </div>
-                    </div>
-
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => toggleMemberExpansion(familyMember.id)}
-                    >
-                      {expandedMembers.has(familyMember.id) ? '▼' : '▶'}
-                    </Button>
-                  </div>
-                </CardHeader>
-
-                <CardContent>
-                  {expandedMembers.has(familyMember.id) && (
-                    <div className="space-y-2 mb-4">
-                      <div className="flex items-center justify-between text-sm">
-                        <span className="text-muted-foreground">CPF:</span>
-                        <span className="font-medium">
-                          {familyMember?.member?.cpf ? formatCPF(familyMember.member.cpf) : 'N/A'}
-                        </span>
-                      </div>
-                      {familyMember?.member?.birthDate && (
-                        <div className="flex items-center justify-between text-sm">
-                          <span className="text-muted-foreground">Idade:</span>
-                          <span className="font-medium">
-                            {calculateAge(familyMember.member.birthDate)} anos
-                          </span>
-                        </div>
-                      )}
-                      <div className="flex items-center justify-between text-sm">
-                        <span className="text-muted-foreground">Email:</span>
-                        <span className="font-medium">{familyMember?.member?.email || 'N/A'}</span>
-                      </div>
-                      {familyMember?.member?.phone && (
-                        <div className="flex items-center justify-between text-sm">
-                          <span className="text-muted-foreground">Telefone:</span>
-                          <span className="font-medium">
-                            {formatPhone(familyMember.member.phone)}
-                          </span>
-                        </div>
-                      )}
-                      {familyMember.occupation && (
-                        <div className="flex items-center justify-between text-sm">
-                          <span className="text-muted-foreground">Ocupação:</span>
-                          <span className="font-medium">{familyMember.occupation}</span>
-                        </div>
-                      )}
-                      {familyMember.education && (
-                        <div className="flex items-center justify-between text-sm">
-                          <span className="text-muted-foreground">Escolaridade:</span>
-                          <span className="font-medium">{familyMember.education}</span>
-                        </div>
-                      )}
-                      {familyMember.monthlyIncome !== null && familyMember.monthlyIncome !== undefined && (
-                        <div className="flex items-center justify-between text-sm">
-                          <span className="text-muted-foreground">Renda Mensal:</span>
-                          <span className="font-medium">
-                            R$ {familyMember.monthlyIncome.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
-                          </span>
-                        </div>
-                      )}
-                      <div className="flex items-center justify-between text-sm">
-                        <span className="text-muted-foreground">Status:</span>
-                        <span className={`font-medium ${
-                          familyMember?.member?.isActive ? 'text-green-600' : 'text-red-600'
-                        }`}>
-                          {familyMember?.member?.isActive ? 'Ativo' : 'Inativo'}
-                        </span>
-                      </div>
-                    </div>
-                  )}
-
-                  <div className="flex gap-2">
-                    {onViewMember && familyMember?.member?.id && (
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => onViewMember(familyMember.member.id)}
-                        className="flex-1"
-                      >
-                        Ver Detalhes
-                      </Button>
-                    )}
-
-                    {onEditMember && (
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => onEditMember(familyMember.id)}
-                      >
-                        <Edit className="h-4 w-4" />
-                      </Button>
-                    )}
-
-                    {onRemoveMember && (
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => onRemoveMember(familyMember.id)}
-                        className="text-red-600 hover:text-red-700"
-                      >
-                        <Trash2 className="h-4 w-4" />
-                      </Button>
-                    )}
-                  </div>
-                </CardContent>
-              </Card>
-            ))}
-          </div>
-        )}
-      </div>
-
-      {/* Membro de outras famílias */}
-      {family.memberOf.length > 0 && (
-        <div>
-          <h3 className="text-lg font-semibold mb-4">
-            Membro de Outras Famílias ({family.memberOf.length})
-          </h3>
-
-          <div className="space-y-2">
+      {(family.memberOf?.length ?? 0) > 0 && (
+        <section className="space-y-2">
+          <h3 className="px-1 text-sm font-semibold text-gray-700">Você também faz parte de</h3>
+          <ul className="divide-y overflow-hidden rounded-2xl border bg-white">
             {family.memberOf.map((relation) => (
-              <Card key={relation.id}>
-                <CardContent className="py-4">
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center space-x-3">
-                      <span className="text-lg">👥</span>
-                      <div>
-                        <p className="font-medium">{relation?.head?.name || 'Nome não disponível'}</p>
-                        <p className="text-sm text-muted-foreground">
-                          Você é {getRelationshipLabel(relation.relationship)} nesta família
-                        </p>
-                      </div>
-                    </div>
-                    <div className="text-right">
-                      <p className="text-sm text-muted-foreground">CPF</p>
-                      <p className="text-sm font-medium">
-                        {relation?.head?.cpf ? formatCPF(relation.head.cpf) : 'N/A'}
-                      </p>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
+              <li key={relation.id} className="px-4 py-3">
+                <p className="font-medium text-gray-900">Família de {relation?.head?.name || '—'}</p>
+                <p className="text-sm text-gray-500">Você é {getRelationshipLabel(relation.relationship).toLowerCase()} nesta família</p>
+              </li>
             ))}
-          </div>
-        </div>
+          </ul>
+        </section>
       )}
     </div>
   );

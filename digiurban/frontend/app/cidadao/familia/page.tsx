@@ -13,7 +13,6 @@ import { FamilyInviteDialog } from '@/components/citizen/FamilyInviteDialog'
 import { PendingLinksSection } from '@/components/citizen/PendingLinksSection'
 import { FamilyStats } from '@/components/citizen/FamilyStats'
 import { FamilyInvitesList } from '@/components/citizen/FamilyInvitesList'
-import { FamilyTreeDiagram } from '@/components/citizen/FamilyTreeDiagram'
 import { FamilyExportButton } from '@/components/citizen/FamilyExportButton'
 import { useToast } from '@/hooks/use-toast'
 import {
@@ -202,44 +201,26 @@ export default function FamiliaPage() {
 
   return (
     <CitizenLayout>
-      <div className="space-y-6">
-        {/* Header */}
-        <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
-          <div>
-            <h1 className="text-2xl md:text-3xl font-bold text-gray-900 flex items-center gap-2">
-              <Users className="h-7 w-7 md:h-8 md:w-8" />
-              Minha Família
-            </h1>
-            <p className="text-gray-600 mt-1">
-              Gerencie a composição familiar e envie convites
-            </p>
-          </div>
-
-          <div className="flex gap-2 flex-wrap">
-            <Button
-              onClick={() => setShowAddDialog(true)}
-              className="flex-1 md:flex-none"
-            >
-              <UserPlus className="h-4 w-4 mr-2" />
-              Adicionar Membro
-            </Button>
-            <Button
-              onClick={() => setShowInviteDialog(true)}
-              variant="outline"
-              className="flex-1 md:flex-none"
-            >
-              <Mail className="h-4 w-4 mr-2" />
-              Convidar por Email
-            </Button>
-            <FamilyExportButton
-              head={familyData.head}
-              members={familyData.members}
-              stats={familyData.stats}
-            />
-          </div>
+      <div className="mx-auto w-full max-w-3xl space-y-5">
+        <div>
+          <h1 className="text-2xl font-bold text-gray-900">Minha família</h1>
+          <p className="mt-0.5 text-sm text-gray-600">
+            Quem mora com você. A pessoa adicionada confirma o vínculo pela conta dela.
+          </p>
         </div>
 
-        {/* Vínculos Pendentes */}
+        <div className="flex flex-col gap-2 sm:flex-row">
+          <Button size="lg" onClick={() => setShowAddDialog(true)} className="h-12 text-base sm:flex-1">
+            <UserPlus className="mr-2 h-5 w-5" />
+            Adicionar pessoa
+          </Button>
+          <Button size="lg" variant="outline" onClick={() => setShowInviteDialog(true)} className="h-12 text-base sm:flex-1">
+            <Mail className="mr-2 h-5 w-5" />
+            Convidar quem não tem cadastro
+          </Button>
+        </div>
+
+        {/* Vínculos esperando a sua confirmação */}
         {familyData.pendingLinks && familyData.pendingLinks.length > 0 && (
           <PendingLinksSection
             pendingLinks={familyData.pendingLinks}
@@ -248,42 +229,16 @@ export default function FamiliaPage() {
           />
         )}
 
-        {/* Info Box */}
-        <Card className="border-blue-200 bg-blue-50">
-          <CardContent className="py-4">
-            <div className="flex items-start gap-3">
-              <Info className="h-5 w-5 text-blue-600 mt-0.5 flex-shrink-0" />
-              <div className="text-sm text-blue-800">
-                <p className="font-medium mb-1">Como funciona a composição familiar?</p>
-                <ul className="space-y-1 text-xs">
-                  <li>• <strong>Adicionar Membro:</strong> Busque um cidadão já cadastrado no sistema</li>
-                  <li>• <strong>Convidar por Email:</strong> Envie um convite para alguém que ainda não está cadastrado</li>
-                  <li>• Membros adicionados precisam confirmar o vínculo familiar</li>
-                  <li>• Convites expiram em 30 dias</li>
-                </ul>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-
-        {/* Tabs */}
         <Tabs defaultValue="members" className="space-y-4">
-          <TabsList className="grid w-full grid-cols-2 md:grid-cols-4">
-            <TabsTrigger value="members">
-              <Users className="h-4 w-4 mr-2" />
-              Membros ({familyData?.members?.length || 0})
+          <TabsList className="grid h-auto w-full grid-cols-3 rounded-xl bg-gray-100 p-1">
+            <TabsTrigger value="members" className="rounded-lg py-2">
+              Pessoas ({(familyData?.members?.length || 0) + 1})
             </TabsTrigger>
-            <TabsTrigger value="tree">
-              <GitBranch className="h-4 w-4 mr-2" />
-              Árvore
+            <TabsTrigger value="invites" className="rounded-lg py-2">
+              Convites{invites?.length ? ` (${invites.length})` : ''}
             </TabsTrigger>
-            <TabsTrigger value="invites">
-              <Mail className="h-4 w-4 mr-2" />
-              Convites ({invites?.length || 0})
-            </TabsTrigger>
-            <TabsTrigger value="stats">
-              <Info className="h-4 w-4 mr-2" />
-              Estatísticas
+            <TabsTrigger value="stats" className="rounded-lg py-2">
+              Resumo
             </TabsTrigger>
           </TabsList>
 
@@ -294,14 +249,6 @@ export default function FamiliaPage() {
               onAddMember={() => setShowAddDialog(true)}
               onEditMember={handleEditMember}
               onRemoveMember={handleRemoveMember}
-            />
-          </TabsContent>
-
-          {/* Aba Árvore Genealógica */}
-          <TabsContent value="tree">
-            <FamilyTreeDiagram
-              head={familyData.head}
-              members={familyData.members}
             />
           </TabsContent>
 
@@ -317,7 +264,12 @@ export default function FamiliaPage() {
           {/* Aba Estatísticas */}
           <TabsContent value="stats">
             {familyData.stats ? (
-              <FamilyStats stats={familyData.stats} />
+              <div className="space-y-4">
+                <FamilyStats stats={familyData.stats} />
+                <div className="flex justify-end">
+                  <FamilyExportButton head={familyData.head} members={familyData.members} stats={familyData.stats} />
+                </div>
+              </div>
             ) : (
               <Card>
                 <CardContent className="py-12 text-center">

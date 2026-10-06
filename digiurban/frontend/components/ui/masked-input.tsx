@@ -1,8 +1,7 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
-import InputMask from 'react-input-mask';
-import { cn } from '@/lib/utils';
+import React from 'react';
+import { ModernMaskedInput, getMaskPlaceholder as modernPlaceholder } from './modern-masked-input';
 
 interface MaskedInputProps {
   id?: string;
@@ -17,147 +16,19 @@ interface MaskedInputProps {
 }
 
 /**
- * Componente de input com máscara para formatação automática
- * Suporta: CPF, Telefone, CEP, Data, RG, CNPJ, CPF/CNPJ, Moeda
- *
- * SOLUÇÃO PROFISSIONAL: Usa estado interno para garantir que o react-input-mask
- * processe o valor inicial corretamente, sincronizando com props.value
+ * Campo com máscara. Agora é o mesmo componente do ModernMaskedInput: o antigo
+ * usava react-input-mask com máscara em forma de função (telefone, RG, CPF/CNPJ),
+ * o que essa biblioteca não aceita — o campo não mascarava direito.
  */
-export function MaskedInput({
-  id,
-  type = 'cpf',
-  value,
-  onChange,
-  onBlur,
-  placeholder,
-  required = false,
-  disabled = false,
-  className
-}: MaskedInputProps) {
-
-  // Debug para citizen_phone
-  if (id === 'citizen_phone') {
-    console.log('📱 [MASKED INPUT] Recebeu:', { value, type: typeof value });
-  }
-
-  // ✅ FIX: react-input-mask não funciona bem com valores pré-formatados
-  // Extrair apenas números do valor para garantir que a máscara seja aplicada corretamente
-  const cleanValue = value ? value.replace(/\D/g, '') : '';
-
-  if (id === 'citizen_phone') {
-    console.log('📱 [MASKED INPUT] Limpou para:', cleanValue);
-  }
-
-  // Definir máscara baseado no tipo
-  const getMask = (): string | (string | RegExp)[] | ((value: string) => string) => {
-    switch (type) {
-      case 'cpf':
-        return '999.999.999-99';
-
-      case 'cnpj':
-        return '99.999.999/9999-99';
-
-      case 'cpf-cnpj':
-        // Máscara dinâmica: CPF ou CNPJ baseado no tamanho
-        return (value: string) => {
-          const numbers = value.replace(/\D/g, '');
-          if (numbers.length <= 11) {
-            return '999.999.999-999'; // CPF
-          }
-          return '99.999.999/9999-99'; // CNPJ
-        };
-
-      case 'phone':
-        // Máscara dinâmica: (99) 9999-9999 ou (99) 99999-9999
-        return (value: string) => {
-          const numbers = value.replace(/\D/g, '');
-          if (numbers.length <= 10) {
-            return '(99) 9999-9999'; // Fixo
-          }
-          return '(99) 99999-9999'; // Celular
-        };
-
-      case 'cep':
-        return '99999-999';
-
-      case 'date':
-        return '99/99/9999';
-
-      case 'rg':
-        // Máscara dinâmica baseada no comprimento
-        // Suporta RGs de 8 dígitos (X.XXX.XXX-X) ou 9 dígitos (XX.XXX.XXX-X)
-        return (value: string) => {
-          const numbers = value.replace(/\D/g, '');
-          // Se tem até 8 dígitos, usa formato com 1 dígito inicial
-          // Se tem 9 dígitos, usa formato com 2 dígitos iniciais
-          if (numbers.length <= 8) {
-            return '9.999.999-9';
-          }
-          return '99.999.999-9';
-        };
-
-      case 'currency':
-        return 'R$ 999.999.999,99';
-
-      default:
-        return '';
-    }
-  };
-
-  const mask = getMask();
-
-  return (
-    <InputMask
-      id={id}
-      mask={mask as any}
-      value={cleanValue}
-      onChange={onChange}
-      onBlur={onBlur}
-      disabled={disabled}
-      placeholder={placeholder}
-      alwaysShowMask={false}
-      maskChar={null}
-    >
-      {/* @ts-ignore */}
-      {(inputProps: any) => (
-        <input
-          {...inputProps}
-          type="text"
-          required={required}
-          className={cn(
-            'flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50',
-            className
-          )}
-        />
-      )}
-    </InputMask>
-  );
+export function MaskedInput({ type = 'cpf', ...props }: MaskedInputProps) {
+  return <ModernMaskedInput type={type} {...props} />;
 }
 
 /**
- * Hook para obter placeholder baseado no tipo de máscara
+ * Placeholder baseado no tipo de máscara
  */
 export function getMaskPlaceholder(type: MaskedInputProps['type']): string {
-  switch (type) {
-    case 'cpf':
-      return '000.000.000-00';
-    case 'cnpj':
-      return '00.000.000/0000-00';
-    case 'cpf-cnpj':
-      return 'CPF ou CNPJ';
-    case 'phone':
-      return '(00) 00000-0000';
-    case 'cep':
-      return '00000-000';
-    case 'date':
-      return 'DD/MM/AAAA';
-    case 'rg':
-      return '00.000.000-0';
-    case 'currency':
-      return 'R$ 0,00';
-    default:
-      return '';
-  }
+  return modernPlaceholder(type);
 }
 
 /**

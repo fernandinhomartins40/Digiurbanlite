@@ -832,7 +832,8 @@ router.post('/change-password', asyncHandler(async (req: Request, res: Response)
     // Verificar senha atual
     const validPassword = await bcrypt.compare(data.currentPassword, citizen.password);
     if (!validPassword) {
-      return res.status(401).json({ error: 'Senha atual incorreta' });
+      // 400 (não 401): o portal trata 401 como sessão vencida e desconectaria a pessoa
+      return res.status(400).json({ error: 'Senha atual incorreta' });
     }
 
     // Verificar se a nova senha é diferente da atual

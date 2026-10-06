@@ -1,209 +1,79 @@
 'use client';
 
+/**
+ * Mais — atalhos da conta numa lista só. Antes: perfil aparecia duas vezes
+ * (cartão do nome + item), biometria em dois itens (cadastrar e testar, que já
+ * fica dentro da própria tela de biometria) e um quadro de "versão do app".
+ */
+
+import Link from 'next/link';
+import { ChevronRight, FileCheck, LogOut, ScanFace, Users } from 'lucide-react';
 import { CitizenLayout } from '@/components/citizen/CitizenLayout';
-import { Card, CardContent } from '@/components/ui/card';
 import { useCitizenAuth } from '@/contexts/CitizenAuthContext';
-import {
-  FileCheck,
-  Bell,
-  Settings,
-  HelpCircle,
-  Info,
-  LogOut,
-  ChevronRight,
-  ScanFace,
-  User,
-  Users,
-  Shield,
-  MessageSquare
-} from 'lucide-react';
-import { useRouter } from 'next/navigation';
 import { MunicipioSwitcher } from '@/components/citizen/MunicipioSwitcher';
 import { AppearanceSetting } from '@/components/liquid-glass/AppearanceSetting';
 
-interface MenuItem {
-  id: string;
-  label: string;
-  description: string;
-  icon: React.ComponentType<{ className?: string }>;
-  href?: string;
-  badge?: number | string;
-  onClick?: () => void;
-  variant?: 'default' | 'danger';
-}
+const ITEMS = [
+  { href: '/cidadao/familia', label: 'Minha família', description: 'Pessoas da sua casa', icon: Users },
+  { href: '/cidadao/documentos', label: 'Meus documentos', description: 'RG, comprovantes e assinaturas', icon: FileCheck },
+  { href: '/cidadao/biometria-facial', label: 'Biometria facial', description: 'Confirmar sua identidade pelo rosto', icon: ScanFace },
+];
 
 export default function MaisPage() {
-  const router = useRouter();
   const { logout, citizen } = useCitizenAuth();
+  const initials = (citizen?.name || '?').split(' ').filter(Boolean).slice(0, 2).map((p) => p[0]).join('').toUpperCase();
 
   const handleLogout = async () => {
-    if (confirm('Deseja realmente sair?')) {
-      await logout();
-    }
+    if (confirm('Deseja sair da sua conta?')) await logout();
   };
-
-  const menuItems: MenuItem[] = [
-    {
-      id: 'profile',
-      label: 'Meu perfil',
-      description: 'Dados pessoais, endereço e contato',
-      icon: User,
-      href: '/cidadao/perfil',
-    },
-    {
-      id: 'family',
-      label: 'Minha família',
-      description: 'Pessoas da sua casa e pedidos em nome delas',
-      icon: Users,
-      href: '/cidadao/familia',
-    },
-    {
-      id: 'documents',
-      label: 'Meus documentos',
-      description: 'Documentos pessoais e assinaturas digitais',
-      icon: FileCheck,
-      href: '/cidadao/documentos',
-    },
-    {
-      id: 'face-read',
-      label: 'Leitura biométrica',
-      description: 'Testar se a biometria facial está reconhecendo corretamente',
-      icon: ScanFace,
-      href: '/cidadao/biometria-facial/leitura',
-    },
-    {
-      id: 'face-enroll',
-      label: 'Biometria facial',
-      description: 'Cadastrar a biometria facial ao vivo pela primeira vez',
-      icon: Shield,
-      href: '/cidadao/biometria-facial',
-    },
-  ];
-
-  const dangerItems: MenuItem[] = [
-    {
-      id: 'logout',
-      label: 'Sair',
-      description: 'Encerrar sessão',
-      icon: LogOut,
-      onClick: handleLogout,
-      variant: 'danger',
-    },
-  ];
 
   return (
     <CitizenLayout>
-      <div className="space-y-6">
-        {/* Header */}
-        <div>
-          <h1 className="text-2xl font-bold text-gray-900">Menu</h1>
-          <p className="text-gray-600 mt-1">Configurações e opções adicionais</p>
-        </div>
+      <div className="mx-auto w-full max-w-2xl space-y-5">
+        <h1 className="text-2xl font-bold text-gray-900">Mais</h1>
 
-        {/* User Info Card */}
-        <Card className="border-blue-200 bg-blue-50">
-          <CardContent className="p-4">
-            <div className="flex items-center gap-4">
-              <div className="h-12 w-12 bg-blue-600 rounded-full flex items-center justify-center flex-shrink-0">
-                <span className="text-white font-bold text-lg">
-                  {citizen?.name?.charAt(0).toUpperCase()}
-                </span>
-              </div>
-              <div className="flex-1 min-w-0">
-                <p className="font-semibold text-gray-900 truncate">{citizen?.name}</p>
-                <p className="text-sm text-gray-600 truncate">
-                  CPF: {citizen?.cpf?.replace(/(\d{3})(\d{3})(\d{3})(\d{2})/, '***.$2.$3-**')}
-                </p>
-              </div>
-              <button
-                onClick={() => router.push('/cidadao/perfil')}
-                className="text-blue-600 hover:text-blue-700"
-              >
-                <ChevronRight className="h-5 w-5" />
-              </button>
-            </div>
-          </CardContent>
-        </Card>
+        <Link href="/cidadao/perfil" className="flex items-center gap-4 rounded-2xl border bg-white p-4 hover:bg-gray-50">
+          <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-blue-600 font-semibold text-white">
+            {initials}
+          </div>
+          <div className="min-w-0 flex-1">
+            <p className="truncate font-semibold text-gray-900">{citizen?.name}</p>
+            <p className="text-sm text-gray-500">Meu perfil, endereço e senha</p>
+          </div>
+          <ChevronRight className="h-5 w-5 shrink-0 text-gray-300" />
+        </Link>
+
+        <ul className="divide-y overflow-hidden rounded-2xl border bg-white">
+          {ITEMS.map(({ href, label, description, icon: Icon }) => (
+            <li key={href}>
+              <Link href={href} className="flex items-center gap-4 px-4 py-3.5 hover:bg-gray-50">
+                <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-gray-100 text-gray-700">
+                  <Icon className="h-5 w-5" />
+                </div>
+                <div className="min-w-0 flex-1">
+                  <p className="font-medium text-gray-900">{label}</p>
+                  <p className="truncate text-sm text-gray-500">{description}</p>
+                </div>
+                <ChevronRight className="h-5 w-5 shrink-0 text-gray-300" />
+              </Link>
+            </li>
+          ))}
+        </ul>
 
         {/* Trocar de município (só aparece com cadastro em 2+ prefeituras) */}
         <MunicipioSwitcher />
 
-        {/* Menu Items */}
-        <div className="space-y-2">
-          {menuItems.map((item) => {
-            const Icon = item.icon;
-            return (
-              <button
-                key={item.id}
-                onClick={() => item.onClick ? item.onClick() : item.href && router.push(item.href)}
-                className="w-full bg-white border border-gray-200 rounded-lg p-4 hover:bg-gray-50 active:bg-gray-100 transition-colors"
-              >
-                <div className="flex items-center gap-4">
-                  <div className="bg-gray-100 p-2.5 rounded-lg flex-shrink-0">
-                    <Icon className="h-5 w-5 text-gray-700" />
-                  </div>
-                  <div className="flex-1 text-left min-w-0">
-                    <div className="flex items-center gap-2">
-                      <p className="font-semibold text-gray-900">{item.label}</p>
-                      {item.badge && (
-                        <span className="bg-red-500 text-white text-xs font-bold px-2 py-0.5 rounded-full min-w-[20px] text-center">
-                          {item.badge}
-                        </span>
-                      )}
-                    </div>
-                    <p className="text-sm text-gray-600 truncate">{item.description}</p>
-                  </div>
-                  <ChevronRight className="h-5 w-5 text-gray-400 flex-shrink-0" />
-                </div>
-              </button>
-            );
-          })}
-        </div>
-
         {/* Aparência: automático (segue o aparelho), claro ou escuro */}
         <AppearanceSetting />
 
-        {/* Separator */}
-        <div className="border-t border-gray-200" />
-
-        {/* Danger Items */}
-        <div className="space-y-2">
-          {dangerItems.map((item) => {
-            const Icon = item.icon;
-            return (
-              <button
-                key={item.id}
-                onClick={() => item.onClick ? item.onClick() : item.href && router.push(item.href)}
-                className="w-full bg-white border border-red-200 rounded-lg p-4 hover:bg-red-50 active:bg-red-100 transition-colors"
-              >
-                <div className="flex items-center gap-4">
-                  <div className="bg-red-100 p-2.5 rounded-lg flex-shrink-0">
-                    <Icon className="h-5 w-5 text-red-600" />
-                  </div>
-                  <div className="flex-1 text-left min-w-0">
-                    <p className="font-semibold text-red-600">{item.label}</p>
-                    <p className="text-sm text-red-500 truncate">{item.description}</p>
-                  </div>
-                  <ChevronRight className="h-5 w-5 text-red-400 flex-shrink-0" />
-                </div>
-              </button>
-            );
-          })}
-        </div>
-
-        {/* App Info */}
-        <Card className="bg-gray-50 border-gray-200">
-          <CardContent className="p-4 text-center">
-            <div className="flex items-center justify-center gap-2 mb-2">
-              <Shield className="h-4 w-4 text-gray-500" />
-              <p className="text-sm font-medium text-gray-700">Portal do Cidadão</p>
-            </div>
-            <p className="text-xs text-gray-500">Versão 1.0.0</p>
-            <p className="text-xs text-gray-400 mt-1">
-              © {new Date().getFullYear()} - Todos os direitos reservados
-            </p>
-          </CardContent>
-        </Card>
+        <button
+          type="button"
+          onClick={handleLogout}
+          className="flex w-full items-center justify-center gap-2 rounded-2xl border border-red-200 bg-white px-4 py-3 font-medium text-red-600 hover:bg-red-50"
+        >
+          <LogOut className="h-4 w-4" />
+          Sair da conta
+        </button>
       </div>
     </CitizenLayout>
   );

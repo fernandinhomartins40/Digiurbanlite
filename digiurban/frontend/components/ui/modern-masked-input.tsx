@@ -3,9 +3,12 @@
 import React from 'react';
 import { cn } from '@/lib/utils';
 
+export type MaskType = 'cpf' | 'phone' | 'cep' | 'rg' | 'cnpj' | 'date' | 'cpf-cnpj' | 'currency';
+
 interface ModernMaskedInputProps {
   id?: string;
-  type?: 'cpf' | 'phone' | 'cep' | 'rg' | 'cnpj' | 'date';
+  name?: string;
+  type?: MaskType;
   value: string;
   onChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
   onBlur?: (e: React.FocusEvent<HTMLInputElement>) => void;
@@ -13,21 +16,63 @@ interface ModernMaskedInputProps {
   required?: boolean;
   disabled?: boolean;
   className?: string;
+  autoComplete?: string;
+}
+
+const formatCpf = (n: string) =>
+  n.substring(0, 11).replace(/(\d{3})(\d)/, '$1.$2').replace(/(\d{3})(\d)/, '$1.$2').replace(/(\d{3})(\d{1,2})$/, '$1-$2');
+
+const formatCnpj = (n: string) =>
+  n
+    .substring(0, 14)
+    .replace(/(\d{2})(\d)/, '$1.$2')
+    .replace(/(\d{3})(\d)/, '$1.$2')
+    .replace(/(\d{3})(\d)/, '$1/$2')
+    .replace(/(\d{4})(\d{1,2})$/, '$1-$2');
+
+/**
+ * Aplica a máscara a qualquer valor (digitado ou vindo do servidor).
+ * Uma regra só para o campo e para a formatação de dados pré-preenchidos.
+ */
+export function formatValue(value: string, type: MaskType): string {
+  if (!value) return '';
+  const n = String(value).replace(/\D/g, '');
+
+  switch (type) {
+    case 'cpf':
+      return formatCpf(n);
+    case 'cnpj':
+      return formatCnpj(n);
+    case 'cpf-cnpj':
+      return n.length <= 11 ? formatCpf(n) : formatCnpj(n);
+    case 'phone':
+      if (n.length <= 10) return n.replace(/(\d{2})(\d)/, '($1) $2').replace(/(\d{4})(\d)/, '$1-$2');
+      return n.substring(0, 11).replace(/(\d{2})(\d)/, '($1) $2').replace(/(\d{5})(\d)/, '$1-$2');
+    case 'cep':
+      return n.substring(0, 8).replace(/(\d{5})(\d)/, '$1-$2');
+    case 'rg':
+      if (n.length <= 8) return n.replace(/(\d{1})(\d)/, '$1.$2').replace(/(\d{3})(\d)/, '$1.$2').replace(/(\d{3})(\d{1})$/, '$1-$2');
+      return n.substring(0, 9).replace(/(\d{2})(\d)/, '$1.$2').replace(/(\d{3})(\d)/, '$1.$2').replace(/(\d{3})(\d{1})$/, '$1-$2');
+    case 'date':
+      return n.substring(0, 8).replace(/(\d{2})(\d)/, '$1/$2').replace(/(\d{2})(\d)/, '$1/$2');
+    case 'currency': {
+      if (!n) return '';
+      const cents = Number(n.substring(0, 13));
+      return (cents / 100).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+    }
+    default:
+      return value;
+  }
 }
 
 /**
- * Componente de input com máscara MODERNO - Solução Profissional
- *
- * ✅ Compatível com Next.js 14
- * ✅ TypeScript nativo
- * ✅ Não quebra onChange
- * ✅ Não interfere com pré-preenchimento
- * ✅ Máscaras aplicadas em tempo real via JavaScript puro
- *
- * SOLUÇÃO: Usa JavaScript puro para aplicar máscaras sem bibliotecas problemáticas
+ * Campo com máscara em JavaScript puro (sem react-input-mask, que não aceita
+ * máscara dinâmica e quebrava telefone/RG). Devolve no onChange o próprio
+ * evento do campo, com o valor já mascarado — name/id continuam disponíveis.
  */
 export function ModernMaskedInput({
   id,
+  name,
   type = 'cpf',
   value,
   onChange,
@@ -35,116 +80,28 @@ export function ModernMaskedInput({
   placeholder,
   required = false,
   disabled = false,
-  className
+  className,
+  autoComplete,
 }: ModernMaskedInputProps) {
-
-  // Debug apenas para citizen_phone
-  if (id === 'citizen_phone') {
-    console.log('📱 [MASKED INPUT] Recebeu value:', value, 'type:', typeof value);
-  }
-
-  // Função para aplicar máscara ao valor
-  const applyMask = (rawValue: string, maskType: string): string => {
-    // Remove tudo que não é número
-    const numbers = rawValue.replace(/\D/g, '');
-
-    switch (maskType) {
-      case 'cpf':
-        // 999.999.999-99
-        if (numbers.length <= 11) {
-          return numbers
-            .replace(/(\d{3})(\d)/, '$1.$2')
-            .replace(/(\d{3})(\d)/, '$1.$2')
-            .replace(/(\d{3})(\d{1,2})$/, '$1-$2');
-        }
-        return numbers.substring(0, 11)
-          .replace(/(\d{3})(\d)/, '$1.$2')
-          .replace(/(\d{3})(\d)/, '$1.$2')
-          .replace(/(\d{3})(\d{1,2})$/, '$1-$2');
-
-      case 'cnpj':
-        // 99.999.999/9999-99
-        if (numbers.length <= 14) {
-          return numbers
-            .replace(/(\d{2})(\d)/, '$1.$2')
-            .replace(/(\d{3})(\d)/, '$1.$2')
-            .replace(/(\d{3})(\d)/, '$1/$2')
-            .replace(/(\d{4})(\d{1,2})$/, '$1-$2');
-        }
-        return numbers.substring(0, 14)
-          .replace(/(\d{2})(\d)/, '$1.$2')
-          .replace(/(\d{3})(\d)/, '$1.$2')
-          .replace(/(\d{3})(\d)/, '$1/$2')
-          .replace(/(\d{4})(\d{1,2})$/, '$1-$2');
-
-      case 'phone':
-        // (99) 9999-9999 ou (99) 99999-9999
-        if (numbers.length <= 10) {
-          return numbers
-            .replace(/(\d{2})(\d)/, '($1) $2')
-            .replace(/(\d{4})(\d)/, '$1-$2');
-        }
-        return numbers.substring(0, 11)
-          .replace(/(\d{2})(\d)/, '($1) $2')
-          .replace(/(\d{5})(\d)/, '$1-$2');
-
-      case 'cep':
-        // 99999-999
-        return numbers.substring(0, 8)
-          .replace(/(\d{5})(\d)/, '$1-$2');
-
-      case 'rg':
-        // 99.999.999-9 ou 9.999.999-9
-        if (numbers.length <= 8) {
-          return numbers
-            .replace(/(\d{1})(\d)/, '$1.$2')
-            .replace(/(\d{3})(\d)/, '$1.$2')
-            .replace(/(\d{3})(\d{1})$/, '$1-$2');
-        }
-        return numbers.substring(0, 9)
-          .replace(/(\d{2})(\d)/, '$1.$2')
-          .replace(/(\d{3})(\d)/, '$1.$2')
-          .replace(/(\d{3})(\d{1})$/, '$1-$2');
-
-      case 'date':
-        // DD/MM/YYYY (data brasileira)
-        return numbers.substring(0, 8)
-          .replace(/(\d{2})(\d)/, '$1/$2')
-          .replace(/(\d{2})(\d)/, '$1/$2');
-
-      default:
-        return numbers;
-    }
-  };
-
-  // Handler que aplica a máscara e chama o onChange original
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const rawValue = e.target.value;
-    const maskedValue = applyMask(rawValue, type);
-
-    // Cria um novo evento com o valor mascarado
-    const syntheticEvent = {
-      ...e,
-      target: {
-        ...e.target,
-        value: maskedValue
-      }
-    } as React.ChangeEvent<HTMLInputElement>;
-
-    // Chama o onChange original com o valor mascarado
-    onChange(syntheticEvent);
+    e.target.value = formatValue(e.target.value, type);
+    onChange(e);
   };
 
   return (
     <input
       id={id}
+      name={name}
       type="text"
-      value={value}
+      inputMode={type === 'currency' || type === 'date' || type === 'cep' || type === 'phone' || type === 'cpf' ? 'numeric' : undefined}
+      autoComplete={autoComplete}
+      // valor vindo do servidor só com números já aparece formatado
+      value={type === 'date' || type === 'currency' ? value ?? '' : formatValue(value ?? '', type)}
       onChange={handleChange}
       onBlur={onBlur}
       disabled={disabled}
       required={required}
-      placeholder={placeholder}
+      placeholder={placeholder ?? getMaskPlaceholder(type)}
       className={cn(
         'flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background',
         'file:border-0 file:bg-transparent file:text-sm file:font-medium',
@@ -157,95 +114,19 @@ export function ModernMaskedInput({
   );
 }
 
-/**
- * Função para remover máscara e obter apenas números
- */
+/** Remove a máscara (só números) */
 export function unmaskValue(value: string): string {
   return value.replace(/\D/g, '');
 }
 
-/**
- * Função EXPORTADA para aplicar máscara a um valor (uso externo)
- * ✅ Útil para formatar valores vindos do backend/pré-preenchimento
- */
-export function formatValue(value: string, type: 'cpf' | 'phone' | 'cep' | 'rg' | 'cnpj' | 'date'): string {
-  if (!value) return '';
-
-  const numbers = value.replace(/\D/g, '');
-
-  switch (type) {
-    case 'cpf':
-      if (numbers.length <= 11) {
-        return numbers
-          .replace(/(\d{3})(\d)/, '$1.$2')
-          .replace(/(\d{3})(\d)/, '$1.$2')
-          .replace(/(\d{3})(\d{1,2})$/, '$1-$2');
-      }
-      return numbers.substring(0, 11)
-        .replace(/(\d{3})(\d)/, '$1.$2')
-        .replace(/(\d{3})(\d)/, '$1.$2')
-        .replace(/(\d{3})(\d{1,2})$/, '$1-$2');
-
-    case 'phone':
-      if (numbers.length <= 10) {
-        return numbers
-          .replace(/(\d{2})(\d)/, '($1) $2')
-          .replace(/(\d{4})(\d)/, '$1-$2');
-      }
-      return numbers.substring(0, 11)
-        .replace(/(\d{2})(\d)/, '($1) $2')
-        .replace(/(\d{5})(\d)/, '$1-$2');
-
-    case 'cep':
-      return numbers.substring(0, 8)
-        .replace(/(\d{5})(\d)/, '$1-$2');
-
-    case 'rg':
-      if (numbers.length <= 8) {
-        return numbers
-          .replace(/(\d{1})(\d)/, '$1.$2')
-          .replace(/(\d{3})(\d)/, '$1.$2')
-          .replace(/(\d{3})(\d{1})$/, '$1-$2');
-      }
-      return numbers.substring(0, 9)
-        .replace(/(\d{2})(\d)/, '$1.$2')
-        .replace(/(\d{3})(\d)/, '$1.$2')
-        .replace(/(\d{3})(\d{1})$/, '$1-$2');
-
-    case 'cnpj':
-      if (numbers.length <= 14) {
-        return numbers
-          .replace(/(\d{2})(\d)/, '$1.$2')
-          .replace(/(\d{3})(\d)/, '$1.$2')
-          .replace(/(\d{3})(\d)/, '$1/$2')
-          .replace(/(\d{4})(\d{1,2})$/, '$1-$2');
-      }
-      return numbers.substring(0, 14)
-        .replace(/(\d{2})(\d)/, '$1.$2')
-        .replace(/(\d{3})(\d)/, '$1.$2')
-        .replace(/(\d{3})(\d)/, '$1/$2')
-        .replace(/(\d{4})(\d{1,2})$/, '$1-$2');
-
-    case 'date':
-      // DD/MM/YYYY (data brasileira)
-      return numbers.substring(0, 8)
-        .replace(/(\d{2})(\d)/, '$1/$2')
-        .replace(/(\d{2})(\d)/, '$1/$2');
-
-    default:
-      return value;
-  }
-}
-
-/**
- * Função para obter placeholder baseado no tipo
- */
-export function getMaskPlaceholder(type: ModernMaskedInputProps['type']): string {
+export function getMaskPlaceholder(type: MaskType | undefined): string {
   switch (type) {
     case 'cpf':
       return '000.000.000-00';
     case 'cnpj':
       return '00.000.000/0000-00';
+    case 'cpf-cnpj':
+      return 'CPF ou CNPJ';
     case 'phone':
       return '(00) 00000-0000';
     case 'cep':
@@ -254,6 +135,8 @@ export function getMaskPlaceholder(type: ModernMaskedInputProps['type']): string
       return '00.000.000-0';
     case 'date':
       return 'DD/MM/AAAA';
+    case 'currency':
+      return 'R$ 0,00';
     default:
       return '';
   }

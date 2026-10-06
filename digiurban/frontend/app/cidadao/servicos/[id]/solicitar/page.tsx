@@ -21,6 +21,7 @@ import { normalizeDocumentConfig } from '@/lib/document-utils';
 import { ServiceFormRenderer } from '@/components/forms/ServiceFormRenderer';
 import { extractFieldsFromSchema, extractCitizenFields } from '@/lib/schema-field-extractor';
 import { LocationPicker } from '@/components/common/LocationPicker';
+import { getFullApiUrl } from '@/lib/api-config';
 
 interface Service {
   id: string;
@@ -68,6 +69,7 @@ export default function SolicitarServicoPage() {
   const [selectedProgram, setSelectedProgram] = useState<any>(null);
   const [uploadedFiles, setUploadedFiles] = useState<Record<string, File>>({});
   const [locationData, setLocationData] = useState<{ latitude: number; longitude: number; address?: string } | null>(null);
+  const [showLocation, setShowLocation] = useState(false);
 
   // Determinar quais campos usar: do programa selecionado ou do serviço
   // useMemo para evitar recriar array em cada render
@@ -186,8 +188,9 @@ export default function SolicitarServicoPage() {
       return;
     }
 
-    if (!description.trim()) {
-      toast.error('Por favor, descreva sua solicitação');
+    const hasOwnQuestions = activeFormFields.some((field) => !field.id.toLowerCase().startsWith('citizen_'));
+    if (!description.trim() && !hasOwnQuestions) {
+      toast.error('Conte o que você precisa');
       return;
     }
 
@@ -248,7 +251,8 @@ export default function SolicitarServicoPage() {
     try {
       // Preparar FormData para upload de arquivos
       const formData = new FormData();
-      formData.append('description', description);
+      // o servidor exige descrição; quando o serviço tem perguntas próprias, ela é opcional para a pessoa
+      formData.append('description', description.trim() || `Pedido de ${service?.name || 'serviço'}`);
       formData.append('priority', '3');
 
       // ✅ FILTRAR: Remover campos citizen_* do customFormData
@@ -299,8 +303,7 @@ export default function SolicitarServicoPage() {
       console.log('📤 Enviando solicitação com', Object.keys(uploadedFiles).length, 'arquivo(s)');
 
       // ✅ SEGURANÇA: Fazer request com FormData
-      const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001/api';
-      const response = await fetch(`${apiUrl}/citizen/services/${serviceId}/request`, {
+      const response = await fetch(getFullApiUrl(`/citizen/services/${serviceId}/request`), {
         method: 'POST',
         body: formData,
         credentials: 'include',
@@ -330,11 +333,11 @@ export default function SolicitarServicoPage() {
 
       const data = await response.json();
 
-      toast.success('Solicitação enviada com sucesso!', {
-        description: `Protocolo ${data.protocol.number} gerado`,
+      toast.success('Pedido enviado!', {
+        description: `Número do pedido: ${data.protocol.number}. Acompanhe em Meus pedidos.`,
       });
 
-      router.push('/cidadao/protocolos');
+      router.push(data.protocol?.id ? `/cidadao/protocolos/${data.protocol.id}` : '/cidadao/protocolos');
     } catch (error) {
       console.error('Erro ao solicitar serviço:', error);
       toast.error(
@@ -375,348 +378,147 @@ export default function SolicitarServicoPage() {
   const isProgramEnrollment = service?.moduleType && MODULE_TO_API_TYPE[service.moduleType];
   const programApiType = isProgramEnrollment && service?.moduleType ? MODULE_TO_API_TYPE[service.moduleType] : null;
 
+  const hasOwnQuestions = activeFormFields.some((field) => !field.id.toLowerCase().startsWith('citizen_'));
+  const showForm = !isProgramEnrollment || selectedProgram;
+  const docsToSend: any[] = selectedProgram
+    ? (Array.isArray(selectedProgram.requiredDocuments) ? selectedProgram.requiredDocuments : [])
+    : service.requiresDocuments && Array.isArray(service.requiredDocuments)
+      ? service.requiredDocuments
+      : [];
+
   return (
     <CitizenLayout>
-      <div className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 space-y-5 animate-fade-in">
-        {/* Header */}
-        <div>
-          <Button
-            variant="ghost"
-            size="sm"
-            className="mb-3 -ml-2"
-            onClick={() => router.back()}
-          >
-            <ArrowLeft className="h-4 w-4 mr-2" />
-            Voltar
-          </Button>
-
-          <h1 className="text-xl sm:text-2xl font-bold text-gray-900">
-            {isProgramEnrollment && !selectedProgram ? 'Selecione o Programa' : 'Solicitar Serviço'}
-          </h1>
-          <p className="text-sm text-gray-600 mt-0.5">
-            {isProgramEnrollment && !selectedProgram
-              ? 'Escolha o programa em que deseja se inscrever'
-              : 'Preencha os dados para solicitar este serviço'}
-          </p>
+      <div className="mx-auto w-full max-w-2xl space-y-5">
+        {/* serviço */}
+        <div className="space-y-1">
+          <p className="text-sm text-gray-500">{service.department.name}</p>
+          <h1 className="text-2xl font-bold text-gray-900">{service.name}</h1>
+          {service.description && <p className="text-sm leading-6 text-gray-600">{service.description}</p>}
+          {!!service.estimatedDays && (
+            <p className="inline-flex items-center gap-1.5 pt-1 text-sm text-gray-500">
+              <Clock className="h-4 w-4" />
+              Prazo de até {service.estimatedDays} dia{service.estimatedDays > 1 ? 's' : ''}
+            </p>
+          )}
         </div>
 
-        {/* Informações do Serviço */}
-        <Card>
-          <CardHeader className="p-4 sm:p-6">
-            <div className="flex items-start gap-3">
-              <div className="bg-blue-50 p-2 sm:p-3 rounded-lg flex-shrink-0">
-                <FileText className="h-5 w-5 sm:h-6 sm:w-6 text-blue-600" />
-              </div>
-              <div className="flex-1 min-w-0">
-                <CardTitle className="text-base sm:text-xl">{service.name}</CardTitle>
-                <CardDescription className="mt-1 text-sm">
-                  {service.department.name}
-                </CardDescription>
-                {service.description && (
-                  <p className="text-sm text-gray-600 mt-2">{service.description}</p>
-                )}
-                {service.estimatedDays && (
-                  <div className="flex items-center gap-2 mt-2 text-xs sm:text-sm text-gray-500">
-                    <Clock className="h-4 w-4" />
-                    <span>Prazo estimado: {service.estimatedDays} dias</span>
-                  </div>
-                )}
-              </div>
-            </div>
-          </CardHeader>
-        </Card>
-
-        {/* Seletor de Programas - Mostrar se for serviço de inscrição e programa não foi selecionado */}
+        {/* inscrição em programa: primeiro escolhe o programa */}
         {isProgramEnrollment && !selectedProgram && programApiType && (
-          <ProgramSelector
-            serviceType={programApiType}
-            onSelectProgram={handleSelectProgram}
-          />
+          <ProgramSelector serviceType={programApiType} onSelectProgram={handleSelectProgram} />
         )}
 
-        {/* Programa Selecionado - Mostrar resumo se programa foi selecionado */}
         {isProgramEnrollment && selectedProgram && (
-          <Card className="border-green-200 bg-green-50">
-            <CardHeader>
-              <div className="flex items-start justify-between">
+          <div className="flex items-center justify-between gap-3 rounded-2xl border border-green-200 bg-green-50 px-4 py-3">
+            <div className="min-w-0">
+              <p className="text-xs text-green-700">Programa escolhido</p>
+              <p className="truncate font-medium text-green-900">{selectedProgram.name}</p>
+            </div>
+            <Button variant="ghost" size="sm" onClick={() => setSelectedProgram(null)} className="text-green-800">
+              Trocar
+            </Button>
+          </div>
+        )}
+
+        {showForm && (
+          <form onSubmit={handleSubmit} className="space-y-5 rounded-2xl border bg-white p-4 sm:p-6">
+            {hasPrefilledData && (
+              <p className="flex items-start gap-2 text-sm text-gray-600">
+                <UserCheck className="mt-0.5 h-4 w-4 shrink-0 text-emerald-600" />
+                Já preenchemos o que temos do seu cadastro. Confira e complete o resto.
+              </p>
+            )}
+
+            {/* dados básicos para inscrição em programa */}
+            {selectedProgram && (
+              <div className="grid gap-4 sm:grid-cols-2">
+                <div className="space-y-1.5 sm:col-span-2">
+                  <Label htmlFor="applicantName">Nome completo *</Label>
+                  <Input id="applicantName" value={customFormData.applicantName || citizen?.name || ''} onChange={(e) => updateField('applicantName', e.target.value)} required />
+                </div>
+                <div className="space-y-1.5">
+                  <Label htmlFor="applicantCpf">CPF *</Label>
+                  <MaskedInput id="applicantCpf" type="cpf" value={customFormData.applicantCpf || citizen?.cpf || ''} onChange={(e) => updateField('applicantCpf', e.target.value)} placeholder={getMaskPlaceholder('cpf')} required />
+                </div>
+                <div className="space-y-1.5">
+                  <Label htmlFor="applicantPhone">Telefone *</Label>
+                  <MaskedInput id="applicantPhone" type="phone" value={customFormData.applicantPhone || citizen?.phone || ''} onChange={(e) => updateField('applicantPhone', e.target.value)} placeholder={getMaskPlaceholder('phone')} required />
+                </div>
+                <div className="space-y-1.5 sm:col-span-2">
+                  <Label htmlFor="applicantEmail">E-mail *</Label>
+                  <Input id="applicantEmail" type="email" value={customFormData.applicantEmail || citizen?.email || ''} onChange={(e) => updateField('applicantEmail', e.target.value)} required />
+                </div>
+              </div>
+            )}
+
+            {/* perguntas do serviço */}
+            {activeFormFields && activeFormFields.length > 0 && (
+              <ServiceFormRenderer
+                fields={activeFormFields}
+                formData={customFormData}
+                onChange={updateField}
+                isFieldPrefilled={isFieldPrefilled}
+                title={selectedProgram ? 'Mais informações' : 'Sobre o pedido'}
+              />
+            )}
+
+            {/* descrição: obrigatória só quando o serviço não tem perguntas próprias */}
+            <div className="space-y-1.5">
+              <Label htmlFor="description">
+                {hasOwnQuestions ? 'Quer acrescentar algo? (opcional)' : 'Conte o que você precisa *'}
+              </Label>
+              <Textarea
+                id="description"
+                placeholder={hasOwnQuestions ? 'Algum detalhe que ajude a equipe' : 'Ex.: onde fica, desde quando acontece, o que você precisa'}
+                value={description}
+                onChange={(e) => setDescription(e.target.value)}
+                rows={hasOwnQuestions ? 3 : 5}
+                className="resize-none"
+              />
+            </div>
+
+            {/* localização: obrigatória em alguns serviços; nos outros, só se a pessoa quiser */}
+            {requiresSpecificLocation || showLocation ? (
+              <LocationPicker
+                value={locationData}
+                onChange={setLocationData}
+                required={Boolean(requiresSpecificLocation)}
+                serviceName={service?.name}
+              />
+            ) : (
+              <button type="button" onClick={() => setShowLocation(true)} className="text-sm font-medium text-blue-600 hover:underline">
+                + Marcar o local no mapa (opcional)
+              </button>
+            )}
+
+            {/* documentos */}
+            {docsToSend.length > 0 && (
+              <div className="space-y-3 border-t pt-5">
                 <div>
-                  <CardTitle className="text-lg text-green-900">Programa Selecionado</CardTitle>
-                  <CardDescription className="mt-1 text-green-700">
-                    {selectedProgram.name}
-                  </CardDescription>
+                  <h3 className="font-medium text-gray-900">Documentos</h3>
+                  <p className="text-sm text-gray-500">Foto ou arquivo de cada um.</p>
                 </div>
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={() => setSelectedProgram(null)}
-                  className="text-green-700 hover:text-green-900"
-                >
-                  Alterar
-                </Button>
-              </div>
-            </CardHeader>
-          </Card>
-        )}
-
-        {/* Formulário de Solicitação - Mostrar só se não for inscrição OU se programa foi selecionado */}
-        {(!isProgramEnrollment || selectedProgram) && (
-          <form onSubmit={handleSubmit}>
-            <Card>
-            <CardHeader>
-              <CardTitle>Dados da Solicitação</CardTitle>
-              <CardDescription>
-                Forneça os detalhes da sua solicitação
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              {/* Aviso de Pré-preenchimento */}
-              {hasPrefilledData && (
-                <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 flex items-start gap-3">
-                  <UserCheck className="h-5 w-5 text-blue-600 flex-shrink-0 mt-0.5" />
-                  <div className="flex-1">
-                    <p className="text-sm font-medium text-blue-900">
-                      Dados pré-preenchidos automaticamente
-                    </p>
-                    <p className="text-xs text-blue-700 mt-1">
-                      {prefilledMessage}
-                    </p>
-                  </div>
-                </div>
-              )}
-
-              {/* Descrição do Problema */}
-              <div className="space-y-2">
-                <Label htmlFor="description">
-                  Descrição do Problema *
-                </Label>
-                <Textarea
-                  id="description"
-                  placeholder="Descreva detalhadamente sua solicitação..."
-                  value={description}
-                  onChange={(e) => setDescription(e.target.value)}
-                  required
-                  rows={5}
-                  className="resize-none"
-                />
-                <p className="text-xs text-gray-500">
-                  Seja o mais específico possível para agilizar o atendimento
-                </p>
-              </div>
-
-              {/* ✅ NOVO: Seletor de Localização com Auto-Captura GPS */}
-              <div className="pt-4 border-t">
-                <LocationPicker
-                  value={locationData}
-                  onChange={setLocationData}
-                  required={requiresSpecificLocation}
-                  serviceName={service?.name}
-                  autoCapture={true}
-                />
-              </div>
-
-              {/* Upload de Documentos Exigidos pelo Serviço */}
-              {!selectedProgram && service && service.requiresDocuments && service.requiredDocuments && Array.isArray(service.requiredDocuments) && service.requiredDocuments.length > 0 && (
-                <div className="space-y-4 pt-4 border-t">
-                  <h3 className="font-medium text-gray-900 flex items-center gap-2">
-                    <Upload className="h-5 w-5 text-blue-600" />
-                    Documentos Necessários
-                  </h3>
-                  <p className="text-sm text-muted-foreground">
-                    Faça o upload dos documentos solicitados para completar sua solicitação
-                  </p>
-
-                  {Array.isArray(service.requiredDocuments) && service.requiredDocuments.map((doc: any, index: number) => {
-                    const docId = typeof doc === 'string' ? doc : (doc.id || doc.name || `doc-${index}`);
-                    const uploadedFile = uploadedFiles[docId];
-
-                    // Normalizar configuração do documento
-                    const documentConfig = normalizeDocumentConfig(doc);
-
-                    return (
-                      <div key={docId}>
-                        <DocumentUpload
-                          documentConfig={documentConfig}
-                          value={uploadedFile || null}
-                          onChange={(file) => {
-                            if (file) {
-                              handleFileUpload(docId, file);
-                            } else {
-                              handleRemoveFile(docId);
-                            }
-                          }}
-                        />
-                      </div>
-                    );
-                  })}
-                </div>
-              )}
-
-              {/* Upload de Documentos Exigidos pelo Programa */}
-              {selectedProgram && selectedProgram.requiredDocuments && Array.isArray(selectedProgram.requiredDocuments) && selectedProgram.requiredDocuments.length > 0 && (
-                <div className="space-y-4 pt-4 border-t">
-                  <h3 className="font-medium text-gray-900 flex items-center gap-2">
-                    <Upload className="h-5 w-5 text-blue-600" />
-                    Documentos Necessários
-                  </h3>
-                  <p className="text-sm text-muted-foreground">
-                    Faça o upload dos documentos solicitados para completar sua inscrição
-                  </p>
-
-                  {Array.isArray(selectedProgram.requiredDocuments) && selectedProgram.requiredDocuments.map((doc: any, index: number) => {
-                    const docId = doc.id || doc.name || `doc-${index}`;
-                    const uploadedFile = uploadedFiles[docId];
-
-                    // Normalizar configuração do documento
-                    const documentConfig = normalizeDocumentConfig(doc);
-
-                    return (
-                      <div key={docId}>
-                        <DocumentUpload
-                          documentConfig={documentConfig}
-                          value={uploadedFile || null}
-                          onChange={(file) => {
-                            if (file) {
-                              handleFileUpload(docId, file);
-                            } else {
-                              handleRemoveFile(docId);
-                            }
-                          }}
-                        />
-                      </div>
-                    );
-                  })}
-                </div>
-              )}
-
-              {/* Campos Básicos para Inscrição em Programa */}
-              {selectedProgram && (
-                <div className="space-y-4 pt-4 border-t">
-                  <h3 className="font-medium text-gray-900">Dados Básicos do Inscrito</h3>
-
-                  {/* Nome Completo */}
-                  <div className="space-y-2">
-                    <Label htmlFor="applicantName">
-                      Nome Completo <span className="text-red-500">*</span>
-                    </Label>
-                    <Input
-                      id="applicantName"
-                      type="text"
-                      value={customFormData.applicantName || citizen?.name || ''}
-                      onChange={(e) => updateField('applicantName', e.target.value)}
-                      placeholder="Seu nome completo"
-                      required
+                {docsToSend.map((doc: any, index: number) => {
+                  const docId = typeof doc === 'string' ? doc : doc.id || doc.name || `doc-${index}`;
+                  return (
+                    <DocumentUpload
+                      key={docId}
+                      documentConfig={normalizeDocumentConfig(doc)}
+                      value={uploadedFiles[docId] || null}
+                      onChange={(file) => (file ? handleFileUpload(docId, file) : handleRemoveFile(docId))}
                     />
-                  </div>
-
-                  {/* CPF */}
-                  <div className="space-y-2">
-                    <Label htmlFor="applicantCpf">
-                      CPF <span className="text-red-500">*</span>
-                    </Label>
-                    <MaskedInput
-                      id="applicantCpf"
-                      type="cpf"
-                      value={customFormData.applicantCpf || citizen?.cpf || ''}
-                      onChange={(e) => updateField('applicantCpf', e.target.value)}
-                      placeholder={getMaskPlaceholder('cpf')}
-                      required
-                    />
-                  </div>
-
-                  {/* Email */}
-                  <div className="space-y-2">
-                    <Label htmlFor="applicantEmail">
-                      E-mail <span className="text-red-500">*</span>
-                    </Label>
-                    <Input
-                      id="applicantEmail"
-                      type="email"
-                      value={customFormData.applicantEmail || citizen?.email || ''}
-                      onChange={(e) => updateField('applicantEmail', e.target.value)}
-                      placeholder="seu@email.com"
-                      required
-                    />
-                  </div>
-
-                  {/* Telefone */}
-                  <div className="space-y-2">
-                    <Label htmlFor="applicantPhone">
-                      Telefone <span className="text-red-500">*</span>
-                    </Label>
-                    <MaskedInput
-                      id="applicantPhone"
-                      type="phone"
-                      value={customFormData.applicantPhone || citizen?.phone || ''}
-                      onChange={(e) => updateField('applicantPhone', e.target.value)}
-                      placeholder={getMaskPlaceholder('phone')}
-                      required
-                    />
-                  </div>
-                </div>
-              )}
-
-              {/* Todos os Campos do Formulário (citizen_* + customizados) */}
-              {activeFormFields && activeFormFields.length > 0 && (
-                <ServiceFormRenderer
-                  fields={activeFormFields}
-                  formData={customFormData}
-                  onChange={updateField}
-                  isFieldPrefilled={isFieldPrefilled}
-                  title={selectedProgram ? 'Informações Adicionais' : 'Dados do Serviço'}
-                />
-              )}
-
-              {/* Botões de Ação */}
-              <div className="flex flex-col sm:flex-row gap-3 pt-4">
-                <Button
-                  type="button"
-                  variant="outline"
-                  onClick={() => router.back()}
-                  disabled={submitting}
-                  className="w-full sm:flex-1 order-2 sm:order-1"
-                >
-                  Cancelar
-                </Button>
-                <Button
-                  type="submit"
-                  disabled={submitting}
-                  className="w-full sm:flex-1 order-1 sm:order-2"
-                >
-                  {submitting ? (
-                    <>
-                      <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                      Enviando...
-                    </>
-                  ) : (
-                    <>
-                      <Send className="h-4 w-4 mr-2" />
-                      Enviar Solicitação
-                    </>
-                  )}
-                </Button>
+                  );
+                })}
               </div>
-            </CardContent>
-          </Card>
-        </form>
-        )}
+            )}
 
-        {/* Avisos - Mostrar só se não for inscrição OU se programa foi selecionado */}
-        {(!isProgramEnrollment || selectedProgram) && (
-          <Card className="bg-blue-50 border-blue-200">
-            <CardContent className="p-4">
-              <div className="flex gap-3">
-                <CheckCircle className="h-5 w-5 text-blue-600 flex-shrink-0 mt-0.5" />
-                <div className="text-sm text-blue-900">
-                  <p className="font-medium mb-1">Após enviar sua solicitação:</p>
-                  <ul className="list-disc list-inside space-y-1 text-blue-800">
-                    <li>Você receberá um número de protocolo</li>
-                    <li>Poderá acompanhar o andamento na página de protocolos</li>
-                    <li>Será notificado sobre atualizações</li>
-                  </ul>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
+            <div className="space-y-2 border-t pt-5">
+              <Button type="submit" size="lg" disabled={submitting} className="h-12 w-full text-base">
+                {submitting ? <Loader2 className="mr-2 h-5 w-5 animate-spin" /> : <Send className="mr-2 h-5 w-5" />}
+                {submitting ? 'Enviando...' : 'Enviar pedido'}
+              </Button>
+              <p className="text-center text-xs text-gray-500">Você recebe um número e acompanha tudo em Meus pedidos.</p>
+            </div>
+          </form>
         )}
       </div>
     </CitizenLayout>

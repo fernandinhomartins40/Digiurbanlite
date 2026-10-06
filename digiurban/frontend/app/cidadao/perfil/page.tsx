@@ -1,876 +1,507 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+/**
+ * Meu perfil — uma coluna:
+ *   1. Quem sou eu + nível (Bronze/Prata/Ouro) e o que falta para subir
+ *   2. Dados pessoais e endereço (lista; "Editar" abre o formulário)
+ *   3. Senha (troca de verdade em /citizen/auth/change-password — antes o
+ *      botão só fechava o formulário e não trocava nada)
+ */
+
+import { useEffect, useState } from 'react';
+import Link from 'next/link';
+import { toast } from 'sonner';
+import { Check, ChevronRight, Eye, EyeOff, Loader2, Pencil } from 'lucide-react';
 import { CitizenLayout } from '@/components/citizen/CitizenLayout';
-import { CitizenAccessLevelCard } from '@/components/citizen/CitizenAccessLevelCard';
 import { useCitizenAuth } from '@/contexts/CitizenAuthContext';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { MaskedInput } from '@/components/ui/masked-input';
 import { ModernMaskedInput, formatValue } from '@/components/ui/modern-masked-input';
 import { useViaCEP, formatCEP, isValidCEP } from '@/hooks/useViaCEP';
-import { Loader2, AlertCircle, CheckCircle } from 'lucide-react';
-import {
-  User,
-  Mail,
-  Phone,
-  MapPin,
-  Key,
-  CheckCircle2,
-  Shield,
-  Calendar,
-  Building2,
-  Edit,
-  Eye,
-  EyeOff,
-  Search
-} from 'lucide-react';
+import { cn } from '@/lib/utils';
+import { citizenDocumentLabel } from '@/lib/citizen-document-types';
+import type { CitizenAccessLevelSummary } from '@/types/citizen-access';
+
+const MARITAL = ['Solteiro(a)', 'Casado(a)', 'Divorciado(a)', 'Viúvo(a)', 'União Estável'];
+const INCOME = ['Até 1 salário mínimo', '1 a 2 salários mínimos', '2 a 3 salários mínimos', '3 a 5 salários mínimos', 'Acima de 5 salários mínimos'];
+const SELECT_CLASS =
+  'flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring';
+
+const LEVEL: Record<string, { label: string; className: string }> = {
+  GOLD: { label: 'Nível Ouro', className: 'bg-amber-100 text-amber-800' },
+  SILVER: { label: 'Nível Prata', className: 'bg-slate-200 text-slate-800' },
+  BRONZE: { label: 'Nível Bronze', className: 'bg-orange-100 text-orange-800' },
+};
+
+const PASSWORD_RULES = [
+  { test: (v: string) => v.length >= 8, label: '8 caracteres ou mais' },
+  { test: (v: string) => /[A-Z]/.test(v), label: 'uma letra maiúscula' },
+  { test: (v: string) => /[a-z]/.test(v), label: 'uma letra minúscula' },
+  { test: (v: string) => /\d/.test(v), label: 'um número' },
+  { test: (v: string) => /[!@#$%^&*(),.?":{}|<>]/.test(v), label: 'um símbolo (ex.: ! @ #)' },
+];
+
+function Row({ label, value }: { label: string; value?: string | null }) {
+  return (
+    <div className="flex flex-col gap-0.5 py-2.5 sm:flex-row sm:gap-4">
+      <dt className="text-sm text-gray-500 sm:w-44 sm:shrink-0">{label}</dt>
+      <dd className={cn('text-sm break-words', value ? 'text-gray-900' : 'text-gray-400')}>{value || 'Não informado'}</dd>
+    </div>
+  );
+}
+
+function Section({ title, action, children }: { title: string; action?: React.ReactNode; children: React.ReactNode }) {
+  return (
+    <section className="rounded-2xl border bg-white p-4 sm:p-6">
+      <div className="mb-2 flex items-center justify-between gap-3">
+        <h2 className="text-base font-semibold text-gray-900">{title}</h2>
+        {action}
+      </div>
+      {children}
+    </section>
+  );
+}
+
+function Field({ id, label, children, wide }: { id: string; label: string; children: React.ReactNode; wide?: boolean }) {
+  return (
+    <div className={cn('space-y-1.5', wide && 'sm:col-span-2')}>
+      <Label htmlFor={id}>{label}</Label>
+      {children}
+    </div>
+  );
+}
 
 export default function PerfilPage() {
-  const { citizen, updateProfile } = useCitizenAuth();
+  const { citizen, updateProfile, apiRequest } = useCitizenAuth();
   const { searchByCEP, loading: cepLoading, error: cepError, clearError } = useViaCEP();
+  const [accessLevel, setAccessLevel] = useState<CitizenAccessLevelSummary | null>(null);
   const [isEditing, setIsEditing] = useState(false);
-  const [isChangingPassword, setIsChangingPassword] = useState(false);
-  const [showCurrentPassword, setShowCurrentPassword] = useState(false);
-  const [showNewPassword, setShowNewPassword] = useState(false);
-  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
-  const [cepInputValue, setCepInputValue] = useState('');
   const [isSaving, setIsSaving] = useState(false);
-  const [saveMessage, setSaveMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
+  const [formError, setFormError] = useState<string | null>(null);
+  const [changingPassword, setChangingPassword] = useState(false);
+  const [savingPassword, setSavingPassword] = useState(false);
+  const [showPasswords, setShowPasswords] = useState(false);
+  const [passwordError, setPasswordError] = useState<string | null>(null);
+  const [passwordData, setPasswordData] = useState({ currentPassword: '', newPassword: '', confirmPassword: '' });
 
-  // ✅ PADRONIZADO: Formulário usa nomenclatura do banco (português)
-  const [formData, setFormData] = useState({
-    name: '',
-    email: '',
-    phone: '',
-    phoneSecondary: '',
-    birthDate: '',
-    rg: '',
-    motherName: '',
-    maritalStatus: '',
-    occupation: '',
-    familyIncome: '',
-    cep: '',
-    logradouro: '',
-    numero: '',
-    complemento: '',
-    bairro: '',
-    cidade: '',
-    uf: '',
-    pontoReferencia: ''
-  });
+  const emptyForm = {
+    name: '', email: '', phone: '', phoneSecondary: '', birthDate: '', rg: '', motherName: '', maritalStatus: '',
+    occupation: '', familyIncome: '', cep: '', logradouro: '', numero: '', complemento: '', bairro: '', cidade: '',
+    uf: '', pontoReferencia: '',
+  };
+  const [formData, setFormData] = useState(emptyForm);
+  const set = (key: keyof typeof emptyForm) => (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) =>
+    setFormData((prev) => ({ ...prev, [key]: e.target.value }));
 
-  const [passwordData, setPasswordData] = useState({
-    currentPassword: '',
-    newPassword: '',
-    confirmPassword: ''
-  });
+  const fillFromCitizen = () => {
+    if (!citizen) return;
+    setFormData({
+      name: citizen.name || '',
+      email: citizen.email || '',
+      phone: formatValue(citizen.phone || '', 'phone'),
+      phoneSecondary: formatValue(citizen.phoneSecondary || '', 'phone'),
+      birthDate: citizen.birthDate ? new Date(citizen.birthDate).toISOString().split('T')[0] : '',
+      rg: formatValue(citizen.rg || '', 'rg'),
+      motherName: citizen.motherName || '',
+      maritalStatus: citizen.maritalStatus || '',
+      occupation: citizen.occupation || '',
+      familyIncome: citizen.familyIncome || '',
+      cep: citizen.address?.cep || '',
+      logradouro: citizen.address?.logradouro || '',
+      numero: citizen.address?.numero || '',
+      complemento: citizen.address?.complemento || '',
+      bairro: citizen.address?.bairro || '',
+      cidade: citizen.address?.cidade || '',
+      uf: citizen.address?.uf || '',
+      pontoReferencia: citizen.address?.pontoReferencia || '',
+    });
+  };
 
-  const verificationStatus = citizen?.verificationStatus || 'PENDING';
-  const accountStatus =
-    verificationStatus === 'GOLD'
-      ? {
-          title: 'Conta Ouro',
-          description: 'Seu cadastro atende aos critérios máximos e possui biometria facial confirmada',
-          badge: 'Status: Ouro',
-        }
-      : verificationStatus === 'VERIFIED'
-        ? {
-            title: 'Conta Verificada',
-            description: 'Seu cadastro já foi validado e está no nível Prata',
-            badge: 'Status: Prata',
-          }
-        : verificationStatus === 'REJECTED'
-          ? {
-              title: 'Cadastro com pendências',
-              description: 'Seu cadastro precisa de ajuste antes de voltar ao fluxo de verificação',
-              badge: 'Status: Revisar',
-            }
-          : {
-              title: 'Conta em análise',
-              description: 'Seu cadastro básico foi recebido e aguarda validação da administração',
-              badge: 'Status: Bronze',
-            };
+  useEffect(fillFromCitizen, [citizen]); // eslint-disable-line react-hooks/exhaustive-deps
 
-  // ✅ PADRONIZADO: Carrega dados do cidadão usando nomenclatura do banco
-  // ✅ FORMATAÇÃO: Aplica máscaras aos valores vindos do backend
   useEffect(() => {
-    if (citizen) {
-      setFormData({
-        name: citizen.name || '',
-        email: citizen.email || '',
-        phone: formatValue(citizen.phone || '', 'phone'),
-        phoneSecondary: formatValue(citizen.phoneSecondary || '', 'phone'),
-        birthDate: citizen.birthDate ? new Date(citizen.birthDate).toISOString().split('T')[0] : '',
-        rg: formatValue(citizen.rg || '', 'rg'),
-        motherName: citizen.motherName || '',
-        maritalStatus: citizen.maritalStatus || '',
-        occupation: citizen.occupation || '',
-        familyIncome: citizen.familyIncome || '',
-        cep: citizen.address?.cep || '',
-        logradouro: citizen.address?.logradouro || '',
-        numero: citizen.address?.numero || '',
-        complemento: citizen.address?.complemento || '',
-        bairro: citizen.address?.bairro || '',
-        cidade: citizen.address?.cidade || '',
-        uf: citizen.address?.uf || '',
-        pontoReferencia: citizen.address?.pontoReferencia || ''
-      });
-      setCepInputValue(citizen.address?.cep || '');
-    }
-  }, [citizen]);
+    let active = true;
+    apiRequest('/citizen/auth/access-level')
+      .then((response: any) => active && setAccessLevel(response?.data?.accessLevel || null))
+      .catch(() => undefined);
+    return () => {
+      active = false;
+    };
+  }, [apiRequest, citizen?.updatedAt]);
 
-  // ✅ PADRONIZADO: Busca CEP e preenche com nomenclatura do banco
   const handleCEPChange = async (value: string) => {
-    // Formata o CEP enquanto digita
     const formatted = formatCEP(value);
-    setCepInputValue(formatted);
-    setFormData({ ...formData, cep: formatted });
+    setFormData((prev) => ({ ...prev, cep: formatted }));
     clearError();
-
-    // Só busca se o CEP estiver completo
     if (isValidCEP(formatted)) {
-      const addressData = await searchByCEP(formatted);
-      if (addressData) {
-        // ✅ PADRONIZADO: useViaCEP retorna dados em inglês, convertemos para português
-        setFormData(prev => ({
+      const address = await searchByCEP(formatted);
+      if (address) {
+        setFormData((prev) => ({
           ...prev,
-          cep: addressData.zipCode,
-          logradouro: addressData.street,
-          bairro: addressData.neighborhood,
-          cidade: addressData.city,
-          uf: addressData.state
+          cep: address.zipCode,
+          logradouro: address.street,
+          bairro: address.neighborhood,
+          cidade: address.city,
+          uf: address.state,
         }));
       }
     }
   };
 
-  // ✅ PADRONIZADO: Salva dados com nomenclatura do banco
   const handleSave = async () => {
+    setFormError(null);
+    if (formData.name.trim().length < 2) return setFormError('Informe o nome completo.');
+    if (!formData.email.includes('@')) return setFormError('Informe um e-mail válido.');
     try {
       setIsSaving(true);
-      setSaveMessage(null);
-
-      // Validações básicas
-      if (!formData.name || formData.name.length < 2) {
-        setSaveMessage({ type: 'error', text: 'Nome deve ter pelo menos 2 caracteres' });
-        return;
-      }
-
-      if (!formData.email || !formData.email.includes('@')) {
-        setSaveMessage({ type: 'error', text: 'Email inválido' });
-        return;
-      }
-
-      // ✅ PADRONIZADO: Preparar dados com nomenclatura do banco
-      // ⚠️ IMPORTANTE: Enviar campos mesmo se vazios para permitir limpeza de dados
-      const updateData = {
-        name: formData.name,
-        email: formData.email,
-        phone: formData.phone?.trim() || undefined,
-        phoneSecondary: formData.phoneSecondary?.trim() || undefined,
+      const trim = (v: string) => v?.trim() || undefined;
+      const result = await updateProfile({
+        name: formData.name.trim(),
+        email: formData.email.trim(),
+        phone: trim(formData.phone),
+        phoneSecondary: trim(formData.phoneSecondary),
         birthDate: formData.birthDate ? new Date(formData.birthDate).toISOString() : undefined,
-        rg: formData.rg?.trim() || undefined,
-        motherName: formData.motherName?.trim() || undefined,
-        maritalStatus: formData.maritalStatus?.trim() || undefined,
-        occupation: formData.occupation?.trim() || undefined,
-        familyIncome: formData.familyIncome?.trim() || undefined,
+        rg: trim(formData.rg),
+        motherName: trim(formData.motherName),
+        maritalStatus: trim(formData.maritalStatus),
+        occupation: trim(formData.occupation),
+        familyIncome: trim(formData.familyIncome),
         address: {
-          cep: formData.cep?.trim() || '',
-          logradouro: formData.logradouro?.trim() || '',
-          numero: formData.numero?.trim() || '',
-          complemento: formData.complemento?.trim() || '',
-          bairro: formData.bairro?.trim() || '',
-          cidade: formData.cidade?.trim() || '',
-          uf: formData.uf?.trim() || '',
-          pontoReferencia: formData.pontoReferencia?.trim() || ''
-        }
-      };
-
-      console.log('[Perfil] Dados sendo enviados para atualização:', updateData);
-      const result = await updateProfile(updateData);
-
+          cep: formData.cep.trim(),
+          logradouro: formData.logradouro.trim(),
+          numero: formData.numero.trim(),
+          complemento: formData.complemento.trim(),
+          bairro: formData.bairro.trim(),
+          cidade: formData.cidade.trim(),
+          uf: formData.uf.trim(),
+          pontoReferencia: formData.pontoReferencia.trim(),
+        },
+      } as any);
       if (result.success) {
-        setSaveMessage({ type: 'success', text: 'Perfil atualizado com sucesso!' });
+        toast.success('Dados atualizados!');
         setIsEditing(false);
-
-        // Limpar mensagem após 3 segundos
-        setTimeout(() => setSaveMessage(null), 3000);
       } else {
-        setSaveMessage({ type: 'error', text: result.message || 'Erro ao atualizar perfil' });
+        setFormError(result.message || 'Não foi possível salvar.');
       }
-    } catch (error) {
-      console.error('Erro ao salvar:', error);
-      setSaveMessage({ type: 'error', text: 'Erro ao atualizar perfil. Tente novamente.' });
+    } catch {
+      setFormError('Não foi possível salvar. Tente de novo.');
     } finally {
       setIsSaving(false);
     }
   };
 
-  const handleChangePassword = () => {
-    // Aqui você integraria com o backend
-    console.log('Alterando senha');
-    setIsChangingPassword(false);
-    setPasswordData({
-      currentPassword: '',
-      newPassword: '',
-      confirmPassword: ''
-    });
+  const handleChangePassword = async () => {
+    setPasswordError(null);
+    if (!passwordData.currentPassword) return setPasswordError('Digite a senha atual.');
+    if (!PASSWORD_RULES.every((rule) => rule.test(passwordData.newPassword))) return setPasswordError('A nova senha ainda não cumpre todas as regras.');
+    if (passwordData.newPassword !== passwordData.confirmPassword) return setPasswordError('A confirmação não é igual à nova senha.');
+    try {
+      setSavingPassword(true);
+      await apiRequest('/citizen/auth/change-password', {
+        method: 'POST',
+        body: JSON.stringify({ currentPassword: passwordData.currentPassword, newPassword: passwordData.newPassword }),
+      });
+      toast.success('Senha trocada!');
+      setChangingPassword(false);
+      setPasswordData({ currentPassword: '', newPassword: '', confirmPassword: '' });
+    } catch (error: any) {
+      setPasswordError(error?.message || 'Não foi possível trocar a senha.');
+    } finally {
+      setSavingPassword(false);
+    }
   };
+
+  /* ---------- nível ---------- */
+  const level = LEVEL[accessLevel?.currentLevel || (citizen?.verificationStatus === 'GOLD' ? 'GOLD' : citizen?.verificationStatus === 'VERIFIED' ? 'SILVER' : 'BRONZE')];
+  const todo: Array<{ label: string; href: string }> = [];
+  if (accessLevel && accessLevel.currentLevel !== 'GOLD') {
+    const gold = accessLevel.goldCriteria;
+    if (!gold.profileComplete || gold.missingProfileFields.length) {
+      todo.push({ label: `Completar dados: ${gold.missingProfileFields.join(', ') || 'perfil'}`, href: '#dados' });
+    }
+    if (gold.missingDocumentTypes.length) {
+      todo.push({
+        label: `Enviar ${gold.missingDocumentTypes.map((type) => citizenDocumentLabel(type)).join(', ')}`,
+        href: '/cidadao/documentos',
+      });
+    }
+    if (!gold.biometricConfirmed) todo.push({ label: 'Cadastrar o rosto (biometria facial)', href: '/cidadao/biometria-facial' });
+  }
+
+  const initials = (citizen?.name || '?').split(' ').filter(Boolean).slice(0, 2).map((p) => p[0]).join('').toUpperCase();
+  const address = citizen?.address;
+  const addressLine = address?.logradouro
+    ? `${address.logradouro}${address.numero ? `, ${address.numero}` : ''}${address.complemento ? ` — ${address.complemento}` : ''}`
+    : '';
+  const cityLine = [address?.bairro, address?.cidade && `${address.cidade}${address.uf ? `/${address.uf}` : ''}`, address?.cep].filter(Boolean).join(' · ');
 
   return (
     <CitizenLayout>
-      <div className="space-y-6">
-        {/* Header */}
-        <div>
-          <h1 className="text-2xl font-bold text-gray-900">Meu Perfil</h1>
-          <p className="text-gray-600 mt-1">Gerencie suas informações pessoais e configurações</p>
-        </div>
-
-        {/* Status da Conta */}
-        <Card className="border-blue-200 bg-blue-50">
-          <CardContent className="p-4 sm:p-6">
-            <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3 sm:gap-4">
-              <div className="bg-blue-100 p-2.5 sm:p-3 rounded-full">
-                <Shield className="h-6 w-6 sm:h-8 sm:w-8 text-blue-600" />
-              </div>
-              <div className="flex-1 min-w-0">
-                <h3 className="text-base sm:text-lg font-semibold text-blue-900">{accountStatus.title}</h3>
-                <p className="text-xs sm:text-sm text-blue-700">
-                  {accountStatus.description}
-                </p>
-              </div>
-              <div className="flex items-center gap-2 bg-blue-100 px-3 py-1.5 sm:px-4 sm:py-2 rounded-lg self-end sm:self-auto">
-                <CheckCircle2 className="h-4 w-4 sm:h-5 sm:w-5 text-blue-600" />
-                <span className="text-xs sm:text-sm font-medium text-blue-900">{accountStatus.badge}</span>
+      <div className="mx-auto w-full max-w-2xl space-y-5">
+        {/* 1. quem sou eu */}
+        <section className="rounded-2xl border bg-white p-4 sm:p-6">
+          <div className="flex items-center gap-4">
+            <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-full bg-blue-600 text-lg font-semibold text-white">
+              {initials}
+            </div>
+            <div className="min-w-0 flex-1">
+              <h1 className="truncate text-xl font-bold text-gray-900">{citizen?.name}</h1>
+              <div className="mt-1 flex flex-wrap items-center gap-2 text-sm text-gray-500">
+                <span>CPF {citizen?.cpf}</span>
+                {level && <span className={cn('rounded-full px-2.5 py-0.5 text-xs font-medium', level.className)}>{level.label}</span>}
               </div>
             </div>
-          </CardContent>
-        </Card>
+          </div>
 
-        <CitizenAccessLevelCard />
+          {todo.length > 0 && (
+            <div className="mt-4 border-t pt-4">
+              <p className="text-sm font-medium text-gray-900">Para chegar ao nível Ouro</p>
+              <p className="mb-2 text-xs text-gray-500">Com o Ouro, mais serviços ficam liberados sem ir à prefeitura.</p>
+              <ul className="space-y-1">
+                {todo.map((item) => (
+                  <li key={item.label}>
+                    <Link href={item.href} className="flex items-center justify-between gap-3 rounded-lg px-2 py-2 text-sm text-blue-700 hover:bg-blue-50">
+                      <span>{item.label}</span>
+                      <ChevronRight className="h-4 w-4 shrink-0" />
+                    </Link>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
+        </section>
 
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          {/* Informações Pessoais */}
-          <div className="lg:col-span-2 space-y-4 sm:space-y-6">
-            {/* Mensagem de feedback */}
-            {saveMessage && (
-              <div className={`p-4 rounded-lg flex items-center gap-3 ${
-                saveMessage.type === 'success'
-                  ? 'bg-green-50 border border-green-200'
-                  : 'bg-red-50 border border-red-200'
-              }`}>
-                {saveMessage.type === 'success' ? (
-                  <CheckCircle className="h-5 w-5 text-green-600 flex-shrink-0" />
-                ) : (
-                  <AlertCircle className="h-5 w-5 text-red-600 flex-shrink-0" />
-                )}
-                <p className={`text-sm font-medium ${
-                  saveMessage.type === 'success' ? 'text-green-800' : 'text-red-800'
-                }`}>
-                  {saveMessage.text}
-                </p>
+        {/* 2. dados */}
+        {isEditing ? (
+          <section id="dados" className="space-y-5 rounded-2xl border bg-white p-4 sm:p-6">
+            <h2 className="text-base font-semibold text-gray-900">Editar meus dados</h2>
+
+            <div className="grid gap-4 sm:grid-cols-2">
+              <Field id="name" label="Nome completo" wide>
+                <Input id="name" value={formData.name} onChange={set('name')} autoComplete="name" />
+              </Field>
+              <Field id="email" label="E-mail" wide>
+                <Input id="email" type="email" value={formData.email} onChange={set('email')} autoComplete="email" />
+              </Field>
+              <Field id="phone" label="Telefone">
+                <ModernMaskedInput id="phone" type="phone" value={formData.phone} onChange={set('phone')} autoComplete="tel" />
+              </Field>
+              <Field id="phoneSecondary" label="Outro telefone (opcional)">
+                <ModernMaskedInput id="phoneSecondary" type="phone" value={formData.phoneSecondary} onChange={set('phoneSecondary')} />
+              </Field>
+              <Field id="birthDate" label="Data de nascimento">
+                <Input id="birthDate" type="date" value={formData.birthDate} onChange={set('birthDate')} />
+              </Field>
+              <Field id="rg" label="RG">
+                <ModernMaskedInput id="rg" type="rg" value={formData.rg} onChange={set('rg')} />
+              </Field>
+              <Field id="motherName" label="Nome da mãe" wide>
+                <Input id="motherName" value={formData.motherName} onChange={set('motherName')} />
+              </Field>
+              <Field id="maritalStatus" label="Estado civil">
+                <select id="maritalStatus" value={formData.maritalStatus} onChange={set('maritalStatus')} className={SELECT_CLASS}>
+                  <option value="">Selecione</option>
+                  {MARITAL.map((option) => <option key={option}>{option}</option>)}
+                </select>
+              </Field>
+              <Field id="familyIncome" label="Renda da família">
+                <select id="familyIncome" value={formData.familyIncome} onChange={set('familyIncome')} className={SELECT_CLASS}>
+                  <option value="">Selecione</option>
+                  {INCOME.map((option) => <option key={option}>{option}</option>)}
+                </select>
+              </Field>
+              <Field id="occupation" label="Profissão" wide>
+                <Input id="occupation" value={formData.occupation} onChange={set('occupation')} />
+              </Field>
+            </div>
+
+            <div className="border-t pt-5">
+              <h3 className="mb-4 text-sm font-semibold text-gray-900">Endereço</h3>
+              <div className="grid gap-4 sm:grid-cols-2">
+                <Field id="cep" label="CEP">
+                  <div className="relative">
+                    <ModernMaskedInput id="cep" type="cep" value={formData.cep} onChange={(e) => handleCEPChange(e.target.value)} />
+                    {cepLoading && <Loader2 className="absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 animate-spin text-blue-600" />}
+                  </div>
+                  {cepError ? (
+                    <p className="text-xs text-red-600">{cepError}</p>
+                  ) : (
+                    <p className="text-xs text-gray-500">Digite o CEP e o endereço se completa sozinho.</p>
+                  )}
+                </Field>
+                <div className="hidden sm:block" />
+                <Field id="logradouro" label="Rua" wide>
+                  <Input id="logradouro" value={formData.logradouro} onChange={set('logradouro')} />
+                </Field>
+                <Field id="numero" label="Número">
+                  <Input id="numero" value={formData.numero} onChange={set('numero')} inputMode="numeric" />
+                </Field>
+                <Field id="complemento" label="Complemento (opcional)">
+                  <Input id="complemento" value={formData.complemento} onChange={set('complemento')} />
+                </Field>
+                <Field id="bairro" label="Bairro">
+                  <Input id="bairro" value={formData.bairro} onChange={set('bairro')} />
+                </Field>
+                <Field id="cidade" label="Cidade">
+                  <div className="flex gap-2">
+                    <Input id="cidade" value={formData.cidade} onChange={set('cidade')} className="flex-1" />
+                    <Input id="uf" aria-label="Estado" value={formData.uf} onChange={set('uf')} maxLength={2} className="w-16 uppercase" />
+                  </div>
+                </Field>
+                <Field id="pontoReferencia" label="Ponto de referência (opcional)" wide>
+                  <Input id="pontoReferencia" value={formData.pontoReferencia} onChange={set('pontoReferencia')} />
+                </Field>
               </div>
-            )}
+            </div>
 
-            <Card>
-              <CardHeader className="flex-col sm:flex-row items-start sm:items-center gap-3 sm:gap-0 sm:justify-between p-4 sm:p-6">
-                <CardTitle className="text-base sm:text-lg">Informações Pessoais</CardTitle>
-                {!isEditing ? (
-                  <Button size="sm" variant="outline" onClick={() => setIsEditing(true)} className="w-full sm:w-auto">
-                    <Edit className="h-4 w-4 mr-2" />
-                    Editar
-                  </Button>
-                ) : (
-                  <div className="flex gap-2 w-full sm:w-auto">
-                    <Button
-                      size="sm"
-                      variant="outline"
-                      onClick={() => {
-                        setIsEditing(false);
-                        setSaveMessage(null);
-                      }}
-                      className="flex-1 sm:flex-none"
-                      disabled={isSaving}
-                    >
-                      Cancelar
-                    </Button>
-                    <Button
-                      size="sm"
-                      onClick={handleSave}
-                      className="flex-1 sm:flex-none"
-                      disabled={isSaving}
-                    >
-                      {isSaving ? (
-                        <>
-                          <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                          Salvando...
-                        </>
-                      ) : (
-                        'Salvar'
-                      )}
-                    </Button>
-                  </div>
-                )}
-              </CardHeader>
-              <CardContent className="space-y-4 p-4 sm:p-6">
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div>
-                    <Label htmlFor="name">Nome Completo</Label>
-                    <div className="mt-1">
-                      {isEditing ? (
-                        <Input
-                          id="name"
-                          value={formData.name}
-                          onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                        />
-                      ) : (
-                        <div className="flex items-center gap-2 text-gray-900">
-                          <User className="h-4 w-4 text-gray-400" />
-                          {citizen?.name || '-'}
-                        </div>
-                      )}
-                    </div>
-                  </div>
+            {formError && <p role="alert" className="rounded-xl bg-red-50 px-3 py-2 text-sm text-red-700">{formError}</p>}
 
-                  <div>
-                    <Label htmlFor="cpf">CPF</Label>
-                    <div className="mt-1 flex items-center gap-2 text-gray-900">
-                      <Shield className="h-4 w-4 text-gray-400" />
-                      {citizen?.cpf?.replace(/(\d{3})(\d{3})(\d{3})(\d{2})/, '$1.$2.$3-$4') || '-'}
-                    </div>
-                  </div>
+            <div className="flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
+              <Button
+                variant="outline"
+                onClick={() => {
+                  setIsEditing(false);
+                  setFormError(null);
+                  fillFromCitizen();
+                }}
+                disabled={isSaving}
+              >
+                Cancelar
+              </Button>
+              <Button onClick={handleSave} disabled={isSaving}>
+                {isSaving && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                Salvar
+              </Button>
+            </div>
+          </section>
+        ) : (
+          <div id="dados" className="space-y-5">
+            <Section
+              title="Meus dados"
+              action={
+                <Button size="sm" variant="outline" onClick={() => setIsEditing(true)}>
+                  <Pencil className="mr-1.5 h-3.5 w-3.5" />
+                  Editar
+                </Button>
+              }
+            >
+              <dl className="divide-y">
+                <Row label="E-mail" value={citizen?.email} />
+                <Row label="Telefone" value={[citizen?.phone, citizen?.phoneSecondary].filter(Boolean).map((p) => formatValue(p!, 'phone')).join(' · ')} />
+                <Row label="Nascimento" value={citizen?.birthDate ? new Date(citizen.birthDate).toLocaleDateString('pt-BR', { timeZone: 'UTC' }) : null} />
+                <Row label="RG" value={citizen?.rg ? formatValue(citizen.rg, 'rg') : null} />
+                <Row label="Nome da mãe" value={citizen?.motherName} />
+                <Row label="Estado civil" value={citizen?.maritalStatus} />
+                <Row label="Profissão" value={citizen?.occupation} />
+                <Row label="Renda da família" value={citizen?.familyIncome} />
+              </dl>
+            </Section>
 
-                  <div>
-                    <Label htmlFor="email">E-mail</Label>
-                    <div className="mt-1">
-                      {isEditing ? (
-                        <Input
-                          id="email"
-                          type="email"
-                          value={formData.email}
-                          onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                        />
-                      ) : (
-                        <div className="flex items-center gap-2 text-gray-900">
-                          <Mail className="h-4 w-4 text-gray-400" />
-                          {citizen?.email || '-'}
-                        </div>
-                      )}
-                    </div>
-                  </div>
-
-                  <div>
-                    <Label htmlFor="phone">Telefone</Label>
-                    <div className="mt-1">
-                      {isEditing ? (
-                        <MaskedInput
-                          id="phone"
-                          type="phone"
-                          value={formData.phone}
-                          onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
-                          placeholder="(00) 00000-0000"
-                        />
-                      ) : (
-                        <div className="flex items-center gap-2 text-gray-900">
-                          <Phone className="h-4 w-4 text-gray-400" />
-                          {citizen?.phone || '-'}
-                        </div>
-                      )}
-                    </div>
-                  </div>
-
-                  <div>
-                    <Label htmlFor="phoneSecondary">Telefone Secundário</Label>
-                    <div className="mt-1">
-                      {isEditing ? (
-                        <ModernMaskedInput
-                          id="phoneSecondary"
-                          type="phone"
-                          value={formData.phoneSecondary}
-                          onChange={(e) => {
-                            console.log('📱 Telefone Secundário onChange:', e.target.value);
-                            setFormData({ ...formData, phoneSecondary: e.target.value });
-                          }}
-                          placeholder="(00) 00000-0000"
-                        />
-                      ) : (
-                        <div className="flex items-center gap-2 text-gray-900">
-                          <Phone className="h-4 w-4 text-gray-400" />
-                          {citizen?.phoneSecondary || '-'}
-                        </div>
-                      )}
-                    </div>
-                  </div>
-
-                  <div>
-                    <Label htmlFor="birthDate">Data de Nascimento</Label>
-                    <div className="mt-1">
-                      {isEditing ? (
-                        <Input
-                          id="birthDate"
-                          type="date"
-                          value={formData.birthDate}
-                          onChange={(e) => setFormData({ ...formData, birthDate: e.target.value })}
-                        />
-                      ) : (
-                        <div className="flex items-center gap-2 text-gray-900">
-                          <Calendar className="h-4 w-4 text-gray-400" />
-                          {citizen?.birthDate ? new Date(citizen.birthDate).toLocaleDateString('pt-BR') : '-'}
-                        </div>
-                      )}
-                    </div>
-                  </div>
-
-                  <div>
-                    <Label htmlFor="rg">RG</Label>
-                    <div className="mt-1">
-                      {isEditing ? (
-                        <ModernMaskedInput
-                          id="rg"
-                          type="rg"
-                          value={formData.rg}
-                          onChange={(e) => {
-                            console.log('🪪 RG onChange:', e.target.value);
-                            setFormData({ ...formData, rg: e.target.value });
-                          }}
-                          placeholder="00.000.000-0"
-                        />
-                      ) : (
-                        <div className="flex items-center gap-2 text-gray-900">
-                          <Shield className="h-4 w-4 text-gray-400" />
-                          {citizen?.rg || '-'}
-                        </div>
-                      )}
-                    </div>
-                  </div>
-
-                  <div>
-                    <Label htmlFor="motherName">Nome da Mãe</Label>
-                    <div className="mt-1">
-                      {isEditing ? (
-                        <Input
-                          id="motherName"
-                          value={formData.motherName}
-                          onChange={(e) => setFormData({ ...formData, motherName: e.target.value })}
-                          placeholder="Nome completo da mãe"
-                        />
-                      ) : (
-                        <div className="flex items-center gap-2 text-gray-900">
-                          <User className="h-4 w-4 text-gray-400" />
-                          {citizen?.motherName || '-'}
-                        </div>
-                      )}
-                    </div>
-                  </div>
-
-                  <div>
-                    <Label htmlFor="maritalStatus">Estado Civil</Label>
-                    <div className="mt-1">
-                      {isEditing ? (
-                        <select
-                          id="maritalStatus"
-                          value={formData.maritalStatus}
-                          onChange={(e) => setFormData({ ...formData, maritalStatus: e.target.value })}
-                          className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
-                        >
-                          <option value="">Selecione...</option>
-                          <option value="Solteiro(a)">Solteiro(a)</option>
-                          <option value="Casado(a)">Casado(a)</option>
-                          <option value="Divorciado(a)">Divorciado(a)</option>
-                          <option value="Viúvo(a)">Viúvo(a)</option>
-                          <option value="União Estável">União Estável</option>
-                        </select>
-                      ) : (
-                        <p className="text-gray-900">{citizen?.maritalStatus || '-'}</p>
-                      )}
-                    </div>
-                  </div>
-
-                  <div>
-                    <Label htmlFor="occupation">Profissão/Ocupação</Label>
-                    <div className="mt-1">
-                      {isEditing ? (
-                        <Input
-                          id="occupation"
-                          value={formData.occupation}
-                          onChange={(e) => setFormData({ ...formData, occupation: e.target.value })}
-                          placeholder="Sua profissão ou ocupação"
-                        />
-                      ) : (
-                        <p className="text-gray-900">{citizen?.occupation || '-'}</p>
-                      )}
-                    </div>
-                  </div>
-
-                  <div>
-                    <Label htmlFor="familyIncome">Renda Familiar</Label>
-                    <div className="mt-1">
-                      {isEditing ? (
-                        <select
-                          id="familyIncome"
-                          value={formData.familyIncome}
-                          onChange={(e) => setFormData({ ...formData, familyIncome: e.target.value })}
-                          className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
-                        >
-                          <option value="">Selecione...</option>
-                          <option value="Até 1 salário mínimo">Até 1 salário mínimo</option>
-                          <option value="1 a 2 salários mínimos">1 a 2 salários mínimos</option>
-                          <option value="2 a 3 salários mínimos">2 a 3 salários mínimos</option>
-                          <option value="3 a 5 salários mínimos">3 a 5 salários mínimos</option>
-                          <option value="Acima de 5 salários mínimos">Acima de 5 salários mínimos</option>
-                        </select>
-                      ) : (
-                        <p className="text-gray-900">{citizen?.familyIncome || '-'}</p>
-                      )}
-                    </div>
-                  </div>
+            <Section title="Endereço">
+              {addressLine ? (
+                <div className="text-sm text-gray-900">
+                  <p>{addressLine}</p>
+                  <p className="text-gray-600">{cityLine}</p>
+                  {address?.pontoReferencia && <p className="mt-1 text-gray-500">Referência: {address.pontoReferencia}</p>}
                 </div>
-              </CardContent>
-            </Card>
-
-            {/* Endereço */}
-            <Card>
-              <CardHeader className="p-4 sm:p-6">
-                <CardTitle className="text-base sm:text-lg">Endereço</CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-4 p-4 sm:p-6">
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  {/* CEP - Primeiro campo */}
-                  <div className="md:col-span-2">
-                    <Label htmlFor="cep" className="flex items-center gap-2">
-                      CEP
-                      {isEditing && (
-                        <span className="text-xs text-gray-500 font-normal">
-                          (Digite o CEP para preencher automaticamente)
-                        </span>
-                      )}
-                    </Label>
-                    <div className="mt-1">
-                      {isEditing ? (
-                        <div className="relative">
-                          <MaskedInput
-                            id="cep"
-                            type="cep"
-                            placeholder="00000-000"
-                            value={cepInputValue}
-                            onChange={(e) => handleCEPChange(e.target.value)}
-                            className={cepError ? 'border-red-300' : ''}
-                          />
-                          {cepLoading && (
-                            <div className="absolute right-3 top-1/2 -translate-y-1/2">
-                              <Loader2 className="h-4 w-4 animate-spin text-blue-600" />
-                            </div>
-                          )}
-                        </div>
-                      ) : (
-                        <p className="text-gray-900">{citizen?.address?.cep || '-'}</p>
-                      )}
-                      {cepError && isEditing && (
-                        <p className="text-xs text-red-600 mt-1">{cepError}</p>
-                      )}
-                    </div>
-                  </div>
-
-                  {/* Logradouro */}
-                  <div className="md:col-span-2">
-                    <Label htmlFor="street">Logradouro</Label>
-                    <div className="mt-1">
-                      {isEditing ? (
-                        <Input
-                          id="logradouro"
-                          value={formData.logradouro}
-                          onChange={(e) => setFormData({ ...formData, logradouro: e.target.value })}
-                          placeholder="Rua, Avenida, etc."
-                        />
-                      ) : (
-                        <div className="flex items-center gap-2 text-gray-900">
-                          <MapPin className="h-4 w-4 text-gray-400" />
-                          {citizen?.address?.logradouro || '-'}
-                        </div>
-                      )}
-                    </div>
-                  </div>
-
-                  {/* Número */}
-                  <div>
-                    <Label htmlFor="numero">Número</Label>
-                    <div className="mt-1">
-                      {isEditing ? (
-                        <Input
-                          id="numero"
-                          value={formData.numero}
-                          onChange={(e) => setFormData({ ...formData, numero: e.target.value })}
-                          placeholder="123"
-                        />
-                      ) : (
-                        <p className="text-gray-900">{citizen?.address?.numero || '-'}</p>
-                      )}
-                    </div>
-                  </div>
-
-                  {/* Complemento */}
-                  <div>
-                    <Label htmlFor="complemento">Complemento</Label>
-                    <div className="mt-1">
-                      {isEditing ? (
-                        <Input
-                          id="complemento"
-                          value={formData.complemento}
-                          onChange={(e) => setFormData({ ...formData, complemento: e.target.value })}
-                          placeholder="Apto, Bloco, etc. (opcional)"
-                        />
-                      ) : (
-                        <p className="text-gray-900">{citizen?.address?.complemento || '-'}</p>
-                      )}
-                    </div>
-                  </div>
-
-                  {/* Bairro */}
-                  <div>
-                    <Label htmlFor="bairro">Bairro</Label>
-                    <div className="mt-1">
-                      {isEditing ? (
-                        <Input
-                          id="bairro"
-                          value={formData.bairro}
-                          onChange={(e) => setFormData({ ...formData, bairro: e.target.value })}
-                          placeholder="Nome do bairro"
-                        />
-                      ) : (
-                        <p className="text-gray-900">{citizen?.address?.bairro || '-'}</p>
-                      )}
-                    </div>
-                  </div>
-
-                  {/* Cidade */}
-                  <div>
-                    <Label htmlFor="cidade">Cidade</Label>
-                    <div className="mt-1">
-                      {isEditing ? (
-                        <Input
-                          id="cidade"
-                          value={formData.cidade}
-                          onChange={(e) => setFormData({ ...formData, cidade: e.target.value })}
-                          placeholder="Nome da cidade"
-                        />
-                      ) : (
-                        <div className="flex items-center gap-2 text-gray-900">
-                          <Building2 className="h-4 w-4 text-gray-400" />
-                          {citizen?.address?.cidade || '-'}
-                        </div>
-                      )}
-                    </div>
-                  </div>
-
-                  {/* Estado */}
-                  <div>
-                    <Label htmlFor="uf">Estado</Label>
-                    <div className="mt-1">
-                      {isEditing ? (
-                        <Input
-                          id="uf"
-                          value={formData.uf}
-                          onChange={(e) => setFormData({ ...formData, uf: e.target.value.toUpperCase() })}
-                          placeholder="SP"
-                          maxLength={2}
-                        />
-                      ) : (
-                        <p className="text-gray-900">{citizen?.address?.uf || '-'}</p>
-                      )}
-                    </div>
-                  </div>
-
-                  {/* Ponto de Referência */}
-                  <div className="md:col-span-2">
-                    <Label htmlFor="pontoReferencia">Ponto de Referência</Label>
-                    <div className="mt-1">
-                      {isEditing ? (
-                        <Input
-                          id="pontoReferencia"
-                          value={formData.pontoReferencia}
-                          onChange={(e) => setFormData({ ...formData, pontoReferencia: e.target.value })}
-                          placeholder="Ex: Próximo ao mercado central"
-                        />
-                      ) : (
-                        <div className="flex items-center gap-2 text-gray-900">
-                          <MapPin className="h-4 w-4 text-gray-400" />
-                          {citizen?.address?.pontoReferencia || '-'}
-                        </div>
-                      )}
-                    </div>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-
-            {/* Segurança */}
-            <Card>
-              <CardHeader className="p-4 sm:p-6">
-                <CardTitle className="text-base sm:text-lg">Segurança</CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-4 p-4 sm:p-6">
-                {!isChangingPassword ? (
-                  <div>
-                    <Label>Senha</Label>
-                    <div className="mt-1 flex items-center justify-between">
-                      <div className="flex items-center gap-2 text-gray-900">
-                        <Key className="h-4 w-4 text-gray-400" />
-                        <span>••••••••</span>
-                      </div>
-                      <Button
-                        size="sm"
-                        variant="outline"
-                        onClick={() => setIsChangingPassword(true)}
-                      >
-                        Alterar Senha
-                      </Button>
-                    </div>
-                  </div>
-                ) : (
-                  <div className="space-y-4">
-                    <div>
-                      <Label htmlFor="currentPassword">Senha Atual</Label>
-                      <div className="relative">
-                        <Input
-                          id="currentPassword"
-                          type={showCurrentPassword ? "text" : "password"}
-                          value={passwordData.currentPassword}
-                          onChange={(e) => setPasswordData({ ...passwordData, currentPassword: e.target.value })}
-                          className="pr-10"
-                        />
-                        <button
-                          type="button"
-                          onClick={() => setShowCurrentPassword(!showCurrentPassword)}
-                          className="absolute inset-y-0 right-0 pr-3 flex items-center text-gray-400 hover:text-gray-600"
-                        >
-                          {showCurrentPassword ? (
-                            <EyeOff className="h-4 w-4" />
-                          ) : (
-                            <Eye className="h-4 w-4" />
-                          )}
-                        </button>
-                      </div>
-                    </div>
-                    <div>
-                      <Label htmlFor="newPassword">Nova Senha</Label>
-                      <div className="relative">
-                        <Input
-                          id="newPassword"
-                          type={showNewPassword ? "text" : "password"}
-                          value={passwordData.newPassword}
-                          onChange={(e) => setPasswordData({ ...passwordData, newPassword: e.target.value })}
-                          className="pr-10"
-                        />
-                        <button
-                          type="button"
-                          onClick={() => setShowNewPassword(!showNewPassword)}
-                          className="absolute inset-y-0 right-0 pr-3 flex items-center text-gray-400 hover:text-gray-600"
-                        >
-                          {showNewPassword ? (
-                            <EyeOff className="h-4 w-4" />
-                          ) : (
-                            <Eye className="h-4 w-4" />
-                          )}
-                        </button>
-                      </div>
-                    </div>
-                    <div>
-                      <Label htmlFor="confirmPassword">Confirmar Nova Senha</Label>
-                      <div className="relative">
-                        <Input
-                          id="confirmPassword"
-                          type={showConfirmPassword ? "text" : "password"}
-                          value={passwordData.confirmPassword}
-                          onChange={(e) => setPasswordData({ ...passwordData, confirmPassword: e.target.value })}
-                          className="pr-10"
-                        />
-                        <button
-                          type="button"
-                          onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-                          className="absolute inset-y-0 right-0 pr-3 flex items-center text-gray-400 hover:text-gray-600"
-                        >
-                          {showConfirmPassword ? (
-                            <EyeOff className="h-4 w-4" />
-                          ) : (
-                            <Eye className="h-4 w-4" />
-                          )}
-                        </button>
-                      </div>
-                    </div>
-                    <div className="flex flex-col sm:flex-row gap-2">
-                      <Button
-                        variant="outline"
-                        onClick={() => {
-                          setIsChangingPassword(false);
-                          setPasswordData({ currentPassword: '', newPassword: '', confirmPassword: '' });
-                        }}
-                        className="w-full sm:flex-1"
-                      >
-                        Cancelar
-                      </Button>
-                      <Button onClick={handleChangePassword} className="w-full sm:flex-1">
-                        Alterar Senha
-                      </Button>
-                    </div>
-                  </div>
-                )}
-              </CardContent>
-            </Card>
+              ) : (
+                <p className="text-sm text-gray-400">Não informado</p>
+              )}
+            </Section>
           </div>
+        )}
 
-          {/* Sidebar com informações */}
-          <div className="space-y-4 sm:space-y-6">
-            <Card>
-              <CardHeader className="p-4 sm:p-6">
-                <CardTitle className="text-base sm:text-lg">Informações da Conta</CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-4 p-4 sm:p-6">
-                <div>
-                  <div className="flex items-center gap-2 text-sm text-gray-600 mb-1">
-                    <Calendar className="h-4 w-4" />
-                    <span>Membro desde</span>
-                  </div>
-                  <p className="text-sm font-medium text-gray-900">
-                    {citizen?.createdAt ? new Date(citizen.createdAt).toLocaleDateString('pt-BR') : '-'}
-                  </p>
-                </div>
-
-                <div>
-                  <div className="flex items-center gap-2 text-sm text-gray-600 mb-1">
-                    <Shield className="h-4 w-4" />
-                    <span>Status de Verificação</span>
-                  </div>
-                  <p className="text-sm font-medium text-green-600">Verificado (Prata)</p>
-                </div>
-
-                <div>
-                  <div className="flex items-center gap-2 text-sm text-gray-600 mb-1">
-                    <CheckCircle2 className="h-4 w-4" />
-                    <span>Origem do Cadastro</span>
-                  </div>
-                  <p className="text-sm font-medium text-gray-900">Administração Municipal</p>
-                </div>
-              </CardContent>
-            </Card>
-
-            <Card className="border-yellow-200 bg-yellow-50">
-              <CardContent className="p-4">
-                <h4 className="text-sm font-semibold text-yellow-900 mb-2">
-                  Dicas de Segurança
-                </h4>
-                <ul className="text-xs text-yellow-700 space-y-1">
-                  <li>• Nunca compartilhe sua senha</li>
-                  <li>• Use uma senha forte e única</li>
-                  <li>• Mantenha seus dados atualizados</li>
-                  <li>• Verifique sempre o endereço do site</li>
+        {/* 3. senha */}
+        <Section
+          title="Senha"
+          action={
+            !changingPassword && (
+              <Button size="sm" variant="outline" onClick={() => setChangingPassword(true)}>
+                Trocar senha
+              </Button>
+            )
+          }
+        >
+          {!changingPassword ? (
+            <p className="text-sm text-gray-500">Use uma senha que você não usa em outros sites.</p>
+          ) : (
+            <div className="space-y-4 pt-1">
+              <Field id="currentPassword" label="Senha atual">
+                <Input
+                  id="currentPassword"
+                  type={showPasswords ? 'text' : 'password'}
+                  autoComplete="current-password"
+                  value={passwordData.currentPassword}
+                  onChange={(e) => setPasswordData((p) => ({ ...p, currentPassword: e.target.value }))}
+                />
+              </Field>
+              <Field id="newPassword" label="Nova senha">
+                <Input
+                  id="newPassword"
+                  type={showPasswords ? 'text' : 'password'}
+                  autoComplete="new-password"
+                  value={passwordData.newPassword}
+                  onChange={(e) => setPasswordData((p) => ({ ...p, newPassword: e.target.value }))}
+                />
+                <ul className="grid gap-1 pt-1 text-xs sm:grid-cols-2">
+                  {PASSWORD_RULES.map((rule) => {
+                    const ok = rule.test(passwordData.newPassword);
+                    return (
+                      <li key={rule.label} className={cn('flex items-center gap-1.5', ok ? 'text-emerald-700' : 'text-gray-500')}>
+                        <Check className={cn('h-3.5 w-3.5', ok ? 'opacity-100' : 'opacity-30')} />
+                        {rule.label}
+                      </li>
+                    );
+                  })}
                 </ul>
-              </CardContent>
-            </Card>
-          </div>
-        </div>
+              </Field>
+              <Field id="confirmPassword" label="Repita a nova senha">
+                <Input
+                  id="confirmPassword"
+                  type={showPasswords ? 'text' : 'password'}
+                  autoComplete="new-password"
+                  value={passwordData.confirmPassword}
+                  onChange={(e) => setPasswordData((p) => ({ ...p, confirmPassword: e.target.value }))}
+                />
+              </Field>
+              <button
+                type="button"
+                onClick={() => setShowPasswords((v) => !v)}
+                className="inline-flex items-center gap-1.5 text-sm text-gray-600 hover:text-gray-900"
+              >
+                {showPasswords ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                {showPasswords ? 'Esconder senhas' : 'Mostrar senhas'}
+              </button>
+
+              {passwordError && <p role="alert" className="rounded-xl bg-red-50 px-3 py-2 text-sm text-red-700">{passwordError}</p>}
+
+              <div className="flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
+                <Button
+                  variant="outline"
+                  disabled={savingPassword}
+                  onClick={() => {
+                    setChangingPassword(false);
+                    setPasswordError(null);
+                    setPasswordData({ currentPassword: '', newPassword: '', confirmPassword: '' });
+                  }}
+                >
+                  Cancelar
+                </Button>
+                <Button onClick={handleChangePassword} disabled={savingPassword}>
+                  {savingPassword && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                  Trocar senha
+                </Button>
+              </div>
+            </div>
+          )}
+        </Section>
+
+        {citizen?.createdAt && (
+          <p className="text-center text-xs text-gray-400">
+            Cadastro desde {new Date(citizen.createdAt).toLocaleDateString('pt-BR')}
+          </p>
+        )}
       </div>
     </CitizenLayout>
   );

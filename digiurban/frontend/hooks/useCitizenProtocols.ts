@@ -149,7 +149,7 @@ export function useCitizenProtocols(params?: FetchProtocolsParams): UseProtocols
   // fallback para os protocolos carregados. Status reais do enum ProtocolStatus.
   const countStatus = (statuses: string[]) =>
     summary
-      ? statuses.reduce((acc, s) => acc + (summary.byStatus[s] || 0), 0)
+      ? statuses.reduce((acc, s) => acc + (summary.byStatus?.[s] || 0), 0)
       : protocols.filter(p => statuses.includes(p.status)).length;
 
   const stats = {
