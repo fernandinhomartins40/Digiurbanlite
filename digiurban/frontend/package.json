@@ -3,15 +3,16 @@
   "version": "1.0.0",
   "private": true,
   "scripts": {
-    "dev": "npm run copy:pdfjs && next dev",
-    "build": "npm run copy:pdfjs && npm run generate:icons && next build",
-    "build:no-icons": "npm run copy:pdfjs && next build",
+    "dev": "npm run copy:pdfjs && npm run copy:ort && next dev",
+    "build": "npm run copy:pdfjs && npm run copy:ort && npm run generate:icons && next build",
+    "build:no-icons": "npm run copy:pdfjs && npm run copy:ort && next build",
     "start": "next start",
     "lint": "next lint",
     "type-check": "tsc --noEmit",
     "generate:icons": "node scripts/generate-icons.js",
     "pwa:validate": "node scripts/validate-pwa.js",
-    "copy:pdfjs": "node scripts/copy-pdfjs-worker.js"
+    "copy:pdfjs": "node scripts/copy-pdfjs-worker.js",
+    "copy:ort": "node scripts/copy-ort-wasm.js"
   },
   "dependencies": {
     "@ducanh2912/next-pwa": "^10.2.9",
@@ -60,11 +61,11 @@
     "crypto-js": "^4.2.0",
     "date-fns": "^4.1.0",
     "face-api.js": "^0.22.2",
-    "jscanify": "^1.4.0",
     "leaflet": "^1.9.4",
     "leaflet.heat": "^0.2.0",
     "lucide-react": "^0.544.0",
     "next": "^14.2.32",
+    "onnxruntime-web": "1.22.0",
     "pdfjs-dist": "^5.4.530",
     "react": "^18.3.1",
     "react-big-calendar": "^1.19.4",

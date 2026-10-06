@@ -4,6 +4,8 @@ const withPWA = require('@ducanh2912/next-pwa').default({
   register: true,
   skipWaiting: true,
   buildExcludes: [/middleware-manifest\.json$/],
+  // scanner de documentos (motor de 11 MB e modelo): baixados só quando a câmera abre
+  publicExcludes: ['!noprecache/**/*', '!doc-scanner/**/*'],
   scope: '/',
   sw: 'sw.js',
   cacheOnFrontEndNav: false, // ✅ CORRIGIDO: Desabilitar cache de navegação de páginas

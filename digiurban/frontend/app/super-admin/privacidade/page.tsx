@@ -16,6 +16,7 @@ import { Switch } from '@/components/ui/switch';
 import { useToast } from '@/hooks/use-toast';
 import { useSuperAdminAuth } from '@/contexts/SuperAdminAuthContext';
 import FaceBiometrySettings from '@/components/super-admin/FaceBiometrySettings';
+import DocScannerSettings from '@/components/super-admin/DocScannerSettings';
 
 interface Settings {
   enabled: boolean;
@@ -237,6 +238,8 @@ export default function PrivacyPage() {
       </Card>
 
       <FaceBiometrySettings isAdmin={isAdmin} retention={settings} onSaved={load} />
+
+      <DocScannerSettings isAdmin={isAdmin} />
     </div>
   );
 }

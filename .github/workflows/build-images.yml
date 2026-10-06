@@ -95,6 +95,9 @@ jobs:
           - name: digiurban-face-engine
             context: ./ultrazend-face-engine
             dockerfile: ./ultrazend-face-engine/Dockerfile
+          - name: digiurban-doc-engine
+            context: ./ultrazend-doc-engine
+            dockerfile: ./ultrazend-doc-engine/Dockerfile
 
     steps:
       - name: Checkout
@@ -203,7 +206,7 @@ jobs:
 
           echo "=== Baixando imagens prontas (a VPS NAO compila) ==="
           RELEASE="${RELEASE}" docker-compose -f docker-compose.vps.yml pull \
-            digiurban ultrazend-messages ultrazend-face ultrazend-face-engine
+            digiurban ultrazend-messages ultrazend-face ultrazend-face-engine ultrazend-doc-engine
 
           # IA LOCAL REMOVIDA (2026-09-14): llamacpp e digiurban-ai sairam do compose
           # (a IA passa a ser externa). Containers de servicos removidos NAO somem
@@ -250,7 +253,7 @@ jobs:
 
           echo "=== Subindo satelites (schema ja criado pelo backend) ==="
           RELEASE="${RELEASE}" docker-compose -f docker-compose.vps.yml up -d \
-            ultrazend-face-engine ultrazend-messages ultrazend-face
+            ultrazend-face-engine ultrazend-doc-engine ultrazend-messages ultrazend-face
           wait_for_container_health ultrazend-messages 30 5
 
           echo "=== Seeds ==="

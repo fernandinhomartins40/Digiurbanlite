@@ -45,3 +45,5 @@ errors-only.txt
 
 # PDF.js worker (copiado no build)
 **/public/pdf.worker.min.mjs
+# motor ONNX do scanner (copiado de node_modules na montagem)
+**/public/doc-scanner/ort*

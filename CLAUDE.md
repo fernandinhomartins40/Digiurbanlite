@@ -13,6 +13,7 @@ Digiurbanlite/
 ├── ultrazend-messages-server/  # WebSocket + Bot Engine (porta 9001)
 ├── ultrazend-face-server/      # Biometria facial: regras, consentimento, fotos cifradas (rede interna, 9006)
 ├── ultrazend-face-engine/      # Motor facial Python (UniFace + ONNX CPU) — só mede, não decide (rede interna, 8000)
+├── ultrazend-doc-engine/       # Leitura de documentos Python (PaddleOCR via RapidOCR + ZXing, ONNX CPU) — só lê (rede interna, 8000)
 ├── docker/                     # nginx.conf, supervisord.conf, startup.sh, SQL scripts
 ├── docker-compose.vps.yml      # Orquestração produção
 └── Dockerfile                  # Multi-stage build (backend + frontend + nginx)
@@ -352,6 +353,12 @@ npx ts-node prisma/seeds/seed-system-certificate.ts
 - Caminho padrão 100% de uso comercial (2026-10-05): BlazeFace + FaceMesh (Google) + **AuraFace** (padrão, Apache 2.0, SHA-256 fixado) + MiniFASNet; giro e qualidade calculados sem modelo. ArcFace/MobileFace do UniFace = uso NÃO comercial (só teste). NÃO voltar RetinaFace/HeadPose/eDifFIQA (treinados em bases de pesquisa). Ver `docs/LGPD-RIPD-BIOMETRIA-FACIAL.md`
 - Smoke ponta a ponta: `backend/scripts/smoke-biometria.ts` (requer banco + motor + face-server + fotos de teste)
 - `PrismaPromise` é preguiçosa: em `runAsTenant(id, () => prisma.x.create())` a consulta roda FORA do contexto — usar `async () =>`
+
+### Scanner e leitura de documentos (2026-10-06)
+- **Câmera** (`frontend/components/common/DocumentScanner.tsx`, mesmas props de antes): tela cheia no visual da biometria. Com a "câmera inteligente" ligada no painel, o modelo **DocAligner lcnet050 point** (DocsaidLab, código Apache 2.0; `public/doc-scanner/docaligner-lcnet050-point.onnx`, SHA-256 `32d18608…e220`) roda no navegador via `onnxruntime-web` 1.22 (MIT; arquivos copiados para `public/doc-scanner` por `scripts/copy-ort-wasm.js`, uma thread). Desligada: moldura fixa + botão. Recorte/endireitamento/clareamento em canvas puro (`lib/doc-scanner/geometry.ts`) — OpenCV.js e jscanify REMOVIDOS. RG/CIN/CNH: frente e verso viram um JPEG só
+- ⚠️ **Licença dos pesos do DocAligner não está declarada** (treinado em MIDV-500/2019 CC BY-SA 2.5, MIDV-2020 CC BY 4.0, SmartDoc 2015, CORD, sintético): `DocScannerSettings.smartCameraEnabled` fica DESLIGADO até confirmar com os autores. NÃO quantizar o modelo (int8 quebra a precisão)
+- **Leitura** (`ultrazend-doc-engine`, rede interna, porta 8000): PaddleOCR PP-OCRv5 (detector + leitor latino) via RapidOCR 3.9.2 + ZXing (QR/barras), tudo Apache 2.0, SHA-256 conferido no build. Só LÊ; o backend decide em `services/doc-reading/rules.ts` (tipo do documento, nome/CPF/nascimento x cadastro, MRZ TD1 da CIN com dígitos de controle, QR só vira link se for https *.gov.br). Testes: `__tests__/unit/doc-reading-rules.test.ts`
+- Rotina a cada 2 min (`jobs/doc-reading.job.ts`) lê fotos novas/reenviadas de `citizen_documents` e `protocol_documents` em todos os municípios (cobre todo caminho de envio); `kickDocReading()` adianta após envio. Grava SÓ o resultado em `document_readings` (nunca o texto). PDF = SKIPPED. Tela do servidor: `components/admin/DocumentReadingInfo.tsx` (aviso; quem aprova é o servidor). Painel: Super-admin › Privacidade › Documentos
 
 ### Registry — Motor de Dados Orientado a Metadados (plano F0–F7)
 Substitui o padrão "módulo-por-serviço" (metadados hardcoded em `MANAGEMENT_CONFIGS` + `switch` em `analyzeCustomData`). **Serviço estruturado novo = `EntityType` + `FieldDefinition` no banco, NÃO um módulo em código.**

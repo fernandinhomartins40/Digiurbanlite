@@ -11390,6 +11390,52 @@ model FaceEngineSettings {
   @@map("face_engine_settings")
 }
 
+/// Scanner e leitura de documentos (Super-admin › Privacidade).
+/// smartCameraEnabled: câmera que acha o documento sozinha (modelo DocAligner) —
+/// desligada até a confirmação da licença dos pesos do modelo.
+model DocScannerSettings {
+  id                 String   @id @default("singleton")
+  smartCameraEnabled Boolean  @default(false)
+  readingEnabled     Boolean  @default(true)
+  updatedBy          String?
+  updatedAt          DateTime @updatedAt
+
+  @@map("doc_scanner_settings")
+}
+
+/// Resultado da leitura automática de um documento (ultrazend-doc-engine).
+/// Guarda SÓ o resultado da conferência — nunca o texto lido (LGPD).
+/// É um aviso para o servidor; quem aprova ou recusa é sempre uma pessoa.
+model DocumentReading {
+  id             String   @id @default(cuid())
+  tenantId       String?
+  /// CITIZEN_DOCUMENT (Meus documentos) | PROTOCOL_DOCUMENT (documento do pedido)
+  source         String
+  documentId     String
+  /// arquivo lido (reenvio troca o arquivo e a leitura é refeita)
+  fileKey        String
+  status         String // DONE | SKIPPED | FAILED
+  note           String?
+  detectedKind   String?
+  expectedKind   String?
+  kindMatches    Boolean?
+  nameMatch      String? // MATCH | PARTIAL | NO_MATCH | NOT_FOUND
+  cpfMatch       String?
+  birthDateMatch String?
+  mrzValid       Boolean?
+  qrFound        Boolean  @default(false)
+  qrGovUrl       String?
+  textQuality    Float?
+  lineCount      Int      @default(0)
+  engineMs       Int?
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  @@unique([source, documentId])
+  @@index([tenantId])
+  @@map("document_readings")
+}
+
 /// E-mail transacional da plataforma (envio pelo VeloMail). Chave da API e
 /// segredo do webhook ficam cifrados em platform_secrets (velomail_*).
 model TransactionalMailSettings {

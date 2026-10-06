@@ -274,6 +274,7 @@ loadRoute('/api/leads', './routes/public-leads.routes');
 // IA da plataforma (chaves, modelos, cobrança, pacotes) — console /super-admin
 loadRoute('/api/platform/ai', './routes/platform-ai.routes');
 loadRoute('/api/platform/privacy', './routes/platform-privacy.routes');
+loadRoute('/api/admin/document-readings', './routes/admin-document-readings.routes');
 loadRoute('/api/platform', './routes/platform');
 // Painel de plataforma completo (Fases 1/6 do plano 2026-07-13): detalhe de
 // municípios, admins, billing, leads, métricas, schema, migrations, backups.
@@ -404,6 +405,7 @@ try { require('./jobs/sla-monitor.job').initSlaMonitorJob(); } catch (e) { logge
 try { require('./jobs/revertExpiredDelegations.job').initRevertExpiredDelegationsJob(); } catch (e) { logger.error('Failed to start delegation revert job', { error: e }); }
 // Prazo de guarda das conversas (LGPD) — só age se ativado em Super-admin › Privacidade
 try { require('./jobs/privacy-retention.job').initPrivacyRetentionJob(); } catch (e) { logger.error('Failed to start privacy retention job', { error: e }); }
+try { require('./jobs/doc-reading.job').initDocReadingJob(); } catch (e) { logger.error('Failed to start document reading job', { error: e }); }
 
 // Saúde - Apps integrados
 // REMOVIDO (Fase 0, achado do fail-fast): ./routes/saude-atendimento.routes não

@@ -35,6 +35,7 @@ import { useToast } from '@/hooks/use-toast'
 import { format } from 'date-fns'
 import { ptBR } from 'date-fns/locale'
 import { getFullApiUrl } from '@/lib/api-config'
+import { DocumentReadingInfo } from '@/components/admin/DocumentReadingInfo'
 import { isImageDoc, isPdfDoc, resolvePreviewUrl } from '@/lib/document-preview'
 
 interface ProtocolDocumentsTabProps {
@@ -405,6 +406,10 @@ export function ProtocolDocumentsTab({
                         </div>
                       )}
 
+                      {doc.fileName && doc.status === DocumentStatus.UPLOADED && (
+                        <DocumentReadingInfo source="PROTOCOL_DOCUMENT" documentId={doc.id} className="mb-3" />
+                      )}
+
                       {doc.status === DocumentStatus.UPLOADED && (
                         <div className="flex gap-2">
                           <Button size="sm" variant="default" onClick={() => handleApprove(doc.id)}>
@@ -534,6 +539,10 @@ export function ProtocolDocumentsTab({
                             Enviar
                           </Button>
                         </div>
+                      )}
+
+                      {doc.fileName && doc.status === DocumentStatus.UPLOADED && (
+                        <DocumentReadingInfo source="PROTOCOL_DOCUMENT" documentId={doc.id} className="mb-3" />
                       )}
 
                       {doc.status === DocumentStatus.UPLOADED && (

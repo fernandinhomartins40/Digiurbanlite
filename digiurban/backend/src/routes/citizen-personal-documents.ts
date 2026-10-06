@@ -3,6 +3,7 @@
 // ============================================================================
 
 import { Router, Request, Response, NextFunction, RequestHandler } from 'express';
+import { kickDocReading } from '../services/doc-reading/doc-reading.service';
 import { Prisma } from '@prisma/client';
 import { prisma } from '../lib/prisma';
 import * as path from 'path';
@@ -295,6 +296,9 @@ router.post(
         uploadedDocuments.push(document);
       }
 
+      // leitura automática (aviso para o servidor que vai conferir)
+      kickDocReading();
+
       // Criar notificação
       await prisma.notification.create({
         data: {
@@ -583,6 +587,7 @@ router.post(
           updatedAt: new Date()
         }
       });
+      kickDocReading();
 
       // Criar notificação para admin
       await prisma.notification.create({

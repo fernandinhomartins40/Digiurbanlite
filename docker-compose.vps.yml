@@ -230,6 +230,37 @@ services:
       start_period: 90s
 
 
+  # Leitura de documentos (2026-10-06): PaddleOCR PP-OCRv5 (latino) via RapidOCR +
+  # ZXing para QR/código de barras, ONNX em CPU. Só LÊ o texto das fotos enviadas;
+  # quem confere com o cadastro e guarda o resultado é o backend. Sem porta
+  # publicada: só o backend (rede interna) chama http://ultrazend-doc-engine:8000.
+  ultrazend-doc-engine:
+    image: ghcr.io/fernandinhomartins40/digiurban-doc-engine:${RELEASE:-latest}
+    build:
+      context: ./ultrazend-doc-engine
+      dockerfile: Dockerfile
+    container_name: ultrazend-doc-engine
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+    # ~1,8 s por foto com 2 threads; a leitura roda uma foto por vez
+    mem_limit: 700m
+    cpus: 1.0
+    pids_limit: 128
+    environment:
+      - DOC_ENGINE_THREADS=2
+    restart: unless-stopped
+    networks:
+      - digiurban_network
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request,sys; sys.exit(0 if urllib.request.urlopen('http://127.0.0.1:8000/health', timeout=5).status == 200 else 1)"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 90s
+
   ultrazend-face:
     # Otimizacao VPS (docs/VPS-OPTIMIZATION-AUDIT.md, P0-4): a imagem vem PRONTA do
     # GHCR, construida pelo GitHub Actions. A VPS so faz `pull`. O bloco `build`

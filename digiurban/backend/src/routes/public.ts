@@ -302,5 +302,18 @@ router.get(
   })
 );
 
+// GET /api/public/doc-scanner — o que a câmera de documentos pode usar.
+// smartCamera: achar o documento sozinha (modelo DocAligner), ligada no painel
+// da plataforma só depois de confirmada a licença dos pesos do modelo.
+router.get(
+  '/doc-scanner',
+  handleAsync(async (_req, res) => {
+    const { getDocScannerSettings } = await import('../services/doc-reading/doc-reading.service');
+    const settings = await getDocScannerSettings();
+    res.set('Cache-Control', 'public, max-age=60');
+    res.json({ success: true, smartCamera: settings.smartCameraEnabled });
+  })
+);
+
 export default router;
 

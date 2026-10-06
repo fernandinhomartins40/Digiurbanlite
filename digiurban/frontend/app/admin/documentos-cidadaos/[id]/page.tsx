@@ -7,6 +7,7 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Textarea } from '@/components/ui/textarea';
 import { useToast } from '@/hooks/use-toast';
+import { DocumentReadingInfo } from '@/components/admin/DocumentReadingInfo';
 import { useAdminAuth, useAdminPermissions } from '@/contexts/AdminAuthContext';
 import {
   ArrowLeft,
@@ -312,6 +313,8 @@ export default function DocumentoDetalhesPage() {
 
         {/* Informações e Ações */}
         <div className="space-y-6">
+          {document.mimeType?.startsWith('image/') && <DocumentReadingInfo source="CITIZEN_DOCUMENT" documentId={document.id} />}
+
           {/* Informações do Cidadão */}
           <Card>
             <CardHeader>

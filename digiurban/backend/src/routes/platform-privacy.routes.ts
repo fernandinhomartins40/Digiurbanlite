@@ -11,6 +11,7 @@ import { getRetentionSettings, runRetention, updateRetentionSettings } from '../
 import { prisma } from '../lib/prisma';
 import { runAsPlatform } from '../lib/tenant-context';
 import facePlatformClientService from '../services/face-platform-client.service';
+import { getDocScannerSettings } from '../services/doc-reading/doc-reading.service';
 
 const router = Router();
 router.use(platformAuthMiddleware);
@@ -154,6 +155,52 @@ router.put('/face-settings', ADMIN, async (req, res) => {
     if (error instanceof z.ZodError) return res.status(400).json({ error: error.issues[0]?.message || 'Dados inválidos' });
     console.error('[platform-privacy] face-settings', error);
     res.status(500).json({ error: 'Erro ao salvar a configuração da biometria' });
+  }
+});
+
+// ---------------------------------------------------------------- scanner e leitura de documentos
+
+const docScannerSchema = z.object({
+  smartCameraEnabled: z.boolean().optional(),
+  readingEnabled: z.boolean().optional(),
+});
+
+async function docEngineOnline(): Promise<boolean> {
+  const url = (process.env.DOC_ENGINE_URL || 'http://ultrazend-doc-engine:8000').replace(/\/+$/, '');
+  try {
+    const response = await fetch(`${url}/health`, { signal: AbortSignal.timeout(3000) });
+    return response.ok;
+  } catch {
+    return false;
+  }
+}
+
+router.get('/doc-scanner', async (_req, res) => {
+  try {
+    const [settings, engineOnline] = await Promise.all([getDocScannerSettings(), docEngineOnline()]);
+    res.json({ success: true, settings, engineOnline });
+  } catch (error) {
+    console.error('[platform-privacy] doc-scanner', error);
+    res.status(500).json({ error: 'Erro ao carregar a configuração dos documentos' });
+  }
+});
+
+router.put('/doc-scanner', ADMIN, async (req, res) => {
+  try {
+    const body = docScannerSchema.parse(req.body);
+    await getDocScannerSettings();
+    const settings = await runAsPlatform(async () =>
+      prisma.docScannerSettings.update({
+        where: { id: 'singleton' },
+        data: { ...body, updatedBy: (req as PlatformAuthenticatedRequest).platformUser?.id || null },
+      })
+    );
+    audit(req, 'platform_doc_scanner_updated', body);
+    res.json({ success: true, settings, engineOnline: await docEngineOnline() });
+  } catch (error: any) {
+    if (error instanceof z.ZodError) return res.status(400).json({ error: error.issues[0]?.message || 'Dados inválidos' });
+    console.error('[platform-privacy] doc-scanner', error);
+    res.status(500).json({ error: 'Erro ao salvar a configuração dos documentos' });
   }
 });
 
