@@ -388,6 +388,7 @@ Substitui o padrão "módulo-por-serviço" (metadados hardcoded em `MANAGEMENT_C
 - Cliente frontend: `frontend/src/services/registry.service.ts`
 
 ### Backend
+- ⚠️ `backend/src/shared/` é CÓPIA: no build o Docker sobrescreve com `digiurban/shared/` (fonte de verdade). Tipos/constantes compartilhados se alteram em `digiurban/shared/` e copiam para `backend/src/shared/` — senão compila aqui e quebra no CI
 - `concludedAt` para tempo de conclusão (NÃO `updatedAt`)
 - `createdById` (não `createdBy`)
 - Prisma `groupBy` não suporta nested relations — usar `_count` ou aggregation

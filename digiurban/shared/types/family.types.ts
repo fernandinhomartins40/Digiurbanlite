@@ -144,6 +144,8 @@ export interface FamilyData {
     status: FamilyLinkStatus;
     head: FamilyMember;
   }>;
+  /** vínculos em que EU fui adicionado e ainda preciso confirmar */
+  pendingLinks: Array<{ id: string; relationship: FamilyRelationship; head: { id: string; name: string; cpf: string } }>;
   stats: FamilyStats;
 }
 
