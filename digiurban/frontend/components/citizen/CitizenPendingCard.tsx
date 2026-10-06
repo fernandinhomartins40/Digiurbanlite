@@ -242,8 +242,14 @@ export function CitizenPendingCard({ pending, onResolve, onResolveWithDocument, 
                 {pending.title || pending.metadata?.title || 'Pendência'}
               </h3>
               <div className="flex flex-wrap items-center gap-2">
-                {/* prioridade e tipo são da equipe; para o cidadão basta a situação */}
+                {getTypeBadge(pendingType)}
+                {getPriorityBadge(pending.priority)}
                 {getStatusBadge()}
+                {pending.blocksProgress && (
+                  <Badge variant="destructive" className="text-xs">
+                    Bloqueia fluxo
+                  </Badge>
+                )}
               </div>
             </div>
           </div>

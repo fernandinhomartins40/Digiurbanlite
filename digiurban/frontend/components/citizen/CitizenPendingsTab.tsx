@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react'
 import { Card, CardContent } from '@/components/ui/card'
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { AlertCircle, CheckCircle2, XCircle, Loader2 } from 'lucide-react'
 import { CitizenPendingCard, CitizenPendingUploadFile, ProtocolPending } from './CitizenPendingCard'
 import { toast } from 'sonner'
@@ -14,6 +15,7 @@ interface CitizenPendingsTabProps {
 export function CitizenPendingsTab({ protocolId, apiRequest }: CitizenPendingsTabProps) {
   const [pendings, setPendings] = useState<ProtocolPending[]>([])
   const [isLoading, setIsLoading] = useState(true)
+  const [activeTab, setActiveTab] = useState('all')
 
   useEffect(() => {
     loadPendings()
@@ -135,49 +137,128 @@ export function CitizenPendingsTab({ protocolId, apiRequest }: CitizenPendingsTa
     )
   }
 
-  const renderCard = (pending: ProtocolPending) => (
-    <CitizenPendingCard
-      key={pending.id}
-      pending={pending}
-      onResolve={(resolution, file) => handleResolvePending(pending.id, resolution, file)}
-      onResolveWithDocument={(files) => handleResolvePending(pending.id, '', undefined, files)}
-    />
-  )
-  const finished = [...resolvedPendings, ...cancelledPendings]
-
-  // grupos em vez de 5 abas (que ficavam espremidas e sobrepostas no celular)
   return (
-    <div className="space-y-6">
-      {pendingPendings.length > 0 && (
-        <section className="space-y-3">
-          <h3 className="px-1 text-sm font-semibold text-orange-800">Para você responder ({pendingPendings.length})</h3>
-          {pendingPendings.map(renderCard)}
-        </section>
-      )}
+    <div className="space-y-4">
+      <Tabs value={activeTab} onValueChange={setActiveTab}>
+        <TabsList className="grid w-full grid-cols-5">
+          <TabsTrigger value="all" className="flex items-center gap-2">
+            <AlertCircle className="h-4 w-4" />
+            Todas ({pendings.length})
+          </TabsTrigger>
+          <TabsTrigger value="pending" className="flex items-center gap-2">
+            <AlertCircle className="h-4 w-4" />
+            Pendentes ({pendingPendings.length})
+          </TabsTrigger>
+          <TabsTrigger value="resolved" className="flex items-center gap-2">
+            <CheckCircle2 className="h-4 w-4" />
+            Resolvidas ({resolvedPendings.length})
+          </TabsTrigger>
+          <TabsTrigger value="review" className="flex items-center gap-2">
+            <Loader2 className="h-4 w-4" />
+            Em análise ({underReviewPendings.length})
+          </TabsTrigger>
+          <TabsTrigger value="cancelled" className="flex items-center gap-2">
+            <XCircle className="h-4 w-4" />
+            Canceladas ({cancelledPendings.length})
+          </TabsTrigger>
+        </TabsList>
 
-      {underReviewPendings.length > 0 && (
-        <section className="space-y-3">
-          <h3 className="px-1 text-sm font-semibold text-blue-800">Em análise pela prefeitura ({underReviewPendings.length})</h3>
-          {underReviewPendings.map(renderCard)}
-        </section>
-      )}
+        <TabsContent value="all" className="space-y-4 mt-4">
+          {pendings.length === 0 ? (
+            <Card>
+              <CardContent className="p-8 text-center text-gray-500">
+                Nenhuma pendência encontrada
+              </CardContent>
+            </Card>
+          ) : (
+            pendings.map((pending) => (
+              <CitizenPendingCard
+                key={pending.id}
+                pending={pending}
+                onResolve={(resolution, file) => handleResolvePending(pending.id, resolution, file)}
+                onResolveWithDocument={(files) => handleResolvePending(pending.id, '', undefined, files)}
+              />
+            ))
+          )}
+        </TabsContent>
 
-      {pendingPendings.length === 0 && underReviewPendings.length === 0 && (
-        <div className="flex items-center gap-3 rounded-2xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-800">
-          <CheckCircle2 className="h-5 w-5 shrink-0" />
-          Nada para responder agora.
-        </div>
-      )}
+        <TabsContent value="pending" className="space-y-4 mt-4">
+          {pendingPendings.length === 0 ? (
+            <Card>
+              <CardContent className="p-8 text-center text-gray-500">
+                <CheckCircle2 className="h-8 w-8 mx-auto mb-2 text-green-400" />
+                <p>Nenhuma pendência aguardando resolução</p>
+              </CardContent>
+            </Card>
+          ) : (
+            pendingPendings.map((pending) => (
+              <CitizenPendingCard
+                key={pending.id}
+                pending={pending}
+                onResolve={(resolution, file) => handleResolvePending(pending.id, resolution, file)}
+                onResolveWithDocument={(files) => handleResolvePending(pending.id, '', undefined, files)}
+              />
+            ))
+          )}
+        </TabsContent>
 
-      {finished.length > 0 && (
-        <details className="group rounded-2xl border bg-white">
-          <summary className="cursor-pointer list-none px-4 py-3 text-sm font-medium text-gray-700 [&::-webkit-details-marker]:hidden">
-            Já resolvidas ({finished.length})
-            <span className="ml-1 text-gray-400 group-open:hidden">— mostrar</span>
-          </summary>
-          <div className="space-y-3 border-t p-3">{finished.map(renderCard)}</div>
-        </details>
-      )}
+        <TabsContent value="resolved" className="space-y-4 mt-4">
+          {resolvedPendings.length === 0 ? (
+            <Card>
+              <CardContent className="p-8 text-center text-gray-500">
+                Nenhuma pendência resolvida
+              </CardContent>
+            </Card>
+          ) : (
+            resolvedPendings.map((pending) => (
+              <CitizenPendingCard
+                key={pending.id}
+                pending={pending}
+                onResolve={(resolution, file) => handleResolvePending(pending.id, resolution, file)}
+                onResolveWithDocument={(files) => handleResolvePending(pending.id, '', undefined, files)}
+              />
+            ))
+          )}
+        </TabsContent>
+
+        <TabsContent value="review" className="space-y-4 mt-4">
+          {underReviewPendings.length === 0 ? (
+            <Card>
+              <CardContent className="p-8 text-center text-gray-500">
+                Nenhuma pendência em análise
+              </CardContent>
+            </Card>
+          ) : (
+            underReviewPendings.map((pending) => (
+              <CitizenPendingCard
+                key={pending.id}
+                pending={pending}
+                onResolve={(resolution, file) => handleResolvePending(pending.id, resolution, file)}
+                onResolveWithDocument={(files) => handleResolvePending(pending.id, '', undefined, files)}
+              />
+            ))
+          )}
+        </TabsContent>
+
+        <TabsContent value="cancelled" className="space-y-4 mt-4">
+          {cancelledPendings.length === 0 ? (
+            <Card>
+              <CardContent className="p-8 text-center text-gray-500">
+                Nenhuma pendência cancelada
+              </CardContent>
+            </Card>
+          ) : (
+            cancelledPendings.map((pending) => (
+              <CitizenPendingCard
+                key={pending.id}
+                pending={pending}
+                onResolve={(resolution, file) => handleResolvePending(pending.id, resolution, file)}
+                onResolveWithDocument={(files) => handleResolvePending(pending.id, '', undefined, files)}
+              />
+            ))
+          )}
+        </TabsContent>
+      </Tabs>
     </div>
   )
 }
