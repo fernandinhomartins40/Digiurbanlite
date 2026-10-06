@@ -2,6 +2,7 @@
  * Serviço para gerenciamento de SLA de Protocolos
  */
 
+import { serviceDays } from '../config/service-defaults';
 import { Prisma } from '@prisma/client';
 import { prisma } from '../lib/prisma';
 import { addDays, differenceInCalendarDays, differenceInBusinessDays, isWeekend } from 'date-fns';
@@ -82,8 +83,8 @@ export async function createProtocolSLA(protocolId: string) {
     throw new Error('Protocolo não encontrado');
   }
 
-  // Usar estimatedDays do serviço, ou 30 dias como padrão
-  const workingDays = protocol.service.estimatedDays || 30;
+  // prazo do serviço, ou o padrão único da plataforma
+  const workingDays = serviceDays(protocol.service.estimatedDays);
 
   return await createSLA({
     protocolId,

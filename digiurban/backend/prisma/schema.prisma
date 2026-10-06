@@ -994,6 +994,11 @@ model ServiceSimplified {
   // Nível mínimo do cidadão para pedir pelo portal/assistente: BRONZE (qualquer um) | SILVER | GOLD
   minLevel String @default("BRONZE")
 
+  // Item do catálogo da plataforma de onde o serviço veio e a impressão do que
+  // foi aplicado (melhoria do catálogo só chega se o município não editou)
+  catalogKey  String?
+  catalogHash String?
+
   allowMultipleActiveProtocols Boolean @default(true) // Permite múltiplos protocolos ativos do mesmo serviço por cidadão
   uniquenessScope              String? // 'CITIZEN' | 'CUSTOM' | 'CITIZEN_PER_FIELD'
   uniquenessRules              Json? // Regras JSON para validação (estrutura varia por scope)
@@ -1012,6 +1017,7 @@ model ServiceSimplified {
 
   @@unique([tenantId, moduleType])
   @@index([tenantId])
+  @@index([tenantId, catalogKey])
   @@map("services_simplified")
 }
 

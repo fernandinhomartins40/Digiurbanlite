@@ -21,7 +21,7 @@ import * as jwt from 'jsonwebtoken';
 import bcrypt from 'bcryptjs';
 import { z } from 'zod';
 import { prisma } from '../lib/prisma';
-import { runAsPlatform } from '../lib/tenant-context';
+import { runAsPlatform, runAsTenant } from '../lib/tenant-context';
 import {
   platformAuthMiddleware,
   requirePlatformRole,
@@ -223,6 +223,38 @@ router.post(
       }
       console.error('Erro ao provisionar tenant:', error);
       res.status(500).json({ error: 'Erro ao provisionar tenant' });
+    }
+  }
+);
+
+// POST /tenants/:id/service-catalog — aplica o catálogo de serviços no município
+// (só acrescenta: cria o que falta e atualiza o que o município não editou)
+router.post(
+  '/tenants/:id/service-catalog',
+  platformAuthMiddleware,
+  requirePlatformRole('PLATFORM_ADMIN'),
+  async (req: Request, res: Response) => {
+    try {
+      const tenantId = String(req.params.id);
+      const tenant = await runAsPlatform(async () => prisma.tenant.findUnique({ where: { id: tenantId }, select: { id: true } }));
+      if (!tenant) return res.status(404).json({ error: 'Município não encontrado' });
+      const { applyServiceCatalog } = await import('../catalog/services');
+      const result = await runAsTenant(tenantId, async () => applyServiceCatalog(prisma, tenantId));
+      await logAuditEvent({
+        action: AUDIT_EVENTS.TENANT_CONFIG_CHANGE,
+        resource: req.originalUrl,
+        method: req.method,
+        details: { context: 'platform', platformUserId: (req as PlatformAuthenticatedRequest).platformUser?.id, tenantId, serviceCatalog: { ...result } },
+        success: true,
+      });
+      return res.json({
+        success: true,
+        result,
+        message: `Catálogo aplicado: ${result.created} serviço(s) novo(s), ${result.updated} atualizado(s), ${result.keptEdited} mantido(s) como o município editou.`,
+      });
+    } catch (error) {
+      console.error('[platform] catálogo de serviços:', error);
+      return res.status(500).json({ error: 'Não foi possível aplicar o catálogo agora' });
     }
   }
 );

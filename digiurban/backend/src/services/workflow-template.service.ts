@@ -9,6 +9,7 @@
  * - Não duplica dados
  */
 
+import { serviceDays } from '../config/service-defaults';
 import type { CreateWorkflowData, WorkflowStage } from '../types/workflow.types';
 import type { ServiceSimplified } from '@prisma/client';
 import {
@@ -46,7 +47,7 @@ export function generateDefaultWorkflow(
   } = input;
 
   // Calcular SLA total
-  const totalSLA = estimatedDays || 10;
+  const totalSLA = serviceDays(estimatedDays);
 
   // Distribuir SLA entre etapas
   const analysisTime = Math.ceil(totalSLA * 0.4);  // 40% análise
@@ -328,7 +329,7 @@ export function generateMinimalWorkflowForSemDados(
   serviceDescription: string | null | undefined,
   estimatedDays: number | null | undefined
 ): CreateWorkflowData {
-  const totalSLA = estimatedDays || 7;
+  const totalSLA = serviceDays(estimatedDays);
   const atendimentoSLA = Math.max(1, totalSLA - 2); // Reserva 1 dia para recepção e 1 para conclusão
 
   const stages: Omit<WorkflowStage, 'id'>[] = [
@@ -549,7 +550,7 @@ export function generateSpecializedWorkflow(input: {
 
   console.log(`[WORKFLOW] Gerando workflow especializado para ${serviceName}:`, analysis);
 
-  const totalSLA = estimatedDays || 10;
+  const totalSLA = serviceDays(estimatedDays);
   const stages: Omit<WorkflowStage, 'id'>[] = [];
   let currentOrder = 1;
   let remainingSLA = totalSLA;
@@ -903,7 +904,7 @@ export function generateCompleteWorkflowBySubtype(service: ServiceSimplified): C
   }
 
   const subtype = service.serviceSubtype || 'CONSULTIVO';
-  const totalSLA = service.estimatedDays || 10;
+  const totalSLA = serviceDays(service.estimatedDays);
 
   // Extrair e processar documentos
   const docs = parseServiceDocuments(service.requiredDocuments);

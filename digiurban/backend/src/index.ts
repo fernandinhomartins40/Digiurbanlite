@@ -329,7 +329,6 @@ loadRoute('/api', './routes/dynamic-services');
 loadRoute('/api/admin/users', './routes/admin-users');
 loadRoute('/api/admin/departments', './routes/admin-departments');
 loadRoute('/api/admin', './routes/admin-management');
-loadRoute('/api/admin', './routes/admin-dynamic-services');
 
 // Busca de cidadão
 const citizenLookupRoutes = require('./routes/admin-citizen-lookup').default;

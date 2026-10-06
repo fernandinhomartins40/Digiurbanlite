@@ -1773,3 +1773,26 @@ export async function getServiceForWorkflow(serviceId: string) {
     formFields
   };
 }
+
+/**
+ * Garante que o serviço tem o seu fluxo de etapas (o que os protocolos usam).
+ * Gera pelo tipo/subtipo do serviço quando não existe. Usado na criação do
+ * serviço e no primeiro pedido — um caminho só.
+ */
+export async function ensureServiceWorkflow(serviceId: string) {
+  const existing = await getWorkflowByServiceId(serviceId);
+  if (existing) return existing;
+  const service = await prisma.serviceSimplified.findUnique({ where: { id: serviceId } });
+  if (!service) throw new Error(`Serviço não encontrado: ${serviceId}`);
+  const { generateCompleteWorkflowBySubtype } = await import('./workflow-template.service');
+  const generated = generateCompleteWorkflowBySubtype(service as any);
+  try {
+    await createServiceWorkflow({ serviceId, ...generated });
+  } catch (error) {
+    // dois pedidos ao mesmo tempo: o outro já criou
+    const created = await getWorkflowByServiceId(serviceId);
+    if (created) return created;
+    throw error;
+  }
+  return getWorkflowByServiceId(serviceId);
+}

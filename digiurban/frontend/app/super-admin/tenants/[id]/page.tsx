@@ -226,6 +226,19 @@ export default function TenantDetailPage() {
   const suspend = () => patchTenant({ status: 'SUSPENDED', suspensionReason: 'Suspenso pelo painel de plataforma' }, 'Município suspenso');
   const reactivate = () => patchTenant({ status: 'ACTIVE', suspensionReason: null }, 'Município reativado');
 
+  // catálogo de serviços: cria o que falta e melhora o que o município não editou
+  const applyCatalog = async () => {
+    if (!window.confirm('Aplicar o catálogo de serviços neste município? Serviços editados pelo município não são alterados.')) return;
+    setSaving(true);
+    try {
+      const res = await fetch(`/api/platform/tenants/${id}/service-catalog`, { method: 'POST' });
+      const data = await res.json().catch(() => ({}));
+      toast({ title: res.ok ? 'Catálogo aplicado' : 'Erro', description: data.message || data.error, variant: res.ok ? undefined : 'destructive' });
+    } finally {
+      setSaving(false);
+    }
+  };
+
   const addAdmin = async () => {
     if (!newAdmin.name || !newAdmin.email.includes('@')) {
       toast({ title: 'Preencha nome e email válidos', variant: 'destructive' });
@@ -304,11 +317,16 @@ export default function TenantDetailPage() {
             <p className="text-sm text-muted-foreground">{tenant.nomeMunicipio}/{tenant.ufMunicipio} · slug <code>{tenant.slug}</code> · {tenantStatusLabel(tenant.status)}</p>
           </div>
         </div>
+        <div className="flex flex-wrap gap-2">
+        <Button variant="outline" onClick={applyCatalog} disabled={saving}>
+          {saving ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <Save className="h-4 w-4 mr-2" />} Atualizar catálogo de serviços
+        </Button>
         {tenant.status === 'SUSPENDED' ? (
           <Button variant="outline" onClick={reactivate} disabled={saving}><CheckCircle className="h-4 w-4 mr-2" /> Reativar</Button>
         ) : (
           <Button variant="outline" className="text-red-600" onClick={suspend} disabled={saving || tenant.slug === 'default'}><Ban className="h-4 w-4 mr-2" /> Suspender</Button>
         )}
+        </div>
       </div>
 
       {tempPassword && (

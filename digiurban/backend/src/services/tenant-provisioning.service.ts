@@ -69,18 +69,13 @@ export const DEFAULT_DEPARTMENTS: Array<{ name: string; code: string }> = [
  * `deptCode` = code da secretaria criada por seedDefaultDepartments.
  */
 export const DEFAULT_SERVICES: Array<{ name: string; description: string; deptCode: string }> = [
+  // Só o que o catálogo das secretarias não cobre. Os genéricos de cada
+  // secretaria ("Atendimento — Saúde", "Agricultura"...) saíram: duplicavam os
+  // ~400 serviços específicos do catálogo.
   { name: 'Solicitação Geral', description: 'Abertura de solicitação geral ao município', deptCode: 'ADMINISTRACAO' },
   { name: 'Ouvidoria — Reclamação', description: 'Registrar reclamação junto à Ouvidoria', deptCode: 'OUVIDORIA' },
   { name: 'Ouvidoria — Denúncia', description: 'Registrar denúncia junto à Ouvidoria', deptCode: 'OUVIDORIA' },
   { name: 'Ouvidoria — Elogio ou Sugestão', description: 'Enviar elogio ou sugestão', deptCode: 'OUVIDORIA' },
-  { name: 'Atendimento — Saúde', description: 'Solicitar atendimento ou informação de saúde', deptCode: 'SAUDE' },
-  { name: 'Matrícula e Atendimento — Educação', description: 'Solicitações da rede municipal de ensino', deptCode: 'EDUCACAO' },
-  { name: 'Atendimento — Assistência Social', description: 'Solicitar atendimento da Assistência Social', deptCode: 'ASSISTENCIA_SOCIAL' },
-  { name: 'Solicitação de Obras', description: 'Tapa-buraco, iluminação, calçadas e afins', deptCode: 'OBRAS_PUBLICAS' },
-  { name: 'Serviços Públicos', description: 'Coleta, limpeza urbana, poda e afins', deptCode: 'SERVICOS_PUBLICOS' },
-  { name: 'Meio Ambiente', description: 'Poda de árvore, denúncia ambiental e afins', deptCode: 'MEIO_AMBIENTE' },
-  { name: 'Habitação', description: 'Programas e solicitações habitacionais', deptCode: 'HABITACAO' },
-  { name: 'Agricultura', description: 'Atendimento ao produtor rural', deptCode: 'AGRICULTURA' },
 ];
 
 /**
@@ -277,6 +272,8 @@ export interface ProvisionResult {
   servicesCreated: number;
   /** Entregue UMA única vez; o admin troca no primeiro login */
   temporaryPassword: string;
+  /** o que não deu certo (ex.: catálogo de serviços) — mostrar a quem criou */
+  warnings: string[];
 }
 
 /**
@@ -313,30 +310,13 @@ export async function resolvePlanLimits(
  * porque prisma/seeds fica FORA de src/ (build de produção só emite src/), então
  * não pode ser importado estaticamente. Retorna quantos serviços foram criados.
  */
-async function seedFullServiceCatalog(tenantSlug: string): Promise<number> {
-  const { execFile } = await import('child_process');
-  const path = await import('path');
-  const fs = await import('fs');
-  const { promisify } = await import('util');
-  const execFileP = promisify(execFile);
-
-  const tsx = path.resolve(process.cwd(), 'node_modules/.bin/tsx');
-  const script = path.resolve(process.cwd(), 'scripts/backfill-tenant-services.ts');
-
-  // Ambiente sem tsx/script (ex.: alguns builds): degrada sem quebrar.
-  if (!fs.existsSync(tsx) || !fs.existsSync(script)) {
-    console.warn('[PROVISION] tsx/script de catálogo indisponível — catálogo completo não semeado; rode scripts/backfill-tenant-services.ts manualmente');
-    return 0;
-  }
-
-  const { stdout } = await execFileP(tsx, [script, '--apply', '--tenant', tenantSlug], {
-    cwd: process.cwd(),
-    env: process.env,
-    timeout: 120000,
-    maxBuffer: 10 * 1024 * 1024,
-  });
-  const m = stdout.match(/\+(\d+)\s+criados/);
-  return m ? parseInt(m[1], 10) : 0;
+async function seedFullServiceCatalog(tenantId: string): Promise<number> {
+  const { prisma } = await import('../lib/prisma');
+  const { applyServiceCatalog } = await import('../catalog/services');
+  // no próprio processo (o catálogo está em src/): sem o processo externo que
+  // podia estourar o tempo e deixar o município sem serviços sem ninguém saber
+  const result = await runAsTenant(tenantId, async () => applyServiceCatalog(prisma, tenantId));
+  return result.created;
 }
 
 export async function provisionTenant(input: ProvisionTenantInput): Promise<ProvisionResult> {
@@ -407,11 +387,17 @@ export async function provisionTenant(input: ProvisionTenantInput): Promise<Prov
   // fora do build de produção), então são carregadas via `tsx` num processo
   // separado — o build (rootDir: src) NÃO pode importá-las. Best-effort: falha
   // não desfaz o provisionamento.
+  const warnings: string[] = [];
   let fullServicesCreated = 0;
-  try {
-    fullServicesCreated = await seedFullServiceCatalog(result.tenant.slug);
-  } catch (servicesError) {
-    console.error(`[PROVISION] Falha ao semear catálogo completo do tenant ${result.tenant.slug}:`, servicesError);
+  for (let attempt = 1; attempt <= 2 && fullServicesCreated === 0; attempt++) {
+    try {
+      fullServicesCreated = await seedFullServiceCatalog(result.tenant.id);
+    } catch (servicesError) {
+      console.error(`[PROVISION] Falha ao semear catálogo (tentativa ${attempt}) do tenant ${result.tenant.slug}:`, servicesError);
+    }
+  }
+  if (fullServicesCreated === 0) {
+    warnings.push('O catálogo de serviços não foi criado. Use "Atualizar catálogo de serviços" no painel do município.');
   }
 
   // Catálogos de referência da onda 8 (plano 2026-07-13): sem isto o município
@@ -432,6 +418,7 @@ export async function provisionTenant(input: ProvisionTenantInput): Promise<Prov
     departmentsCreated: result.departmentsCreated,
     servicesCreated: result.servicesCreated + fullServicesCreated,
     temporaryPassword: tempPassword,
+    warnings,
   };
 }
 

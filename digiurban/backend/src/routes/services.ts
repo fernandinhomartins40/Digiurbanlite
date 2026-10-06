@@ -1,3 +1,5 @@
+import { serviceDays } from '../config/service-defaults';
+import { ensureServiceWorkflow } from '../services/service-workflow.service';
 import { normalizeLevel } from '../services/service-access-level';
 import { Router, Response } from 'express';
 import { prisma } from '../lib/prisma';
@@ -48,8 +50,10 @@ router.get(
 
       console.log('[GET /api/services] Query params:', { departmentId, departmentCode, search });
 
+      // o painel do servidor pede também os desativados (?includeInactive=true) para poder reativar
+      const includeInactive = req.query.includeInactive === 'true';
       let whereClause: WhereCondition = {
-        isActive: true
+        ...(includeInactive ? {} : { isActive: true }),
         };
 
       // Suporte para filtrar por departmentId OU departmentCode (case-insensitive)
@@ -434,168 +438,42 @@ router.post('/', adminAuthMiddleware, requireMinRole(UserRole.MANAGER), async (r
         }
       });
 
-      /**
-       * ========================================================================
-       * GERAÇÃO AUTOMÁTICA DE WORKFLOWS (PILARES 1 e 2)
-       * ========================================================================
-       */
-      let workflow = null;
-      let workflowCreated = false;
-      let workflowType = 'NONE';
-
-      if (resolvedServiceType === 'COM_DADOS' && moduleType) {
-        // ====== PILAR 2: WORKFLOW ESPECIALIZADO PARA COM_DADOS ======
-        console.log(`[WORKFLOW] Gerando workflow inteligente para ${name} (COM_DADOS)`);
-
-        // Extrair documentos
-        const requiredDocs = Array.isArray(requiredDocuments)
-          ? (requiredDocuments as any[]).map(doc => ({
-              type: typeof doc === 'string' ? doc : doc.type,
-              name: typeof doc === 'string' ? doc : (doc.name || doc.type)
-            }))
-          : [];
-
-        // Extrair campos do formulário do formSchema
-        const formFields: Array<{ id: string; label: string; required: boolean }> = [];
-        if (formSchema) {
-          // Suportar diferentes estruturas de formSchema
-          if (formSchema.properties) {
-            // JSON Schema format
-            const required = formSchema.required || [];
-            Object.keys(formSchema.properties).forEach(fieldId => {
-              const field = formSchema.properties[fieldId];
-              formFields.push({
-                id: fieldId,
-                label: field.title || fieldId,
-                required: required.includes(fieldId)
-              });
-            });
-          } else if (formSchema.fields) {
-            // Custom fields format
-            (formSchema.fields as any[]).forEach((field: any) => {
-              formFields.push({
-                id: field.id || field.name,
-                label: field.label || field.name,
-                required: field.required || false
-              });
-            });
-          }
-        }
-
-        // Gerar workflow especializado baseado em análise inteligente
-        const workflowTemplate = generateSpecializedWorkflow({
-          moduleType,
-          serviceName: name,
-          serviceDescription: description,
-          estimatedDays,
-          departmentCode: department.code || undefined,
-          departmentName: department.name,
-          priority: priority || 3,
-          requiredDocuments: requiredDocs,
-          formFields
-        });
-
-        // Criar workflow
-        workflow = await tx.moduleWorkflow.create({
-          data: {
-            moduleType: workflowTemplate.moduleType,
-            name: workflowTemplate.name,
-            description: workflowTemplate.description,
-            defaultSLA: workflowTemplate.defaultSLA,
-            stages: workflowTemplate.stages as any,
-            rules: workflowTemplate.rules as any
-          }
-        });
-
-        workflowCreated = true;
-        workflowType = 'SPECIALIZED';
-        console.log(`✅ [INTELLIGENT] Workflow especializado criado para ${moduleType} com ${workflowTemplate.stages.length} etapas`);
-
-      } else if (resolvedServiceType === 'SEM_DADOS') {
-        const shouldCreateWorkflow = shouldAutoCreateWorkflow(
-          resolvedServiceType,
-          resolvedServiceSubtype
-        );
-
-        if (shouldCreateWorkflow) {
-          const workflowTemplate = buildNoDataWorkflowTemplate({
-            serviceName: name,
-            serviceDescription: description,
-            estimatedDays,
-            subtype: resolvedServiceSubtype as NoDataServiceSubtype,
-          });
-
-          if (workflowTemplate) {
-            const uniqueModuleType = `SEM_DADOS_${resolvedServiceSubtype}_${service.id}`;
-
-            workflow = await tx.moduleWorkflow.create({
-              data: {
-                moduleType: uniqueModuleType,
-                name: workflowTemplate.name,
-                description: workflowTemplate.description,
-                defaultSLA: workflowTemplate.defaultSLA,
-                stages: workflowTemplate.stages as any,
-                rules: workflowTemplate.rules as any
-              }
-            });
-
-            service = await tx.serviceSimplified.update({
-              where: { id: service.id },
-              data: { moduleType: uniqueModuleType },
-              include: {
-                department: {
-                  select: {
-                    id: true,
-                    name: true,
-                    code: true
-                  }
-                }
-              }
-            });
-
-            workflowCreated = true;
-            workflowType = `NO_DATA_${resolvedServiceSubtype}`;
-            console.log(`✅ [NO_DATA] Workflow criado para ${name}: ${uniqueModuleType}`);
-          }
-        } else {
-          workflowType = `DIRECT_${resolvedServiceSubtype}`;
-          console.log(`ℹ️ [NO_DATA] Serviço ${name} criado sem workflow para ${resolvedServiceSubtype}`);
-        }
-      }
-
-      return { service, workflow, workflowCreated, workflowType };
+      return { service };
     });
+
+    // Fluxo de etapas do serviço: o MESMO que o protocolo usa (ServiceWorkflow),
+    // criado já agora para o gestor poder ajustar em Fluxos antes do 1º pedido.
+    // Antes era gravado em ModuleWorkflow, que nenhum protocolo lia: as etapas
+    // "inteligentes" da criação nunca valiam.
+    let workflow: any = null;
+    try {
+      workflow = await ensureServiceWorkflow(result.service.id);
+    } catch (workflowError) {
+      console.warn('[services] fluxo não criado agora (será criado no 1º pedido):', workflowError instanceof Error ? workflowError.message : workflowError);
+    }
+    const workflowCreated = Boolean(workflow);
+    const workflowType = workflowCreated ? `SUBTYPE_${result.service.serviceSubtype || 'PADRAO'}` : 'NONE';
 
     // ========== RESPOSTA COM INFORMAÇÕES COMPLETAS ==========
 
-    let message = 'Serviço criado com sucesso';
-    const stagesCount = (result.workflow?.stages && Array.isArray(result.workflow.stages))
-      ? result.workflow.stages.length
-      : 0;
-
-    if (result.workflowCreated) {
-      if (result.workflowType === 'SPECIALIZED') {
-        message = `Serviço COM_DADOS criado com workflow especializado inteligente (${stagesCount} etapas). O workflow foi otimizado com base na complexidade do serviço e pode ser ajustado em /admin/workflows`;
-      } else if (result.workflowType.startsWith('NO_DATA_')) {
-        message = `Serviço SEM_DADOS criado com workflow alinhado ao modo ${result.service.serviceSubtype}.`;
-      }
-    } else if (resolvedServiceType === 'SEM_DADOS' && result.workflowType.startsWith('DIRECT_')) {
-      message = `Serviço SEM_DADOS criado como atendimento direto (${result.service.serviceSubtype}), sem workflow protocolável.`;
-    }
+    const stagesCount = Array.isArray(workflow?.stages) ? workflow.stages.length : 0;
+    const message = workflowCreated
+      ? `Serviço criado com ${stagesCount} etapas de atendimento. Ajuste as etapas em Fluxos, se precisar.`
+      : 'Serviço criado com sucesso';
 
     return res.status(201).json({
       success: true,
       message,
       service: result.service,
-      workflow: result.workflow,
-      workflowCreated: result.workflowCreated,
-      workflowType: result.workflowType,
+      workflow,
+      workflowCreated,
+      workflowType,
       workflowStages: stagesCount,
       serviceType: result.service.serviceType,
       serviceSubtype: result.service.serviceSubtype,
       hasDataCapture: result.service.serviceType === 'COM_DADOS',
       moduleType: result.service.moduleType,
-      intelligentWorkflow: result.workflowType === 'SPECIALIZED'
+      intelligentWorkflow: workflowCreated
         });
   } catch (error) {
     console.error('Create service error:', error);
@@ -774,6 +652,13 @@ router.put('/:id', adminAuthMiddleware, requireMinRole(UserRole.MANAGER), async 
       enabledFieldsSaved: updatedService.enabledFields ? 'sim' : 'null',
       formFieldsConfigSaved: updatedService.formFieldsConfig ? 'sim' : 'null'
     });
+
+    // prazo mudou: o fluxo do serviço (e os próximos pedidos) acompanham
+    if (estimatedDays !== undefined && Number(estimatedDays || 0) !== Number(service.estimatedDays || 0)) {
+      await prisma.serviceWorkflow
+        .updateMany({ where: { serviceId: updatedService.id }, data: { defaultSLA: serviceDays(updatedService.estimatedDays) } })
+        .catch((error) => console.warn('[services] prazo do fluxo não atualizado:', error?.message || error));
+    }
 
     return res.json({
       message: 'Serviço atualizado com sucesso',

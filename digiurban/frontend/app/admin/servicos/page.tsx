@@ -115,7 +115,8 @@ export default function ServicesManagementPage() {
           setAppNameByAction(map)
         })
         .catch(() => undefined)
-      const response = await apiRequest('/api/services')
+      // inclui os desativados: a aba Inativos e o botão Reativar dependem deles
+      const response = await apiRequest('/api/services?includeInactive=true')
 
       // ✅ CORREÇÃO: Aceitar múltiplos formatos de resposta
       const servicesData = response.data || response.services || []
@@ -151,6 +152,17 @@ export default function ServicesManagementPage() {
     }
   }, [apiRequest])
 
+
+  // Reativar serviço desativado
+  const reactivateService = async (serviceId: string) => {
+    try {
+      await apiRequest(`/api/services/${serviceId}`, { method: 'PUT', body: JSON.stringify({ isActive: true }) })
+      toast({ title: 'Serviço reativado', description: 'O serviço voltou a aparecer para o cidadão.' })
+      await loadServices()
+    } catch (error: any) {
+      toast({ title: 'Erro ao reativar', description: error?.message || 'Tente de novo.', variant: 'destructive' })
+    }
+  }
 
   // Desativar serviço
   const deleteService = async (serviceId: string) => {
@@ -470,6 +482,12 @@ export default function ServicesManagementPage() {
                           <span className="text-xs">Editar</span>
                         </Button>
                       </Link>
+                    )}
+
+                    {hasPermission('services:delete') && !service.isActive && (
+                      <Button size="sm" variant="outline" onClick={() => reactivateService(service.id)}>
+                        <span className="text-xs">Reativar</span>
+                      </Button>
                     )}
 
                     {hasPermission('services:delete') && service.isActive && (

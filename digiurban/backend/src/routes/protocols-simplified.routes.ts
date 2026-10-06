@@ -1839,10 +1839,6 @@ router.post('/:id/complete', requireMinRole(UserRole.USER), async (req, res) => 
       }
     });
 
-    // Etiquetas do cidadão ligadas a este serviço (não falha a conclusão)
-    const { assignTagsOnProtocolConcluded } = await import('../services/citizen-tags.service');
-    await assignTagsOnProtocolConcluded(updatedProtocol.id);
-
     return res.json({
       success: true,
       data: updatedProtocol,

@@ -39,6 +39,7 @@ interface ProvisionResult {
   admin: { email: string; name: string };
   temporaryPassword: string;
   departmentsCreated: number; servicesCreated: number;
+  warnings?: string[];
   accessUrl?: string;
 }
 
@@ -293,6 +294,9 @@ export default function TenantsPage() {
             )}
             <p className="text-green-800">
               {provisioned.departmentsCreated} secretarias e {provisioned.servicesCreated} serviços criados.
+              {provisioned.warnings?.map((warning) => (
+                <span key={warning} className="block font-medium text-red-700">{warning}</span>
+              ))}
               A senha não será exibida novamente — o admin trocará no primeiro login.
             </p>
             <Button size="sm" variant="outline" onClick={() => setProvisioned(null)}>

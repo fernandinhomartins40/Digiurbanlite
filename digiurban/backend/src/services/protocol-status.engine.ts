@@ -11,6 +11,7 @@
  * diretamente.
  */
 
+import { runConclusionHooks } from './protocol-conclusion-hooks';
 import { PendingStatus, ProtocolStatus, UserRole, Prisma } from '@prisma/client';
 import { resumePausedSla } from './protocol-sla.service';
 import { differenceInCalendarDays } from 'date-fns';
@@ -181,6 +182,12 @@ export class ProtocolStatusEngine {
     };
 
     const result = tx ? await runTransition(tx) : await prisma.$transaction(runTransition);
+
+    // Conclusão: etiquetas e demais efeitos num lugar só. Com transação de
+    // fora (aprovação de dados), quem chamou roda depois de gravar.
+    if (!tx && input.newStatus === ProtocolStatus.CONCLUIDO && currentStatus !== ProtocolStatus.CONCLUIDO) {
+      void runConclusionHooks(input.protocolId, input.actorId);
+    }
 
     // 4️⃣ PÓS-TRANSAÇÃO: Notificações (fora da transação para não bloquear)
     this.sendNotifications(result.protocol, currentStatus, input.newStatus).catch((error) => {

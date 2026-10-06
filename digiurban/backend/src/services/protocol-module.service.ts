@@ -7,6 +7,7 @@
  * Implementa o fluxo: Protocolo COM_DADOS → customData (entidade virtual) → Aprovação
  */
 
+import { runConclusionHooks } from './protocol-conclusion-hooks';
 import { ProtocolStatus, Prisma, UserRole } from '@prisma/client';
 import { prisma } from '../lib/prisma';
 import { generateProtocolNumberSafe } from './protocol-number.service';
@@ -50,6 +51,28 @@ export interface RejectProtocolInput {
   /** Role real de quem rejeita */
   actorRole?: ActorRole;
   reason: string;
+}
+
+/** Ids de TODOS os campos do formulário do serviço (formSchema + formFieldsConfig) */
+function extractFormFieldIds(service: { formSchema?: unknown; formFieldsConfig?: unknown }): Set<string> {
+  const ids = new Set<string>();
+  let schema: any = service.formSchema;
+  if (typeof schema === 'string') {
+    try {
+      schema = JSON.parse(schema);
+    } catch {
+      schema = null;
+    }
+  }
+  if (schema?.properties && typeof schema.properties === 'object') Object.keys(schema.properties).forEach((id) => ids.add(id));
+  if (Array.isArray(schema?.fields)) schema.fields.forEach((field: any) => field?.id && ids.add(String(field.id)));
+  if (Array.isArray(service.formFieldsConfig)) {
+    (service.formFieldsConfig as any[]).forEach((field) => {
+      const id = field?.id ?? field?.key ?? field?.name;
+      if (typeof id === 'string' && id) ids.add(id);
+    });
+  }
+  return ids;
 }
 
 function extractRequiredInputFieldsFromService(service: {
@@ -127,9 +150,16 @@ export class ProtocolModuleService {
     const isComDados = service.serviceType === 'COM_DADOS';
 
     // 2.1 Pré-preencher dados de composição familiar (Sprint 3.2)
+    // Só os campos de família que o FORMULÁRIO do serviço pede (renda, nº de
+    // crianças...). Antes iam em todo pedido — até "tapa-buraco" — e viravam
+    // campos para o servidor aprovar (LGPD: guardar só o necessário).
     let enrichedFormData = { ...formData };
     try {
-      const familyPrefillData = await familyStatsService.getFormPrefillData(citizenId);
+      const formFieldIds = extractFormFieldIds(service);
+      const allFamilyData = await familyStatsService.getFormPrefillData(citizenId);
+      const familyPrefillData = Object.fromEntries(
+        Object.entries(allFamilyData || {}).filter(([key]) => formFieldIds.has(key))
+      );
 
       // Mesclar dados de composição familiar com formData existente
       // Dados do formulário têm prioridade sobre dados calculados
@@ -406,31 +436,9 @@ export class ProtocolModuleService {
         throw new Error('Protocolo ou serviço não encontrado');
       }
 
-      // 1. Buscar workflow do SERVIÇO (não mais por moduleType)
-      const workflow = await serviceWorkflowService.getWorkflowByServiceId(protocol.serviceId);
-
-      if (!workflow) {
-        // ✅ AUTO-GERAÇÃO: Se não tem workflow, gerar automaticamente usando subtipo
-        console.warn(`⚠️ Workflow não encontrado para serviço "${protocol.service.name}". Gerando workflow automático...`);
-
-        const templateService = await import('./workflow-template.service');
-
-        // Gerar workflow UNIFICADO baseado em subtipo
-        const generatedWorkflow = templateService.generateCompleteWorkflowBySubtype(protocol.service as any);
-
-        // Criar workflow no banco usando ServiceWorkflow
-        await serviceWorkflowService.createServiceWorkflow({
-          serviceId: protocol.serviceId,
-          ...generatedWorkflow
-        });
-
-        const subtype = protocol.service.serviceSubtype || 'CONSULTIVO';
-        console.log(`✅ Workflow UNIFICADO criado automaticamente (${subtype}) para "${protocol.service.name}"`);
-
-        // Aplicar workflow recém-criado (recursão segura - não entra em loop pois workflow agora existe)
-        await this.applyWorkflowToProtocol(protocolId, moduleType);
-        return;
-      }
+      // 1. Fluxo do SERVIÇO (gerado agora se ainda não existe — mesmo caminho da criação do serviço)
+      const workflow = await serviceWorkflowService.ensureServiceWorkflow(protocol.serviceId);
+      if (!workflow) throw new Error('Fluxo do serviço não pôde ser criado');
 
       // 2. Aplicar workflow (criar etapas baseado no ServiceWorkflow)
       await serviceWorkflowService.applyWorkflowToProtocol(protocolId);
@@ -525,6 +533,9 @@ export class ProtocolModuleService {
         tx
       );
     }, { timeout: 15000 });
+
+    // conclusão dentro da transação de cima: efeitos de conclusão agora, já gravado
+    await runConclusionHooks(protocolId, userId);
 
     // ⭐ HOOK: cadastros aprovados viram entidade do app de secretaria
     // (produtor/propriedade rural). NÃO-FATAL, padrão materializeOnApproval.
