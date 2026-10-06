@@ -909,6 +909,11 @@ export async function assignProtocolToServer(params: AssignProtocolParams) {
     });
   }
 
+  // Aviso ao servidor (portal + e-mail); não falha a atribuição
+  void import('./notification-triggers')
+    .then(({ default: NotificationTriggers }) => NotificationTriggers.onProtocolAssigned(protocolId, assignedUserId, { byUserId: assignedById, byName: source === 'AUTO_STAGE' ? null : normalizedAssignedByName, kind: 'ATRIBUIDO' }))
+    .catch((error) => console.error('[assignment] Falha ao avisar o servidor:', error));
+
   return {
     protocol: updatedProtocol,
     assignment,
@@ -1002,6 +1007,11 @@ export async function delegateProtocol(params: DelegateProtocolParams) {
       }
     }
   });
+
+  // Aviso ao servidor (portal + e-mail); não falha a atribuição
+  void import('./notification-triggers')
+    .then(({ default: NotificationTriggers }) => NotificationTriggers.onProtocolAssigned(protocolId, delegadoParaUserId, { byUserId: delegadoPorUserId, byName: delegadoPorName, kind: 'DELEGADO' }))
+    .catch((error) => console.error('[assignment] Falha ao avisar o servidor:', error));
 
   return assignment;
 }
@@ -1122,6 +1132,11 @@ export async function forwardProtocol(params: ForwardProtocolParams) {
     }
   });
 
+  // Aviso ao servidor (portal + e-mail); não falha a atribuição
+  void import('./notification-triggers')
+    .then(({ default: NotificationTriggers }) => NotificationTriggers.onProtocolAssigned(protocolId, forwardToUserId, { byUserId: forwardedById, byName: forwardedByName, kind: 'ENCAMINHADO' }))
+    .catch((error) => console.error('[assignment] Falha ao avisar o servidor:', error));
+
   return assignment;
 }
 
@@ -1208,6 +1223,15 @@ export async function assignProtocolToTeam(params: AssignTeamParams) {
       }
     }
   });
+
+  // Aviso a cada membro da equipe (portal + e-mail); não falha a atribuição
+  void import('./notification-triggers')
+    .then(async ({ default: NotificationTriggers }) => {
+      for (const membro of team.membros) {
+        await NotificationTriggers.onProtocolAssigned(protocolId, membro.userId, { byUserId: assignedById, byName: assignedByName, kind: 'EQUIPE' });
+      }
+    })
+    .catch((error) => console.error('[assignment] Falha ao avisar a equipe:', error));
 
   return {
     team,

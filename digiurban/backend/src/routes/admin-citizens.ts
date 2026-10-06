@@ -1,4 +1,5 @@
 import { Router, Response } from 'express';
+import { PasswordResetService } from '../services/password-reset.service';
 import { prisma } from '../lib/prisma';
 import { adminAuthMiddleware, requirePermission } from '../middleware/admin-auth';
 import { asyncHandler } from '../utils/express-helpers';
@@ -105,6 +106,7 @@ router.post(
 
     // Gerar senha hash (ou senha temporária se não fornecida)
     let hashedPassword: string;
+    const createdWithoutPassword = !(password && password.length >= 8);
     if (password && password.length >= 8) {
       hashedPassword = await bcrypt.hash(password, BCRYPT_ROUNDS);
     } else {
@@ -159,9 +161,16 @@ router.post(
       return createdCitizen;
     });
 
+    // Sem senha definida no balcão: o cidadão recebe o link para criar a dele
+    if (createdWithoutPassword) {
+      void new PasswordResetService().sendCitizenAccountCreated(newCitizen);
+    }
+
     res.status(201).json({
       success: true,
-      message: 'Cidadão cadastrado como Prata (Verificado)',
+      message: createdWithoutPassword
+        ? 'Cidadão cadastrado como Prata (Verificado). Enviamos um e-mail para ele criar a senha.'
+        : 'Cidadão cadastrado como Prata (Verificado)',
       data: { citizen: newCitizen }
         });
   })

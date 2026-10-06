@@ -270,5 +270,37 @@ router.post(
   })
 );
 
+// GET /api/public/family-invites/:token — dados do convite familiar para a página
+// aberta pelo link do e-mail (quem recebe ainda pode não ter conta). O token é o
+// segredo; devolve só o necessário (sem CPF nem e-mail de quem convidou).
+router.get(
+  '/family-invites/:token',
+  handleAsync(async (req, res) => {
+    const token = String(req.params.token || '');
+    if (!/^[A-Za-z0-9_-]{16,128}$/.test(token)) {
+      res.status(404).json({ success: false, message: 'Convite não encontrado' });
+      return;
+    }
+    const invite = await prisma.familyInvite.findUnique({
+      where: { token },
+      select: {
+        email: true,
+        name: true,
+        relationship: true,
+        isDependent: true,
+        message: true,
+        status: true,
+        expiresAt: true,
+        head: { select: { name: true } },
+      },
+    });
+    if (!invite) {
+      res.status(404).json({ success: false, message: 'Convite não encontrado ou expirado' });
+      return;
+    }
+    res.json({ success: true, data: { invite } });
+  })
+);
+
 export default router;
 

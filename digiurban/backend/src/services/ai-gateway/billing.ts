@@ -141,6 +141,24 @@ export async function checkLowBalance(tenantId: string, balance: number): Promis
         sentAt: new Date(),
       })),
     });
+    // e-mail aos administradores (o sininho só aparece para quem abre o painel)
+    const { default: notificationService } = await import('../notification.service');
+    for (const admin of admins) {
+      await notificationService
+        .notify({
+          recipientType: 'user',
+          recipientId: admin.id,
+          type: 'AI_CREDITS_LOW',
+          title: empty ? 'Créditos de IA esgotados' : 'Créditos de IA acabando',
+          message: empty
+            ? 'O município ficou sem créditos de IA. O DigiBot e o Assistente funcionam sem IA até a recarga.'
+            : `Restam ${Math.floor(balance)} créditos de IA. Compre um pacote para não interromper o DigiBot e o Assistente.`,
+          data: { url: '/admin/ia-creditos' },
+          channels: ['email'],
+          priority: 'high',
+        })
+        .catch((error) => console.error('[ai-billing] Falha ao enviar e-mail de saldo baixo:', error));
+    }
   });
 }
 

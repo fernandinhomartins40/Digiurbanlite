@@ -6,6 +6,7 @@ import { Router, Response, Request } from 'express';
 import { prisma } from '../lib/prisma';
 import { adminAuthMiddleware, requirePermission } from '../middleware/admin-auth';
 import { asyncHandler } from '../utils/express-helpers';
+import NotificationTriggers from '../services/notification-triggers';
 import type { AuthenticatedRequest } from '../types';
 import * as path from 'path';
 import * as fs from 'fs';
@@ -520,6 +521,12 @@ router.post(
 
       return rejectedDoc;
     });
+
+    // E-mail "Envie de novo" (o aviso no portal já foi criado acima)
+    NotificationTriggers.onDocumentRejected(documentId, reason, {
+      documentName: getDocumentLabel(document.documentType),
+      channels: ['push', 'email'],
+    }).catch((error) => console.error('Erro ao avisar recusa de documento:', error));
 
     res.json({
       success: true,

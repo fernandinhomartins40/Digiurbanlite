@@ -5,6 +5,7 @@
  */
 
 import { Router } from 'express';
+import { uploadUrlToDiskPath } from '../config/upload';
 import { authenticateToken, requireAdmin, requireSuperAdmin } from '../middleware/auth';
 import { adminAuthMiddleware, requireMinRole } from '../middleware/admin-auth';
 import { UserRole } from '@prisma/client';
@@ -21,9 +22,7 @@ import {
 import { uploadDocuments } from '../config/upload';
 import path from 'path';
 import fs from 'fs/promises';
-import { sendMail } from '../services/mail/mailer';
-import { mailSenderName } from '../services/mail/links';
-import { escapeMailHtml, mailInfoBox, mailParagraph, renderMailLayout } from '../services/mail/layout';
+import { sendTemplatedMail } from '../services/mail/templated';
 
 const router = Router();
 // Otimização VPS (docs/VPS-OPTIMIZATION-AUDIT.md, P0-2): usar o singleton de
@@ -819,7 +818,7 @@ router.post('/generated-documents/send-multiple', adminAuthMiddleware, uploadDoc
       // Preparar anexos dos documentos gerados
       const documentAttachments = documents.map(doc => ({
         filename: doc.fileName,
-        path: path.join(process.cwd(), doc.filePath)
+        path: uploadUrlToDiskPath(doc.filePath)
       }));
 
       // Preparar anexos dos arquivos adicionais
@@ -831,38 +830,27 @@ router.post('/generated-documents/send-multiple', adminAuthMiddleware, uploadDoc
       // Combinar todos os anexos
       const allAttachments = [...documentAttachments, ...additionalAttachments];
 
-      const docList = documents.map(d => `• ${escapeMailHtml(d.template.name)}`).join('<br>');
-      const fileList = additionalFiles.map(f => `• ${escapeMailHtml(f.originalname)}`).join('<br>');
       const totalCount = documents.length + additionalFiles.length;
+      const documentList = [
+        ...documents.map(d => `• ${d.template.name}`),
+        ...additionalFiles.map(f => `• ${f.originalname}`),
+      ].join('\n');
 
-      const htmlContent = renderMailLayout({
-        title: totalCount > 1 ? 'Seus documentos estão disponíveis' : 'Seu documento está disponível',
-        preheader: `Documentos do protocolo ${protocolNumber}`,
-        senderName: await mailSenderName(),
-        bodyHtml:
-          mailParagraph(`Olá, <strong>${escapeMailHtml(recipientName)}</strong>!`) +
-          (message ? mailParagraph(escapeMailHtml(message)) : '') +
-          mailParagraph(`Você recebeu <strong>${totalCount} documento(s)</strong> do protocolo <strong>${escapeMailHtml(protocolNumber)}</strong>:`) +
-          mailInfoBox(
-            [
-              ['Documentos', documents.length > 0 ? docList : ''],
-              ['Outros arquivos', additionalFiles.length > 0 ? fileList : ''],
-            ],
-            { raw: true }
-          ) +
-          mailParagraph('Os arquivos vão <strong>anexados</strong> a este e-mail e também ficam em "Meus Documentos" no portal.'),
-      });
-
-      // Fila do e-mail transacional (VeloMail). Os arquivos são lidos agora:
-      // os enviados no formulário são temporários e podem sumir antes da entrega.
+      // Modelo "document-delivery". Os arquivos são lidos agora: os enviados no
+      // formulário são temporários e podem sumir antes da entrega.
       const attachmentsWithContent = await Promise.all(
         allAttachments.map(async (item) => ({ filename: item.filename, content: await fs.readFile(item.path) }))
       );
-      const queued = await sendMail({
+      const queued = await sendTemplatedMail({
+        template: 'document-delivery',
         to: recipientEmail,
-        subject: subject || `Documentos do Protocolo ${protocolNumber}`,
-        html: htmlContent,
-        kind: 'document',
+        variables: {
+          recipientName: String(recipientName || '').trim().split(' ')[0],
+          subject: subject || `Documentos do Protocolo ${protocolNumber}`,
+          message: message || `Você recebeu ${totalCount} documento(s) do seu pedido.`,
+          protocolNumber,
+          documentList,
+        },
         attachments: attachmentsWithContent,
       });
       if (!queued.queued) throw new Error(queued.reason || 'E-mail não enfileirado');

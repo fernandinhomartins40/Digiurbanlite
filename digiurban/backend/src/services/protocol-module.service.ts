@@ -378,6 +378,11 @@ export class ProtocolModuleService {
       console.error('❌ Erro ao converter protocolo para app de secretaria (não-fatal):', error);
     }
 
+    // Aviso "Recebemos o seu pedido" (portal + e-mail). Não segura a resposta nem falha a criação.
+    import('./notification-triggers')
+      .then(({ default: NotificationTriggers }) => NotificationTriggers.onProtocolCreated(result.protocol.id))
+      .catch((error) => console.error('Erro ao avisar o cidadão sobre o pedido criado (não-fatal):', error));
+
     return result;
   }
 

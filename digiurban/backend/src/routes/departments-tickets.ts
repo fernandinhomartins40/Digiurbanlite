@@ -1,4 +1,5 @@
 import { Router, Request, Response } from 'express';
+import NotificationTriggers from '../services/notification-triggers';
 import { z } from 'zod';
 import { UserRole } from '@prisma/client';
 import { prisma } from '../lib/prisma';
@@ -290,15 +291,8 @@ router.post('/tickets/:id/accept', async (req: Request, res: Response) => {
       },
     });
 
-    await prisma.notification.create({
-      data: {
-        citizenId: ticket.citizenId,
-        title: 'Protocolo Criado',
-        message: `A secretaria criou o protocolo ${protocol.number} para atender sua solicitacao: ${ticket.title}`,
-        type: 'INFO',
-        protocolId: protocol.id,
-      },
-    });
+    // Aviso "Recebemos o seu pedido" (portal + e-mail)
+    await NotificationTriggers.onProtocolCreated(protocol.id);
 
     res.json({
       success: true,

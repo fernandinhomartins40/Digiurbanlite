@@ -3,6 +3,8 @@ import { prisma } from '../lib/prisma';
 import { z } from 'zod';
 import { asyncHandler } from '../utils/express-helpers';
 import { transactionalEmailService } from '../lib/email/TransactionalEmailService';
+import { EMAIL_TEMPLATE_INFO } from '../lib/email/default-templates';
+import { ensureDefaultTemplates } from '../services/mail/templated';
 
 import { platformConsoleAuth } from '../middleware/platform-console-auth';
 const router = Router();
@@ -27,13 +29,25 @@ const templateSchema = z.object({
  * Lista todos os templates de email
  */
 router.get('/', asyncHandler(async (req: Request, res: Response) => {
+  // garante que todo e-mail do sistema tem o seu modelo na lista
+  await ensureDefaultTemplates().catch((error) => console.error('[email-templates] modelos padrão:', error));
+
   const templates = await prisma.emailTemplate.findMany({
     orderBy: { createdAt: 'desc' }
   });
 
+  const order = Object.keys(EMAIL_TEMPLATE_INFO);
+  const data = templates
+    .map((template) => ({ ...template, info: EMAIL_TEMPLATE_INFO[template.name] || null }))
+    .sort((a, b) => {
+      const ia = order.indexOf(a.name);
+      const ib = order.indexOf(b.name);
+      return (ia < 0 ? 999 : ia) - (ib < 0 ? 999 : ib);
+    });
+
   res.json({
     success: true,
-    data: templates
+    data
   });
 }));
 
@@ -119,6 +133,14 @@ router.put('/:id', asyncHandler(async (req: Request, res: Response) => {
     });
   }
 
+  // o sistema procura o modelo pelo nome: modelo do sistema não pode ser renomeado
+  if (data.name && data.name !== existing.name && EMAIL_TEMPLATE_INFO[existing.name]) {
+    return res.status(400).json({
+      success: false,
+      message: 'Este modelo é usado pelo sistema e não pode mudar de nome.'
+    });
+  }
+
   // Se está mudando o nome, verificar se não conflita
   if (data.name && data.name !== existing.name) {
     const nameConflict = await prisma.emailTemplate.findFirst({
@@ -176,8 +198,7 @@ router.delete('/:id', asyncHandler(async (req: Request, res: Response) => {
   }
 
   // Verificar se é um template do sistema (não pode deletar)
-  const systemTemplates = ['user-confirmation', 'password-recovery', 'protocol-confirmation', 'protocol-update', 'citizen-welcome'];
-  if (systemTemplates.includes(existing.name)) {
+  if (EMAIL_TEMPLATE_INFO[existing.name]) {
     return res.status(400).json({
       success: false,
       message: 'Templates do sistema não podem ser deletados. Você pode desativá-los.'

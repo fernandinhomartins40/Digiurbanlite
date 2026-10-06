@@ -30,7 +30,8 @@ import {
   ValidationWarning
 } from '../shared/types/family.types'
 
-import { FAMILY_VALIDATION_RULES, FAMILY_MESSAGES } from '../shared/constants/family.constants'
+import { FAMILY_VALIDATION_RULES, FAMILY_MESSAGES, RELATIONSHIP_LABELS } from '../shared/constants/family.constants'
+import { portalLink, sendTemplatedMail } from './mail/templated'
 
 // ============================================================================
 // INTERFACES LOCAIS
@@ -528,8 +529,24 @@ export class FamilyService {
         }
       })
 
-      // TODO: Enviar email com link de convite
-      // await emailService.sendFamilyInvite(data.email, head.name, token)
+      // E-mail do convite (modelo "family-invite"); não falha o convite
+      if (invite.email) {
+        portalLink(`/convites/familia/${token}`)
+          .then((inviteUrl) =>
+            sendTemplatedMail({
+              template: 'family-invite',
+              to: invite.email,
+              variables: {
+                inviteeName: (data.name || '').trim().split(' ')[0] || invite.email.split('@')[0],
+                headName: head.name,
+                relationship: RELATIONSHIP_LABELS[String(data.relationship)] || 'Familiar',
+                expiresAt,
+                inviteUrl,
+              },
+            })
+          )
+          .catch((error) => console.error('Erro ao enviar e-mail do convite familiar:', error))
+      }
 
       return {
         success: true,

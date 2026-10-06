@@ -6,9 +6,7 @@
 import crypto from 'crypto';
 import { prisma } from '../lib/prisma';
 import { TransactionalEmailService } from '../lib/email/TransactionalEmailService';
-import { sendMail } from './mail/mailer';
-import { mailSenderName, tenantPortalUrl } from './mail/links';
-import { escapeMailHtml, mailNotice, mailParagraph, renderMailLayout } from './mail/layout';
+import { portalLink, sendTemplatedMail } from './mail/templated';
 
 interface CreateResetTokenParams {
   email: string;
@@ -29,6 +27,7 @@ interface ResetPasswordParams {
 export class PasswordResetService {
   private emailService: TransactionalEmailService;
   private readonly TOKEN_EXPIRATION_HOURS = 1;
+  private readonly WELCOME_TOKEN_HOURS = 72;
 
   constructor() {
     this.emailService = new TransactionalEmailService();
@@ -232,7 +231,7 @@ export class PasswordResetService {
   }
 
   /**
-   * Envia email de recuperação
+   * Envia email de recuperação (modelo "password-recovery")
    */
   private async sendResetEmail({ email, token, userName, userType }: {
     email: string;
@@ -241,45 +240,20 @@ export class PasswordResetService {
     userType: 'admin' | 'citizen';
   }): Promise<void> {
     try {
-      // URL base do frontend
       // link no endereço do município (a sessão e o cookie ficam presos ao subdomínio)
-      const frontendUrl = await tenantPortalUrl();
       const resetPath = userType === 'admin' ? '/admin/reset-password' : '/cidadao/reset-password';
-      const resetUrl = `${frontendUrl}${resetPath}?token=${token}`;
-
-      const subject = userType === 'admin'
-        ? 'Criar nova senha — painel dos servidores'
-        : 'Criar nova senha — Portal do Cidadão';
-
-      const htmlContent = this.getEmailTemplate({
-        senderName: await mailSenderName(),
-        userName,
-        resetUrl,
-        userType,
-        expirationHours: this.TOKEN_EXPIRATION_HOURS
+      const result = await sendTemplatedMail({
+        template: 'password-recovery',
+        to: email,
+        priority: 'critical',
+        variables: {
+          userName: userName.trim().split(' ')[0],
+          recoveryUrl: await portalLink(`${resetPath}?token=${token}`),
+          portalName: userType === 'admin' ? 'painel dos servidores' : 'Portal do Cidadão',
+          expirationText: `${this.TOKEN_EXPIRATION_HOURS} hora${this.TOKEN_EXPIRATION_HOURS === 1 ? '' : 's'}`,
+        },
       });
-
-      const textContent = `
-Olá ${userName},
-
-Recebemos uma solicitação para recuperar sua senha no ${userType === 'admin' ? 'painel administrativo' : 'Portal do Cidadão'} DigiUrban.
-
-Clique no link abaixo para redefinir sua senha:
-${resetUrl}
-
-Este link expira em ${this.TOKEN_EXPIRATION_HOURS} hora(s).
-
-Se você não solicitou esta recuperação, ignore este email. Sua senha permanecerá inalterada.
-
-Atenciosamente,
-Equipe DigiUrban
-      `.trim();
-
-      // Enviar email via TransactionalEmailService
-      // fila do e-mail transacional (VeloMail), prioridade máxima
-      const result = await sendMail({ to: email, subject, html: htmlContent, text: textContent, priority: 'critical', kind: `password-reset:${userType}` });
       if (!result.queued) console.warn('[Password Reset] E-mail não enfileirado:', result.reason);
-
     } catch (error) {
       console.error('Error sending reset email:', error);
       // Não lançar erro - email é secundário
@@ -287,27 +261,31 @@ Equipe DigiUrban
   }
 
   /**
-   * Template HTML do email
+   * Cidadão cadastrado pela prefeitura sem senha: manda o link para ele criar a
+   * própria senha (modelo "citizen-account-created"). O link vale 3 dias.
    */
-  private getEmailTemplate({ userName, resetUrl, userType, expirationHours, senderName }: {
-    userName: string;
-    resetUrl: string;
-    userType: 'admin' | 'citizen';
-    expirationHours: number;
-    senderName: string;
-  }): string {
-    const where = userType === 'admin' ? 'painel dos servidores' : 'Portal do Cidadão';
-    return renderMailLayout({
-      title: 'Criar uma nova senha',
-      preheader: `Link para criar uma nova senha no ${where}. Vale por ${expirationHours} hora(s).`,
-      senderName,
-      bodyHtml:
-        mailParagraph(`Olá, <strong>${escapeMailHtml(userName)}</strong>!`) +
-        mailParagraph(`Recebemos um pedido para trocar a sua senha no <strong>${where}</strong>. Clique no botão abaixo para criar uma nova senha.`) +
-        mailNotice(`<strong>Atenção:</strong> o link vale por <strong>${expirationHours} hora(s)</strong> e só pode ser usado uma vez.`),
-      button: { label: 'Criar nova senha', url: resetUrl },
-      footerNote: 'Se você não pediu a troca de senha, ignore este e-mail: a sua senha continua a mesma.',
-    });
+  async sendCitizenAccountCreated(citizen: { id: string; email: string | null; name: string }): Promise<void> {
+    if (!citizen.email) return;
+    try {
+      const token = this.generateSecureToken();
+      const expiresAt = new Date(Date.now() + this.WELCOME_TOKEN_HOURS * 60 * 60 * 1000);
+      await prisma.passwordResetToken.create({
+        data: { token, email: citizen.email, userType: 'citizen', citizenId: citizen.id, expiresAt },
+      });
+      const result = await sendTemplatedMail({
+        template: 'citizen-account-created',
+        to: citizen.email,
+        priority: 'critical',
+        variables: {
+          citizenName: citizen.name.trim().split(' ')[0],
+          setPasswordUrl: await portalLink(`/cidadao/reset-password?token=${token}`),
+          expirationText: '3 dias',
+        },
+      });
+      if (!result.queued) console.warn('[Conta criada] E-mail não enfileirado:', result.reason);
+    } catch (error) {
+      console.error('Erro ao enviar e-mail de conta criada:', error);
+    }
   }
 
   /**

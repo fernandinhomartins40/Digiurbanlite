@@ -1,8 +1,6 @@
 import { prisma } from '../prisma';
 import { sendMail } from '../../services/mail/mailer';
-import { mailSenderName } from '../../services/mail/links';
-import { escapeMailHtml } from '../../services/mail/layout';
-import { buildDefaultTemplates } from './default-templates';
+import { ensureDefaultTemplates, MailVariables, sendTemplatedMail } from '../../services/mail/templated';
 import {
   IEmailService,
   EmailTemplate as CentralEmailTemplate,
@@ -143,35 +141,18 @@ export class TransactionalEmailService {
   async sendEmail(
     options: SendEmailOptions
   ): Promise<{ success: boolean; messageId?: string; error?: string }> {
-    // Desde 2026-10-05 o envio é pela fila do e-mail transacional (VeloMail).
-    // emailServerId fica na assinatura só por compatibilidade com quem chama.
+    // Desde 2026-10-05 o envio é pela fila do e-mail transacional (VeloMail), sempre
+    // a partir do modelo (services/mail/templated.ts). emailServerId fica na
+    // assinatura só por compatibilidade com quem chama.
     try {
-      const { templateName, to, variables, from, priority = 3, scheduledFor, tags = ['transactional'], attachments = [] } = options;
-
-      let template = await prisma.emailTemplate.findFirst({ where: { name: templateName } });
-      if (!template) {
-        // banco sem os modelos padrão (instalação nova): cria e tenta de novo
-        await this.createDefaultTemplates('');
-        template = await prisma.emailTemplate.findFirst({ where: { name: templateName } });
-      }
-      if (!template) {
-        throw new Error(`Email template '${templateName}' not found`);
-      }
-
-      const vars = { senderName: await mailSenderName(), ...variables } as EmailTemplateVariables;
-      const subject = this.processTemplate(template.subject, vars);
-      const html = this.processTemplate(template.htmlContent, vars, true);
-      const text = template.textContent ? this.processTemplate(template.textContent, vars) : this.convertHtmlToText(html);
-
-      const result = await sendMail({
+      const { templateName, to, variables, from, priority = 3, scheduledFor, tags, attachments = [] } = options;
+      const result = await sendTemplatedMail({
+        template: templateName,
         to,
-        subject,
-        html,
-        text,
+        variables: variables as MailVariables,
         fromName: from?.name || null,
         priority: priority <= 2 ? 'critical' : priority >= 5 ? 'low' : 'normal',
         tags,
-        kind: `template:${templateName}`,
         sendAt: scheduledFor || null,
         attachments: attachments.map((item) => ({
           filename: item.filename,
@@ -368,57 +349,11 @@ export class TransactionalEmailService {
   }
 
   /**
-   * Processa template substituindo variáveis
-   */
-  private processTemplate(template: string, variables: EmailTemplateVariables, html = false): string {
-    let processed = template;
-
-    for (const [key, value] of Object.entries(variables)) {
-      const regex = new RegExp(`{{\\s*${key}\\s*}}`, 'g');
-      // no HTML o valor entra escapado: nome ou mensagem digitada não vira código
-      const text = html ? escapeMailHtml(value) : String(value ?? '');
-      processed = processed.replace(regex, () => text);
-    }
-
-    // variável que não veio some, em vez de aparecer "{{assim}}" no e-mail
-    return processed.replace(/{{\s*[\w.]+\s*}}/g, '');
-  }
-
-  /**
-   * Converte HTML simples para texto
-   */
-  private convertHtmlToText(html: string): string {
-    return html
-      .replace(/<br\s*\/?>/gi, '\n')
-      .replace(/<\/p>/gi, '\n\n')
-      .replace(/<[^>]*>/g, '')
-      .replace(/&nbsp;/g, ' ')
-      .replace(/&amp;/g, '&')
-      .replace(/&lt;/g, '<')
-      .replace(/&gt;/g, '>')
-      .trim();
-  }
-
-  /**
    * Cria templates padrão para um emailServer
    * DIA 3: Changed parameter from tenantId to emailServerId
    */
   async createDefaultTemplates(emailServerId: string): Promise<void> {
-    const defaultTemplates = buildDefaultTemplates();
-
-    for (const template of defaultTemplates) {
-      const existing = await prisma.emailTemplate.findFirst({ where: { name: template.name } });
-      if (!existing) {
-        await prisma.emailTemplate.create({ data: { ...template } });
-        continue;
-      }
-      // Modelo que ninguém editou no painel ganha o visual novo; o que foi
-      // personalizado fica como está.
-      const neverEdited = Math.abs(existing.updatedAt.getTime() - existing.createdAt.getTime()) < 5000;
-      if (neverEdited && existing.htmlContent !== template.htmlContent) {
-        await prisma.emailTemplate.update({ where: { id: existing.id }, data: { ...template } });
-      }
-    }
+    await ensureDefaultTemplates(true);
   }
 
   /**

@@ -61,9 +61,9 @@ export default function AcceptInvitePage() {
       setLoading(true)
       setError(null)
 
-      // Endpoint público para visualizar convite
+      // Endpoint público para visualizar convite (quem recebe pode ainda não ter conta)
       const response = await fetch(
-        `${process.env.NEXT_PUBLIC_API_URL}/citizen/family/invites/${token}`,
+        `/api/public/family-invites/${encodeURIComponent(token)}`,
         {
           method: 'GET',
           headers: {
@@ -267,7 +267,6 @@ export default function AcceptInvitePage() {
                 <div className="flex-1">
                   <p className="text-sm text-blue-600 font-medium">Convidado por:</p>
                   <p className="text-lg font-bold text-blue-900">{inviteData.head.name}</p>
-                  <p className="text-sm text-blue-700">CPF: {inviteData.head.cpf}</p>
                 </div>
               </div>
             </div>

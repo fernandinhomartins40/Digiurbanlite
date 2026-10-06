@@ -16,6 +16,39 @@ import {
   NotificationPreferencesData,
 } from '../types/notification.types';
 
+/**
+ * Avisos que também vão por e-mail (quando quem dispara não escolhe os canais).
+ * Cada tipo tem o seu modelo em services/notification-channels/email.ts.
+ */
+const EMAIL_TYPES: Record<'citizen' | 'user', string[]> = {
+  citizen: [
+    NotificationType.PROTOCOL_CREATED,
+    NotificationType.PROTOCOL_STATUS,
+    NotificationType.PROTOCOL_COMPLETED,
+    'PROTOCOL_PENDING_CREATED',
+    'PROTOCOL_PENDING_REMINDER',
+    'PROTOCOL_PENDING_OVERDUE',
+    'PROTOCOL_PENDING_EXPIRED',
+    NotificationType.DOCUMENT_REJECTED,
+    NotificationType.APPOINTMENT_REMINDER,
+    NotificationType.EXAM_RESULT,
+    NotificationType.SYSTEM_MAINTENANCE,
+    NotificationType.STUDENT_ENTRY,
+    NotificationType.STUDENT_EXIT,
+  ],
+  user: [
+    NotificationType.PROTOCOL_ASSIGNED,
+    'PROTOCOL_PENDING_RESOLVED',
+    'PROTOCOL_OVERDUE_DIGEST',
+    'AI_CREDITS_LOW',
+    NotificationType.SYSTEM_MAINTENANCE,
+  ],
+};
+
+export function shouldEmail(type: string, recipientType: 'user' | 'citizen'): boolean {
+  return EMAIL_TYPES[recipientType].includes(type);
+}
+
 export class NotificationService {
   private queue: Queue;
   private queueEvents: QueueEvents;
@@ -79,7 +112,7 @@ export class NotificationService {
               (channel !== 'email' || preferences?.emailEnabled !== false) &&
               (channel !== 'sms' || preferences?.smsEnabled !== false)
           )
-        : this.getEnabledChannels(preferences, payload.type);
+        : this.getEnabledChannels(preferences, payload.type, payload.recipientType);
 
       if (channels.length === 0) {
         console.log(`[Notification] No channels enabled for ${payload.type}`);
@@ -139,19 +172,14 @@ export class NotificationService {
     payload: Omit<NotificationPayload, 'recipientId' | 'recipientType'>,
     recipients: Array<{ type: 'user' | 'citizen'; id: string }>
   ): Promise<void> {
-    const tenantId = tryGetTenantId();
-    const jobs = recipients.map((recipient) => ({
-      name: 'notify',
-      data: {
-        ...payload,
-        recipientType: recipient.type,
-        recipientId: recipient.id,
-        tenantId,
-      },
-    }));
-
-    await this.queue.addBulk(jobs);
-    console.log(`📢 [Notification] Broadcast enqueued for ${recipients.length} recipients`);
+    // um aviso por pessoa, respeitando as preferências de cada uma
+    // (antes enfileirava jobs sem canal, que o worker recusava)
+    for (const recipient of recipients) {
+      await this.notify({ ...payload, recipientType: recipient.type, recipientId: recipient.id }).catch((error) => {
+        console.error(`[Notification] Broadcast failed for ${recipient.type}:${recipient.id}:`, error);
+      });
+    }
+    console.log(`📢 [Notification] Broadcast sent to ${recipients.length} recipients`);
   }
 
   /**
@@ -220,7 +248,8 @@ export class NotificationService {
    */
   private getEnabledChannels(
     preferences: NotificationPreferencesData | null,
-    notificationType: string
+    notificationType: string,
+    recipientType: 'user' | 'citizen'
   ): NotificationChannel[] {
     if (!preferences) {
       return ['web']; // Default: apenas web
@@ -245,11 +274,8 @@ export class NotificationService {
       if (preferences.whatsappEnabled && this.isImportantNotification(notificationType)) {
         channels.push('chat');
       }
-      // Email e SMS apenas para tipos importantes
-      if (
-        preferences.emailEnabled &&
-        this.isImportantNotification(notificationType)
-      ) {
+      // E-mail só para o que a pessoa precisa saber mesmo fora do portal
+      if (preferences.emailEnabled && shouldEmail(notificationType, recipientType)) {
         channels.push('email');
       }
     }

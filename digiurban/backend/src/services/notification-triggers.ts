@@ -7,7 +7,7 @@
 
 import { prisma } from '../lib/prisma';
 import notificationService from './notification.service';
-import { NotificationType } from '../types/notification.types';
+import { NotificationChannel, NotificationType } from '../types/notification.types';
 
 export class NotificationTriggers {
   /**
@@ -20,19 +20,20 @@ export class NotificationTriggers {
         include: { service: true, citizen: true },
       });
 
-      if (!protocol) return;
+      if (!protocol || !protocol.citizenId) return;
 
-      // Notificar cidadão
+      // Notificar cidadão (portal + e-mail "Recebemos o seu pedido")
       await notificationService.notify({
         recipientType: 'citizen',
         recipientId: protocol.citizenId,
         type: NotificationType.PROTOCOL_CREATED,
-        title: 'Solicitação recebida!',
-        message: `Protocolo ${protocol.number} criado com sucesso.`,
+        title: 'Recebemos o seu pedido',
+        message: `Pedido ${protocol.number} (${protocol.service?.name || 'serviço'}) registrado. Avisaremos quando houver novidade.`,
         data: {
           protocolId: protocol.id,
           protocolNumber: protocol.number,
-          serviceName: protocol.service.name,
+          serviceName: protocol.service?.name,
+          createdAt: protocol.createdAt,
           url: `/cidadao/protocolos/${protocol.id}`,
         },
         priority: 'normal',
@@ -61,46 +62,50 @@ export class NotificationTriggers {
       if (!protocol) return;
 
       const statusLabels: Record<string, string> = {
-        VINCULADO: 'Vinculado',
-        PROGRESSO: 'Em Progresso',
-        PENDENCIA: 'Pendente',
-        ATUALIZACAO: 'Aguardando Atualização',
+        VINCULADO: 'Recebido',
+        PROGRESSO: 'Em andamento',
+        PENDENCIA: 'Aguardando você',
+        ATUALIZACAO: 'Aguardando você',
         CONCLUIDO: 'Concluído',
         CANCELADO: 'Cancelado',
       };
+      const statusLabel = statusLabels[newStatus] || newStatus;
 
-      // Notificar cidadão
-      await notificationService.notify({
-        recipientType: 'citizen',
-        recipientId: protocol.citizenId,
-        type: NotificationType.PROTOCOL_STATUS,
-        title: `Protocolo ${protocol.number} atualizado`,
-        message: `Status: ${statusLabels[newStatus] || newStatus}`,
-        data: {
-          protocolId: protocol.id,
-          protocolNumber: protocol.number,
-          oldStatus,
-          newStatus,
-          url: `/cidadao/protocolos/${protocol.id}`,
-        },
-        priority: newStatus === 'CONCLUIDO' ? 'high' : 'normal',
-      });
-
-      // Se foi concluído, notificação especial
       if (newStatus === 'CONCLUIDO') {
+        // Concluído: um aviso só (antes iam dois — "atualizado" e "concluído")
         await notificationService.notify({
           recipientType: 'citizen',
           recipientId: protocol.citizenId,
           type: NotificationType.PROTOCOL_COMPLETED,
-          title: 'Solicitação concluída! 🎉',
-          message: `Seu protocolo ${protocol.number} foi concluído.`,
+          title: 'Pedido concluído! 🎉',
+          message: `Seu pedido ${protocol.number} foi concluído.`,
           data: {
             protocolId: protocol.id,
             protocolNumber: protocol.number,
+            serviceName: protocol.service?.name,
             url: `/cidadao/protocolos/${protocol.id}`,
           },
-          channels: ['web', 'push', 'email'],
           priority: 'high',
+        });
+      } else {
+        await notificationService.notify({
+          recipientType: 'citizen',
+          recipientId: protocol.citizenId,
+          type: NotificationType.PROTOCOL_STATUS,
+          title: `Pedido ${protocol.number}: ${statusLabel}`,
+          message: `Situação do seu pedido: ${statusLabel}`,
+          data: {
+            protocolId: protocol.id,
+            protocolNumber: protocol.number,
+            serviceName: protocol.service?.name,
+            statusLabel,
+            oldStatus,
+            newStatus,
+            url: `/cidadao/protocolos/${protocol.id}`,
+          },
+          // pendência tem e-mail próprio (o que falta e até quando); aqui só o portal
+          channels: newStatus === 'PENDENCIA' || newStatus === 'ATUALIZACAO' ? ['web', 'push'] : undefined,
+          priority: 'normal',
         });
       }
 
@@ -111,7 +116,7 @@ export class NotificationTriggers {
           recipientId: protocol.currentAssignedUserId,
           type: NotificationType.PROTOCOL_STATUS,
           title: `Protocolo ${protocol.number} atualizado`,
-          message: `Status: ${statusLabels[newStatus] || newStatus}`,
+          message: `Status: ${statusLabel}`,
           data: {
             protocolId: protocol.id,
             protocolNumber: protocol.number,
@@ -130,25 +135,43 @@ export class NotificationTriggers {
   /**
    * 📨 PROTOCOLO: Atribuído
    */
-  static async onProtocolAssigned(protocolId: string, userId: string) {
+  static async onProtocolAssigned(
+    protocolId: string,
+    userId: string,
+    options: { byUserId?: string | null; byName?: string | null; kind?: 'ATRIBUIDO' | 'DELEGADO' | 'ENCAMINHADO' | 'EQUIPE' } = {}
+  ) {
     try {
+      // quem pega o pedido para si não precisa de aviso
+      if (!userId || (options.byUserId && options.byUserId === userId)) return;
+
       const protocol = await prisma.protocolSimplified.findUnique({
         where: { id: protocolId },
-        include: { service: true },
+        include: { service: true, citizen: { select: { name: true } } },
       });
 
       if (!protocol) return;
+
+      const by = options.byName ? ` por ${options.byName}` : '';
+      const message =
+        options.kind === 'DELEGADO'
+          ? `O pedido ${protocol.number} foi delegado a você${by}.`
+          : options.kind === 'ENCAMINHADO'
+            ? `O pedido ${protocol.number} foi encaminhado a você${by}.`
+            : options.kind === 'EQUIPE'
+              ? `O pedido ${protocol.number} foi passado para a sua equipe${by}.`
+              : `O pedido ${protocol.number} foi passado para você${by}.`;
 
       await notificationService.notify({
         recipientType: 'user',
         recipientId: userId,
         type: NotificationType.PROTOCOL_ASSIGNED,
-        title: 'Novo protocolo atribuído',
-        message: `Protocolo ${protocol.number} foi atribuído a você.`,
+        title: 'Pedido passado para você',
+        message,
         data: {
           protocolId: protocol.id,
           protocolNumber: protocol.number,
-          serviceName: protocol.service.name,
+          serviceName: protocol.service?.name,
+          citizenName: protocol.citizen?.name,
           url: `/admin/protocolos/${protocol.id}`,
         },
         priority: 'high',
@@ -196,7 +219,11 @@ export class NotificationTriggers {
   /**
    * 📨 DOCUMENTO: Rejeitado
    */
-  static async onDocumentRejected(documentId: string, reason?: string) {
+  static async onDocumentRejected(
+    documentId: string,
+    reason?: string,
+    options: { documentName?: string; channels?: NotificationChannel[] } = {}
+  ) {
     try {
       const document = await prisma.citizenDocument.findUnique({
         where: { id: documentId },
@@ -204,20 +231,23 @@ export class NotificationTriggers {
       });
 
       if (!document) return;
+      const documentName = options.documentName || document.documentType;
 
       await notificationService.notify({
         recipientType: 'citizen',
         recipientId: document.citizenId,
         type: NotificationType.DOCUMENT_REJECTED,
-        title: 'Documento rejeitado',
-        message: reason || `Seu documento "${document.documentType}" foi rejeitado. Por favor, envie novamente.`,
+        title: 'Documento recusado',
+        message: reason
+          ? `Seu documento "${documentName}" foi recusado. Motivo: ${reason}`
+          : `Seu documento "${documentName}" foi recusado. Por favor, envie novamente.`,
         data: {
           documentId: document.id,
-          documentName: document.documentType,
-          reason,
+          documentName,
+          reason: reason || 'Não informado',
           url: '/cidadao/documentos',
         },
-        channels: ['web', 'push', 'email'],
+        channels: options.channels || ['web', 'push', 'email'],
         priority: 'high',
       });
 
@@ -395,7 +425,8 @@ export class NotificationTriggers {
             expectedEndDate: protocol.sla?.expectedEndDate,
             url: `/cidadao/protocolos/${protocol.id}`,
           },
-          channels: ['web', 'push', 'email'],
+          // o prazo é da prefeitura: aviso no portal, sem e-mail todo dia
+          channels: ['web', 'push'],
           priority: 'high',
         });
 
@@ -428,10 +459,8 @@ export class NotificationTriggers {
   /**
    * 🔔 SLA: Protocolos vencidos (executado por cron)
    */
-  static async checkOverdueProtocols() {
+  static async checkOverdueProtocols(options: { sendDigest?: boolean } = {}) {
     try {
-      const now = new Date();
-
       const overdueProtocols = await prisma.protocolSimplified.findMany({
         where: {
           status: { in: ['VINCULADO', 'PROGRESSO', 'PENDENCIA'] },
@@ -439,24 +468,27 @@ export class NotificationTriggers {
             isOverdue: true,
           },
         },
-        include: { citizen: true, sla: true },
+        include: { citizen: true, sla: true, service: { select: { name: true } } },
       });
 
+      // gestor → pedidos atrasados (um e-mail de resumo por dia, não um por pedido)
+      const digest = new Map<string, string[]>();
+
       for (const protocol of overdueProtocols) {
-        // Notificar cidadão
+        // Notificar cidadão (portal; o atraso é da prefeitura, não vai e-mail)
         await notificationService.notify({
           recipientType: 'citizen',
           recipientId: protocol.citizenId,
           type: NotificationType.PROTOCOL_OVERDUE,
-          title: 'Protocolo vencido',
-          message: `Protocolo ${protocol.number} está vencido há ${protocol.sla?.daysOverdue} dia(s).`,
+          title: 'Pedido passou do prazo',
+          message: `O pedido ${protocol.number} passou do prazo previsto. A prefeitura já foi avisada.`,
           data: {
             protocolId: protocol.id,
             protocolNumber: protocol.number,
             daysOverdue: protocol.sla?.daysOverdue,
             url: `/cidadao/protocolos/${protocol.id}`,
           },
-          channels: ['web', 'push', 'email'],
+          channels: ['web', 'push'],
           priority: 'high',
         });
 
@@ -483,10 +515,33 @@ export class NotificationTriggers {
                 daysOverdue: protocol.sla?.daysOverdue,
                 url: `/admin/protocolos/${protocol.id}`,
               },
-              channels: ['web', 'push', 'email'],
+              channels: ['web', 'push'],
               priority: 'high',
             });
+            const days = protocol.sla?.daysOverdue || 0;
+            const line = `${protocol.number} — ${protocol.service?.name || 'serviço'} (${days} dia${days === 1 ? '' : 's'} de atraso)`;
+            digest.set(manager.id, [...(digest.get(manager.id) || []), line]);
           }
+        }
+      }
+
+      if (options.sendDigest) {
+        for (const [managerId, lines] of digest) {
+          const shown = lines.slice(0, 30).join('\n') + (lines.length > 30 ? `\n… e mais ${lines.length - 30}` : '');
+          await notificationService.notify({
+            recipientType: 'user',
+            recipientId: managerId,
+            type: 'PROTOCOL_OVERDUE_DIGEST',
+            title: `${lines.length} pedido(s) atrasado(s)`,
+            message: shown,
+            data: {
+              count: lines.length,
+              protocolList: shown,
+              url: '/admin/protocolos',
+            },
+            channels: ['email'],
+            priority: 'normal',
+          });
         }
       }
 

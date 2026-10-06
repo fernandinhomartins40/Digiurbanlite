@@ -7,6 +7,7 @@
  */
 
 import { prisma } from '../lib/prisma';
+import { uploadUrlToDiskPath } from '../config/upload';
 import Handlebars from 'handlebars';
 import fs from 'fs/promises';
 import path from 'path';
@@ -14,9 +15,7 @@ import {
   generateUniqueValidationCode,
   generateDocumentHash
 } from '../utils/validation-code.utils';
-import { sendMail } from './mail/mailer';
-import { mailSenderName } from './mail/links';
-import { escapeMailHtml, mailInfoBox, mailParagraph, renderMailLayout } from './mail/layout';
+import { sendTemplatedMail } from './mail/templated';
 import { resolveUploadTenantId, getTenantUploadDir, getTenantUploadUrl } from '../config/upload';
 
 
@@ -590,7 +589,7 @@ export async function sendDocumentByEmail(input: SendDocumentInput) {
   // IMPORTANTE: doc.filePath já começa com "/" (ex: /uploads/generated/...)
   // No container, os arquivos estão em /app/uploads, não em /uploads
   // Então precisamos adicionar /app antes do caminho
-  const filePath = path.join('/app', doc.filePath);
+  const filePath = uploadUrlToDiskPath(doc.filePath);
   const emailSubject = subject || `Documento do Protocolo ${doc.protocol.number}`;
   const emailMessage = message || `Segue em anexo o documento referente ao protocolo ${doc.protocol.number} - ${doc.protocol.service.name}.`;
 
@@ -602,28 +601,17 @@ export async function sendDocumentByEmail(input: SendDocumentInput) {
   }
   const fileContent = await fs.readFile(filePath);
 
-  // Montar HTML (visual padrão dos e-mails)
-  const htmlContent = renderMailLayout({
-    title: 'Seu documento está disponível',
-    preheader: emailMessage,
-    senderName: await mailSenderName(),
-    bodyHtml:
-      mailParagraph(`Olá, <strong>${escapeMailHtml(recipientName)}</strong>!`) +
-      mailParagraph(escapeMailHtml(emailMessage)) +
-      mailInfoBox([
-        ['Protocolo', doc.protocol.number],
-        ['Serviço', doc.protocol.service.name],
-        ['Documento', doc.fileName],
-      ]) +
-      mailParagraph('O documento vai <strong>anexado</strong> a este e-mail.'),
-  });
-
-  // Fila do e-mail transacional (VeloMail) — entrega com novas tentativas
-  const result = await sendMail({
+  // Modelo "document-delivery" (fila do e-mail transacional, com novas tentativas)
+  const result = await sendTemplatedMail({
+    template: 'document-delivery',
     to: recipientEmail,
-    subject: emailSubject,
-    html: htmlContent,
-    kind: 'document',
+    variables: {
+      recipientName: recipientName.trim().split(' ')[0],
+      subject: emailSubject,
+      message: emailMessage,
+      protocolNumber: doc.protocol.number,
+      documentList: doc.fileName,
+    },
     attachments: [{ filename: doc.fileName, content: fileContent, contentType: 'application/pdf' }],
   });
   if (!result.queued) {

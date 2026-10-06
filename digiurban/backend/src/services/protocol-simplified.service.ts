@@ -292,6 +292,11 @@ export class ProtocolServiceSimplified {
       }
     })
 
+    // Aviso ao servidor (portal + e-mail); não falha a atribuição
+    void import('./notification-triggers')
+      .then(({ default: NotificationTriggers }) => NotificationTriggers.onProtocolAssigned(protocolId, assignedUserId, { byUserId: userId }))
+      .catch((error) => console.error('[assignProtocol] Falha ao avisar o servidor:', error))
+
     return updated
   }
 

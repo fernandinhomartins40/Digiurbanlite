@@ -2,20 +2,28 @@
  * ============================================================================
  * EMAIL CHANNEL - Envio de notificações por email
  * ============================================================================
- * Coloca o aviso na fila do e-mail transacional (VeloMail). Roda dentro do
+ * Coloca o aviso na fila do e-mail transacional (VeloMail), sempre a partir do
+ * modelo do tipo de aviso (Super-admin › Modelos de e-mail). Roda dentro do
  * contexto do município (notification.worker usa runAsTenant).
  */
 
 import { NotificationPayload } from '../../types/notification.types';
 import { prisma } from '../../lib/prisma';
 import { tryGetTenantId } from '../../lib/tenant-context';
-import { sendMail } from '../mail/mailer';
-import { mailSenderName, tenantPortalUrl } from '../mail/links';
-import { escapeMailHtml, mailParagraph, renderMailLayout } from '../mail/layout';
+import { portalLink, sendTemplatedMail, MailVariables } from '../mail/templated';
+import { NOTIFICATION_TEMPLATE_BY_TYPE } from '../../lib/email/default-templates';
+
+
+function formatDate(value: unknown): string | undefined {
+  if (!value) return undefined;
+  const date = value instanceof Date ? value : new Date(String(value));
+  if (Number.isNaN(date.getTime())) return undefined;
+  return date.toLocaleDateString('pt-BR', { timeZone: 'America/Sao_Paulo' });
+}
 
 export async function sendEmail(payload: NotificationPayload): Promise<{ success: boolean }> {
   try {
-    const { recipientType, recipientId, title, message, data } = payload;
+    const { recipientType, recipientId, title, message, data = {} } = payload;
 
     // Buscar email do destinatário
     let email: string | null = null;
@@ -43,29 +51,39 @@ export async function sendEmail(payload: NotificationPayload): Promise<{ success
     }
 
     const tenantId = tryGetTenantId() || null;
-    const portalUrl = await tenantPortalUrl(tenantId);
-    const senderName = await mailSenderName(tenantId);
     const firstName = name ? name.trim().split(' ')[0] : '';
-    const rawUrl = typeof data?.url === 'string' ? data.url : null;
+    const rawUrl = typeof data.url === 'string' ? data.url : '';
     // só links do próprio portal (caminho relativo); nada de URL externa vinda de dado
-    const link = rawUrl && rawUrl.startsWith('/') && !rawUrl.startsWith('//') ? `${portalUrl}${rawUrl}` : null;
+    const actionUrl = await portalLink(rawUrl, tenantId);
 
-    const result = await sendMail({
+    const template = NOTIFICATION_TEMPLATE_BY_TYPE[String(payload.type)] || 'notification';
+    const variables: MailVariables = {
+      recipientName: firstName,
+      citizenName: recipientType === 'citizen' ? firstName : data.citizenName,
+      userName: firstName,
+      title,
+      message,
+      actionUrl,
+      trackingUrl: actionUrl,
+      protocolNumber: data.protocolNumber,
+      serviceName: data.serviceName,
+      status: data.statusLabel,
+      createdAt: formatDate(data.createdAt),
+      pendingTitle: data.pendingTitle,
+      dueDate: formatDate(data.dueDate) || 'sem prazo definido',
+      documentName: data.documentName,
+      reason: data.reason,
+      count: data.count,
+      protocolList: data.protocolList,
+    };
+
+    const result = await sendTemplatedMail({
+      template,
       to: email,
-      subject: title,
-      html: renderMailLayout({
-        title,
-        preheader: message,
-        senderName,
-        bodyHtml:
-          mailParagraph(firstName ? `Olá, <strong>${escapeMailHtml(firstName)}</strong>!` : 'Olá!') +
-          mailParagraph(escapeMailHtml(message).replace(/\n/g, '<br>')),
-        button: link ? { label: 'Ver detalhes', url: link } : null,
-        footerNote: 'Mensagem automática. Você pode desligar os avisos por e-mail nas preferências da sua conta.',
-      }),
+      variables,
+      tenantId,
       priority: payload.priority === 'low' ? 'low' : 'normal',
       tags: ['notification', String(payload.type).toLowerCase()],
-      kind: `notification:${payload.type}`,
     });
 
     if (!result.queued) {

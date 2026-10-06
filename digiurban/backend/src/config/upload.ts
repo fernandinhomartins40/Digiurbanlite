@@ -66,6 +66,19 @@ export function getTenantUploadDir(tenantId: string | undefined | null, ...segme
   return path.join(UPLOAD_DIR, TENANT_UPLOADS_SEGMENT, resolveUploadTenantId(tenantId), ...segments);
 }
 
+/**
+ * Caminho no disco de um arquivo salvo como URL "/uploads/...". Funciona igual
+ * no servidor (UPLOAD_BASE_PATH=/app/uploads) e na máquina de desenvolvimento.
+ */
+export function uploadUrlToDiskPath(fileUrl: string): string {
+  const relative = String(fileUrl || '').replace(/^\/+/, '').replace(/^uploads\//, '');
+  const resolved = path.resolve(UPLOAD_DIR, relative);
+  if (!resolved.startsWith(path.resolve(UPLOAD_DIR))) {
+    throw new Error('Caminho de arquivo inválido');
+  }
+  return resolved;
+}
+
 /** URL pública particionada: /uploads/t/{tenantId}/{...segments} */
 export function getTenantUploadUrl(tenantId: string | undefined | null, ...segments: string[]): string {
   return `/uploads/${TENANT_UPLOADS_SEGMENT}/${resolveUploadTenantId(tenantId)}/${segments.join('/')}`;

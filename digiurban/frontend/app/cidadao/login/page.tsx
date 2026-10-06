@@ -33,6 +33,9 @@ function CitizenLoginForm() {
   const [activeTab, setActiveTab] = useState<'login' | 'register'>(
     searchParams?.get('tab') === 'register' ? 'register' : 'login'
   )
+  // volta para onde a pessoa estava (ex.: link do convite de família no e-mail)
+  const redirectParam = searchParams?.get('redirect') || ''
+  const afterLogin = redirectParam.startsWith('/') && !redirectParam.startsWith('//') ? redirectParam : '/cidadao'
 
   const [loginData, setLoginData] = useState({
     cpf: '',
@@ -207,7 +210,7 @@ function CitizenLoginForm() {
           title: 'Login realizado com sucesso!',
           description: 'Redirecionando para o portal...',
         })
-        router.push('/cidadao')
+        router.push(afterLogin)
       } else {
         const errorMsg = 'CPF ou senha incorretos'
         setError(errorMsg)
@@ -294,7 +297,7 @@ function CitizenLoginForm() {
           description: 'Bem-vindo ao Portal do Cidadão. Redirecionando...',
         })
         setTimeout(() => {
-          router.push('/cidadao')
+          router.push(afterLogin)
         }, 2000)
       } else {
         const errorMsg = 'Erro ao criar cadastro. Verifique se o CPF já não está cadastrado.'

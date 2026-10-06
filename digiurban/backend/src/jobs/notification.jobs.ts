@@ -33,7 +33,8 @@ cron.schedule('0 9,17 * * *', async () => {
   console.log('🔔 [Cron] Running overdue protocols check...');
   try {
     await forEachActiveTenant('overdue-protocols', async () => {
-      await NotificationTriggers.checkOverdueProtocols();
+      // resumo por e-mail aos gestores só na rodada da manhã (uma vez por dia)
+      await NotificationTriggers.checkOverdueProtocols({ sendDigest: new Date().getHours() < 12 });
     });
     console.log('✅ [Cron] Overdue protocols check completed');
   } catch (error) {

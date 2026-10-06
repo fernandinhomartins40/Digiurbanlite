@@ -36,6 +36,8 @@ interface EmailTemplate {
   isActive: boolean;
   createdAt: string;
   updatedAt: string;
+  /** descrição do modelo usado pelo sistema (vem do servidor) */
+  info?: { label: string; when: string; audience: string; critical?: boolean } | null;
 }
 
 export default function EmailTemplatesPage() {
@@ -187,15 +189,15 @@ export default function EmailTemplatesPage() {
     }
   };
 
-  const systemTemplates = ['user-confirmation', 'password-recovery', 'protocol-confirmation', 'protocol-update', 'citizen-welcome'];
 
   return (
     <div className="container mx-auto py-6 space-y-6">
       <div className="flex justify-between items-center">
         <div>
-          <h1 className="text-3xl font-bold">Templates de Email</h1>
+          <h1 className="text-3xl font-bold">Modelos de e-mail</h1>
           <p className="text-muted-foreground mt-1">
-            Gerencie templates de emails transacionais
+            Cada e-mail que o sistema manda tem o seu modelo. Ao desligar um modelo, aquele e-mail deixa de ser enviado
+            (menos os de senha e conta, que sempre vão).
           </p>
         </div>
         <Button onClick={handleCreate}>
@@ -222,52 +224,35 @@ export default function EmailTemplatesPage() {
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead>Nome</TableHead>
+                  <TableHead>E-mail</TableHead>
+                  <TableHead>Quando é enviado</TableHead>
                   <TableHead>Assunto</TableHead>
-                  <TableHead>Categoria</TableHead>
-                  <TableHead>Variáveis</TableHead>
                   <TableHead>Status</TableHead>
                   <TableHead className="text-right">Ações</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
                 {templates.map((template) => {
-                  const isSystem = systemTemplates.includes(template.name);
+                  const isSystem = Boolean(template.info);
 
                   return (
                     <TableRow key={template.id}>
                       <TableCell className="font-medium">
                         <div className="flex items-center gap-2">
-                          <Mail className="h-4 w-4 text-muted-foreground" />
-                          {template.name}
-                          {isSystem && (
-                            <Badge variant="secondary" className="text-xs">
-                              Sistema
-                            </Badge>
-                          )}
+                          <Mail className="h-4 w-4 shrink-0 text-muted-foreground" />
+                          <div className="min-w-0">
+                            <div>{template.info?.label || template.name}</div>
+                            <div className="text-xs font-normal text-muted-foreground">
+                              {template.info ? `para ${template.info.audience}` : 'modelo extra'}
+                            </div>
+                          </div>
                         </div>
+                      </TableCell>
+                      <TableCell className="max-w-sm text-sm text-muted-foreground">
+                        {template.info?.when || '—'}
                       </TableCell>
                       <TableCell className="max-w-xs truncate">
                         {template.subject}
-                      </TableCell>
-                      <TableCell>
-                        <Badge variant="outline">
-                          {template.category || 'custom'}
-                        </Badge>
-                      </TableCell>
-                      <TableCell>
-                        <div className="flex flex-wrap gap-1">
-                          {template.variables.slice(0, 3).map((variable) => (
-                            <Badge key={variable} variant="secondary" className="text-xs">
-                              {`{{${variable}}}`}
-                            </Badge>
-                          ))}
-                          {template.variables.length > 3 && (
-                            <Badge variant="secondary" className="text-xs">
-                              +{template.variables.length - 3}
-                            </Badge>
-                          )}
-                        </div>
                       </TableCell>
                       <TableCell>
                         <Badge
