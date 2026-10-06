@@ -180,6 +180,7 @@ export async function processProtocolCitizenLinks(
         const familyLink = await prisma.familyComposition.findFirst({
           where: {
             headId: citizenId,
+            status: 'ACTIVE',
             memberId: linkedCitizenId,
             relationship: { in: linkConfig.expectedRelationships as any }
           }

@@ -950,6 +950,57 @@ router.put(
   })
 );
 
+// PUT /api/admin/citizens/:id/reactivate - Reativar cadastro desativado (ex.: conta excluída pelo titular que voltou)
+router.put(
+  '/:id/reactivate',
+  requirePermission('citizens:verify'),
+  asyncHandler(async (req, res: Response): Promise<void> => {
+    const authReq = req as AuthenticatedRequest;
+    const { id } = authReq.params;
+    const email = typeof authReq.body?.email === 'string' ? authReq.body.email.trim().toLowerCase() : '';
+
+    const citizen = await prisma.citizen.findFirst({ where: { id }, select: { id: true, name: true, email: true, isActive: true } });
+    if (!citizen) {
+      res.status(404).json({ success: false, error: 'Cidadão não encontrado' });
+      return;
+    }
+    if (citizen.isActive) {
+      res.status(400).json({ success: false, error: 'Este cadastro já está ativo' });
+      return;
+    }
+    if (email) {
+      if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+        res.status(400).json({ success: false, error: 'E-mail inválido' });
+        return;
+      }
+      const taken = await prisma.citizen.findFirst({ where: { email: { equals: email, mode: 'insensitive' }, id: { not: id } }, select: { id: true } });
+      if (taken) {
+        res.status(400).json({ success: false, error: 'Esse e-mail já é usado em outro cadastro' });
+        return;
+      }
+    }
+
+    const updated = await prisma.citizen.update({
+      where: { id },
+      data: {
+        isActive: true,
+        ...(email ? { email } : {}),
+        verificationNotes: `Cadastro reativado no balcão por ${authReq.user.name} em ${new Date().toLocaleDateString('pt-BR')}.`,
+      },
+      select: { id: true, name: true, email: true },
+    });
+    // com e-mail, a pessoa recebe o link para criar a senha nova
+    if (updated.email) void new PasswordResetService().sendCitizenAccountCreated(updated);
+
+    res.json({
+      success: true,
+      message: updated.email
+        ? 'Cadastro reativado. Enviamos um e-mail para a pessoa criar a senha.'
+        : 'Cadastro reativado. Sem e-mail, a pessoa é atendida pelo balcão.',
+    });
+  })
+);
+
 // PUT /api/admin/citizens/:id/promote-gold - Promover cidadão para nível GOLD
 router.put(
   '/:id/promote-gold',

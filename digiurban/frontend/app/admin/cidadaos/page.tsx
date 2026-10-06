@@ -146,6 +146,23 @@ export default function CidadaosPage() {
     }
   }
 
+  // cadastro desativado (ex.: a pessoa excluiu a conta e voltou): reativa no balcão
+  const handleReactivate = async (citizen: Citizen) => {
+    const email = window.prompt(`Reativar o cadastro de ${citizen.name}.
+E-mail para a pessoa criar a senha (pode deixar em branco):`, citizen.email || '')
+    if (email === null) return
+    try {
+      const response = await apiRequest(`/admin/citizens/${citizen.id}/reactivate`, {
+        method: 'PUT',
+        body: JSON.stringify({ email: email.trim() }),
+      })
+      toast({ title: 'Cadastro reativado', description: response?.message })
+      fetchCitizens()
+    } catch (error: any) {
+      toast({ variant: 'destructive', title: 'Não foi possível reativar', description: error?.message || 'Tente de novo.' })
+    }
+  }
+
   const handleApprove = async () => {
     if (!selectedCitizen) return
 
@@ -575,6 +592,12 @@ export default function CidadaosPage() {
                               <FileText className="h-4 w-4 mr-2" />
                               Ver Protocolos
                             </DropdownMenuItem>
+                            {!citizen.isActive && canVerify && (
+                              <DropdownMenuItem onClick={() => handleReactivate(citizen)} className="text-xs sm:text-sm cursor-pointer">
+                                <CheckCircle className="h-4 w-4 mr-2" />
+                                Reativar cadastro
+                              </DropdownMenuItem>
+                            )}
                           </DropdownMenuContent>
                         </DropdownMenu>
                       </div>

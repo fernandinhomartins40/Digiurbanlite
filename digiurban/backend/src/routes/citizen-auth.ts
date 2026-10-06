@@ -25,6 +25,7 @@ async function contactEmailFor(tenantId: string | null) {
 }
 import { syncCitizenPersonIdentity } from '../services/person-identity.service';
 import { sendTemplatedMail } from '../services/mail/templated';
+import { countOpenProtocols, deleteCitizenAccount, exportCitizenData } from '../services/citizen-privacy.service';
 import { isCpfLike, normalizeCpf, normalizeEmail, normalizeNullableString } from '../utils/identity';
 import { citizenAuthMiddleware } from '../middleware/citizen-auth';
 import facePlatformClientService from '../services/face-platform-client.service';
@@ -172,6 +173,11 @@ router.post('/register', registerRateLimiter, asyncHandler(async (req: Request, 
         });
 
     if (existingCitizen) {
+      // Conta excluída pelo titular: a volta é pelo balcão (com documento na
+      // mão) — pelo cadastro, um estranho com o CPF herdaria os pedidos antigos
+      if (!existingCitizen.isActive) {
+        return res.status(400).json({ error: 'Este CPF tem um cadastro desativado. Para voltar a usar o portal, procure a prefeitura.' });
+      }
       return res.status(400).json({ error: 'CPF já cadastrado' });
     }
 
@@ -1159,6 +1165,62 @@ router.put('/profile', asyncHandler(async (req: Request, res: Response) => {
     return res.status(500).json({ error: 'Erro interno do servidor' });
   }
 }));
+
+// GET /api/auth/citizen/my-data - Baixar uma cópia dos meus dados (LGPD art. 18)
+router.get(
+  '/my-data',
+  citizenAuthMiddleware,
+  asyncHandler(async (req: Request, res: Response) => {
+    const citizenId = (req as any).citizenId as string | undefined;
+    if (!citizenId) return res.status(401).json({ error: 'Cidadão não autenticado' });
+    const data = await exportCitizenData(citizenId);
+    if (!data) return res.status(404).json({ error: 'Cidadão não encontrado' });
+    await logAuditEvent({
+      citizenId,
+      action: 'CITIZEN_DATA_EXPORTED',
+      resource: '/api/auth/citizen/my-data',
+      method: 'GET',
+      ip: req.ip || req.socket.remoteAddress,
+      userAgent: req.headers['user-agent'],
+      success: true,
+    });
+    res.setHeader('Content-Disposition', 'attachment; filename="meus-dados.json"');
+    return res.json(data);
+  })
+);
+
+// POST /api/auth/citizen/delete-account - Excluir a minha conta (LGPD art. 18, VI)
+router.post(
+  '/delete-account',
+  loginRateLimiter,
+  citizenAuthMiddleware,
+  asyncHandler(async (req: Request, res: Response) => {
+    const citizenId = (req as any).citizenId as string | undefined;
+    if (!citizenId) return res.status(401).json({ error: 'Cidadão não autenticado' });
+
+    const citizen = await prisma.citizen.findUnique({ where: { id: citizenId }, select: { password: true } });
+    const password = typeof req.body?.password === 'string' ? req.body.password : '';
+    if (!citizen || !password || !(await bcrypt.compare(password, citizen.password))) {
+      return res.status(400).json({ error: 'Senha incorreta.' });
+    }
+
+    const open = await countOpenProtocols(citizenId);
+    if (open > 0) {
+      return res.status(409).json({
+        error: `Você tem ${open} pedido${open > 1 ? 's' : ''} em andamento. Espere terminar ou cancele antes de excluir a conta.`,
+        code: 'OPEN_PROTOCOLS',
+      });
+    }
+
+    await deleteCitizenAccount(citizenId, { ip: req.ip, userAgent: String(req.headers['user-agent'] || '') });
+
+    res.clearCookie(CITIZEN_COOKIE, { httpOnly: true, secure: process.env.NODE_ENV === 'production', sameSite: 'lax', path: '/' });
+    if (process.env.NODE_ENV === 'production') {
+      res.clearCookie(CITIZEN_COOKIE, { httpOnly: true, secure: true, sameSite: 'lax', path: '/', domain: '.digiurban.com.br' });
+    }
+    return res.json({ success: true, message: 'Sua conta foi excluída.' });
+  })
+);
 
 // POST /api/auth/citizen/logout - Logout (limpar cookie)
 router.post('/logout', asyncHandler(async (req: Request, res: Response) => {

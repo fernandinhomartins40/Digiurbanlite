@@ -32,6 +32,11 @@ import {
 
 import { FAMILY_VALIDATION_RULES, FAMILY_MESSAGES, RELATIONSHIP_LABELS } from '../shared/constants/family.constants'
 import { portalLink, sendTemplatedMail } from './mail/templated'
+import * as bcrypt from 'bcryptjs'
+import { BCRYPT_ROUNDS } from '../config/security'
+import { validateCPF } from '../utils/validators'
+import { syncCitizenPersonIdentity } from './person-identity.service'
+import { PasswordResetService } from './password-reset.service'
 
 // ============================================================================
 // INTERFACES LOCAIS
@@ -118,10 +123,40 @@ export class FamilyService {
     // Calcular estatísticas
     const stats = await this.calculateFamilyStats(citizenId)
 
+    const maskCpf = (cpf: string) => (cpf ? `***.${cpf.slice(3, 6)}.${cpf.slice(6, 9)}-**` : '')
+    const firstNames = (name: string) => {
+      const [first, ...rest] = String(name || '').trim().split(/\s+/)
+      return [first, ...rest.map((part) => `${part[0]?.toUpperCase() ?? ''}.`)].join(' ')
+    }
+
+    // Quem ainda não confirmou o vínculo aparece só com nome abreviado e CPF
+    // mascarado (antes vinham e-mail, telefone e nascimento de quem não aceitou)
+    const members = familyMembers
+      .filter((link) => link.status !== FamilyLinkStatus.REJECTED)
+      .map((link) =>
+        link.status === FamilyLinkStatus.ACTIVE
+          ? link
+          : {
+              ...link,
+              monthlyIncome: null,
+              member: { id: link.member.id, name: firstNames(link.member.name), cpf: maskCpf(link.member.cpf), email: '', phone: null, birthDate: null },
+            }
+      )
+
+    // Vínculos em que eu fui adicionado e ainda preciso responder
+    const pendingLinks = memberOf
+      .filter((link) => link.status === FamilyLinkStatus.PENDING)
+      .map((link) => ({
+        id: link.id,
+        relationship: link.relationship as any,
+        head: { id: link.head.id, name: link.head.name, cpf: maskCpf(link.head.cpf) },
+      }))
+
     return {
       head: citizen,
-      members: familyMembers as any,
-      memberOf: memberOf as any,
+      members: members as any,
+      memberOf: memberOf.filter((link) => link.status === FamilyLinkStatus.ACTIVE) as any,
+      pendingLinks,
       stats
     }
   }
@@ -755,10 +790,196 @@ export class FamilyService {
   }
 
   // ==========================================================================
+  // DEPENDENTES SEM CONTA (crianças e adolescentes)
+  // ==========================================================================
+
+  /**
+   * O responsável cadastra o filho (ou outro menor) que não tem conta: nasce
+   * um cadastro sem login, já ligado à família como dependente. Adulto sem
+   * conta é cadastrado no balcão, onde o servidor confere a pessoa.
+   */
+  async createDependent(
+    headId: string,
+    input: { name: string; cpf: string; birthDate: string; relationship: FamilyRelationship; hasDisability?: boolean }
+  ): Promise<FamilyMemberResult> {
+    try {
+      const head = await prisma.citizen.findUnique({ where: { id: headId }, select: { id: true, cpf: true, address: true } })
+      if (!head) return { success: false, error: 'Cidadão não encontrado' }
+
+      const cpf = String(input.cpf || '').replace(/\D/g, '')
+      const name = String(input.name || '').trim().replace(/\s+/g, ' ')
+      const birthDate = new Date(input.birthDate)
+      if (!validateCPF(cpf)) return { success: false, error: 'CPF inválido' }
+      if (cpf === head.cpf) return { success: false, error: 'Este é o seu próprio CPF' }
+      if (name.split(' ').length < 2) return { success: false, error: 'Informe o nome completo' }
+      if (Number.isNaN(birthDate.getTime()) || birthDate > new Date()) return { success: false, error: 'Data de nascimento inválida' }
+      const age = calculateAge(birthDate)
+      if (age === null || age >= 18) {
+        return { success: false, error: 'Aqui só dá para cadastrar menores de 18 anos. Para adultos, use "Adicionar pessoa" ou procure a prefeitura.' }
+      }
+
+      const dependents = await prisma.familyComposition.count({ where: { headId, isDependent: true } })
+      if (dependents >= 15) return { success: false, error: 'Limite de dependentes atingido. Procure a prefeitura.' }
+
+      let memberId: string
+      const existing = await prisma.citizen.findFirst({ where: { cpf }, select: { id: true } })
+      if (existing) {
+        // já existe cadastro com esse CPF: não dá para puxar para a família só com o número
+        // (quem soubesse o CPF de uma criança teria acesso aos pedidos dela)
+        const mine = await prisma.familyComposition.findFirst({ where: { headId, memberId: existing.id }, select: { id: true } })
+        return {
+          success: false,
+          error: mine
+            ? 'Essa pessoa já está na sua família.'
+            : 'Esse CPF já tem cadastro. Se a pessoa tem conta, use "Adicionar pessoa". Se é dependente de outro responsável, procure a prefeitura.',
+        }
+      } else {
+        const created = await prisma.$transaction(async (tx) => {
+          const citizen = await tx.citizen.create({
+            data: {
+              cpf,
+              name,
+              email: '',
+              birthDate,
+              // senha aleatória que ninguém conhece: o cadastro não tem login
+              password: await bcrypt.hash(crypto.randomBytes(24).toString('base64url'), BCRYPT_ROUNDS),
+              address: (head.address as Prisma.InputJsonValue) || undefined,
+              registrationSource: 'FAMILY',
+              verificationStatus: 'PENDING',
+              isActive: true,
+            },
+          })
+          await syncCitizenPersonIdentity(tx, {
+            citizenId: citizen.id,
+            currentPersonId: citizen.personId,
+            cpf: citizen.cpf,
+            name: citizen.name,
+            email: null,
+            phone: null,
+            birthDate: citizen.birthDate,
+            isActive: true,
+          })
+          return citizen
+        })
+        memberId = created.id
+      }
+
+      const link = await prisma.familyComposition.upsert({
+        where: { headId_memberId: { headId, memberId } },
+        create: {
+          headId,
+          memberId,
+          relationship: input.relationship,
+          isDependent: true,
+          status: FamilyLinkStatus.ACTIVE,
+          hasDisability: input.hasDisability ?? null,
+        },
+        update: { relationship: input.relationship, isDependent: true, status: FamilyLinkStatus.ACTIVE },
+        include: { member: { select: { id: true, name: true, cpf: true, birthDate: true } } },
+      })
+      return { success: true, data: link }
+    } catch (error: any) {
+      return { success: false, error: error.message || 'Erro ao cadastrar dependente' }
+    }
+  }
+
+  /** Dependente sem login que é meu: devolve o cadastro ou null */
+  private async ownedDependent(headId: string, memberId: string) {
+    const link = await prisma.familyComposition.findFirst({
+      where: { headId, memberId, status: FamilyLinkStatus.ACTIVE, isDependent: true },
+      select: { member: { select: { id: true, name: true, email: true, registrationSource: true, cpf: true, personId: true, birthDate: true } } },
+    })
+    return link?.member && link.member.registrationSource === 'FAMILY' && !link.member.email ? link.member : null
+  }
+
+  /** Corrigir nome/nascimento do dependente sem login */
+  async updateDependent(headId: string, memberId: string, input: { name?: string; birthDate?: string }): Promise<FamilyMemberResult> {
+    try {
+      const dependent = await this.ownedDependent(headId, memberId)
+      if (!dependent) return { success: false, error: 'Dependente não encontrado' }
+      const data: Prisma.CitizenUpdateInput = {}
+      if (input.name !== undefined) {
+        const name = String(input.name).trim().replace(/\s+/g, ' ')
+        if (name.split(' ').length < 2) return { success: false, error: 'Informe o nome completo' }
+        data.name = name
+      }
+      if (input.birthDate !== undefined) {
+        const birthDate = new Date(input.birthDate)
+        if (Number.isNaN(birthDate.getTime()) || birthDate > new Date()) return { success: false, error: 'Data de nascimento inválida' }
+        data.birthDate = birthDate
+      }
+      const updated = await prisma.citizen.update({ where: { id: memberId }, data, select: { id: true, name: true, birthDate: true } })
+      return { success: true, data: updated }
+    } catch (error: any) {
+      return { success: false, error: error.message || 'Erro ao atualizar dependente' }
+    }
+  }
+
+  /** O responsável informa um e-mail e o dependente recebe o link para criar a própria senha */
+  async giveDependentAccess(headId: string, memberId: string, rawEmail: string): Promise<FamilyMemberResult> {
+    try {
+      const dependent = await this.ownedDependent(headId, memberId)
+      if (!dependent) return { success: false, error: 'Dependente não encontrado ou já tem acesso' }
+      const email = String(rawEmail || '').trim().toLowerCase()
+      if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) return { success: false, error: 'E-mail inválido' }
+      const taken = await prisma.citizen.findFirst({ where: { email: { equals: email, mode: 'insensitive' } }, select: { id: true } })
+      if (taken) return { success: false, error: 'Esse e-mail já é usado em outro cadastro' }
+      await prisma.citizen.update({ where: { id: memberId }, data: { email } })
+      await new PasswordResetService().sendCitizenAccountCreated({ id: memberId, email, name: dependent.name })
+      return { success: true, data: { message: 'Enviamos um e-mail para criar a senha.' } }
+    } catch (error: any) {
+      return { success: false, error: error.message || 'Erro ao criar o acesso' }
+    }
+  }
+
+  /** Pedidos dos meus dependentes (número, serviço e situação) */
+  async listDependentsProtocols(headId: string) {
+    const links = await prisma.familyComposition.findMany({
+      where: { headId, status: FamilyLinkStatus.ACTIVE, isDependent: true },
+      select: { memberId: true },
+    })
+    if (links.length === 0) return []
+    const protocols = await prisma.protocolSimplified.findMany({
+      where: { citizenId: { in: links.map((link) => link.memberId) } },
+      orderBy: { createdAt: 'desc' },
+      take: 50,
+      select: {
+        id: true,
+        number: true,
+        status: true,
+        createdAt: true,
+        citizen: { select: { id: true, name: true } },
+        service: { select: { name: true } },
+      },
+    })
+    return protocols.map((protocol) => ({
+      id: protocol.id,
+      number: protocol.number,
+      status: protocol.status,
+      createdAt: protocol.createdAt,
+      serviceName: protocol.service?.name || 'Serviço',
+      dependent: protocol.citizen ? { id: protocol.citizen.id, name: protocol.citizen.name } : null,
+    }))
+  }
+
+  // ==========================================================================
   // ESTATÍSTICAS
   // ==========================================================================
 
-  async calculateFamilyStats(citizenId: string) {
+  async calculateFamilyStats(requestedCitizenId: string) {
+    // Quem não é responsável por ninguém mas faz parte de UMA família vê o
+    // resumo dela (antes cada pessoa via números diferentes da mesma casa)
+    let citizenId = requestedCitizenId
+    const ownLinks = await prisma.familyComposition.count({ where: { headId: requestedCitizenId, status: FamilyLinkStatus.ACTIVE } })
+    if (ownLinks === 0) {
+      const memberOf = await prisma.familyComposition.findMany({
+        where: { memberId: requestedCitizenId, status: FamilyLinkStatus.ACTIVE },
+        select: { headId: true },
+        take: 2,
+      })
+      if (memberOf.length === 1) citizenId = memberOf[0].headId
+    }
+
     const members = await prisma.familyComposition.findMany({
       where: {
         headId: citizenId,

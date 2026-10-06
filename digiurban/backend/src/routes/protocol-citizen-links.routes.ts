@@ -153,6 +153,7 @@ router.post('/:protocolId/citizen-links', requireMinRole(UserRole.USER), async (
       const familyLink = await prisma.familyComposition.findFirst({
         where: {
           headId: protocol.citizenId,
+          status: 'ACTIVE',
           memberId: linkedCitizenId,
           relationship: relationship
         }

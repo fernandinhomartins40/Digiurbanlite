@@ -76,6 +76,43 @@ export default function PerfilPage() {
   const { citizen, updateProfile, apiRequest, refreshCitizenData } = useCitizenAuth();
   const [resubmitting, setResubmitting] = useState(false);
 
+  // LGPD: baixar os meus dados e excluir a minha conta
+  const [deleting, setDeleting] = useState(false);
+  const [deletePassword, setDeletePassword] = useState('');
+  const [deleteError, setDeleteError] = useState<string | null>(null);
+  const [deleteBusy, setDeleteBusy] = useState(false);
+
+  const handleDownloadData = async () => {
+    try {
+      const data = await apiRequest('/citizen/auth/my-data');
+      const url = window.URL.createObjectURL(new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' }));
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = 'meus-dados.json';
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      window.URL.revokeObjectURL(url);
+    } catch (error: any) {
+      toast.error(error?.message || 'Não foi possível baixar agora. Tente de novo.');
+    }
+  };
+
+  const handleDeleteAccount = async () => {
+    setDeleteError(null);
+    if (!deletePassword) return setDeleteError('Digite a sua senha para confirmar.');
+    try {
+      setDeleteBusy(true);
+      await apiRequest('/citizen/auth/delete-account', { method: 'POST', body: JSON.stringify({ password: deletePassword }) });
+      toast.success('Sua conta foi excluída.');
+      window.location.href = '/cidadao/login';
+    } catch (error: any) {
+      setDeleteError(error?.message || 'Não foi possível excluir agora. Tente de novo.');
+    } finally {
+      setDeleteBusy(false);
+    }
+  };
+
   // recusado: depois de corrigir, a pessoa pede nova conferência (antes a conta era desativada)
   const handleResubmit = async () => {
     try {
@@ -536,6 +573,54 @@ export default function PerfilPage() {
                 <Button onClick={handleChangePassword} disabled={savingPassword}>
                   {savingPassword && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
                   Trocar senha
+                </Button>
+              </div>
+            </div>
+          )}
+        </Section>
+
+        <Section title="Meus dados e privacidade">
+          <p className="text-sm text-gray-500">Você pode baixar uma cópia de tudo o que a prefeitura guarda sobre você aqui, ou excluir a sua conta.</p>
+          <div className="mt-3 flex flex-col gap-2 sm:flex-row">
+            <Button variant="outline" onClick={handleDownloadData}>Baixar os meus dados</Button>
+            {!deleting && (
+              <Button variant="outline" className="text-red-700 hover:bg-red-50 hover:text-red-800" onClick={() => setDeleting(true)}>
+                Excluir a minha conta
+              </Button>
+            )}
+          </div>
+          {deleting && (
+            <div className="mt-4 space-y-3 rounded-xl border border-red-200 bg-red-50 p-3">
+              <p className="text-sm text-red-900">
+                Ao excluir, apagamos o seu contato, endereço, documentos, biometria, família e o acesso ao portal. Ficam guardados só o seu nome,
+                o CPF e os pedidos já feitos, porque a prefeitura é obrigada a manter o registro do atendimento. Para voltar depois, é preciso
+                ir à prefeitura.
+              </p>
+              <Field id="deletePassword" label="Sua senha, para confirmar">
+                <Input
+                  id="deletePassword"
+                  type="password"
+                  autoComplete="current-password"
+                  value={deletePassword}
+                  onChange={(e) => setDeletePassword(e.target.value)}
+                />
+              </Field>
+              {deleteError && <p role="alert" className="rounded-xl bg-white px-3 py-2 text-sm text-red-700">{deleteError}</p>}
+              <div className="flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
+                <Button
+                  variant="outline"
+                  disabled={deleteBusy}
+                  onClick={() => {
+                    setDeleting(false);
+                    setDeletePassword('');
+                    setDeleteError(null);
+                  }}
+                >
+                  Cancelar
+                </Button>
+                <Button className="bg-red-600 hover:bg-red-700" onClick={handleDeleteAccount} disabled={deleteBusy}>
+                  {deleteBusy && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                  Excluir a minha conta
                 </Button>
               </div>
             </div>

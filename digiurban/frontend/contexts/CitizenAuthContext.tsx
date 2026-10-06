@@ -159,7 +159,10 @@ export function CitizenAuthProvider({ children }: { children: React.ReactNode })
         throw new Error('Token expirado');
       }
 
-      throw new Error(errorData.error || 'Erro na requisição');
+      // algumas rotas mandam { error: 'CODIGO', message: 'texto' }: a pessoa vê o texto
+      const errorText = typeof errorData.error === 'string' ? errorData.error : errorData.error?.message;
+      const isCode = /^[A-Z0-9_]+$/.test(String(errorText || ''));
+      throw new Error((isCode && errorData.message ? errorData.message : errorText || errorData.message) || 'Erro na requisição');
     }
 
     return response.json();

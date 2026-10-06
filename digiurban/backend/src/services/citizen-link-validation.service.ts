@@ -29,6 +29,7 @@ export class CitizenLinkValidationService {
       const familyLink = await prisma.familyComposition.findFirst({
         where: {
           headId: headCitizenId,
+          status: 'ACTIVE',
           memberId: memberCitizenId
         }
       });
@@ -78,7 +79,8 @@ export class CitizenLinkValidationService {
   }) {
     try {
       const where: any = {
-        headId: citizenId
+        headId: citizenId,
+        status: 'ACTIVE'
       };
 
       if (options?.relationship) {
@@ -163,7 +165,8 @@ export class CitizenLinkValidationService {
     try {
       // Definir filtros baseados no tipo de vínculo
       const where: any = {
-        headId: requesterId
+        headId: requesterId,
+        status: 'ACTIVE'
       };
 
       // Filtros específicos por tipo de vínculo

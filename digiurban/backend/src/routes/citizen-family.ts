@@ -303,6 +303,79 @@ router.get('/members/:memberId', async (req, res) => {
 })
 
 // ============================================================================
+// ROTAS - DEPENDENTES SEM CONTA (menores de 18 anos)
+// ============================================================================
+
+const dependentSchema = z.object({
+  name: z.string().min(3).max(120),
+  cpf: z.string().min(11).max(14),
+  birthDate: z.string().min(8),
+  relationship: z.enum(['SON', 'DAUGHTER', 'GRANDSON', 'GRANDDAUGHTER', 'BROTHER', 'SISTER', 'OTHER']),
+  hasDisability: z.boolean().optional()
+})
+
+const dependentLimiter = rateLimit({
+  windowMs: 60 * 60 * 1000,
+  max: 15,
+  keyGenerator: (req: any) => `family-dependent:${req.citizen?.id || req.ip}`,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { success: false, error: 'Muitas tentativas. Tente novamente em 1 hora.' }
+})
+
+/** POST /api/citizen/family/dependents — cadastrar filho(a) ou outro menor sem conta */
+router.post('/dependents', dependentLimiter, async (req, res) => {
+  try {
+    const { citizen } = req as unknown as TenantCitizenAuthenticatedRequest
+    const data = dependentSchema.parse(req.body)
+    const result = await familyService.createDependent(citizen.id, data as any)
+    if (!result.success) {
+      return res.status(400).json(createErrorResponse('DEPENDENT_ERROR', result.error || 'Erro ao cadastrar dependente'))
+    }
+    return res.status(201).json(createSuccessResponse({ member: result.data }))
+  } catch (error: any) {
+    if (error.name === 'ZodError') {
+      return res.status(400).json(createErrorResponse('VALIDATION_ERROR', 'Confira o nome, o CPF, a data de nascimento e o parentesco'))
+    }
+    console.error('Erro ao cadastrar dependente:', error)
+    return res.status(500).json(createErrorResponse('INTERNAL_ERROR', 'Erro interno do servidor'))
+  }
+})
+
+/** PUT /api/citizen/family/dependents/:memberId — corrigir nome/nascimento */
+router.put('/dependents/:memberId', async (req, res) => {
+  try {
+    const { citizen } = req as unknown as TenantCitizenAuthenticatedRequest
+    const result = await familyService.updateDependent(citizen.id, req.params.memberId, {
+      name: typeof req.body?.name === 'string' ? req.body.name : undefined,
+      birthDate: typeof req.body?.birthDate === 'string' ? req.body.birthDate : undefined
+    })
+    if (!result.success) {
+      return res.status(400).json(createErrorResponse('DEPENDENT_ERROR', result.error || 'Erro ao atualizar dependente'))
+    }
+    return res.json(createSuccessResponse({ member: result.data }))
+  } catch (error) {
+    console.error('Erro ao atualizar dependente:', error)
+    return res.status(500).json(createErrorResponse('INTERNAL_ERROR', 'Erro interno do servidor'))
+  }
+})
+
+/** POST /api/citizen/family/dependents/:memberId/access — criar o acesso do dependente (e-mail dele) */
+router.post('/dependents/:memberId/access', dependentLimiter, async (req, res) => {
+  try {
+    const { citizen } = req as unknown as TenantCitizenAuthenticatedRequest
+    const result = await familyService.giveDependentAccess(citizen.id, req.params.memberId, String(req.body?.email || ''))
+    if (!result.success) {
+      return res.status(400).json(createErrorResponse('DEPENDENT_ERROR', result.error || 'Erro ao criar o acesso'))
+    }
+    return res.json(createSuccessResponse(result.data))
+  } catch (error) {
+    console.error('Erro ao criar acesso do dependente:', error)
+    return res.status(500).json(createErrorResponse('INTERNAL_ERROR', 'Erro interno do servidor'))
+  }
+})
+
+// ============================================================================
 // ROTAS - ESTATÍSTICAS
 // ============================================================================
 
@@ -337,22 +410,10 @@ router.get('/protocols', async (req, res) => {
   try {
     const { citizen } = req as TenantCitizenAuthenticatedRequest
 
-    // Buscar composição familiar
-    const family = await familyService.getFamilyComposition(citizen.id)
+    // Pedidos dos dependentes (os do próprio cidadão ficam em "Meus pedidos")
+    const protocols = await familyService.listDependentsProtocols(citizen.id)
 
-    // Coletar IDs de todos os membros (incluindo responsável)
-    const memberIds = [citizen.id, ...family.members.map((m: any) => m.memberId)]
-
-    // Buscar protocolos de todos os membros
-    // TODO: Implementar busca de protocolos (integração com protocols-simplified)
-    // const protocols = await protocolService.getProtocolsByMultipleCitizens(memberIds)
-
-    return res.json(
-      createSuccessResponse({
-        message: 'Funcionalidade de protocolos em desenvolvimento',
-        memberIds
-      })
-    )
+    return res.json(createSuccessResponse({ protocols }))
   } catch (error) {
     console.error('Erro ao buscar protocolos da família:', error)
     return res.status(500).json(

@@ -8,6 +8,7 @@ import { Button } from '@/components/ui/button'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { FamilyTree } from '@/components/citizen/FamilyTree'
 import { AddFamilyMemberDialog } from '@/components/citizen/AddFamilyMemberDialog'
+import { AddDependentDialog } from '@/components/citizen/AddDependentDialog'
 import { EditFamilyMemberDialog } from '@/components/citizen/EditFamilyMemberDialog'
 import { FamilyInviteDialog } from '@/components/citizen/FamilyInviteDialog'
 import { PendingLinksSection } from '@/components/citizen/PendingLinksSection'
@@ -73,6 +74,10 @@ export default function FamiliaPage() {
   const [showAddDialog, setShowAddDialog] = useState(false)
   const [showEditDialog, setShowEditDialog] = useState(false)
   const [showInviteDialog, setShowInviteDialog] = useState(false)
+  const [showDependentDialog, setShowDependentDialog] = useState(false)
+  const [dependentsProtocols, setDependentsProtocols] = useState<
+    Array<{ id: string; number: string; status: string; serviceName: string; dependent: { id: string; name: string } | null }>
+  >([])
   const [showRemoveDialog, setShowRemoveDialog] = useState(false)
 
   // Selected
@@ -165,9 +170,45 @@ export default function FamiliaPage() {
     }
   }
 
+  const loadDependentsProtocols = useCallback(async () => {
+    try {
+      const response = await apiRequest('/citizen/family/protocols')
+      setDependentsProtocols(response?.data?.protocols || [])
+    } catch {
+      setDependentsProtocols([])
+    }
+  }, [apiRequest])
+
+  useEffect(() => {
+    void loadDependentsProtocols()
+  }, [loadDependentsProtocols])
+
   const handleSuccess = () => {
     loadFamilyData()
     loadInvites()
+    loadDependentsProtocols()
+  }
+
+  // dependente sem conta: o responsável informa um e-mail e ele cria a própria senha
+  const handleGiveAccess = async (memberId: string, name: string) => {
+    const email = window.prompt(`E-mail de ${name} para criar o acesso ao portal:`)
+    if (!email) return
+    try {
+      await apiRequest(`/citizen/family/dependents/${memberId}/access`, { method: 'POST', body: JSON.stringify({ email }) })
+      toast({ title: 'Acesso criado', description: `Enviamos um e-mail para ${name} criar a senha.` })
+      loadFamilyData()
+    } catch (error: any) {
+      toast({ variant: 'destructive', title: 'Não foi possível', description: error?.message || 'Tente de novo.' })
+    }
+  }
+
+  const STATUS_LABEL: Record<string, string> = {
+    VINCULADO: 'Recebido',
+    PROGRESSO: 'Em andamento',
+    PENDENCIA: 'Aguardando você',
+    ATUALIZACAO: 'Em atualização',
+    CONCLUIDO: 'Concluído',
+    CANCELADO: 'Cancelado',
   }
 
   if (loading) {
@@ -205,7 +246,7 @@ export default function FamiliaPage() {
         <div>
           <h1 className="text-2xl font-bold text-gray-900">Minha família</h1>
           <p className="mt-0.5 text-sm text-gray-600">
-            Quem mora com você. A pessoa adicionada confirma o vínculo pela conta dela.
+            Quem mora com você. Quem tem conta confirma o vínculo pela conta dela; filhos menores você cadastra direto.
           </p>
         </div>
 
@@ -219,6 +260,10 @@ export default function FamiliaPage() {
             Convidar quem não tem cadastro
           </Button>
         </div>
+        <Button size="lg" variant="outline" onClick={() => setShowDependentDialog(true)} className="h-12 w-full text-base">
+          <Users className="mr-2 h-5 w-5" />
+          Cadastrar filho(a) sem conta
+        </Button>
 
         {/* Vínculos esperando a sua confirmação */}
         {familyData.pendingLinks && familyData.pendingLinks.length > 0 && (
@@ -250,6 +295,47 @@ export default function FamiliaPage() {
               onEditMember={handleEditMember}
               onRemoveMember={handleRemoveMember}
             />
+
+            {/* dependentes sem conta: criar o acesso quando crescerem */}
+            {familyData.members.some((item) => item.isDependent && !item.member?.email) && (
+              <div className="mt-4 rounded-2xl border bg-white p-4">
+                <p className="text-sm font-medium text-gray-900">Dependentes sem conta</p>
+                <p className="mb-2 text-xs text-gray-500">Você cuida dos pedidos deles. Se quiser, crie o acesso para o dependente usar o portal.</p>
+                <ul className="divide-y">
+                  {familyData.members
+                    .filter((item) => item.isDependent && !item.member?.email)
+                    .map((item) => (
+                      <li key={item.id} className="flex items-center justify-between gap-3 py-2 text-sm">
+                        <span className="truncate">{item.member.name}</span>
+                        <Button variant="ghost" size="sm" onClick={() => handleGiveAccess(item.member.id, item.member.name.split(' ')[0])}>
+                          Criar acesso
+                        </Button>
+                      </li>
+                    ))}
+                </ul>
+              </div>
+            )}
+
+            {dependentsProtocols.length > 0 && (
+              <div className="mt-4 rounded-2xl border bg-white p-4">
+                <p className="mb-2 text-sm font-medium text-gray-900">Pedidos dos dependentes</p>
+                <ul className="divide-y">
+                  {dependentsProtocols.map((protocol) => (
+                    <li key={protocol.id} className="flex items-center justify-between gap-3 py-2 text-sm">
+                      <div className="min-w-0">
+                        <p className="truncate font-medium text-gray-900">{protocol.serviceName}</p>
+                        <p className="truncate text-xs text-gray-500">
+                          {protocol.dependent?.name} · nº {protocol.number}
+                        </p>
+                      </div>
+                      <span className="shrink-0 rounded-full bg-gray-100 px-2.5 py-0.5 text-xs text-gray-700">
+                        {STATUS_LABEL[protocol.status] || protocol.status}
+                      </span>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            )}
           </TabsContent>
 
           {/* Aba Convites */}
@@ -295,6 +381,13 @@ export default function FamiliaPage() {
         open={showEditDialog}
         onOpenChange={setShowEditDialog}
         member={selectedMember}
+        onSuccess={handleSuccess}
+        apiRequest={apiRequest}
+      />
+
+      <AddDependentDialog
+        open={showDependentDialog}
+        onOpenChange={setShowDependentDialog}
         onSuccess={handleSuccess}
         apiRequest={apiRequest}
       />

@@ -152,6 +152,7 @@ export class CitizenLinkTransformer {
     const familyLink = await prisma.familyComposition.findFirst({
       where: {
         headId: requesterId,
+        status: 'ACTIVE',
         memberId: studentId
       }
     });
@@ -178,6 +179,7 @@ export class CitizenLinkTransformer {
     const familyLink = await prisma.familyComposition.findFirst({
       where: {
         headId: requesterId,
+        status: 'ACTIVE',
         memberId: companionId
       }
     });
@@ -204,6 +206,7 @@ export class CitizenLinkTransformer {
     const familyLink = await prisma.familyComposition.findFirst({
       where: {
         headId: requesterId,
+        status: 'ACTIVE',
         memberId: authorizedId
       }
     });
