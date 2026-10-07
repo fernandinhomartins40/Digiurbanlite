@@ -2,6 +2,7 @@
 // ADMIN-MANAGEMENT.TS - ISOLAMENTO PROFISSIONAL COMPLETO
 // ============================================================================
 
+import { BCRYPT_ROUNDS } from '../config/security';
 import { Router, Response, RequestHandler, Request, NextFunction } from 'express';
 import { z, ZodError } from 'zod';
 import * as bcrypt from 'bcryptjs';
@@ -1342,7 +1343,7 @@ router.post(
     }
 
     // Hash da senha
-    const hashedPassword = await bcrypt.hash(data.password, 10);
+    const hashedPassword = await bcrypt.hash(data.password, BCRYPT_ROUNDS);
 
     const newUser = await prisma.$transaction(async (tx) => {
       const createdUser = await tx.user.create({

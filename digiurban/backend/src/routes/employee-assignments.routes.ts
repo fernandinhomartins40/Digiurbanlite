@@ -1,5 +1,5 @@
 import { Router, Request, Response } from 'express';
-import { authenticateAdmin } from '../middleware/auth';
+import { orgChartGuard } from '../middleware/org-chart-auth';
 import { syncUserDepartmentsFromAssignments, syncAllUserDepartments } from '../services/assignment-sync.service';
 import {
   assertDepartmentScopedEntities,
@@ -8,6 +8,9 @@ import {
 import { safeCreateAssignmentAudit, safeFindAssignmentAudits } from '../utils/assignment-audit-safe';
 
 const router = Router();
+
+// ver: coordenador ou acima; mexer: admin, ou gerente na própria secretaria
+router.use(...orgChartGuard('assignment'));
 // Otimização VPS (docs/VPS-OPTIMIZATION-AUDIT.md, P0-2): usar o singleton de
 // src/lib/prisma — cada `new PrismaClient()` abria um pool próprio (esgotava o
 // PostgreSQL) e NÃO passava pela tenantExtension (furo de isolamento multi-tenant).
@@ -21,7 +24,7 @@ import { prisma } from '../lib/prisma';
  * GET /api/employee-assignments
  * Listar todos os vínculos funcionais
  */
-router.get('/', authenticateAdmin, async (req: Request, res: Response) => {
+router.get('/', async (req: Request, res: Response) => {
   try {
     const {
       userId,
@@ -89,7 +92,7 @@ router.get('/', authenticateAdmin, async (req: Request, res: Response) => {
  * GET /api/employee-assignments/:id
  * Buscar vínculo específico
  */
-router.get('/:id', authenticateAdmin, async (req: Request, res: Response) => {
+router.get('/:id', async (req: Request, res: Response) => {
   try {
     const { id } = req.params;
 
@@ -164,7 +167,7 @@ router.get('/:id', authenticateAdmin, async (req: Request, res: Response) => {
  * GET /api/employee-assignments/user/:userId
  * Buscar todos os vínculos de um servidor
  */
-router.get('/user/:userId', authenticateAdmin, async (req: Request, res: Response) => {
+router.get('/user/:userId', async (req: Request, res: Response) => {
   try {
     const { userId } = req.params;
     const { includeInactive } = req.query;
@@ -207,7 +210,7 @@ router.get('/user/:userId', authenticateAdmin, async (req: Request, res: Respons
  * POST /api/employee-assignments
  * Criar novo vínculo funcional
  */
-router.post('/', authenticateAdmin, async (req: Request, res: Response) => {
+router.post('/', async (req: Request, res: Response) => {
   try {
     const {
       userId,
@@ -349,7 +352,7 @@ router.post('/', authenticateAdmin, async (req: Request, res: Response) => {
  * PUT /api/employee-assignments/:id
  * Atualizar vínculo funcional
  */
-router.put('/:id', authenticateAdmin, async (req: Request, res: Response) => {
+router.put('/:id', async (req: Request, res: Response) => {
   try {
     const { id } = req.params;
     const {
@@ -495,7 +498,7 @@ router.put('/:id', authenticateAdmin, async (req: Request, res: Response) => {
  * DELETE /api/employee-assignments/:id
  * Encerrar vínculo funcional
  */
-router.delete('/:id', authenticateAdmin, async (req: Request, res: Response) => {
+router.delete('/:id', async (req: Request, res: Response) => {
   try {
     const { id } = req.params;
     const { motivo, dataFim } = req.body;
@@ -561,7 +564,7 @@ router.delete('/:id', authenticateAdmin, async (req: Request, res: Response) => 
  * GET /api/employee-assignments/:id/audit
  * Buscar histórico de auditoria de um vínculo
  */
-router.get('/:id/audit', authenticateAdmin, async (req: Request, res: Response) => {
+router.get('/:id/audit', async (req: Request, res: Response) => {
   try {
     const { id } = req.params;
 
@@ -585,7 +588,7 @@ router.get('/:id/audit', authenticateAdmin, async (req: Request, res: Response) 
  * POST /api/employee-assignments/sync-all
  * Sincronizar UserDepartments de TODOS os servidores (migração/reparo)
  */
-router.post('/sync-all', authenticateAdmin, async (req: Request, res: Response) => {
+router.post('/sync-all', async (req: Request, res: Response) => {
   try {
     const result = await syncAllUserDepartments();
     res.json({

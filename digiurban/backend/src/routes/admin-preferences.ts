@@ -6,6 +6,7 @@
  * ============================================================================
  */
 
+import { BCRYPT_ROUNDS } from '../config/security';
 import { Router } from 'express';
 import { prisma } from '../lib/prisma';
 import { adminAuthMiddleware } from '../middleware/admin-auth';
@@ -656,7 +657,7 @@ router.put('/password', adminAuthMiddleware, async (req, res) => {
     }
 
     // Gerar hash da nova senha
-    const hashedPassword = await bcrypt.hash(validatedData.newPassword, 10);
+    const hashedPassword = await bcrypt.hash(validatedData.newPassword, BCRYPT_ROUNDS);
 
     // Atualizar senha
     await prisma.user.update({

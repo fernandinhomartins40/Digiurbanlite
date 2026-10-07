@@ -1,5 +1,5 @@
 import { Router, Request, Response } from 'express';
-import { authenticateAdmin } from '../middleware/auth';
+import { orgChartGuard } from '../middleware/org-chart-auth';
 import {
   assertDepartmentScopedEntities,
   assertUserAssignmentScope,
@@ -7,6 +7,9 @@ import {
 } from '../services/organizational-integrity.service';
 
 const router = Router();
+
+// ver: coordenador ou acima; mexer: admin, ou gerente na própria secretaria
+router.use(...orgChartGuard('team'));
 // Otimização VPS (docs/VPS-OPTIMIZATION-AUDIT.md, P0-2): usar o singleton de
 // src/lib/prisma — cada `new PrismaClient()` abria um pool próprio (esgotava o
 // PostgreSQL) e NÃO passava pela tenantExtension (furo de isolamento multi-tenant).
@@ -20,7 +23,7 @@ import { prisma } from '../lib/prisma';
  * GET /api/teams
  * Listar todas as equipes
  */
-router.get('/', authenticateAdmin, async (req: Request, res: Response) => {
+router.get('/', async (req: Request, res: Response) => {
   try {
     const {
       departmentId,
@@ -78,7 +81,7 @@ router.get('/', authenticateAdmin, async (req: Request, res: Response) => {
  * GET /api/teams/:id
  * Buscar equipe específica
  */
-router.get('/:id', authenticateAdmin, async (req: Request, res: Response) => {
+router.get('/:id', async (req: Request, res: Response) => {
   try {
     const { id } = req.params;
 
@@ -152,7 +155,7 @@ router.get('/:id', authenticateAdmin, async (req: Request, res: Response) => {
  * POST /api/teams
  * Criar nova equipe
  */
-router.post('/', authenticateAdmin, async (req: Request, res: Response) => {
+router.post('/', async (req: Request, res: Response) => {
   try {
     const {
       nome,
@@ -236,7 +239,7 @@ router.post('/', authenticateAdmin, async (req: Request, res: Response) => {
  * PUT /api/teams/:id
  * Atualizar equipe
  */
-router.put('/:id', authenticateAdmin, async (req: Request, res: Response) => {
+router.put('/:id', async (req: Request, res: Response) => {
   try {
     const { id } = req.params;
     const {
@@ -326,7 +329,7 @@ router.put('/:id', authenticateAdmin, async (req: Request, res: Response) => {
  * DELETE /api/teams/:id
  * Desativar equipe
  */
-router.delete('/:id', authenticateAdmin, async (req: Request, res: Response) => {
+router.delete('/:id', async (req: Request, res: Response) => {
   try {
     const { id } = req.params;
     const { dataFim, motivo } = req.body;
@@ -378,7 +381,7 @@ router.delete('/:id', authenticateAdmin, async (req: Request, res: Response) => 
  * GET /api/teams/:id/members
  * Listar membros de uma equipe
  */
-router.get('/:id/members', authenticateAdmin, async (req: Request, res: Response) => {
+router.get('/:id/members', async (req: Request, res: Response) => {
   try {
     const { id } = req.params;
     const { includeInactive } = req.query;
@@ -425,7 +428,7 @@ router.get('/:id/members', authenticateAdmin, async (req: Request, res: Response
  * POST /api/teams/:id/members
  * Adicionar membro à equipe
  */
-router.post('/:id/members', authenticateAdmin, async (req: Request, res: Response) => {
+router.post('/:id/members', async (req: Request, res: Response) => {
   try {
     const { id } = req.params;
     const {
@@ -512,7 +515,7 @@ router.post('/:id/members', authenticateAdmin, async (req: Request, res: Respons
  * PUT /api/teams/:teamId/members/:memberId
  * Atualizar membro da equipe
  */
-router.put('/:teamId/members/:memberId', authenticateAdmin, async (req: Request, res: Response) => {
+router.put('/:teamId/members/:memberId', async (req: Request, res: Response) => {
   try {
     const { memberId } = req.params;
     const {
@@ -561,7 +564,7 @@ router.put('/:teamId/members/:memberId', authenticateAdmin, async (req: Request,
  * DELETE /api/teams/:teamId/members/:memberId
  * Remover membro da equipe
  */
-router.delete('/:teamId/members/:memberId', authenticateAdmin, async (req: Request, res: Response) => {
+router.delete('/:teamId/members/:memberId', async (req: Request, res: Response) => {
   try {
     const { memberId } = req.params;
     const { dataFim, motivo } = req.body;

@@ -1,3 +1,4 @@
+import { BCRYPT_ROUNDS } from '../config/security';
 import { Router, Request, Response } from 'express';
 import { prisma } from '../lib/prisma';
 import { adminAuthMiddleware } from '../middleware/admin-auth';
@@ -992,7 +993,7 @@ router.post('/users', adminAuthMiddleware, superAdminOnly, async (req: Request, 
 
     // Hash da senha
     const bcrypt = require('bcryptjs');
-    const hashedPassword = await bcrypt.hash(password, 10);
+    const hashedPassword = await bcrypt.hash(password, BCRYPT_ROUNDS);
 
     // Criar usuário
     const normalizedDepartmentIds = Array.from(
@@ -1129,7 +1130,7 @@ router.put('/users/:id', adminAuthMiddleware, superAdminOnly, async (req: Reques
     // Se senha foi fornecida, fazer hash
     if (password) {
       const bcrypt = require('bcryptjs');
-      updateData.password = await bcrypt.hash(password, 10);
+      updateData.password = await bcrypt.hash(password, BCRYPT_ROUNDS);
     }
 
     // Atualizar usuário
@@ -1354,7 +1355,7 @@ router.post('/users/admins', adminAuthMiddleware, superAdminOnly, async (req: Re
     }
 
     // Hash da senha
-    const hashedPassword = await bcrypt.hash(password, 10);
+    const hashedPassword = await bcrypt.hash(password, BCRYPT_ROUNDS);
 
     // Criar usuário
     const newAdmin = await prisma.$transaction(async (tx) => {

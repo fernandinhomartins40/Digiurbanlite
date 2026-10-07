@@ -391,6 +391,17 @@ export async function provisionTenant(input: ProvisionTenantInput): Promise<Prov
   // separado — o build (rootDir: src) NÃO pode importá-las. Best-effort: falha
   // não desfaz o provisionamento.
   const warnings: string[] = [];
+
+  // organograma: cada secretaria nasce com a sua unidade raiz (antes o município
+  // novo ficava sem nenhuma unidade e a lotação dos servidores não tinha onde)
+  try {
+    const { syncDepartmentRootOrganizationalUnits } = await import('./department-organogram.service');
+    const { prisma } = await import('../lib/prisma');
+    await runAsTenant(result.tenant.id, async () => syncDepartmentRootOrganizationalUnits(prisma as any, { missingOnly: true }));
+  } catch (orgError) {
+    console.error(`[PROVISION] Falha ao criar as unidades do organograma do tenant ${result.tenant.slug}:`, orgError);
+    warnings.push('As unidades do organograma não foram criadas. Abra Organograma e use "Sincronizar secretarias".');
+  }
   let fullServicesCreated = 0;
   for (let attempt = 1; attempt <= 2 && fullServicesCreated === 0; attempt++) {
     try {

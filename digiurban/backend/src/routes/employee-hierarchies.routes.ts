@@ -1,5 +1,5 @@
 import { Router, Request, Response } from 'express';
-import { authenticateAdmin } from '../middleware/auth';
+import { orgChartGuard } from '../middleware/org-chart-auth';
 import {
   assertDepartmentScopedEntities,
   assertUserAssignmentScope,
@@ -8,6 +8,9 @@ import {
 } from '../services/organizational-integrity.service';
 
 const router = Router();
+
+// ver: coordenador ou acima; mexer: admin, ou gerente na própria secretaria
+router.use(...orgChartGuard('hierarchy'));
 // Otimização VPS (docs/VPS-OPTIMIZATION-AUDIT.md, P0-2): usar o singleton de
 // src/lib/prisma — cada `new PrismaClient()` abria um pool próprio (esgotava o
 // PostgreSQL) e NÃO passava pela tenantExtension (furo de isolamento multi-tenant).
@@ -21,7 +24,7 @@ import { prisma } from '../lib/prisma';
  * GET /api/employee-hierarchies
  * Listar todas as relações hierárquicas
  */
-router.get('/', authenticateAdmin, async (req: Request, res: Response) => {
+router.get('/', async (req: Request, res: Response) => {
   try {
     const {
       subordinadoId,
@@ -66,7 +69,7 @@ router.get('/', authenticateAdmin, async (req: Request, res: Response) => {
  * GET /api/employee-hierarchies/:id
  * Buscar hierarquia específica
  */
-router.get('/:id', authenticateAdmin, async (req: Request, res: Response) => {
+router.get('/:id', async (req: Request, res: Response) => {
   try {
     const { id } = req.params;
 
@@ -132,7 +135,7 @@ router.get('/:id', authenticateAdmin, async (req: Request, res: Response) => {
  * GET /api/employee-hierarchies/employee/:userId/subordinates
  * Buscar subordinados diretos de um servidor
  */
-router.get('/employee/:userId/subordinates', authenticateAdmin, async (req: Request, res: Response) => {
+router.get('/employee/:userId/subordinates', async (req: Request, res: Response) => {
   try {
     const { userId } = req.params;
     const { tipo, includeInactive } = req.query;
@@ -184,7 +187,7 @@ router.get('/employee/:userId/subordinates', authenticateAdmin, async (req: Requ
  * GET /api/employee-hierarchies/employee/:userId/supervisors
  * Buscar supervisores de um servidor
  */
-router.get('/employee/:userId/supervisors', authenticateAdmin, async (req: Request, res: Response) => {
+router.get('/employee/:userId/supervisors', async (req: Request, res: Response) => {
   try {
     const { userId } = req.params;
     const { tipo, includeInactive } = req.query;
@@ -236,7 +239,7 @@ router.get('/employee/:userId/supervisors', authenticateAdmin, async (req: Reque
  * GET /api/employee-hierarchies/employee/:userId/org-chart
  * Buscar organograma completo de um servidor (hierarquia recursiva)
  */
-router.get('/employee/:userId/org-chart', authenticateAdmin, async (req: Request, res: Response) => {
+router.get('/employee/:userId/org-chart', async (req: Request, res: Response) => {
   try {
     const { userId } = req.params;
 
@@ -330,7 +333,7 @@ router.get('/employee/:userId/org-chart', authenticateAdmin, async (req: Request
  * POST /api/employee-hierarchies
  * Criar nova relação hierárquica
  */
-router.post('/', authenticateAdmin, async (req: Request, res: Response) => {
+router.post('/', async (req: Request, res: Response) => {
   try {
     const {
       subordinadoId,
@@ -458,7 +461,7 @@ router.post('/', authenticateAdmin, async (req: Request, res: Response) => {
  * PUT /api/employee-hierarchies/:id
  * Atualizar relação hierárquica
  */
-router.put('/:id', authenticateAdmin, async (req: Request, res: Response) => {
+router.put('/:id', async (req: Request, res: Response) => {
   try {
     const { id } = req.params;
     const {
@@ -548,7 +551,7 @@ router.put('/:id', authenticateAdmin, async (req: Request, res: Response) => {
  * DELETE /api/employee-hierarchies/:id
  * Desativar relação hierárquica
  */
-router.delete('/:id', authenticateAdmin, async (req: Request, res: Response) => {
+router.delete('/:id', async (req: Request, res: Response) => {
   try {
     const { id } = req.params;
     const { dataFim, motivo } = req.body;

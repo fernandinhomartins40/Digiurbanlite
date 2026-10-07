@@ -1,17 +1,20 @@
 import { Router, Request, Response } from 'express';
-import { authenticateAdmin } from '../middleware/auth';
+import { orgChartGuard } from '../middleware/org-chart-auth';
 import {
   assertDepartmentScopedEntities,
   OrganizationalIntegrityError,
 } from '../services/organizational-integrity.service';
 
 const router = Router();
+
+// ver: coordenador ou acima; mexer: admin, ou gerente na própria secretaria
+router.use(...orgChartGuard('position'));
 // Otimização VPS (docs/VPS-OPTIMIZATION-AUDIT.md, P0-2): usar o singleton de
 // src/lib/prisma — cada `new PrismaClient()` abria um pool próprio (esgotava o
 // PostgreSQL) e NÃO passava pela tenantExtension (furo de isolamento multi-tenant).
 import { prisma } from '../lib/prisma';
 
-router.get('/', authenticateAdmin, async (req: Request, res: Response) => {
+router.get('/', async (req: Request, res: Response) => {
   try {
     const { departmentId, organizationalUnitId, tipo, nivel, categoria, isActive, search } =
       req.query;
@@ -58,7 +61,7 @@ router.get('/', authenticateAdmin, async (req: Request, res: Response) => {
   }
 });
 
-router.get('/:id', authenticateAdmin, async (req: Request, res: Response) => {
+router.get('/:id', async (req: Request, res: Response) => {
   try {
     const { id } = req.params;
 
@@ -116,7 +119,7 @@ router.get('/:id', authenticateAdmin, async (req: Request, res: Response) => {
   }
 });
 
-router.post('/', authenticateAdmin, async (req: Request, res: Response) => {
+router.post('/', async (req: Request, res: Response) => {
   try {
     const {
       nome,
@@ -185,7 +188,7 @@ router.post('/', authenticateAdmin, async (req: Request, res: Response) => {
   }
 });
 
-router.put('/:id', authenticateAdmin, async (req: Request, res: Response) => {
+router.put('/:id', async (req: Request, res: Response) => {
   try {
     const { id } = req.params;
     const {
@@ -270,7 +273,7 @@ router.put('/:id', authenticateAdmin, async (req: Request, res: Response) => {
   }
 });
 
-router.delete('/:id', authenticateAdmin, async (req: Request, res: Response) => {
+router.delete('/:id', async (req: Request, res: Response) => {
   try {
     const { id } = req.params;
 

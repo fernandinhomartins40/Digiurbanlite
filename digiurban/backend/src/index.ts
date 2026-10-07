@@ -405,6 +405,7 @@ try { require('./jobs/revertExpiredDelegations.job').initRevertExpiredDelegation
 // Prazo de guarda das conversas (LGPD) — só age se ativado em Super-admin › Privacidade
 try { require('./jobs/privacy-retention.job').initPrivacyRetentionJob(); } catch (e) { logger.error('Failed to start privacy retention job', { error: e }); }
 try { require('./jobs/doc-reading.job').initDocReadingJob(); } catch (e) { logger.error('Failed to start document reading job', { error: e }); }
+try { require('./jobs/org-chart-startup.job').initOrgChartStartupSync(); } catch (e) { logger.error('Failed to start org chart sync', { error: e }); }
 
 // Saúde - Apps integrados
 // REMOVIDO (Fase 0, achado do fail-fast): ./routes/saude-atendimento.routes não

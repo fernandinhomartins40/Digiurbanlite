@@ -7885,6 +7885,7 @@ enum SituacaoVinculo {
 
 model EmployeeHierarchy {
   id String @id @default(cuid())
+  tenantId String?
 
   subordinadoId String
   subordinado   User   @relation("Subordinados", fields: [subordinadoId], references: [id], onDelete: Cascade)
@@ -7913,6 +7914,7 @@ model EmployeeHierarchy {
   @@index([supervisorId, ativo])
   @@index([organizationalUnitId])
   @@map("employee_hierarchies")
+  @@index([tenantId])
 }
 
 enum TipoHierarquia {
@@ -7928,17 +7930,18 @@ enum TipoHierarquia {
 
 model HealthProfessionalData {
   id String @id @default(cuid())
+  tenantId String?
 
   userId String @unique
   user   User   @relation("UserHealthData", fields: [userId], references: [id], onDelete: Cascade)
 
   categoria String // MEDICO, ENFERMEIRO, ACS, DENTISTA, etc
 
-  registroProfissional String? @unique
+  registroProfissional String?
   tipoRegistro         String? // CRM, COREN, CRO, CRP
   ufRegistro           String?
 
-  cns String? @unique
+  cns String?
   cbo String?
 
   especialidades Json? // Array de IDs de especialidades
@@ -7962,10 +7965,14 @@ model HealthProfessionalData {
   @@index([categoria, status])
   @@index([status])
   @@map("health_professional_data")
+  @@index([tenantId])
+  @@unique([tenantId, registroProfissional])
+  @@unique([tenantId, cns])
 }
 
 model EducationProfessionalData {
   id String @id @default(cuid())
+  tenantId String?
 
   userId String @unique
   user   User   @relation("UserEducationData", fields: [userId], references: [id], onDelete: Cascade)
@@ -7991,17 +7998,19 @@ model EducationProfessionalData {
   @@index([userId])
   @@index([categoria, ativo])
   @@map("education_professional_data")
+  @@index([tenantId])
 }
 
 model EngineeringProfessionalData {
   id String @id @default(cuid())
+  tenantId String?
 
   userId String @unique
   user   User   @relation("UserEngineeringData", fields: [userId], references: [id], onDelete: Cascade)
 
   categoria String // ENGENHEIRO_CIVIL, ARQUITETO, TOPOGRAFO, etc
 
-  registroProfissional String? @unique // CREA, CAU
+  registroProfissional String? // CREA, CAU
   tipoRegistro         String? // CREA, CAU
   ufRegistro           String?
 
@@ -8019,17 +8028,20 @@ model EngineeringProfessionalData {
   @@index([userId])
   @@index([categoria, ativo])
   @@map("engineering_professional_data")
+  @@index([tenantId])
+  @@unique([tenantId, registroProfissional])
 }
 
 model SocialAssistanceProfessionalData {
   id String @id @default(cuid())
+  tenantId String?
 
   userId String @unique
   user   User   @relation("UserSocialAssistanceData", fields: [userId], references: [id], onDelete: Cascade)
 
   categoria String // ASSISTENTE_SOCIAL, PSICOLOGO, EDUCADOR_SOCIAL, etc
 
-  registroProfissional String? @unique // CRESS, CRP
+  registroProfissional String? // CRESS, CRP
   tipoRegistro         String? // CRESS, CRP
   ufRegistro           String?
 
@@ -8047,6 +8059,8 @@ model SocialAssistanceProfessionalData {
   @@index([userId])
   @@index([categoria, ativo])
   @@map("social_assistance_professional_data")
+  @@index([tenantId])
+  @@unique([tenantId, registroProfissional])
 }
 
 // ============================================

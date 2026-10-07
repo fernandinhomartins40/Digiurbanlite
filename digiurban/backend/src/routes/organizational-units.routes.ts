@@ -1,10 +1,13 @@
 import { Router, Request, Response } from 'express';
 import { TipoUnidadeOrganizacional } from '@prisma/client';
-import { authenticateAdmin } from '../middleware/auth';
+import { orgChartGuard } from '../middleware/org-chart-auth';
 import { prisma } from '../lib/prisma';
 import { findDepartmentRootOrganizationalUnit } from '../services/department-organogram.service';
 
 const router = Router();
+
+// ver: coordenador ou acima; mexer: admin, ou gerente na própria secretaria
+router.use(...orgChartGuard('unit'));
 
 async function resolveParentForWrite(
   departmentId: string,
@@ -34,7 +37,7 @@ async function resolveParentForWrite(
 // CRUD DE UNIDADES ORGANIZACIONAIS
 // ============================================
 
-router.get('/', authenticateAdmin, async (req: Request, res: Response) => {
+router.get('/', async (req: Request, res: Response) => {
   try {
     const { departmentId, tipo, parentId, isActive, nivel, search } = req.query;
 
@@ -89,7 +92,7 @@ router.get('/', authenticateAdmin, async (req: Request, res: Response) => {
   }
 });
 
-router.get('/:id', authenticateAdmin, async (req: Request, res: Response) => {
+router.get('/:id', async (req: Request, res: Response) => {
   try {
     const { id } = req.params;
 
@@ -169,7 +172,7 @@ router.get('/:id', authenticateAdmin, async (req: Request, res: Response) => {
   }
 });
 
-router.get('/:id/hierarchy', authenticateAdmin, async (req: Request, res: Response) => {
+router.get('/:id/hierarchy', async (req: Request, res: Response) => {
   try {
     const { id } = req.params;
 
@@ -219,7 +222,7 @@ router.get('/:id/hierarchy', authenticateAdmin, async (req: Request, res: Respon
   }
 });
 
-router.post('/', authenticateAdmin, async (req: Request, res: Response) => {
+router.post('/', async (req: Request, res: Response) => {
   try {
     const {
       nome,
@@ -324,7 +327,7 @@ router.post('/', authenticateAdmin, async (req: Request, res: Response) => {
   }
 });
 
-router.put('/:id', authenticateAdmin, async (req: Request, res: Response) => {
+router.put('/:id', async (req: Request, res: Response) => {
   try {
     const { id } = req.params;
     const {
@@ -431,7 +434,7 @@ router.put('/:id', authenticateAdmin, async (req: Request, res: Response) => {
   }
 });
 
-router.delete('/:id', authenticateAdmin, async (req: Request, res: Response) => {
+router.delete('/:id', async (req: Request, res: Response) => {
   try {
     const { id } = req.params;
 
