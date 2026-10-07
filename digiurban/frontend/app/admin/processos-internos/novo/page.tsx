@@ -26,6 +26,7 @@ interface ProcessType {
   defaultDays: number
   isActive: boolean
   flowKey?: string | null
+  flowDefinition?: { baseKey?: string | null; stages?: Array<{ name: string }> } | null
 }
 
 interface FlowsInfo {
@@ -34,7 +35,7 @@ interface FlowsInfo {
   hipotesesDispensa: string[]
   hipotesesInexigibilidade: string[]
   limites: { year: number; decree: string; obrasEngenharia: number; outros: number }
-  flows: Array<{ key: string; name: string; stages: Array<{ key: string; name: string; legal: string }> }>
+  flows: Array<{ key: string; name: string; fieldsKind: 'licitacao' | 'direta' | 'adesao' | null; stages: Array<{ key: string; name: string; legal: string }> }>
 }
 
 const brl = (value: number) => value.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })
@@ -60,6 +61,9 @@ export default function NovoProcessoInternoPage() {
   const [modalidade, setModalidade] = useState('Pregão')
   const [criterio, setCriterio] = useState('Menor preço')
   const [hipotese, setHipotese] = useState('')
+  const [ata, setAta] = useState('')
+  const [allUnits, setAllUnits] = useState<Array<{ id: string; nome: string; department?: string | null }>>([])
+  const [participantes, setParticipantes] = useState<string[]>([])
   const [error, setError] = useState<string | null>(null)
   const [saving, setSaving] = useState(false)
 
@@ -74,6 +78,9 @@ export default function NovoProcessoInternoPage() {
     apiRequest('/internal-processes/flows')
       .then((response: any) => setFlows(response?.data || null))
       .catch(() => setFlows(null))
+    apiRequest('/internal-processes/units')
+      .then((response: any) => setAllUnits(response?.data?.units || []))
+      .catch(() => setAllUnits([]))
     Promise.all([apiRequest('/internal-processes/types'), apiRequest('/internal-processes/me')])
       .then(([typesResponse, meResponse]: any[]) => {
         const list: ProcessType[] = (typesResponse?.data?.types || []).filter((type: ProcessType) => type.isActive)
@@ -91,7 +98,8 @@ export default function NovoProcessoInternoPage() {
   const submit = async () => {
     setError(null)
     if (subject.trim().length < 3) return setError('Escreva o assunto.')
-    if (!toUnitId) return setError('Escolha para qual unidade enviar.')
+    if (!flowKey && !toUnitId) return setError('Escolha para qual unidade enviar.')
+    if (kind === 'direta' && !hipotese) return setError('Escolha o fundamento legal.')
     try {
       setSaving(true)
       const response = await apiRequest('/internal-processes', {
@@ -101,14 +109,17 @@ export default function NovoProcessoInternoPage() {
           subject,
           body,
           originUnitId,
-          toUnitId,
+          toUnitId: flowKey ? undefined : toUnitId,
           priority: urgent ? 1 : 0,
           confidential,
           protocolId,
           fields: flowKey
             ? {
-                valorEstimado: Number(valor.replace(/\./g, '').replace(',', '.')) || 0,
-                ...(flowKey === 'LICITACAO' ? { modalidade, criterio } : { hipotese }),
+                valorEstimado: valorNumber,
+                ...(kind === 'licitacao' ? { modalidade, criterio } : {}),
+                ...(kind === 'direta' ? { hipotese } : {}),
+                ...(kind === 'adesao' ? { ata } : {}),
+                ...(baseKey === 'REGISTRO_PRECOS' ? { participantes } : {}),
               }
             : undefined,
         }),
@@ -125,10 +136,14 @@ export default function NovoProcessoInternoPage() {
 
   const selectedType = types.find((type) => type.id === typeId)
   const flowKey = selectedType?.flowKey || null
-  const flowInfo = flows?.flows.find((flow) => flow.key === flowKey)
+  // fluxo próprio do município usa os dados do fluxo pronto de onde foi copiado
+  const baseKey = flowKey === 'CUSTOM' ? selectedType?.flowDefinition?.baseKey || null : flowKey
+  const flowInfo = flows?.flows.find((flow) => flow.key === baseKey)
+  const kind = flowInfo?.fieldsKind || null
+  const stageNames = flowKey === 'CUSTOM' ? (selectedType?.flowDefinition?.stages || []).map((stage) => stage.name) : (flowInfo?.stages || []).map((stage) => stage.name)
   const valorNumber = Number(valor.replace(/\./g, '').replace(',', '.')) || 0
   const limitWarning =
-    flowKey === 'DISPENSA' && flows && valorNumber > 0
+    baseKey === 'DISPENSA' && flows && valorNumber > 0
       ? hipotese.startsWith('Art. 75, I ') && valorNumber > flows.limites.obrasEngenharia
         ? `Passa do limite da dispensa para obras e engenharia (${brl(flows.limites.obrasEngenharia)} — ${flows.limites.decree}). Faça licitação.`
         : hipotese.startsWith('Art. 75, II ') && valorNumber > flows.limites.outros
@@ -179,18 +194,22 @@ export default function NovoProcessoInternoPage() {
 
         {flowKey && (
           <div className="space-y-4 rounded-lg border border-blue-100 bg-blue-50/50 p-4">
-            <p className="text-sm font-medium text-blue-900">Contratação pela Lei 14.133/2021</p>
-            {flowInfo && (
+            <p className="text-sm font-medium text-blue-900">{kind ? 'Contratação pela Lei 14.133/2021' : 'Processo com etapas'}</p>
+            {stageNames.length > 0 && (
               <p className="text-xs text-blue-900">
-                Etapas: {flowInfo.stages.map((stage) => stage.name).join(' → ')}
+                Etapas: {stageNames.join(' → ')}
               </p>
             )}
+            <p className="text-xs text-blue-900">
+              O processo começa na sua unidade e, a cada etapa concluída, vai sozinho para o setor responsável pela próxima.
+            </p>
+            {kind && (
             <div className="grid gap-4 sm:grid-cols-2">
               <div className="space-y-1">
                 <Label htmlFor="valor">Valor estimado (R$)</Label>
                 <Input id="valor" inputMode="decimal" placeholder="0,00" value={valor} onChange={(e) => setValor(e.target.value.replace(/[^0-9.,]/g, ''))} />
               </div>
-              {flowKey === 'LICITACAO' ? (
+              {kind === 'licitacao' ? (
                 <>
                   <div className="space-y-1">
                     <Label htmlFor="modalidade">Modalidade</Label>
@@ -209,19 +228,44 @@ export default function NovoProcessoInternoPage() {
                     </select>
                   </div>
                 </>
-              ) : (
+              ) : kind === 'direta' ? (
                 <div className="space-y-1 sm:col-span-2">
                   <Label htmlFor="hipotese">Fundamento legal</Label>
                   <select id="hipotese" value={hipotese} onChange={(e) => setHipotese(e.target.value)} className="h-10 w-full rounded-md border border-input bg-background px-2 text-sm">
                     <option value="">Escolher...</option>
-                    {((flowKey === 'DISPENSA' ? flows?.hipotesesDispensa : flows?.hipotesesInexigibilidade) || []).map((item) => (
+                    {((baseKey === 'DISPENSA' ? flows?.hipotesesDispensa : flows?.hipotesesInexigibilidade) || []).map((item) => (
                       <option key={item} value={item}>{item}</option>
                     ))}
                   </select>
                 </div>
+              ) : (
+                <div className="space-y-1 sm:col-span-2">
+                  <Label htmlFor="ata">Ata de registro de preços</Label>
+                  <Input id="ata" maxLength={200} placeholder="Ex.: Ata nº 12/2026 do Consórcio Intermunicipal ..." value={ata} onChange={(e) => setAta(e.target.value)} />
+                </div>
               )}
             </div>
-            {flowKey === 'DISPENSA' && flows && (
+            )}
+            {baseKey === 'REGISTRO_PRECOS' && (
+              <div className="space-y-1">
+                <Label>Secretarias participantes</Label>
+                <p className="text-xs text-gray-600">Elas recebem o processo para ver e informar, por despacho, o que vão precisar (intenção de registro de preços).</p>
+                <div className="max-h-48 overflow-y-auto rounded-md border bg-white">
+                  {allUnits.filter((unit) => unit.id !== originUnitId).map((unit) => (
+                    <label key={unit.id} className="flex cursor-pointer items-center gap-2 px-3 py-1.5 text-sm hover:bg-gray-50">
+                      <input
+                        type="checkbox"
+                        checked={participantes.includes(unit.id)}
+                        onChange={() => setParticipantes((list) => (list.includes(unit.id) ? list.filter((id) => id !== unit.id) : [...list, unit.id]))}
+                      />
+                      <span>{unit.nome}{unit.department ? <span className="text-xs text-gray-500"> · {unit.department}</span> : null}</span>
+                    </label>
+                  ))}
+                </div>
+                {participantes.length > 0 && <p className="text-xs text-gray-700">{participantes.length} participante(s)</p>}
+              </div>
+            )}
+            {baseKey === 'DISPENSA' && flows && (
               <p className="text-xs text-gray-600">
                 Limites da dispensa por valor em {flows.limites.year} ({flows.limites.decree}): obras e engenharia até {brl(flows.limites.obrasEngenharia)}; outras compras e serviços até {brl(flows.limites.outros)}. Some o mesmo objeto no ano (art. 75, § 1º).
               </p>
@@ -231,7 +275,7 @@ export default function NovoProcessoInternoPage() {
         )}
 
         <div className="space-y-1">
-          <Label htmlFor="subject">{flowKey ? 'Objeto da contratação' : 'Assunto'}</Label>
+          <Label htmlFor="subject">{kind ? 'Objeto da contratação' : 'Assunto'}</Label>
           <Input id="subject" maxLength={200} value={subject} onChange={(e) => setSubject(e.target.value)} />
         </div>
 
@@ -240,10 +284,12 @@ export default function NovoProcessoInternoPage() {
           <Textarea id="body" rows={8} maxLength={20000} value={body} onChange={(e) => setBody(e.target.value)} placeholder="Descreva o pedido, o contexto e o que precisa." />
         </div>
 
-        <div className="space-y-1">
-          <Label>Enviar para</Label>
-          <UnitPicker value={toUnitId} onChange={(id) => setToUnitId(id)} hintText={`${subject} ${body}`} excludeIds={originUnitId ? [originUnitId] : []} />
-        </div>
+        {!flowKey && (
+          <div className="space-y-1">
+            <Label>Enviar para</Label>
+            <UnitPicker value={toUnitId} onChange={(id) => setToUnitId(id)} hintText={`${subject} ${body}`} excludeIds={originUnitId ? [originUnitId] : []} />
+          </div>
+        )}
 
         <div className="flex flex-wrap gap-6 text-sm">
           <label className="flex cursor-pointer items-center gap-2">
@@ -262,7 +308,7 @@ export default function NovoProcessoInternoPage() {
           </Button>
           <Button onClick={submit} disabled={saving || myUnits.length === 0}>
             {saving ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Send className="mr-2 h-4 w-4" />}
-            Enviar
+            {flowKey ? 'Abrir processo' : 'Enviar'}
           </Button>
         </div>
       </div>

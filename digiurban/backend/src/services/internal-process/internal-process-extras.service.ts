@@ -112,6 +112,25 @@ export async function verifySignature(actor: ProcessActor, code: string) {
     };
   }
 
+  // coassinatura (pedido de assinatura atendido depois da primeira)
+  const cosign = await prisma.internalProcessSignatureRequest.findFirst({
+    where: { signatureHash: { startsWith: clean.slice(0, 16) }, status: 'ASSINADO' },
+    include: { document: { include: { process: true } } },
+  });
+  if (cosign?.signedAt) {
+    const doc = cosign.document;
+    if (!canViewProcess(actor, { ...doc.process, involvedUnitIds: [], involvedUserIds: [] }) && doc.process.confidential) {
+      throw new InternalProcessError('Assinatura não encontrada.', 404);
+    }
+    return {
+      number: doc.process.number,
+      subject: `${doc.title} — ${doc.process.subject}`,
+      signer: cosign.userName,
+      signedAt: cosign.signedAt,
+      valid: documentHash(doc, cosign.userId, cosign.signedAt) === cosign.signatureHash,
+    };
+  }
+
   const movement = await prisma.internalProcessMovement.findFirst({
     where: { signatureHash: { startsWith: clean.slice(0, 16) } },
     include: { process: true },
@@ -196,14 +215,15 @@ async function renderPdf(html: string): Promise<Buffer> {
 
 /** PDF de um documento do processo (texto do modelo + assinatura) */
 export async function documentPdf(actor: ProcessActor, documentId: string): Promise<{ buffer: Buffer; filename: string }> {
-  const { document } = await getDocument(actor, documentId);
-  const code = document.signatureHash ? document.signatureHash.slice(0, 16).toUpperCase().match(/.{1,4}/g)!.join('-') : null;
+  const { document, signatures } = await getDocument(actor, documentId);
   const html = `<!DOCTYPE html><html><head><meta charset="UTF-8"><style>
     body { font-family: 'Times New Roman', serif; font-size: 12.5px; color: #111; line-height: 1.55; }
     .text { white-space: pre-wrap; } .sig { margin-top: 24px; border-top: 1px solid #999; padding-top: 6px; font-family: Arial, sans-serif; font-size: 10.5px; color: #333; }
   </style></head><body>
     <div class="text">${escapeHtml(document.content)}</div>
-    ${code ? `<div class="sig">Documento assinado eletronicamente por ${escapeHtml(document.signedByName)} em ${new Date(document.signedAt!).toLocaleString('pt-BR')} (Lei 14.063/2020). Código de verificação: ${code}</div>` : '<div class="sig">Documento ainda não assinado.</div>'}
+    ${signatures.length
+      ? signatures.map((sig) => `<div class="sig">Documento assinado eletronicamente por ${escapeHtml(sig.name)} em ${new Date(sig.signedAt as any).toLocaleString('pt-BR')} (Lei 14.063/2020). Código de verificação: ${escapeHtml(sig.code)}</div>`).join('')
+      : '<div class="sig">Documento ainda não assinado.</div>'}
   </body></html>`;
   const safe = document.title.normalize('NFD').replace(/[̀-ͯ]/g, '').replace(/[^a-zA-Z0-9]+/g, '-').slice(0, 60);
   return { buffer: await renderPdf(html), filename: `${safe}.pdf` };

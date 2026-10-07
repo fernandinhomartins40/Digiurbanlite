@@ -4,7 +4,9 @@
 
 jest.mock('../../src/lib/prisma', () => ({ prisma: {} }));
 
-import { DISPENSA_LIMITS, dispensaLimitWarning, FLOWS, missingForStage } from '../../src/services/internal-process/flows/flows';
+import { DISPENSA_LIMITS, dispensaLimitWarning, FLOWS, missingForStage, previousStage, resolveFlow, stageUnitId, flowBaseKey } from '../../src/services/internal-process/flows/flows';
+import { FLOW_ROLES, suggestRoleUnits } from '../../src/services/internal-process/flows/roles';
+import { buildCustomFlow, CustomFlowError, flowTotalDays } from '../../src/services/internal-process/flows/custom-flow';
 import { DOCUMENT_TEMPLATES, fillTemplate } from '../../src/services/internal-process/flows/templates';
 
 const ctx = {
@@ -28,6 +30,7 @@ describe('fluxos da Lei 14.133', () => {
         }
         expect(stage.legal).toMatch(/Art/);
         expect(stage.days).toBeGreaterThan(0);
+        expect(FLOW_ROLES[stage.role]).toBeDefined();
       }
       const keys = flow.stages.map((stage) => stage.key);
       expect(new Set(keys).size).toBe(keys.length);
@@ -44,7 +47,7 @@ describe('fluxos da Lei 14.133', () => {
 
   it('modelos saem preenchidos, sem {{campo}} sobrando', () => {
     for (const template of Object.values(DOCUMENT_TEMPLATES)) {
-      for (const flowKey of ['LICITACAO', 'DISPENSA', 'INEXIGIBILIDADE']) {
+      for (const flowKey of ['LICITACAO', 'REGISTRO_PRECOS', 'DISPENSA', 'INEXIGIBILIDADE', 'ADESAO_ATA']) {
         const text = fillTemplate(template, { ...ctx, flowKey });
         expect({ key: template.key, leftover: text.match(/\{\{\w+\}\}/g) }).toEqual({ key: template.key, leftover: null });
       }
@@ -66,5 +69,77 @@ describe('fluxos da Lei 14.133', () => {
     expect(dispensaLimitWarning({ hipotese: 'Art. 75, II — outras compras', valorEstimado: 60000 })).toBeNull();
     expect(dispensaLimitWarning({ hipotese: 'Art. 75, I — obras', valorEstimado: 120000 })).toBeNull();
     expect(dispensaLimitWarning({ hipotese: 'Art. 75, VIII — emergência', valorEstimado: 900000 })).toBeNull();
+  });
+
+  it('registro de preços tem IRP no começo e ata no fim; adesão pede aceite do gerenciador', () => {
+    const srp = FLOWS.REGISTRO_PRECOS.stages.map((stage) => stage.key);
+    expect(srp[1]).toBe('INTENCAO_REGISTRO');
+    expect(srp[srp.length - 1]).toBe('ATA');
+    expect(srp).not.toContain('ORCAMENTO');
+    const adesao = FLOWS.ADESAO_ATA.stages.map((stage) => stage.key);
+    expect(adesao.indexOf('JUSTIFICATIVA_ADESAO')).toBeLessThan(adesao.indexOf('ACEITE_ADESAO'));
+    expect(fillTemplate(DOCUMENT_TEMPLATES.AUTORIZACAO, { ...ctx, flowKey: 'ADESAO_ATA', fields: { ata: 'Ata nº 5/2026 do Consórcio X' } })).toContain('adesão à Ata nº 5/2026');
+    expect(fillTemplate(DOCUMENT_TEMPLATES.AVISO_IRP, { ...ctx, flowKey: 'REGISTRO_PRECOS', fields: { participantes: [{ id: 'u1', nome: 'Secretaria de Saúde' }] } })).toContain('Secretaria de Saúde');
+  });
+});
+
+describe('quem faz cada etapa', () => {
+  it('a unidade que pediu é a de origem; os outros papéis usam a unidade ligada', () => {
+    expect(stageUnitId({ role: 'DEMANDANTE' }, 'origem', { JURIDICO: 'jur' })).toBe('origem');
+    expect(stageUnitId({ role: 'JURIDICO' }, 'origem', { JURIDICO: 'jur' })).toBe('jur');
+    expect(stageUnitId({ role: 'COMPRAS' }, 'origem', { JURIDICO: 'jur' })).toBeNull();
+  });
+
+  it('sugere a unidade pelo nome, preferindo a mais específica', () => {
+    const suggestion = suggestRoleUnits([
+      { id: 'adm', nome: 'Secretaria de Administração', nivel: 1, competencias: ['compras e licitações'] },
+      { id: 'cmp', nome: 'Departamento de Compras', nivel: 2 },
+      { id: 'lic', nome: 'Divisão de Licitações e Contratos', nivel: 2 },
+      { id: 'jur', nome: 'Procuradoria Geral do Município', nivel: 1 },
+      { id: 'fin', nome: 'Secretaria Municipal de Finanças', nivel: 1 },
+      { id: 'gab', nome: 'Gabinete do Prefeito', nivel: 1 },
+      { id: 'esc', nome: 'Escola Municipal Ola Mundo', nivel: 3 },
+    ]);
+    expect(suggestion).toMatchObject({ COMPRAS: 'cmp', LICITACAO: 'lic', CONTRATOS: 'lic', JURIDICO: 'jur', FINANCAS: 'fin', AUTORIDADE: 'gab' });
+    expect(suggestion.CONTROLE_INTERNO).toBeUndefined();
+  });
+
+  it('devolver volta uma etapa (não antes da primeira)', () => {
+    const flow = FLOWS.DISPENSA;
+    expect(previousStage(flow, flow.stages[0].key)).toBeNull();
+    expect(previousStage(flow, flow.stages[2].key)?.key).toBe(flow.stages[1].key);
+  });
+});
+
+describe('fluxo próprio do município', () => {
+  const base = {
+    name: 'Compra pequena da Saúde',
+    baseKey: 'DISPENSA',
+    stages: [
+      { name: 'Pedido', role: 'DEMANDANTE', days: 2, requiredDocs: ['DFD', 'NAO_EXISTE'], signedDocs: ['DFD', 'ETP'], checklist: ['Descrever', '', 'Quantidade'] },
+      { name: 'Jurídico', role: 'JURIDICO', days: 999, requiredDocs: ['PARECER_JURIDICO'], optionalDocs: ['PARECER_JURIDICO', 'DOCUMENTO_LIVRE'] },
+    ],
+  };
+
+  it('limpa o que vem da tela', () => {
+    const flow = buildCustomFlow(base);
+    expect(flow.key).toBe('CUSTOM');
+    expect(flowBaseKey(flow)).toBe('DISPENSA');
+    expect(flow.stages[0].requiredDocs).toEqual(['DFD']);
+    expect(flow.stages[0].signedDocs).toEqual(['DFD']);
+    expect(flow.stages[0].checklist).toEqual(['Descrever', 'Quantidade']);
+    expect(flow.stages[1].days).toBe(90);
+    expect(flow.stages[1].optionalDocs).toEqual(['DOCUMENTO_LIVRE']);
+    expect(flow.stages[1].owner).toBe(FLOW_ROLES.JURIDICO.name);
+    expect(new Set(flow.stages.map((stage) => stage.key)).size).toBe(2);
+    expect(flowTotalDays(flow)).toBe(92);
+    expect(resolveFlow({ flowKey: 'CUSTOM', flowSnapshot: flow })?.name).toBe('Compra pequena da Saúde');
+    expect(resolveFlow({ flowKey: 'LICITACAO', flowSnapshot: null })?.key).toBe('LICITACAO');
+  });
+
+  it('recusa fluxo sem nome, sem etapas ou com papel inválido', () => {
+    expect(() => buildCustomFlow({ ...base, name: '' })).toThrow(CustomFlowError);
+    expect(() => buildCustomFlow({ ...base, stages: [] })).toThrow(/pelo menos uma etapa/);
+    expect(() => buildCustomFlow({ ...base, stages: [{ name: 'Etapa', role: 'QUALQUER' }] })).toThrow(/quem faz/);
   });
 });

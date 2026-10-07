@@ -223,6 +223,7 @@ export default function ProcessoInternoPage() {
           fields={process.fields}
           warnings={process.warnings || []}
           canAct={process.canAct}
+          currentUnitId={process.currentUnitId}
           onChanged={() => void load()}
         />
       )}

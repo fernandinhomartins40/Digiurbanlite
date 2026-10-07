@@ -7,7 +7,8 @@
 
 import { useEffect, useState } from 'react'
 import Link from 'next/link'
-import { AlertTriangle, FileText, Loader2, Plus, Search } from 'lucide-react'
+import { AlertTriangle, FileText, Loader2, Plus, Search, Settings2 } from 'lucide-react'
+import { InternalProcessDashboard } from '@/components/admin/internal-process/InternalProcessDashboard'
 import { useAdminAuth } from '@/contexts/AdminAuthContext'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -97,7 +98,15 @@ export default function ProcessosInternosPage() {
           <h1 className="text-2xl font-bold text-gray-900">Processos internos</h1>
           <p className="mt-1 text-sm text-gray-600">Memorandos, ofícios, requisições e pareceres entre as unidades da prefeitura.</p>
         </div>
-        <div className="flex gap-2">
+        <div className="flex flex-wrap gap-2">
+        {['ADMIN', 'SUPER_ADMIN'].includes(String(user?.role || '')) && (
+          <Button variant="outline" asChild>
+            <Link href="/admin/processos-internos/configurar">
+              <Settings2 className="mr-2 h-4 w-4" />
+              Fluxos e responsáveis
+            </Link>
+          </Button>
+        )}
         <Button variant="outline" onClick={verify}>Conferir assinatura</Button>
         <Button asChild>
           <Link href="/admin/processos-internos/novo">
@@ -114,6 +123,8 @@ export default function ProcessosInternosPage() {
           <button type="button" className="text-gray-500" onClick={() => setVerifyResult(null)}>Fechar</button>
         </div>
       )}
+
+      {user && <InternalProcessDashboard />}
 
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
         <div className="flex gap-1 rounded-xl bg-gray-100 p-1">

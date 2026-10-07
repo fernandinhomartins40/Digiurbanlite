@@ -480,6 +480,168 @@ Art. 3º Cabe ao fiscal acompanhar e fiscalizar a execução, anotar em registro
 Art. 4º Esta portaria entra em vigor na data de sua publicação.
 ${SIGN}`,
   },
+
+  AVISO_IRP: {
+    key: 'AVISO_IRP',
+    title: 'Intenção de registro de preços (IRP)',
+    legal: 'Lei 14.133/2021, art. 86',
+    body: `${HEADER}
+
+INTENÇÃO DE REGISTRO DE PREÇOS Nº ____/{{ano}}
+
+{{unidade}}, como órgão gerenciador, comunica a intenção de registrar preços para:
+
+{{objeto}}
+
+Participantes já indicados: {{participantes}}
+
+As secretarias e órgãos interessados em participar devem informar, até ____ (prazo do regulamento do município), por despacho neste processo:
+a) os itens e as quantidades estimadas para 12 meses;
+b) o local de entrega;
+c) o responsável pela demanda.
+
+Valor estimado preliminar: {{valor}}
+${SIGN}`,
+  },
+
+  MINUTA_ATA: {
+    key: 'MINUTA_ATA',
+    title: 'Minuta da ata de registro de preços',
+    legal: 'Lei 14.133/2021, arts. 82 a 84',
+    body: `${HEADER}
+
+MINUTA DA ATA DE REGISTRO DE PREÇOS Nº ____/{{ano}}
+
+Órgão gerenciador: {{municipio}} — {{unidade}}
+Órgãos participantes: {{participantes}}
+Objeto: {{objeto}}
+
+CLÁUSULA 1ª — DO OBJETO
+Registro de preços para eventual contratação de ____, conforme o termo de referência.
+
+CLÁUSULA 2ª — DOS PREÇOS, QUANTIDADES E FORNECEDOR
+Item | Descrição | Unidade | Quantidade máxima | Preço registrado | Fornecedor
+____
+
+CLÁUSULA 3ª — DA VALIDADE
+A ata vale por 1 (um) ano a partir da assinatura, prorrogável por igual período se o preço continuar vantajoso (art. 84).
+
+CLÁUSULA 4ª — DO CADASTRO DE RESERVA
+Fornecedores que aceitarem cotar o mesmo preço do vencedor: ____ (art. 82, VII).
+
+CLÁUSULA 5ª — DA ADESÃO
+( ) Permitida a adesão de não participantes, até 50% por órgão e no total o dobro das quantidades (art. 86, §§ 4º e 5º).
+( ) Não permitida.
+
+CLÁUSULA 6ª — DA CONTRATAÇÃO
+Cada contratação será formalizada por contrato ou nota de empenho, com indicação da dotação orçamentária no momento da contratação.
+
+CLÁUSULA 7ª — DO CANCELAMENTO DO REGISTRO
+Hipóteses do edital e da lei (descumprimento, preço acima do mercado, razões de interesse público).
+${SIGN}`,
+  },
+
+  ATA_REGISTRO_PRECOS: {
+    key: 'ATA_REGISTRO_PRECOS',
+    title: 'Ata de registro de preços',
+    legal: 'Lei 14.133/2021, arts. 82 a 84 e 94',
+    body: `${HEADER}
+
+ATA DE REGISTRO DE PREÇOS Nº ____/{{ano}}
+Pregão nº ____/{{ano}} — Processo nº {{numero}}
+
+Aos ____ dias de ____ de {{ano}}, {{municipio}}, órgão gerenciador, e a empresa ____ (CNPJ ____), representada por ____, firmam a presente ata, nos termos da Lei nº 14.133/2021 e do edital.
+
+1. OBJETO: {{objeto}}
+
+2. PREÇOS REGISTRADOS
+Item | Descrição | Unidade | Quantidade máxima | Preço unitário
+____
+
+3. ÓRGÃOS PARTICIPANTES E QUANTIDADES
+{{participantes}}
+
+4. VALIDADE: 1 (um) ano a partir de ____, prorrogável por igual período (art. 84).
+
+5. CADASTRO DE RESERVA: ____
+
+6. A existência de preços registrados não obriga a Administração a contratar.
+
+7. Publique-se no PNCP.
+${SIGN}
+
+_____________________________________
+Representante do fornecedor`,
+  },
+
+  JUSTIFICATIVA_ADESAO: {
+    key: 'JUSTIFICATIVA_ADESAO',
+    title: 'Justificativa da adesão à ata',
+    legal: 'Lei 14.133/2021, art. 86, § 2º, I e II',
+    body: `${HEADER}
+
+JUSTIFICATIVA DE ADESÃO À ATA DE REGISTRO DE PREÇOS
+
+Objeto: {{objeto}}
+Ata: {{ata}}
+
+1. VANTAGEM DA ADESÃO (art. 86, § 2º, I)
+(Por que aderir é melhor que licitar: economia de tempo e custo, risco de desabastecimento, padronização.)
+
+2. COMPATIBILIDADE DOS PREÇOS COM O MERCADO (art. 86, § 2º, II)
+(Pesquisa de preços conforme o art. 23: comparar os valores da ata com ____.)
+Valor da adesão: {{valor}}
+
+3. VIGÊNCIA E ADMISSÃO DE ADESÃO
+( ) A ata está vigente até ____.
+( ) O edital/ata admite adesão de não participantes.
+
+4. QUANTIDADES
+Itens e quantidades pretendidas (até 50% do registrado por item — art. 86, § 4º): ____
+${SIGN}`,
+  },
+
+  OFICIO_ADESAO: {
+    key: 'OFICIO_ADESAO',
+    title: 'Ofício de pedido de adesão',
+    legal: 'Lei 14.133/2021, art. 86, § 2º, III',
+    body: `${HEADER}
+
+OFÍCIO Nº ____/{{ano}}
+
+Ao(À) ____ (órgão gerenciador da ata)
+
+Assunto: pedido de adesão à {{ata}}
+
+Senhor(a),
+
+{{municipio}} manifesta interesse em aderir à ata de registro de preços acima, para: {{objeto}}.
+
+Itens e quantidades pretendidas: ____
+Valor estimado: {{valor}}
+
+Solicitamos a autorização do órgão gerenciador e a consulta ao fornecedor beneficiário quanto à aceitação do fornecimento, nos termos do art. 86, § 2º, III, da Lei nº 14.133/2021.
+
+Atenciosamente,
+${SIGN}
+
+—
+Anexar a este processo: a autorização do gerenciador e o aceite do fornecedor.`,
+  },
+
+  DOCUMENTO_LIVRE: {
+    key: 'DOCUMENTO_LIVRE',
+    title: 'Documento (texto livre)',
+    legal: '',
+    body: `${HEADER}
+
+____ (título)
+
+Assunto: {{objeto}}
+
+(Escreva o texto.)
+${SIGN}`,
+  },
 };
 
 const BRL = (value: unknown) => {
@@ -499,10 +661,18 @@ export interface TemplateContext {
   fields: Record<string, any>;
 }
 
+const participantsText = (fields: Record<string, any>) => {
+  const list = Array.isArray(fields?.participantes) ? fields.participantes.map((item: any) => item?.nome).filter(Boolean) : [];
+  return list.length ? list.join('; ') : '____';
+};
+
 /** Preenche o modelo com os dados do processo */
 export function fillTemplate(template: DocumentTemplate, ctx: TemplateContext): string {
   const today = new Date();
   const isDireta = ctx.flowKey === 'DISPENSA' || ctx.flowKey === 'INEXIGIBILIDADE';
+  const isAdesao = ctx.flowKey === 'ADESAO_ATA';
+  const isSrp = ctx.flowKey === 'REGISTRO_PRECOS';
+  const ata = String(ctx.fields?.ata || 'ata de registro de preços nº ____ (órgão gerenciador ____)');
   const tipo = ctx.flowKey === 'INEXIGIBILIDADE' ? 'inexigibilidade' : 'dispensa';
   const modalidade = String(ctx.fields?.modalidade || '____');
   const values: Record<string, string> = {
@@ -520,13 +690,23 @@ export function fillTemplate(template: DocumentTemplate, ctx: TemplateContext): 
     criterio: String(ctx.fields?.criterio || '____'),
     hipotese: String(ctx.fields?.hipotese || '____'),
     tipo_contratacao_maiuscula: tipo.toUpperCase(),
-    secao_juridica: isDireta
+    secao_juridica: isAdesao
+      ? `Adesão à ${ata}: vantagem, compatibilidade de preços, aceite do gerenciador e do fornecedor e limites de quantidade (art. 86, §§ 2º a 5º)`
+      : isDireta
       ? `Enquadramento da contratação direta (${ctx.fields?.hipotese || 'hipótese legal'}), razão da escolha, justificativa de preço e habilitação (art. 72)`
       : `Modalidade (${modalidade}) e critério de julgamento (${ctx.fields?.criterio || '____'})`,
-    autorizacao_texto: isDireta ? `a contratação direta por ${tipo} de licitação, com fundamento em ${ctx.fields?.hipotese || '____'},` : `a abertura de licitação na modalidade ${modalidade}`,
-    autorizacao_complemento: isDireta
-      ? 'Publique-se o ato em sítio eletrônico oficial (art. 72, parágrafo único).'
-      : 'Designo como agente de contratação/pregoeiro(a) ____ e equipe de apoio ____ (arts. 7º e 8º).',
+    ata,
+    participantes: participantsText(ctx.fields),
+    autorizacao_texto: isAdesao
+      ? `a adesão à ${ata} e a contratação,`
+      : isDireta
+        ? `a contratação direta por ${tipo} de licitação, com fundamento em ${ctx.fields?.hipotese || '____'},`
+        : `a abertura de licitação na modalidade ${modalidade}${isSrp ? ', pelo sistema de registro de preços,' : ''}`,
+    autorizacao_complemento: isAdesao
+      ? 'Conforme a autorização do órgão gerenciador e o aceite do fornecedor juntados ao processo (art. 86, § 2º).'
+      : isDireta
+        ? 'Publique-se o ato em sítio eletrônico oficial (art. 72, parágrafo único).'
+        : 'Designo como agente de contratação/pregoeiro(a) ____ e equipe de apoio ____ (arts. 7º e 8º).',
   };
   return template.body.replace(/\{\{(\w+)\}\}/g, (_match, key: string) => values[key] ?? '____');
 }

@@ -23,7 +23,11 @@ export const MOVEMENT_LABEL: Record<string, string> = {
   ASSINADO: 'Assinado',
   DOCUMENTO: 'Documento',
   ETAPA: 'Etapa',
+  ETAPA_DEVOLVIDA: 'Devolvido para ajuste',
   PRAZO: 'Prazo vencido',
+  ASSINATURA_PEDIDA: 'Assinatura pedida',
+  ASSINATURA_RECUSADA: 'Assinatura recusada',
+  PARTICIPANTE: 'Participante',
 };
 
 export function formatDateTime(value: string | null | undefined): string {

@@ -11640,8 +11640,10 @@ model InternalProcessType {
   defaultDays Int      @default(5) // prazo padrão (dias úteis)
   isActive    Boolean  @default(true)
   sortOrder   Int      @default(0)
-  // fluxo com etapas (LICITACAO | DISPENSA | INEXIGIBILIDADE) — services/internal-process/flows
+  // fluxo com etapas (LICITACAO | REGISTRO_PRECOS | DISPENSA | INEXIGIBILIDADE | ADESAO_ATA | CUSTOM) — services/internal-process/flows
   flowKey     String?
+  // fluxo próprio do município (flowKey CUSTOM): etapas, papéis, prazos e documentos
+  flowDefinition Json?
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 
@@ -11695,6 +11697,8 @@ model InternalProcess {
   stageDueAt          DateTime?
   // dados da contratação: valor estimado, modalidade, critério, inciso...
   fields              Json?
+  // cópia do fluxo próprio no momento da abertura (mudar o fluxo não mexe nos processos em andamento)
+  flowSnapshot        Json?
   createdAt           DateTime  @default(now())
   updatedAt           DateTime  @updatedAt
 
@@ -11764,10 +11768,58 @@ model InternalProcessDocument {
   createdAt     DateTime  @default(now())
   updatedAt     DateTime  @updatedAt
 
-  process InternalProcess @relation(fields: [processId], references: [id], onDelete: Cascade)
+  process            InternalProcess                   @relation(fields: [processId], references: [id], onDelete: Cascade)
+  signatureRequests  InternalProcessSignatureRequest[]
 
   @@index([processId])
   @@index([tenantId])
   @@index([signatureHash])
   @@map("internal_process_documents")
+}
+
+/// Pedido de assinatura de um documento do processo a uma pessoa (ex.: o
+/// Prefeito assina a autorização). Quem recebeu vê na "fila de assinaturas" e
+/// assina com a senha; se o documento já tem assinatura, a dele soma (coassinatura).
+model InternalProcessSignatureRequest {
+  id              String    @id @default(cuid())
+  tenantId        String?
+  processId       String
+  documentId      String
+  userId          String
+  userName        String
+  requestedById   String
+  requestedByName String
+  note            String?   @db.Text
+  status          String    @default("PENDENTE") // PENDENTE | ASSINADO | RECUSADO | CANCELADO
+  answerNote      String?   @db.Text
+  signatureHash   String?
+  signedAt        DateTime?
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+
+  document InternalProcessDocument @relation(fields: [documentId], references: [id], onDelete: Cascade)
+
+  @@index([tenantId])
+  @@index([userId, status])
+  @@index([requestedById, status])
+  @@index([documentId])
+  @@index([signatureHash])
+  @@map("internal_process_signature_requests")
+}
+
+/// Quem faz cada etapa: papel (Compras, Jurídico, Finanças...) → unidade do
+/// organograma. Preenchido uma vez pelo município; vale para todos os fluxos.
+model InternalProcessRoleUnit {
+  id        String   @id @default(cuid())
+  tenantId  String?
+  role      String // COMPRAS | LICITACAO | JURIDICO | FINANCAS | CONTROLE_INTERNO | AUTORIDADE | CONTRATOS
+  unitId    String
+  unitName  String
+  updatedBy String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([tenantId, role])
+  @@index([tenantId])
+  @@map("internal_process_role_units")
 }

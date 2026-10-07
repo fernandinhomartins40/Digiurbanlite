@@ -17,8 +17,9 @@ import notificationService from '../notification.service';
 import { addWorkingDays } from '../protocol-sla.service';
 import { getUserDepartmentIds, getUserUnitIds, WORKING_ASSIGNMENT_STATUSES } from '../staff-scope.service';
 import { findDepartmentRootOrganizationalUnit } from '../department-organogram.service';
-import { getFlow } from './flows/flows';
-import { buildFlowView, flowWarnings } from './flows/flow.service';
+import { FlowDefinition, flowBaseKey, getFlow, resolveFlow, stageUnitId } from './flows/flows';
+import { buildFlowViewFor, flowWarnings, sanitizeFields } from './flows/flow.service';
+import { getRoleUnits, roleUnitIds } from './flows/roles.service';
 import {
   canActOnProcess,
   canViewProcess,
@@ -41,8 +42,10 @@ export const DEFAULT_TYPES = [
   { prefix: 'PAD', name: 'Processo administrativo', description: 'Processo com várias etapas e unidades', defaultDays: 30, sortOrder: 5 },
   // contratação pública (Lei 14.133/2021) — com etapas, documentos e prazos
   { prefix: 'LIC', name: 'Licitação (Lei 14.133)', description: 'Planejamento, edital, sessão, habilitação, recursos, homologação e contrato', defaultDays: 90, sortOrder: 6, flowKey: 'LICITACAO' },
-  { prefix: 'DIS', name: 'Dispensa de licitação (Lei 14.133)', description: 'Contratação direta por dispensa (art. 75), instruída conforme o art. 72', defaultDays: 30, sortOrder: 7, flowKey: 'DISPENSA' },
-  { prefix: 'INX', name: 'Inexigibilidade (Lei 14.133)', description: 'Contratação direta por inexigibilidade (art. 74), instruída conforme o art. 72', defaultDays: 30, sortOrder: 8, flowKey: 'INEXIGIBILIDADE' },
+  { prefix: 'SRP', name: 'Pregão — registro de preços (Lei 14.133)', description: 'Intenção de registro de preços com as secretarias participantes, edital, sessão e ata de registro de preços', defaultDays: 90, sortOrder: 7, flowKey: 'REGISTRO_PRECOS' },
+  { prefix: 'DIS', name: 'Dispensa de licitação (Lei 14.133)', description: 'Contratação direta por dispensa (art. 75), instruída conforme o art. 72', defaultDays: 30, sortOrder: 8, flowKey: 'DISPENSA' },
+  { prefix: 'INX', name: 'Inexigibilidade (Lei 14.133)', description: 'Contratação direta por inexigibilidade (art. 74), instruída conforme o art. 72', defaultDays: 30, sortOrder: 9, flowKey: 'INEXIGIBILIDADE' },
+  { prefix: 'ADA', name: 'Adesão a ata de registro de preços (Lei 14.133)', description: 'Carona: contratar pela ata de outro órgão, com vantagem, preços e aceite do gerenciador (art. 86, § 2º)', defaultDays: 30, sortOrder: 10, flowKey: 'ADESAO_ATA' },
 ];
 
 export interface ActorInput {
@@ -74,7 +77,7 @@ export async function buildActor(user: ActorInput): Promise<ProcessActor & { nam
   return { id: user.id, role: user.role, name: user.name, unitIds: units, departmentIds };
 }
 
-async function getUnit(unitId: string) {
+export async function getUnit(unitId: string) {
   const unit = await prisma.organizationalUnit.findFirst({
     where: { id: unitId, isActive: true },
     select: { id: true, nome: true, departmentId: true, responsavelId: true },
@@ -96,7 +99,7 @@ async function nextNumber(prefix: string): Promise<string> {
 }
 
 /** Avisa quem recebe: a pessoa indicada, senão o responsável e quem está lotado na unidade */
-async function notifyUnit(unitId: string, toUserId: string | null, title: string, message: string, processId: string, exceptUserId?: string) {
+export async function notifyUnit(unitId: string, toUserId: string | null, title: string, message: string, processId: string, exceptUserId?: string) {
   try {
     let recipients: string[] = [];
     if (toUserId) {
@@ -175,19 +178,26 @@ export async function createProcess(actor: ProcessActor & { name: string }, inpu
     if (!protocol) throw new InternalProcessError('Protocolo do cidadão não encontrado.');
   }
 
-  const number = await nextNumber(type.prefix);
-  const current = destination || origin;
-  // fluxo de contratação: começa na primeira etapa, com o prazo dela
-  const flow = getFlow(type.flowKey);
+  // fluxo com etapas: começa na primeira etapa, com o prazo dela, na unidade do papel dela
+  // (o fluxo próprio do município fica gravado no processo)
+  const flow: FlowDefinition | null = type.flowKey === 'CUSTOM' ? resolveFlow({ flowSnapshot: type.flowDefinition }) : getFlow(type.flowKey);
   const firstStage = flow?.stages[0] || null;
-  const fields = flow && input.fields
-    ? {
-        ...(input.fields.valorEstimado !== undefined ? { valorEstimado: Math.max(0, Number(input.fields.valorEstimado) || 0) } : {}),
-        ...(typeof input.fields.modalidade === 'string' ? { modalidade: input.fields.modalidade.slice(0, 60) } : {}),
-        ...(typeof input.fields.criterio === 'string' ? { criterio: input.fields.criterio.slice(0, 80) } : {}),
-        ...(typeof input.fields.hipotese === 'string' ? { hipotese: input.fields.hipotese.slice(0, 200) } : {}),
-      }
-    : undefined;
+  let routed = destination;
+  if (flow && firstStage && !routed) {
+    const firstUnitId = stageUnitId(firstStage, origin.id, roleUnitIds(await getRoleUnits()));
+    if (firstUnitId && firstUnitId !== origin.id) routed = await getUnit(firstUnitId);
+  }
+  const current = routed || origin;
+  const fields: Record<string, any> | undefined = flow && input.fields ? sanitizeFields(input.fields) : undefined;
+  // registro de preços: secretarias participantes (unidades do organograma)
+  const participants = flow && Array.isArray(input.fields?.participantes)
+    ? await prisma.organizationalUnit.findMany({
+        where: { id: { in: input.fields!.participantes.map(String).slice(0, 40) }, isActive: true },
+        select: { id: true, nome: true },
+      })
+    : [];
+  if (fields && participants.length) fields.participantes = participants.map((unit) => ({ id: unit.id, nome: unit.nome }));
+  const number = await nextNumber(type.prefix);
   const process = await prisma.internalProcess.create({
     data: {
       number,
@@ -196,7 +206,7 @@ export async function createProcess(actor: ProcessActor & { name: string }, inpu
       body: input.body ? String(input.body).slice(0, 20000) : null,
       priority: input.priority === 1 ? 1 : 0,
       confidential: Boolean(input.confidential),
-      status: destination ? 'EM_TRAMITE' : 'ABERTO',
+      status: routed ? 'EM_TRAMITE' : 'ABERTO',
       originUnitId: origin.id,
       originUnitName: origin.nome,
       originDepartmentId: origin.departmentId,
@@ -210,14 +220,15 @@ export async function createProcess(actor: ProcessActor & { name: string }, inpu
       protocolId: input.protocolId || null,
       parentId: input.parentId || null,
       dueAt: addWorkingDays(new Date(), type.defaultDays),
-      flowKey: flow?.key || null,
+      flowKey: flow ? (type.flowKey === 'CUSTOM' ? 'CUSTOM' : flow.key) : null,
+      flowSnapshot: type.flowKey === 'CUSTOM' && flow ? (flow as any) : undefined,
       stageKey: firstStage?.key || null,
       stageDueAt: firstStage ? addWorkingDays(new Date(), firstStage.days) : null,
       fields: fields as any,
       movements: {
         create: [
           { ...nestedTenant(), action: 'CRIADO', userId: actor.id, userName: actor.name, toUnitId: origin.id, toUnitName: origin.nome, readAt: new Date() },
-          ...(destination
+          ...(routed
             ? [{
                 ...nestedTenant(),
                 action: 'ENCAMINHADO',
@@ -225,19 +236,33 @@ export async function createProcess(actor: ProcessActor & { name: string }, inpu
                 userName: actor.name,
                 fromUnitId: origin.id,
                 fromUnitName: origin.nome,
-                toUnitId: destination.id,
-                toUnitName: destination.nome,
+                toUnitId: routed.id,
+                toUnitName: routed.nome,
                 toUserId: toUser?.id || null,
                 toUserName: toUser?.name || null,
               }]
             : []),
+          ...participants
+            .filter((unit) => unit.id !== origin.id)
+            .map((unit) => ({
+              ...nestedTenant(),
+              action: 'PARTICIPANTE',
+              note: 'Secretaria participante: informe por despacho os itens e as quantidades que vai precisar.',
+              userId: actor.id,
+              userName: actor.name,
+              toUnitId: unit.id,
+              toUnitName: unit.nome,
+            })),
         ],
       },
     },
   });
 
-  if (destination) {
-    await notifyUnit(destination.id, toUser?.id || null, `${type.name} recebido: ${number}`, `${origin.nome} enviou: ${subject}`, process.id, actor.id);
+  if (routed) {
+    await notifyUnit(routed.id, toUser?.id || null, `${type.name} recebido: ${number}`, `${origin.nome} enviou: ${subject}`, process.id, actor.id);
+  }
+  for (const unit of participants.filter((item) => item.id !== origin.id)) {
+    await notifyUnit(unit.id, null, `Participação no ${number}`, `${origin.nome} incluiu a sua unidade como participante: ${subject}`, process.id, actor.id);
   }
   return process;
 }
@@ -562,13 +587,14 @@ export async function getProcess(actor: ProcessActor, id: string) {
       select: { id: true, templateKey: true, title: true, stageKey: true, signedAt: true, signedByName: true, createdByName: true, updatedAt: true },
     }),
   ]);
-  const flow = getFlow(process.flowKey);
+  const flow = resolveFlow(process);
+  const { flowSnapshot: _snapshot, ...rest } = (full || {}) as any;
   return {
-    ...full,
+    ...rest,
     protocol,
     documents,
-    flow: flow ? buildFlowView(flow, process.stageKey, documents) : null,
-    warnings: flowWarnings(process.flowKey, process.fields as Record<string, any>),
+    flow: flow ? await buildFlowViewFor(process, documents) : null,
+    warnings: flowWarnings(flowBaseKey(flow), process.fields as Record<string, any>),
     canAct: isOpen(process.status) && canActOnProcess(actor, process),
     overdue: !!process.dueAt && isOpen(process.status) && process.dueAt < new Date(),
   };
@@ -604,4 +630,68 @@ export async function unitPeople(unitId: string) {
     .map((item) => item.user)
     .filter((user) => user && !seen.has(user.id) && seen.add(user.id))
     .sort((a, b) => a.name.localeCompare(b.name));
+}
+
+/**
+ * Central do servidor (como a "Central de Ações" do 1Doc, numa tela só):
+ * não lidos, assinaturas esperando por mim, assinaturas que eu pedi e prazos
+ * a vencer (do processo ou da etapa) nos próximos 5 dias úteis.
+ */
+export async function dashboard(actor: ProcessActor) {
+  const soon = addWorkingDays(new Date(), 5);
+  const mine = { OR: [{ currentUnitId: { in: actor.unitIds } }, { currentUserId: actor.id }] };
+  const [unreadMoves, toSign, asked, dueProcesses] = await Promise.all([
+    prisma.internalProcessMovement.findMany({
+      where: { readAt: null, OR: [{ toUnitId: { in: actor.unitIds } }, { toUserId: actor.id }], process: { status: { in: ['ABERTO', 'EM_TRAMITE'] } } },
+      orderBy: { createdAt: 'desc' },
+      take: 60,
+      select: { processId: true, action: true, userName: true, fromUnitName: true, createdAt: true, process: { select: { number: true, subject: true } } },
+    }),
+    prisma.internalProcessSignatureRequest.findMany({
+      where: { userId: actor.id, status: 'PENDENTE' },
+      orderBy: { createdAt: 'asc' },
+      take: 20,
+      select: { id: true, processId: true, documentId: true, requestedByName: true, createdAt: true, document: { select: { title: true } } },
+    }),
+    prisma.internalProcessSignatureRequest.findMany({
+      where: { requestedById: actor.id, status: 'PENDENTE' },
+      orderBy: { createdAt: 'asc' },
+      take: 20,
+      select: { id: true, processId: true, documentId: true, userName: true, createdAt: true, document: { select: { title: true } } },
+    }),
+    prisma.internalProcess.findMany({
+      where: { AND: [mine, { status: { in: ['ABERTO', 'EM_TRAMITE'] } }, { OR: [{ stageDueAt: { lte: soon } }, { dueAt: { lte: soon } }] }] },
+      take: 40,
+      select: { id: true, number: true, subject: true, dueAt: true, stageDueAt: true, stageKey: true, flowKey: true, flowSnapshot: true },
+    }),
+  ]);
+
+  const seen = new Set<string>();
+  const unread = unreadMoves.filter((move) => !seen.has(move.processId) && seen.add(move.processId));
+  const processNumbers = new Map<string, string>();
+  if (toSign.length + asked.length) {
+    const ids = [...new Set([...toSign, ...asked].map((item) => item.processId))];
+    const rows = await prisma.internalProcess.findMany({ where: { id: { in: ids } }, select: { id: true, number: true } });
+    rows.forEach((row) => processNumbers.set(row.id, row.number));
+  }
+  const deadlines = dueProcesses
+    .map((item) => {
+      const useStage = !!item.stageDueAt && (!item.dueAt || item.stageDueAt <= item.dueAt);
+      const flow = useStage ? resolveFlow(item) : null;
+      const stageName = flow?.stages.find((stage) => stage.key === item.stageKey)?.name || null;
+      const due = (useStage ? item.stageDueAt : item.dueAt) as Date;
+      return { id: item.id, number: item.number, subject: item.subject, due, stageName, overdue: due < new Date() };
+    })
+    .sort((a, b) => a.due.getTime() - b.due.getTime())
+    .slice(0, 15);
+
+  return {
+    unread: {
+      count: unread.length,
+      items: unread.slice(0, 10).map((move) => ({ id: move.processId, number: move.process.number, subject: move.process.subject, action: move.action, from: move.fromUnitName || move.userName, at: move.createdAt })),
+    },
+    toSign: toSign.map((item) => ({ id: item.id, processId: item.processId, documentId: item.documentId, number: processNumbers.get(item.processId) || '', title: item.document.title, by: item.requestedByName, at: item.createdAt })),
+    asked: asked.map((item) => ({ id: item.id, processId: item.processId, documentId: item.documentId, number: processNumbers.get(item.processId) || '', title: item.document.title, to: item.userName, at: item.createdAt })),
+    deadlines,
+  };
 }

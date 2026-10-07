@@ -1,17 +1,22 @@
 'use client'
 
 /**
- * Etapas da contratação (Lei 14.133/2021) dentro do processo interno:
+ * Etapas do processo (Lei 14.133/2021 ou fluxo próprio do município):
  * onde está, o fundamento legal, o que fazer, os documentos da etapa (feitos
- * a partir dos modelos) e o botão de avançar.
+ * a partir dos modelos), para qual unidade cada etapa vai e os botões de
+ * avançar (vai sozinho para o setor da próxima etapa) e devolver para ajuste.
  */
 
 import { useState } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
-import { AlertTriangle, CheckCircle2, Circle, FileText, Loader2, PenLine, Plus, Scale } from 'lucide-react'
+import { AlertTriangle, ArrowRight, CheckCircle2, Circle, CornerUpLeft, FileText, Loader2, PenLine, Plus, Scale } from 'lucide-react'
 import { useAdminAuth } from '@/contexts/AdminAuthContext'
 import { Button } from '@/components/ui/button'
+import { Label } from '@/components/ui/label'
+import { Textarea } from '@/components/ui/textarea'
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog'
+import { UnitPicker } from '@/components/admin/internal-process/UnitPicker'
 import { useToast } from '@/hooks/use-toast'
 import { cn } from '@/lib/utils'
 import { formatDate } from '@/lib/internal-process'
@@ -26,15 +31,21 @@ interface FlowStageView {
   optionalDocs: Array<{ key: string; title: string }>
   days: number
   owner: string
+  role: string
+  roleName: string
+  unitId: string | null
+  unitName: string | null
   status: 'done' | 'current' | 'todo'
 }
 
 interface FlowView {
   key: string
+  baseKey: string | null
   name: string
   stages: FlowStageView[]
   missing: string[]
   isLast: boolean
+  isFirst: boolean
 }
 
 interface ProcessDocumentItem {
@@ -54,6 +65,7 @@ interface FlowPanelProps {
   fields: Record<string, any> | null
   warnings: string[]
   canAct: boolean
+  currentUnitId: string
   onChanged: () => void
 }
 
@@ -62,15 +74,27 @@ const brl = (value: unknown) => {
   return Number.isFinite(number) && number > 0 ? number.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' }) : '—'
 }
 
-export function FlowPanel({ processId, flow, documents, stageDueAt, fields, warnings, canAct, onChanged }: FlowPanelProps) {
+const LEI_14133 = ['LICITACAO', 'REGISTRO_PRECOS', 'DISPENSA', 'INEXIGIBILIDADE', 'ADESAO_ATA']
+
+export function FlowPanel({ processId, flow, documents, stageDueAt, fields, warnings, canAct, currentUnitId, onChanged }: FlowPanelProps) {
   const router = useRouter()
-  const { apiRequest } = useAdminAuth()
+  const { apiRequest, user } = useAdminAuth()
   const { toast } = useToast()
   const [busy, setBusy] = useState<string | null>(null)
   const [selected, setSelected] = useState<string | null>(null)
+  const [dialog, setDialog] = useState<'advance' | 'return' | null>(null)
+  const [note, setNote] = useState('')
+  const [otherUnit, setOtherUnit] = useState(false)
+  const [toUnitId, setToUnitId] = useState('')
+  const [dialogError, setDialogError] = useState<string | null>(null)
 
-  const current = flow.stages.find((stage) => stage.status === 'current') || null
+  const currentIndex = flow.stages.findIndex((stage) => stage.status === 'current')
+  const current = currentIndex >= 0 ? flow.stages[currentIndex] : null
+  const next = currentIndex >= 0 ? flow.stages[currentIndex + 1] || null : null
+  const previous = currentIndex > 0 ? flow.stages[currentIndex - 1] : null
   const shown = flow.stages.find((stage) => stage.key === selected) || current
+  const isAdmin = ['ADMIN', 'SUPER_ADMIN'].includes(String(user?.role || ''))
+  const isLaw = LEI_14133.includes(flow.baseKey || flow.key)
 
   const createFromTemplate = async (templateKey: string) => {
     try {
@@ -85,35 +109,59 @@ export function FlowPanel({ processId, flow, documents, stageDueAt, fields, warn
     }
   }
 
-  const advance = async () => {
+  const openDialog = (kind: 'advance' | 'return') => {
+    setDialog(kind)
+    setNote('')
+    setOtherUnit(false)
+    setToUnitId('')
+    setDialogError(null)
+  }
+
+  const confirm = async () => {
+    setDialogError(null)
+    if (dialog === 'return' && !note.trim()) return setDialogError('Diga o que precisa ser ajustado.')
+    if (dialog === 'advance' && otherUnit && !toUnitId) return setDialogError('Escolha a unidade.')
     try {
-      setBusy('advance')
-      const response = await apiRequest(`/internal-processes/${processId}/advance`, { method: 'POST', body: JSON.stringify({}) })
-      toast({ title: 'Etapa concluída', description: response?.data?.next?.name ? `Agora: ${response.data.next.name}` : undefined })
+      setBusy(dialog)
+      const path = dialog === 'advance' ? 'advance' : 'return-stage'
+      const body = dialog === 'advance' ? { note, toUnitId: otherUnit ? toUnitId : undefined } : { note }
+      const response = await apiRequest(`/internal-processes/${processId}/${path}`, { method: 'POST', body: JSON.stringify(body) })
+      const movedTo = response?.data?.movedTo
+      toast({
+        title: dialog === 'advance' ? 'Etapa concluída' : 'Devolvido para ajuste',
+        description: movedTo ? `Enviado para ${movedTo}` : undefined,
+      })
+      setDialog(null)
       setSelected(null)
       onChanged()
     } catch (error: any) {
-      toast({ variant: 'destructive', title: 'Ainda não dá para avançar', description: error?.message })
+      setDialogError(error?.message || 'Não foi possível concluir.')
     } finally {
       setBusy(null)
     }
   }
 
   const docsFor = (key: string) => documents.filter((doc) => doc.templateKey === key)
+  const goesTo = (stage: FlowStageView | null) =>
+    !stage ? null : stage.unitId ? (stage.unitId === currentUnitId ? 'continua com esta unidade' : stage.unitName || stage.roleName) : null
 
   return (
     <div className="space-y-4 rounded-xl border bg-white p-4">
       <div className="flex flex-wrap items-center justify-between gap-2">
         <p className="flex items-center gap-2 text-sm font-medium text-gray-900">
-          <Scale className="h-4 w-4 text-blue-700" /> {flow.name} — Lei 14.133/2021
+          <Scale className="h-4 w-4 text-blue-700" /> {flow.name}{isLaw ? ' — Lei 14.133/2021' : ''}
         </p>
         <p className="text-xs text-gray-600">
           Valor estimado: <strong>{brl(fields?.valorEstimado)}</strong>
           {fields?.modalidade && <> · {fields.modalidade}</>}
           {fields?.criterio && <> · {fields.criterio}</>}
           {fields?.hipotese && <> · {fields.hipotese}</>}
+          {fields?.ata && <> · {fields.ata}</>}
         </p>
       </div>
+      {Array.isArray(fields?.participantes) && fields!.participantes.length > 0 && (
+        <p className="text-xs text-gray-600">Participantes: {fields!.participantes.map((item: any) => item.nome).join('; ')}</p>
+      )}
 
       {warnings.map((warning) => (
         <p key={warning} className="flex items-start gap-2 rounded-md bg-red-50 p-2 text-sm text-red-700">
@@ -128,6 +176,7 @@ export function FlowPanel({ processId, flow, documents, stageDueAt, fields, warn
             <button
               type="button"
               onClick={() => setSelected(stage.key)}
+              title={stage.unitName ? `${stage.roleName}: ${stage.unitName}` : stage.roleName}
               className={cn(
                 'inline-flex items-center gap-1 rounded-full border px-2.5 py-1 text-xs',
                 stage.status === 'done' && 'border-green-200 bg-green-50 text-green-800',
@@ -148,20 +197,22 @@ export function FlowPanel({ processId, flow, documents, stageDueAt, fields, warn
           <div className="flex flex-wrap items-start justify-between gap-2">
             <div>
               <p className="font-medium text-gray-900">{shown.name}</p>
-              <p className="text-xs text-blue-800">{shown.legal}</p>
+              {shown.legal && <p className="text-xs text-blue-800">{shown.legal}</p>}
             </div>
             <p className="text-xs text-gray-600">
-              Conduz: {shown.owner}
+              Faz: {shown.roleName}{shown.unitName ? ` (${shown.unitName})` : ''}
               {shown.status === 'current' && stageDueAt && <> · prazo da etapa: {formatDate(stageDueAt)}</>}
               {shown.status !== 'current' && <> · prazo sugerido: {shown.days} dias úteis</>}
             </p>
           </div>
-          <p className="text-sm text-gray-700">{shown.description}</p>
-          <ul className="list-disc space-y-0.5 pl-5 text-sm text-gray-700">
-            {shown.checklist.map((item) => (
-              <li key={item}>{item}</li>
-            ))}
-          </ul>
+          {shown.description && <p className="text-sm text-gray-700">{shown.description}</p>}
+          {shown.checklist.length > 0 && (
+            <ul className="list-disc space-y-0.5 pl-5 text-sm text-gray-700">
+              {shown.checklist.map((item) => (
+                <li key={item}>{item}</li>
+              ))}
+            </ul>
+          )}
 
           {[...shown.requiredDocs.map((doc) => ({ ...doc, required: true })), ...shown.optionalDocs.map((doc) => ({ ...doc, required: false, mustSign: false }))].map((doc) => {
             const made = docsFor(doc.key)
@@ -192,15 +243,34 @@ export function FlowPanel({ processId, flow, documents, stageDueAt, fields, warn
           })}
 
           {shown.status === 'current' && (
-            <div className="flex flex-col gap-2 border-t pt-3 sm:flex-row sm:items-center sm:justify-between">
+            <div className="space-y-2 border-t pt-3">
               <p className="text-xs text-gray-600">
                 {flow.missing.length ? `Falta: ${flow.missing.join('; ')}` : flow.isLast ? 'Última etapa: conclua o processo quando tudo estiver pronto.' : 'Tudo pronto para avançar.'}
               </p>
-              {canAct && !flow.isLast && (
-                <Button size="sm" onClick={advance} disabled={busy === 'advance' || flow.missing.length > 0}>
-                  {busy === 'advance' && <Loader2 className="mr-1 h-4 w-4 animate-spin" />}
-                  Concluir etapa e avançar
-                </Button>
+              {next && (
+                <p className="flex flex-wrap items-center gap-1 text-xs text-gray-700">
+                  <ArrowRight className="h-3.5 w-3.5" /> Próxima: <strong>{next.name}</strong> —{' '}
+                  {goesTo(next) ? <>vai para <strong>{goesTo(next)}</strong></> : (
+                    <span className="text-amber-700">
+                      ninguém definido para &quot;{next.roleName}&quot;; o processo fica com esta unidade.
+                      {isAdmin && <> <Link href="/admin/processos-internos/configurar" className="underline">Definir quem faz cada etapa</Link></>}
+                    </span>
+                  )}
+                </p>
+              )}
+              {canAct && (
+                <div className="flex flex-wrap gap-2">
+                  {!flow.isLast && (
+                    <Button size="sm" onClick={() => openDialog('advance')} disabled={!!busy || flow.missing.length > 0}>
+                      Concluir etapa e avançar
+                    </Button>
+                  )}
+                  {previous && (
+                    <Button size="sm" variant="outline" onClick={() => openDialog('return')} disabled={!!busy}>
+                      <CornerUpLeft className="mr-1 h-4 w-4" />Devolver para ajuste
+                    </Button>
+                  )}
+                </div>
               )}
             </div>
           )}
@@ -224,6 +294,42 @@ export function FlowPanel({ processId, flow, documents, stageDueAt, fields, warn
           </ul>
         </div>
       )}
+
+      <Dialog open={!!dialog} onOpenChange={(open) => !open && setDialog(null)}>
+        <DialogContent className="max-h-[90vh] overflow-y-auto sm:max-w-lg">
+          <DialogHeader>
+            <DialogTitle>{dialog === 'advance' ? `Concluir "${current?.name}"` : 'Devolver para ajuste'}</DialogTitle>
+            <DialogDescription>
+              {dialog === 'advance'
+                ? next && goesTo(next)
+                  ? `Próxima etapa: ${next.name}. O processo ${goesTo(next) === 'continua com esta unidade' ? 'continua com esta unidade' : `vai para ${goesTo(next)}`}.`
+                  : `Próxima etapa: ${next?.name}. Ninguém definido para ela: o processo fica com esta unidade (ou escolha outra abaixo).`
+                : `Volta para "${previous?.name}"${previous && goesTo(previous) && goesTo(previous) !== 'continua com esta unidade' ? `, em ${goesTo(previous)}` : ''}, com o motivo no histórico.`}
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4">
+            {dialog === 'advance' && (
+              <label className="flex cursor-pointer items-center gap-2 text-sm">
+                <input type="checkbox" checked={otherUnit} onChange={(e) => setOtherUnit(e.target.checked)} />
+                Mandar para outra unidade só desta vez
+              </label>
+            )}
+            {dialog === 'advance' && otherUnit && <UnitPicker value={toUnitId} onChange={(id) => setToUnitId(id)} excludeIds={[currentUnitId]} />}
+            <div className="space-y-1">
+              <Label htmlFor="flow-note">{dialog === 'advance' ? 'Despacho (opcional)' : 'O que precisa ser ajustado'}</Label>
+              <Textarea id="flow-note" rows={4} maxLength={2000} value={note} onChange={(e) => setNote(e.target.value)} />
+            </div>
+            {dialogError && <p className="rounded-md bg-red-50 p-2 text-sm text-red-700">{dialogError}</p>}
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setDialog(null)} disabled={!!busy}>Cancelar</Button>
+            <Button onClick={confirm} disabled={!!busy}>
+              {busy === dialog && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+              {dialog === 'advance' ? 'Concluir e avançar' : 'Devolver'}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   )
 }

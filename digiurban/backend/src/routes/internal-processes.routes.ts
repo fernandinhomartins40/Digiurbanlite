@@ -3,8 +3,22 @@
  * Substitui /api/flow (proxy do digiurban-flow, que nunca foi para produção).
  */
 
-import { advanceStage, createDocument, deleteDocument, getDocument, signDocument, updateDocument, updateFields } from '../services/internal-process/flows/flow.service';
-import { CRITERIOS, DISPENSA_LIMITS, FLOWS, HIPOTESES_DISPENSA, HIPOTESES_INEXIGIBILIDADE, MODALIDADES } from '../services/internal-process/flows/flows';
+import {
+  advanceStage,
+  answerSignatureRequest,
+  createDocument,
+  deleteDocument,
+  getDocument,
+  requestSignatures,
+  returnStage,
+  signDocument,
+  updateDocument,
+  updateFields,
+} from '../services/internal-process/flows/flow.service';
+import { CRITERIOS, DISPENSA_LIMITS, fieldsKind, FLOWS, HIPOTESES_DISPENSA, HIPOTESES_INEXIGIBILIDADE, MODALIDADES } from '../services/internal-process/flows/flows';
+import { buildCustomFlow, CustomFlowError, flowTotalDays } from '../services/internal-process/flows/custom-flow';
+import { FLOW_ROLES } from '../services/internal-process/flows/roles';
+import { getRoleSettings, saveRoleSettings } from '../services/internal-process/flows/roles.service';
 import { DOCUMENT_TEMPLATES } from '../services/internal-process/flows/templates';
 import { documentPdf, processPdf, signProcess, summarizeProcess, verifySignature } from '../services/internal-process/internal-process-extras.service';
 import { assertProtocolAccess } from '../services/protocol-access.service';
@@ -18,6 +32,7 @@ import {
   closeProcess,
   concludeProcess,
   createProcess,
+  dashboard,
   destinationUnits,
   ensureDefaultTypes,
   forwardProcess,
@@ -47,6 +62,10 @@ const handle =
     } catch (error) {
       if (error instanceof InternalProcessError) {
         res.status(error.status).json({ success: false, error: error.message });
+        return;
+      }
+      if (error instanceof CustomFlowError) {
+        res.status(400).json({ success: false, error: error.message });
         return;
       }
       console.error('[processos-internos]', error);
@@ -91,7 +110,25 @@ router.get('/flows', handle(async (_req, res) => {
   res.json({
     success: true,
     data: {
-      flows: Object.values(FLOWS).map((flow) => ({ key: flow.key, name: flow.name, description: flow.description, stages: flow.stages.map((stage) => ({ key: stage.key, name: stage.name, legal: stage.legal })) })),
+      flows: Object.values(FLOWS).map((flow) => ({
+        key: flow.key,
+        name: flow.name,
+        description: flow.description,
+        fieldsKind: fieldsKind(flow.key),
+        stages: flow.stages.map((stage) => ({
+          key: stage.key,
+          name: stage.name,
+          legal: stage.legal,
+          description: stage.description,
+          checklist: stage.checklist,
+          requiredDocs: stage.requiredDocs,
+          signedDocs: stage.signedDocs || [],
+          optionalDocs: stage.optionalDocs || [],
+          days: stage.days,
+          role: stage.role,
+        })),
+      })),
+      roles: Object.values(FLOW_ROLES).map((role) => ({ key: role.key, name: role.name, hint: role.hint })),
       templates: Object.values(DOCUMENT_TEMPLATES).map((template) => ({ key: template.key, title: template.title, legal: template.legal })),
       modalidades: MODALIDADES,
       criterios: CRITERIOS,
@@ -100,6 +137,84 @@ router.get('/flows', handle(async (_req, res) => {
       limites: DISPENSA_LIMITS,
     },
   });
+}));
+
+// central do servidor: não lidos, assinaturas, prazos
+router.get('/dashboard', handle(async (req, res) => {
+  res.json({ success: true, data: await dashboard(await actorOf(req)) });
+}));
+
+// quem faz cada etapa (papel → unidade): todos veem, administrador altera
+router.get('/settings/roles', handle(async (_req, res) => {
+  res.json({ success: true, data: await getRoleSettings() });
+}));
+
+router.put('/settings/roles', handle(async (req, res) => {
+  if (!isAdmin(req)) throw new InternalProcessError('Só administradores alteram quem faz cada etapa.', 403);
+  const user = (req as any).user;
+  res.json({ success: true, data: await saveRoleSettings({ id: user.id, name: user.name }, req.body?.roles || {}) });
+}));
+
+// fluxos próprios do município (copiados de um pronto e ajustados)
+router.get('/flow-types/:id', handle(async (req, res) => {
+  const type = await prisma.internalProcessType.findFirst({ where: { id: req.params.id } });
+  if (!type) throw new InternalProcessError('Tipo não encontrado', 404);
+  res.json({ success: true, data: { type } });
+}));
+
+router.post('/flow-types', handle(async (req, res) => {
+  if (!isAdmin(req)) throw new InternalProcessError('Só administradores criam fluxos.', 403);
+  const flow = buildCustomFlow(req.body || {});
+  const prefix = String(req.body?.prefix || '').toUpperCase().replace(/[^A-Z]/g, '').slice(0, 4);
+  if (prefix.length < 2) throw new InternalProcessError('Informe a sigla (2 a 4 letras).');
+  const exists = await prisma.internalProcessType.findFirst({ where: { prefix } });
+  if (exists) throw new InternalProcessError('Já existe um tipo com essa sigla.');
+  const count = await prisma.internalProcessType.count();
+  const type = await prisma.internalProcessType.create({
+    data: {
+      name: flow.name,
+      prefix,
+      description: flow.description || null,
+      defaultDays: flowTotalDays(flow),
+      sortOrder: 20 + count,
+      flowKey: 'CUSTOM',
+      flowDefinition: { ...flow, prefix } as any,
+    },
+  });
+  res.status(201).json({ success: true, data: { type } });
+}));
+
+router.put('/flow-types/:id', handle(async (req, res) => {
+  if (!isAdmin(req)) throw new InternalProcessError('Só administradores alteram fluxos.', 403);
+  const type = await prisma.internalProcessType.findFirst({ where: { id: req.params.id } });
+  if (!type || type.flowKey !== 'CUSTOM') throw new InternalProcessError('Fluxo não encontrado (os fluxos prontos não mudam: faça uma cópia).', 404);
+  const flow = buildCustomFlow(req.body || {});
+  const updated = await prisma.internalProcessType.update({
+    where: { id: type.id },
+    data: { name: flow.name, description: flow.description || null, defaultDays: flowTotalDays(flow), flowDefinition: { ...flow, prefix: type.prefix } as any },
+  });
+  res.json({ success: true, data: { type: updated } });
+}));
+
+// servidores do município (para pedir assinatura)
+router.get('/people', handle(async (req, res) => {
+  const term = typeof req.query.search === 'string' ? req.query.search.trim().slice(0, 60) : '';
+  const people = await prisma.user.findMany({
+    where: { isActive: true, ...(term ? { name: { contains: term, mode: 'insensitive' as const } } : {}) },
+    orderBy: { name: 'asc' },
+    take: 20,
+    select: { id: true, name: true, role: true },
+  });
+  res.json({ success: true, data: { people } });
+}));
+
+// pedidos de assinatura: recusar (quem recebeu) ou cancelar (quem pediu)
+router.post('/signature-requests/:requestId/decline', handle(async (req, res) => {
+  res.json({ success: true, data: await answerSignatureRequest(await actorOf(req), req.params.requestId, 'RECUSADO', String(req.body?.note || '')) });
+}));
+
+router.post('/signature-requests/:requestId/cancel', handle(async (req, res) => {
+  res.json({ success: true, data: await answerSignatureRequest(await actorOf(req), req.params.requestId, 'CANCELADO') });
 }));
 
 // documentos do processo (feitos a partir dos modelos)
@@ -118,6 +233,11 @@ router.delete('/documents/:docId', handle(async (req, res) => {
 
 router.post('/documents/:docId/sign', handle(async (req, res) => {
   res.json({ success: true, data: await signDocument(await actorOf(req), req.params.docId, String(req.body?.password || '')) });
+}));
+
+router.post('/documents/:docId/signers', handle(async (req, res) => {
+  const userIds = Array.isArray(req.body?.userIds) ? req.body.userIds.map(String) : [];
+  res.status(201).json({ success: true, data: await requestSignatures(await actorOf(req), req.params.docId, userIds, typeof req.body?.note === 'string' ? req.body.note : undefined) });
 }));
 
 router.get('/documents/:docId/pdf', handle(async (req, res) => {
@@ -239,7 +359,17 @@ router.post('/:id/documents', handle(async (req, res) => {
 }));
 
 router.post('/:id/advance', handle(async (req, res) => {
-  res.json({ success: true, data: await advanceStage(await actorOf(req), req.params.id, typeof req.body?.note === 'string' ? req.body.note : undefined) });
+  res.json({
+    success: true,
+    data: await advanceStage(await actorOf(req), req.params.id, {
+      note: typeof req.body?.note === 'string' ? req.body.note : undefined,
+      toUnitId: typeof req.body?.toUnitId === 'string' && req.body.toUnitId ? req.body.toUnitId : undefined,
+    }),
+  });
+}));
+
+router.post('/:id/return-stage', handle(async (req, res) => {
+  res.json({ success: true, data: await returnStage(await actorOf(req), req.params.id, String(req.body?.note || '')) });
 }));
 
 router.put('/:id/fields', handle(async (req, res) => {
