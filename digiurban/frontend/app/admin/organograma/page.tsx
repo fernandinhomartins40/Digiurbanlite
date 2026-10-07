@@ -101,6 +101,29 @@ export default function OrganogramaPage() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [expanded, setExpanded] = useState<Record<string, boolean>>({});
+  // quem está lotado em cada unidade (aberto ao tocar em "N servidores")
+  const [people, setPeople] = useState<Record<string, Array<{ id: string; name: string; position: string | null }> | 'loading'>>({});
+  const togglePeople = async (unitId: string) => {
+    if (people[unitId]) {
+      setPeople((current) => {
+        const next = { ...current };
+        delete next[unitId];
+        return next;
+      });
+      return;
+    }
+    setPeople((current) => ({ ...current, [unitId]: 'loading' }));
+    try {
+      const response = await apiRequest(`/employee-assignments?organizationalUnitId=${unitId}&situacao=ATIVO&limit=200`);
+      const list = (Array.isArray(response) ? response : response?.data || response?.assignments || []) as any[];
+      setPeople((current) => ({
+        ...current,
+        [unitId]: list.map((item) => ({ id: item.user?.id || item.id, name: item.user?.name || 'Servidor', position: item.position?.nome || null })),
+      }));
+    } catch {
+      setPeople((current) => ({ ...current, [unitId]: [] }));
+    }
+  };
   const [stats, setStats] = useState({ units: 0, positions: 0, assignments: 0, teams: 0 });
 
   // Modal states
@@ -371,9 +394,29 @@ export default function OrganogramaPage() {
                       <Users className="h-3 w-3" /> {unit.responsavel.name}
                     </span>
                   )}
-                  <span>{unit._count?.assignments || 0} servidores</span>
+                  <button type="button" className="underline-offset-2 hover:underline" onClick={(e) => { e.stopPropagation(); void togglePeople(unit.id); }}>
+                    {unit._count?.assignments || 0} servidores
+                  </button>
                   <span>{unit._count?.positions || 0} cargos</span>
                 </div>
+                {people[unit.id] && (
+                  <div className="mt-2 rounded-md bg-white/70 p-2 text-xs text-gray-800">
+                    {people[unit.id] === 'loading' ? (
+                      'Carregando...'
+                    ) : (people[unit.id] as any[]).length === 0 ? (
+                      'Ninguém lotado nesta unidade.'
+                    ) : (
+                      <ul className="space-y-0.5">
+                        {(people[unit.id] as Array<{ id: string; name: string; position: string | null }>).map((person) => (
+                          <li key={person.id}>
+                            <Link href={`/admin/servidores/${person.id}`} className="hover:underline">{person.name}</Link>
+                            {person.position && <span className="text-gray-500"> · {person.position}</span>}
+                          </li>
+                        ))}
+                      </ul>
+                    )}
+                  </div>
+                )}
               </div>
             </div>
 
@@ -444,7 +487,7 @@ export default function OrganogramaPage() {
       description: 'Operação diária de servidores, lotações e coordenação.',
       items: [
         { title: 'Lotações', desc: 'Vínculos funcionais de servidores', icon: UserCog, href: '/admin/organograma/lotacoes', color: 'text-green-600 bg-green-50' },
-        { title: 'Equipes', desc: 'Grupos de trabalho e comissões', icon: Users, href: '/admin/organograma/equipes', color: 'text-orange-600 bg-orange-50' },
+        { title: 'Grupos de trabalho', desc: 'Comissões e grupos de trabalho', icon: Users, href: '/admin/organograma/equipes', color: 'text-orange-600 bg-orange-50' },
         { title: 'Hierarquias', desc: 'Relações supervisor-subordinado', icon: GitBranch, href: '/admin/organograma/hierarquias', color: 'text-indigo-600 bg-indigo-50' },
       ],
     },
@@ -558,7 +601,7 @@ export default function OrganogramaPage() {
                 </div>
                 <div>
                   <p className="text-2xl font-bold">{stats.teams}</p>
-                  <p className="text-xs text-gray-500">Equipes</p>
+                  <p className="text-xs text-gray-500">Grupos de trabalho</p>
                 </div>
               </div>
             </Card>

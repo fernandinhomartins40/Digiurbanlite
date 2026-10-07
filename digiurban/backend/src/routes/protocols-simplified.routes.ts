@@ -56,7 +56,7 @@ async function ensureAccess(
       {
         id: authReq.userId!,
         role: authReq.user.role,
-        departmentId: authReq.user.departmentId
+        departmentId: authReq.user.departmentId, departmentIds: (authReq.user as any)?.departmentIds
       },
       protocolId
     );
@@ -99,7 +99,7 @@ function getActorScope(req: Request) {
   return buildProtocolScopeWhere({
     id: authReq.userId!,
     role: authReq.user.role,
-    departmentId: authReq.user.departmentId
+    departmentId: authReq.user.departmentId, departmentIds: (authReq.user as any)?.departmentIds
   });
 }
 
@@ -310,7 +310,7 @@ router.get('/department/:departmentId', requireMinRole(UserRole.COORDINATOR), as
     const { departmentId } = req.params;
 
     if (!canAccessDepartment(
-      { id: authReq.userId!, role: authReq.user.role, departmentId: authReq.user.departmentId },
+      { id: authReq.userId!, role: authReq.user.role, departmentId: authReq.user.departmentId, departmentIds: (authReq.user as any)?.departmentIds },
       departmentId
     )) {
       return res.status(403).json({
@@ -392,7 +392,7 @@ router.get('/module/:departmentId/:moduleType', requireMinRole(UserRole.COORDINA
     const { departmentId, moduleType } = req.params;
 
     if (!canAccessDepartment(
-      { id: authReq.userId!, role: authReq.user.role, departmentId: authReq.user.departmentId },
+      { id: authReq.userId!, role: authReq.user.role, departmentId: authReq.user.departmentId, departmentIds: (authReq.user as any)?.departmentIds },
       departmentId
     )) {
       return res.status(403).json({
@@ -1071,7 +1071,7 @@ router.get('/:id', requireMinRole(UserRole.USER), async (req, res) => {
 
     // Verificar permissões (regra única de escopo por role)
     if (!canAccessProtocol(
-      { id: userId!, role: user.role, departmentId: user.departmentId },
+      { id: userId!, role: user.role, departmentId: user.departmentId, departmentIds: (user as any)?.departmentIds },
       protocol
     )) {
       return res.status(403).json({
@@ -1710,7 +1710,7 @@ router.get('/stats/:departmentId', requireMinRole(UserRole.COORDINATOR), async (
     const { startDate, endDate } = req.query;
 
     if (!canAccessDepartment(
-      { id: authReq.userId!, role: authReq.user.role, departmentId: authReq.user.departmentId },
+      { id: authReq.userId!, role: authReq.user.role, departmentId: authReq.user.departmentId, departmentIds: (authReq.user as any)?.departmentIds },
       departmentId
     )) {
       return res.status(403).json({
@@ -1763,7 +1763,7 @@ router.get('/by-number/:number', requireMinRole(UserRole.USER), async (req: Requ
 
     // Mesmo escopo por role das demais rotas de leitura
     if (!canAccessProtocol(
-      { id: authReq.userId!, role: authReq.user.role, departmentId: authReq.user.departmentId },
+      { id: authReq.userId!, role: authReq.user.role, departmentId: authReq.user.departmentId, departmentIds: (authReq.user as any)?.departmentIds },
       protocol as any
     )) {
       return res.status(403).json({

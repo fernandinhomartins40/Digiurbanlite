@@ -64,7 +64,9 @@ export const adminAuthMiddleware = async (
           isActive: true
         },
         include: {
-          department: true
+          department: true,
+          // secretarias em que está lotado (espelho das lotações do organograma)
+          userDepartments: { where: { isActive: true }, select: { departmentId: true } }
         }
       })
     );
@@ -73,6 +75,9 @@ export const adminAuthMiddleware = async (
       res.status(401).json({ error: 'Usuário não encontrado ou inativo' });
       return;
     }
+    (user as any).departmentIds = [
+      ...new Set([...(user.departmentId ? [user.departmentId] : []), ...((user as any).userDepartments || []).map((link: { departmentId: string }) => link.departmentId)]),
+    ];
 
     // ✅ Fase 4 Multi-Tenant: validar claim de tenant do token contra o tenant
     // da request (resolvido por host no tenantContextMiddleware).

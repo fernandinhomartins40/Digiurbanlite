@@ -224,7 +224,7 @@ export function getAdminMainNavigation(stats?: AdminNavStats): AdminNavSection[]
       collapsible: true,
       defaultCollapsed: true,
       items: [
-        { title: 'Equipe', href: '/admin/servidores/equipe', icon: Users, minRole: 'COORDINATOR' },
+        { title: 'Servidores', href: '/admin/servidores', icon: Users, minRole: 'COORDINATOR' },
         { title: 'Organograma', href: '/admin/organograma', icon: Network, minRole: 'COORDINATOR' },
         { title: 'Perfil', href: '/admin/perfil', icon: UserCircle, minRole: 'USER' },
         { title: 'Configurações', href: '/admin/configuracoes', icon: Settings, minRole: 'ADMIN' },

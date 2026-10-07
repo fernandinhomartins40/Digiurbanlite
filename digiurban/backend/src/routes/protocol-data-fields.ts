@@ -26,7 +26,7 @@ async function canReadProtocolFields(req: any, protocolId: string): Promise<bool
   if (req.userType === 'citizen') return !!req.citizenId && protocol.citizenId === req.citizenId;
   if (!req.user) return false;
   return canAccessProtocol(
-    { id: req.userId, role: String(req.user.role), departmentId: req.user.departmentId },
+    { id: req.userId, role: String(req.user.role), departmentId: req.user.departmentId, departmentIds: (req.user as any)?.departmentIds },
     protocol
   );
 }

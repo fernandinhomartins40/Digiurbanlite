@@ -2,6 +2,7 @@
 // ADMIN-MANAGEMENT.TS - ISOLAMENTO PROFISSIONAL COMPLETO
 // ============================================================================
 
+import { syncUserDepartmentsFromAssignments } from '../services/assignment-sync.service';
 import { BCRYPT_ROUNDS } from '../config/security';
 import { Router, Response, RequestHandler, Request, NextFunction } from 'express';
 import { z, ZodError } from 'zod';
@@ -1432,6 +1433,9 @@ router.post(
 
       return createdUser;
     });
+
+    // lotação inicial vira a secretaria do servidor (fonte única: organograma)
+    await syncUserDepartmentsFromAssignments(newUser.id).catch((error) => console.warn('[lotação] espelho não atualizado:', error?.message || error));
 
     // ✅ Adicionar campos computed
     await reconcileAdministrativeDepartmentAssignments({

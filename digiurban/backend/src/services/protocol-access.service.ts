@@ -21,6 +21,15 @@ export interface ProtocolAccessActor {
   id: string;
   role: string;
   departmentId?: string | null;
+  /** todas as secretarias em que o servidor está lotado (organograma) */
+  departmentIds?: string[] | null;
+}
+
+/** Secretarias do ator: as lotações; sem elas, a secretaria principal */
+function actorDepartments(actor: ProtocolAccessActor): string[] {
+  const ids = (actor.departmentIds || []).filter(Boolean) as string[];
+  if (ids.length) return ids;
+  return actor.departmentId ? [actor.departmentId] : [];
 }
 
 export interface ProtocolAccessTarget {
@@ -48,7 +57,7 @@ export function canAccessProtocol(
   }
 
   if (role === 'MANAGER' || role === 'COORDINATOR') {
-    return !!actor.departmentId && protocol.departmentId === actor.departmentId;
+    return !!protocol.departmentId && actorDepartments(actor).includes(protocol.departmentId);
   }
 
   if (role === 'USER') {
@@ -73,7 +82,7 @@ export function canAccessDepartment(
   if (role === 'ADMIN' || role === 'SUPER_ADMIN') {
     return true;
   }
-  return !!actor.departmentId && actor.departmentId === departmentId;
+  return actorDepartments(actor).includes(departmentId);
 }
 
 /**
@@ -89,7 +98,8 @@ export function buildProtocolScopeWhere(actor: ProtocolAccessActor): Record<stri
 
   if (role === 'MANAGER' || role === 'COORDINATOR') {
     // Sem departamento vinculado → não vê nada (erro de cadastro, não acesso total)
-    return [{ departmentId: actor.departmentId || '__no_department__' }];
+    const ids = actorDepartments(actor);
+    return [{ departmentId: ids.length ? { in: ids } : '__no_department__' }];
   }
 
   if (role === 'USER') {

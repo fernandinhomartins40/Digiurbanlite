@@ -17,7 +17,7 @@ const protocolAccess: express.RequestHandler = async (req, res, next) => {
   try {
     const user = (req as AuthenticatedRequest).user as any;
     await assertProtocolAccess(
-      { id: user?.id, role: user?.role, departmentId: user?.departmentId },
+      { id: user?.id, role: user?.role, departmentId: user.departmentId, departmentIds: (user as any)?.departmentIds },
       req.params.protocolId
     );
     next();
