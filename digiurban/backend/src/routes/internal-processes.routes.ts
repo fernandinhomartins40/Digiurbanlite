@@ -3,6 +3,7 @@
  * Substitui /api/flow (proxy do digiurban-flow, que nunca foi para produção).
  */
 
+import { processPdf, signProcess, summarizeProcess, verifySignature } from '../services/internal-process/internal-process-extras.service';
 import { assertProtocolAccess } from '../services/protocol-access.service';
 import { Router, Request, Response } from 'express';
 import { adminAuthMiddleware } from '../middleware/admin-auth';
@@ -100,6 +101,11 @@ router.get('/me', handle(async (req, res) => {
   res.json({ success: true, data: { units } });
 }));
 
+// conferir código de assinatura eletrônica
+router.get('/verify/:code', handle(async (req, res) => {
+  res.json({ success: true, data: await verifySignature(await actorOf(req), req.params.code) });
+}));
+
 router.get('/count', handle(async (req, res) => {
   res.json({ success: true, data: { count: await inboxCount(await actorOf(req)) } });
 }));
@@ -181,6 +187,21 @@ router.post('/:id/archive', handle(async (req, res) => {
 
 router.post('/:id/cancel', handle(async (req, res) => {
   res.json({ success: true, data: { process: await closeProcess(await actorOf(req), req.params.id, 'CANCELADO', req.body?.note) } });
+}));
+
+router.post('/:id/summary', handle(async (req, res) => {
+  res.json({ success: true, data: { summary: await summarizeProcess(await actorOf(req), req.params.id) } });
+}));
+
+router.post('/:id/sign', handle(async (req, res) => {
+  res.status(201).json({ success: true, data: await signProcess(await actorOf(req), req.params.id, String(req.body?.password || '')) });
+}));
+
+router.get('/:id/pdf', handle(async (req, res) => {
+  const { buffer, filename } = await processPdf(await actorOf(req), req.params.id);
+  res.setHeader('Content-Type', 'application/pdf');
+  res.setHeader('Content-Disposition', `attachment; filename="${filename}"`);
+  res.send(buffer);
 }));
 
 router.post('/:id/reopen', handle(async (req, res) => {

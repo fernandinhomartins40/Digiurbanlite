@@ -363,6 +363,13 @@ npx ts-node prisma/seeds/seed-system-certificate.ts
 - Smoke ponta a ponta: `backend/scripts/smoke-biometria.ts` (requer banco + motor + face-server + fotos de teste)
 - `PrismaPromise` é preguiçosa: em `runAsTenant(id, () => prisma.x.create())` a consulta roda FORA do contexto — usar `async () =>`
 
+### Organograma, servidores e processo interno (refeito 2026-10-07)
+- **Lotação (EmployeeAssignment) é a fonte de "onde o servidor trabalha"**; `User.departmentId` e `UserDepartment` são espelhos mantidos por `syncUserDepartmentsFromAssignments()` (`assignment-sync.service`). O login do painel carrega `user.departmentIds` e o acesso a protocolos (`protocol-access.service`) considera TODAS as secretarias. Helpers: `services/staff-scope.service.ts`
+- Rotas do organograma (unidades, cargos, funções, lotações, hierarquia, grupos de trabalho, dados profissionais) usam `orgChartGuard()` (`middleware/org-chart-auth.ts`): coordenador+ vê; admin altera tudo; gerente só a própria secretaria. Não usar `authenticateAdmin` nelas
+- Hierarquia e dados profissionais têm `tenantId` (CNS/registro únicos por município). Toda secretaria tem unidade raiz: provisionamento + `jobs/org-chart-startup.job.ts`
+- **Processo interno** (`/api/internal-processes`, `services/internal-process/`, telas `/admin/processos-internos`): Memorando/Ofício/Requisição/Parecer/Processo administrativo tramitando entre unidades; número `PREFIXO-ANO-00001` por município; caixa da unidade e da pessoa; pedir parecer (filho ligado, resposta volta ao pai); ligado a protocolo do cidadão vira nota interna; sugestão de destino por competências (`rules.ts`, sem IA); resumo por IA (créditos); assinatura eletrônica com senha (código = 16 primeiros do SHA-256, conferível); PDF. Gravação aninhada de `movements` PRECISA de `tenantId` explícito (`nestedTenant()`). O antigo `digiurban-flow` e `/api/flow` foram removidos — não recriar serviço separado
+- Demandas do Gabinete (`/admin/chamados`) é OUTRA coisa — não misturar com processo interno
+
 ### Serviços e protocolos (refeito 2026-10-07)
 - **Catálogo da plataforma** em `backend/src/catalog/services/*.seed.ts` (21 secretarias, ~404 serviços; dentro de src, vai no build). `applyServiceCatalog()` é a ÚNICA forma de semear: município novo (no próprio processo, com nova tentativa e aviso), botão "Atualizar catálogo de serviços" (Super-admin › município) e `prisma/seeds/services` (repasse). Regra "só acrescenta": `catalogKey` + `catalogHash` — cria o que falta, melhora o que o município NÃO editou, nunca sobrescreve nem religa o que ele editou
 - Serviço novo no catálogo precisa passar em `__tests__/unit/service-catalog-quality.test.ts` (prazo, subtipo, formulário, LGPD dos dados do cadastro, telefone em emergência)

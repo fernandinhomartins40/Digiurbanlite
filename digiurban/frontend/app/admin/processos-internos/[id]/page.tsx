@@ -9,7 +9,8 @@
 import { useEffect, useState } from 'react'
 import Link from 'next/link'
 import { useParams } from 'next/navigation'
-import { AlertTriangle, ArrowLeft, CheckCircle2, CornerUpLeft, FileText, Loader2, MessageSquare, Send, UserRound, HelpCircle, Archive, RotateCcw } from 'lucide-react'
+import { AlertTriangle, ArrowLeft, CheckCircle2, CornerUpLeft, FileText, Loader2, MessageSquare, Send, UserRound, HelpCircle, Archive, RotateCcw, PenLine, Download, Sparkles } from 'lucide-react'
+import { getFullApiUrl } from '@/lib/api-config'
 import { useAdminAuth } from '@/contexts/AdminAuthContext'
 import { Button } from '@/components/ui/button'
 import { Label } from '@/components/ui/label'
@@ -20,7 +21,7 @@ import { useToast } from '@/hooks/use-toast'
 import { cn } from '@/lib/utils'
 import { formatDate, formatDateTime, MOVEMENT_LABEL, PROCESS_STATUS } from '@/lib/internal-process'
 
-type Action = 'forward' | 'return' | 'note' | 'opinion' | 'assign' | 'conclude' | 'archive' | 'reopen' | null
+type Action = 'forward' | 'return' | 'note' | 'opinion' | 'assign' | 'conclude' | 'archive' | 'reopen' | 'sign' | null
 
 export default function ProcessoInternoPage() {
   const { id } = useParams() as { id: string }
@@ -37,6 +38,38 @@ export default function ProcessoInternoPage() {
   const [people, setPeople] = useState<Array<{ id: string; name: string }>>([])
   const [busy, setBusy] = useState(false)
   const [actionError, setActionError] = useState<string | null>(null)
+  const [password, setPassword] = useState('')
+  const [summarizing, setSummarizing] = useState(false)
+
+  // resumo por IA (cobra créditos do município; sem IA, só avisa)
+  const summarize = async () => {
+    try {
+      setSummarizing(true)
+      const response = await apiRequest(`/internal-processes/${id}/summary`, { method: 'POST' })
+      setProcess((current: any) => ({ ...current, summary: response?.data?.summary }))
+    } catch (summaryError: any) {
+      toast({ variant: 'destructive', title: 'Resumo indisponível', description: summaryError?.message })
+    } finally {
+      setSummarizing(false)
+    }
+  }
+
+  const downloadPdf = async () => {
+    try {
+      const response = await fetch(getFullApiUrl(`/internal-processes/${id}/pdf`), { credentials: 'include' })
+      if (!response.ok) throw new Error()
+      const url = window.URL.createObjectURL(await response.blob())
+      const link = document.createElement('a')
+      link.href = url
+      link.download = `${process?.number || 'processo'}.pdf`
+      document.body.appendChild(link)
+      link.click()
+      document.body.removeChild(link)
+      window.URL.revokeObjectURL(url)
+    } catch {
+      toast({ variant: 'destructive', title: 'Não foi possível gerar o PDF' })
+    }
+  }
 
   const load = async () => {
     try {
@@ -60,6 +93,7 @@ export default function ProcessoInternoPage() {
     setUnitId('')
     setUserId('')
     setActionError(null)
+    setPassword('')
     if (next === 'assign' && process?.currentUnitId) {
       apiRequest(`/internal-processes/units/${process.currentUnitId}/people`)
         .then((response: any) => setPeople(response?.data?.people || []))
@@ -78,11 +112,13 @@ export default function ProcessoInternoPage() {
       conclude: { path: 'conclude', body: { note } },
       archive: { path: 'archive', body: { note } },
       reopen: { path: 'reopen', body: { note } },
+      sign: { path: 'sign', body: { password } },
     }
     const chosen = action ? routes[action] : null
     if (!chosen) return
     if ((action === 'forward' || action === 'opinion') && !unitId) return setActionError('Escolha a unidade.')
     if (action === 'assign' && !userId) return setActionError('Escolha o servidor.')
+    if (action === 'sign' && !password) return setActionError('Digite a sua senha.')
     if ((action === 'return' || action === 'note' || action === 'opinion') && !note.trim()) return setActionError('Escreva o texto.')
     try {
       setBusy(true)
@@ -127,6 +163,7 @@ export default function ProcessoInternoPage() {
     conclude: { title: 'Concluir', description: process.parentId ? 'A conclusão volta como resposta ao processo que pediu o parecer.' : 'Encerra o processo.', noteLabel: 'Conclusão / parecer', button: 'Concluir' },
     archive: { title: 'Arquivar', description: 'Encerra o processo sem conclusão.', noteLabel: 'Observação (opcional)', button: 'Arquivar' },
     reopen: { title: 'Reabrir', description: 'Volta o processo para trâmite.', noteLabel: 'Motivo', button: 'Reabrir' },
+    sign: { title: 'Assinar eletronicamente', description: 'Confirme a sua senha. O código da assinatura fica no histórico e no PDF.', button: 'Assinar' },
   }
   const dialog = action ? DIALOG[action] : null
 
@@ -168,6 +205,11 @@ export default function ProcessoInternoPage() {
       )}
       <div className="flex flex-wrap gap-2">
         <Button variant="outline" size="sm" onClick={() => open('note')}><MessageSquare className="mr-2 h-4 w-4" />Despacho</Button>
+        <Button variant="outline" size="sm" onClick={() => open('sign')}><PenLine className="mr-2 h-4 w-4" />Assinar</Button>
+        <Button variant="outline" size="sm" onClick={downloadPdf}><Download className="mr-2 h-4 w-4" />Baixar PDF</Button>
+        <Button variant="outline" size="sm" onClick={summarize} disabled={summarizing}>
+          {summarizing ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Sparkles className="mr-2 h-4 w-4" />}Resumo
+        </Button>
         {!isOpen && <Button variant="outline" size="sm" onClick={() => open('reopen')}><RotateCcw className="mr-2 h-4 w-4" />Reabrir</Button>}
       </div>
 
@@ -201,6 +243,13 @@ export default function ProcessoInternoPage() {
               </ul>
             </div>
           )}
+        </div>
+      )}
+
+      {process.summary && (
+        <div className="rounded-xl border border-amber-200 bg-amber-50 p-4 text-sm text-amber-950">
+          <p className="mb-1 flex items-center gap-2 font-medium"><Sparkles className="h-4 w-4" />Resumo (IA)</p>
+          <p className="whitespace-pre-wrap">{process.summary}</p>
         </div>
       )}
 
@@ -268,6 +317,12 @@ export default function ProcessoInternoPage() {
                   <div className="space-y-1">
                     <Label htmlFor="note">{dialog.noteLabel}</Label>
                     <Textarea id="note" rows={4} maxLength={5000} value={note} onChange={(e) => setNote(e.target.value)} />
+                  </div>
+                )}
+                {action === 'sign' && (
+                  <div className="space-y-1">
+                    <Label htmlFor="sign-password">Sua senha</Label>
+                    <input id="sign-password" type="password" autoComplete="current-password" value={password} onChange={(e) => setPassword(e.target.value)} className="h-10 w-full rounded-md border border-input bg-background px-3 text-sm" />
                   </div>
                 )}
                 {actionError && <p className="rounded-md bg-red-50 p-2 text-sm text-red-700">{actionError}</p>}

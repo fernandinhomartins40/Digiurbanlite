@@ -11720,6 +11720,8 @@ model InternalProcessMovement {
   userId       String
   userName     String
   readAt       DateTime?
+  // assinatura eletrônica: SHA-256 do conteúdo + quem + quando (os 16 primeiros = código de verificação)
+  signatureHash String?
   createdAt    DateTime  @default(now())
 
   process InternalProcess @relation(fields: [processId], references: [id], onDelete: Cascade)
@@ -11727,5 +11729,6 @@ model InternalProcessMovement {
   @@index([processId, createdAt])
   @@index([tenantId])
   @@index([toUnitId, readAt])
+  @@index([signatureHash])
   @@map("internal_process_movements")
 }

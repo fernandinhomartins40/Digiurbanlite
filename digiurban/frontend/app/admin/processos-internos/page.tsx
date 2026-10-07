@@ -47,6 +47,24 @@ export default function ProcessosInternosPage() {
   const [items, setItems] = useState<ProcessItem[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
+  const [verifyResult, setVerifyResult] = useState<string | null>(null)
+
+  // conferir o código de uma assinatura eletrônica (vem no PDF)
+  const verify = async () => {
+    const code = window.prompt('Código da assinatura (está no PDF do processo):')
+    if (!code) return
+    try {
+      const response = await apiRequest(`/internal-processes/verify/${encodeURIComponent(code.trim())}`)
+      const data = response?.data
+      setVerifyResult(
+        data?.valid
+          ? `Assinatura válida: ${data.signer}, ${new Date(data.signedAt).toLocaleString('pt-BR')} — ${data.number} (${data.subject}).`
+          : `Atenção: a assinatura de ${data?.signer} no ${data?.number} existe, mas o conteúdo do processo mudou depois de assinado.`
+      )
+    } catch (verifyError: any) {
+      setVerifyResult(verifyError?.message || 'Assinatura não encontrada.')
+    }
+  }
 
   useEffect(() => {
     if (!user) return
@@ -79,13 +97,23 @@ export default function ProcessosInternosPage() {
           <h1 className="text-2xl font-bold text-gray-900">Processos internos</h1>
           <p className="mt-1 text-sm text-gray-600">Memorandos, ofícios, requisições e pareceres entre as unidades da prefeitura.</p>
         </div>
+        <div className="flex gap-2">
+        <Button variant="outline" onClick={verify}>Conferir assinatura</Button>
         <Button asChild>
           <Link href="/admin/processos-internos/novo">
             <Plus className="mr-2 h-4 w-4" />
             Novo processo
           </Link>
         </Button>
+        </div>
       </div>
+
+      {verifyResult && (
+        <div className="flex items-start justify-between gap-3 rounded-lg border bg-white p-3 text-sm">
+          <span>{verifyResult}</span>
+          <button type="button" className="text-gray-500" onClick={() => setVerifyResult(null)}>Fechar</button>
+        </div>
+      )}
 
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
         <div className="flex gap-1 rounded-xl bg-gray-100 p-1">

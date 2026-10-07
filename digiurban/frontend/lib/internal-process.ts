@@ -20,6 +20,7 @@ export const MOVEMENT_LABEL: Record<string, string> = {
   ARQUIVADO: 'Arquivado',
   CANCELADO: 'Cancelado',
   REABERTO: 'Reaberto',
+  ASSINADO: 'Assinado',
 };
 
 export function formatDateTime(value: string | null | undefined): string {
