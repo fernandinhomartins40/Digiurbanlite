@@ -589,7 +589,7 @@ export async function sendDocumentByEmail(input: SendDocumentInput) {
   // IMPORTANTE: doc.filePath já começa com "/" (ex: /uploads/generated/...)
   // No container, os arquivos estão em /app/uploads, não em /uploads
   // Então precisamos adicionar /app antes do caminho
-  const filePath = uploadUrlToDiskPath(doc.filePath);
+  const filePath = uploadUrlToDiskPath(doc.signedFilePath || doc.filePath);
   const emailSubject = subject || `Documento do Protocolo ${doc.protocol.number}`;
   const emailMessage = message || `Segue em anexo o documento referente ao protocolo ${doc.protocol.number} - ${doc.protocol.service.name}.`;
 
@@ -708,7 +708,7 @@ export async function getGeneratedDocuments(protocolId: string) {
       name: displayName,
       type: doc.template.documentType || 'DOCUMENTO',
       fileUrl: doc.fileUrl,
-      filePath: doc.filePath,
+      filePath: doc.signedFilePath || doc.filePath,
       fileName: doc.fileName,
       fileSize: doc.fileSize,
       mimeType: doc.mimeType,

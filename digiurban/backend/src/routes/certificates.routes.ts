@@ -1,6 +1,6 @@
 import { Router } from 'express';
 import { issueServerCertificate, revokeCertificate } from '../services/certificate-authority.service';
-import { signDocument, verifySignature } from '../services/document-signing.service';
+import { checkSignature } from '../services/signing/signature.service';
 import { adminAuthMiddleware, requireMinRole } from '../middleware/admin-auth';
 import { UserRole } from '@prisma/client';
 
@@ -78,9 +78,12 @@ router.post('/issue', requireMinRole(UserRole.ADMIN), async (req, res) => {
       department: req.body.department,
       certificateType: req.body.certificateType || 'SERVER',
       validityYears: req.body.validityYears || 2,
+      createdBy: (req as any).user?.id,
     });
 
-    res.json({ success: true, certificate: result.certificate, privateKey: result.privateKey });
+    // a chave privada nunca sai do servidor (assinar = confirmar a senha)
+    const { encryptedPrivateKey: _key, privateKeyHash: _hash, ...certificate } = result as any;
+    res.json({ success: true, certificate });
   } catch (error: any) {
     res.status(500).json({ success: false, message: error.message });
   }
@@ -88,7 +91,8 @@ router.post('/issue', requireMinRole(UserRole.ADMIN), async (req, res) => {
 
 router.post('/revoke', requireMinRole(UserRole.ADMIN), async (req, res) => {
   try {
-    const { serialNumber, reason, revokedBy, comments } = req.body;
+    const { serialNumber, reason, comments } = req.body;
+    const revokedBy = (req as any).user.id;
 
     // Validar reason - deve ser um valor do enum
     const validReasons = ['UNSPECIFIED', 'KEY_COMPROMISE', 'CA_COMPROMISE', 'AFFILIATION_CHANGED', 'SUPERSEDED', 'CESSATION', 'CERTIFICATE_HOLD'];
@@ -102,26 +106,14 @@ router.post('/revoke', requireMinRole(UserRole.ADMIN), async (req, res) => {
   }
 });
 
-router.post('/sign', async (req, res) => {
-  try {
-    const signature = await signDocument({
-      documentId: req.body.documentId,
-      certificateId: req.body.certificateId,
-      privateKey: req.body.privateKey,
-      ipAddress: req.ip || '',
-      userAgent: req.headers['user-agent'] || '',
-    });
-
-    res.json({ success: true, signature });
-  } catch (error: any) {
-    res.status(500).json({ success: false, message: error.message });
-  }
-});
+// assinar: POST /api/documents/sign (senha). A rota antiga que recebia a chave privada foi removida.
 
 router.get('/verify/:signatureId', async (req, res) => {
   try {
-    const result = await verifySignature(req.params.signatureId);
-    res.json({ success: true, ...result });
+    const signature = await prisma.signature.findFirst({ where: { id: req.params.signatureId }, include: { certificate: true } });
+    if (!signature) return res.status(404).json({ success: false, message: 'Assinatura não encontrada' });
+    const result = await checkSignature(signature);
+    res.json({ success: true, valid: result.valid, reason: result.reason, signer: { name: signature.signerName || signature.certificate.commonName }, signedAt: signature.signedAt });
   } catch (error: any) {
     res.status(500).json({ success: false, message: error.message });
   }
@@ -239,7 +231,8 @@ router.get('/requests', async (req, res) => {
 router.post('/requests/:id/approve', requireMinRole(UserRole.ADMIN), async (req, res) => {
   try {
     const { id } = req.params;
-    const { reviewerId, comments } = req.body;
+    const { comments } = req.body;
+    const reviewerId = (req as any).user.id;
 
     // Buscar solicitação
     const request = await prisma.certificateRequest.findUnique({
@@ -270,7 +263,8 @@ router.post('/requests/:id/approve', requireMinRole(UserRole.ADMIN), async (req,
       email: request.email,
       department: userWithDept?.department?.name || 'Não especificado',
       certificateType: request.certificateType,
-      validityYears: 2
+      validityYears: 2,
+      createdBy: reviewerId,
     });
 
     // Atualizar solicitação
@@ -281,15 +275,14 @@ router.post('/requests/:id/approve', requireMinRole(UserRole.ADMIN), async (req,
         reviewedBy: reviewerId,
         reviewedAt: new Date(),
         reviewComments: comments,
-        certificateId: result.certificate.id
+        certificateId: result.id
       }
     });
 
     res.json({
       success: true,
       message: 'Certificado emitido com sucesso',
-      certificate: result.certificate,
-      privateKey: result.privateKey
+      certificate: { id: result.id, serialNumber: result.serialNumber, commonName: result.commonName, expiresAt: result.expiresAt },
     });
   } catch (error: any) {
     console.error('Erro ao aprovar solicitação:', error);
@@ -301,7 +294,8 @@ router.post('/requests/:id/approve', requireMinRole(UserRole.ADMIN), async (req,
 router.post('/requests/:id/reject', requireMinRole(UserRole.ADMIN), async (req, res) => {
   try {
     const { id } = req.params;
-    const { reviewerId, comments } = req.body;
+    const { comments } = req.body;
+    const reviewerId = (req as any).user.id;
 
     const request = await prisma.certificateRequest.findUnique({
       where: { id }

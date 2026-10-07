@@ -14,8 +14,8 @@ import { formatDate, MOVEMENT_LABEL } from '@/lib/internal-process'
 
 interface DashboardData {
   unread: { count: number; items: Array<{ id: string; number: string; subject: string; action: string; from: string; at: string }> }
-  toSign: Array<{ id: string; processId: string; documentId: string; number: string; title: string; by: string; at: string }>
-  asked: Array<{ id: string; processId: string; documentId: string; number: string; title: string; to: string; at: string }>
+  toSign: Array<{ id: string; url: string; title: string; by: string; at: string }>
+  asked: Array<{ id: string; url: string; title: string; to: string; at: string }>
   deadlines: Array<{ id: string; number: string; subject: string; due: string; stageName: string | null; overdue: boolean }>
 }
 
@@ -62,9 +62,9 @@ export function InternalProcessDashboard() {
       <Card title="Esperando a sua assinatura" count={data.toSign.length} icon={PenLine} empty="Nada para assinar.">
         {data.toSign.slice(0, 4).map((item) => (
           <li key={item.id}>
-            <Link href={`/admin/processos-internos/${item.processId}/documentos/${item.documentId}`} className="block rounded-md bg-amber-50 px-2 py-1 hover:bg-amber-100">
+            <Link href={item.url} className="block rounded-md bg-amber-50 px-2 py-1 hover:bg-amber-100">
               <span className="block truncate text-gray-900">{item.title}</span>
-              <span className="block truncate text-xs text-gray-500">{item.number} · pedido por {item.by}</span>
+              <span className="block truncate text-xs text-gray-500">pedido por {item.by}</span>
             </Link>
           </li>
         ))}
@@ -73,9 +73,9 @@ export function InternalProcessDashboard() {
       <Card title="Assinaturas que você pediu" count={data.asked.length} icon={Send} empty="Nenhum pedido em aberto.">
         {data.asked.slice(0, 4).map((item) => (
           <li key={item.id}>
-            <Link href={`/admin/processos-internos/${item.processId}/documentos/${item.documentId}`} className="block rounded-md bg-gray-50 px-2 py-1 hover:bg-gray-100">
+            <Link href={item.url} className="block rounded-md bg-gray-50 px-2 py-1 hover:bg-gray-100">
               <span className="block truncate text-gray-900">{item.title}</span>
-              <span className="block truncate text-xs text-gray-500">{item.number} · esperando {item.to}</span>
+              <span className="block truncate text-xs text-gray-500">esperando {item.to}</span>
             </Link>
           </li>
         ))}

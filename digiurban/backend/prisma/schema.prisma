@@ -6674,6 +6674,9 @@ model GeneratedDocument {
   // Assinatura Digital
   isSigned Boolean @default(false) // Se o documento foi assinado digitalmente
   status   String  @default("PENDING_SIGNATURE") // PENDING_SIGNATURE, SIGNED, PUBLISHED, SUPERSEDED
+  // Versão assinada: o original (intacto) + folha de assinaturas com QR + selo do município
+  signedFilePath String?
+  finalHash      String? // SHA-256 do arquivo assinado (conferência do arquivo baixado)
 
   // Publicação ao cidadão
   publishedToCitizen Boolean   @default(false)
@@ -7149,9 +7152,19 @@ model DigitalCertificate {
 // Assinaturas Digitais em Documentos
 model Signature {
   id                 String  @id @default(cuid())
+  tenantId           String?
   documentId         String? // FK para GeneratedDocument (opcional)
   externalDocumentId String? // FK para ExternalDocument (opcional)
+  internalDocumentId String? // FK para InternalProcessDocument (opcional)
   certificateId      String // FK para DigitalCertificate
+
+  // Quem assinou (cópia para a conferência pública e a folha de assinaturas)
+  signerName      String?
+  signerUserId    String?
+  signerCitizenId String?
+  signerRole      String? // "Servidor — Secretaria de Saúde", "Cidadão"
+  // Código de conferência (16 primeiros do SHA-256 da assinatura, XXXX-XXXX-XXXX-XXXX)
+  code            String? @unique
 
   // Dados da Assinatura Criptográfica
   signatureValue String @db.Text // Assinatura RSA em base64
@@ -7175,10 +7188,13 @@ model Signature {
   updatedAt DateTime @updatedAt
 
   // Relacionamentos
-  document         GeneratedDocument? @relation(fields: [documentId], references: [id], onDelete: Cascade)
-  externalDocument ExternalDocument?  @relation(fields: [externalDocumentId], references: [id], onDelete: Cascade)
-  certificate      DigitalCertificate @relation(fields: [certificateId], references: [id], onDelete: Restrict)
+  document         GeneratedDocument?       @relation(fields: [documentId], references: [id], onDelete: Cascade)
+  externalDocument ExternalDocument?        @relation(fields: [externalDocumentId], references: [id], onDelete: Cascade)
+  internalDocument InternalProcessDocument? @relation(fields: [internalDocumentId], references: [id], onDelete: Cascade)
+  certificate      DigitalCertificate       @relation(fields: [certificateId], references: [id], onDelete: Restrict)
 
+  @@index([tenantId])
+  @@index([internalDocumentId])
   @@index([documentId])
   @@index([externalDocumentId])
   @@index([certificateId])
@@ -7190,6 +7206,7 @@ model Signature {
 // Lista de Revogação de Certificados (CRL - Certificate Revocation List)
 model CertificateRevocationList {
   id            String           @id @default(cuid())
+  tenantId      String?
   serialNumber  String // Número de série do certificado revogado
   certificateId String? // FK opcional para DigitalCertificate
   reason        RevocationReason // Motivo da revogação
@@ -7206,6 +7223,7 @@ model CertificateRevocationList {
   @@index([serialNumber])
   @@index([revokedAt])
   @@index([publishedAt])
+  @@index([tenantId])
   @@map("certificate_revocation_list")
 }
 
@@ -7498,6 +7516,9 @@ model ExternalDocument {
 
   // Assinatura Digital
   isSigned Boolean @default(false) // Se o documento foi assinado digitalmente
+  // Versão assinada: o original (intacto) + folha de assinaturas com QR + selo do município
+  signedFilePath String?
+  finalHash      String?
 
   // Auditoria
   createdAt DateTime @default(now())
@@ -11770,6 +11791,7 @@ model InternalProcessDocument {
 
   process            InternalProcess                   @relation(fields: [processId], references: [id], onDelete: Cascade)
   signatureRequests  InternalProcessSignatureRequest[]
+  signatures         Signature[]
 
   @@index([processId])
   @@index([tenantId])
@@ -11805,6 +11827,37 @@ model InternalProcessSignatureRequest {
   @@index([documentId])
   @@index([signatureHash])
   @@map("internal_process_signature_requests")
+}
+
+/// Pedido de assinatura a uma pessoa, para QUALQUER documento: gerado no
+/// protocolo (GENERATED), enviado para assinar (EXTERNAL) ou do processo
+/// interno (INTERNAL). É a fila "Esperando a sua assinatura" de cada servidor.
+model SignatureRequest {
+  id              String    @id @default(cuid())
+  tenantId        String?
+  targetType      String // GENERATED | EXTERNAL | INTERNAL
+  targetId        String
+  title           String // nome do documento (para a fila)
+  // onde abrir: protocolo ou processo interno
+  protocolId      String?
+  processId       String?
+  userId          String
+  userName        String
+  requestedById   String
+  requestedByName String
+  note            String?   @db.Text
+  status          String    @default("PENDENTE") // PENDENTE | ASSINADO | RECUSADO | CANCELADO
+  answerNote      String?   @db.Text
+  signatureId     String?
+  signedAt        DateTime?
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+
+  @@index([tenantId])
+  @@index([userId, status])
+  @@index([requestedById, status])
+  @@index([targetType, targetId])
+  @@map("signature_requests")
 }
 
 /// Quem faz cada etapa: papel (Compras, Jurídico, Finanças...) → unidade do

@@ -1,89 +1,54 @@
 import * as crypto from 'crypto';
+import { getCertMasterKey } from './signing/keystore.service';
 
 /**
- * Serviço de criptografia para chaves privadas
- * Usa AES-256-GCM para criptografia autenticada
+ * Cifra das chaves privadas dos certificados (AES-256-GCM).
+ *
+ * Formato atual "v2:" — chave mestra aleatória guardada cifrada no cofre da
+ * plataforma (signing/keystore.service). Antes a chave vinha de
+ * ENCRYPTION_MASTER_KEY e, sem ela (produção), de um texto fixo do código;
+ * esse formato antigo só é lido para recifrar (ver isLegacyEncrypted).
  */
 
-// Chave mestra para criptografia (em produção, deve vir de variável de ambiente)
-const MASTER_KEY = process.env.ENCRYPTION_MASTER_KEY || 'CHANGE_THIS_IN_PRODUCTION_32CHAR';
+const LEGACY_DEFAULT = 'CHANGE_THIS_IN_PRODUCTION_32CHAR';
 
-// Garantir que a chave tenha 32 bytes (256 bits)
-function getMasterKey(): Buffer {
-  const key = MASTER_KEY.padEnd(32, '0').substring(0, 32);
-  return Buffer.from(key, 'utf-8');
+function legacyKeys(): Buffer[] {
+  return [process.env.ENCRYPTION_MASTER_KEY, LEGACY_DEFAULT]
+    .filter((value): value is string => Boolean(value))
+    .map((value) => Buffer.from(value.padEnd(32, '0').substring(0, 32), 'utf-8'));
 }
 
-/**
- * Criptografa uma chave privada usando AES-256-GCM
- * @param privateKey - Chave privada em formato PEM
- * @returns String base64 contendo IV + Auth Tag + Dados criptografados
- */
-export function encryptPrivateKey(privateKey: string): string {
-  const algorithm = 'aes-256-gcm';
-  const key = getMasterKey();
+function open(combined: Buffer, key: Buffer): string {
+  const decipher = crypto.createDecipheriv('aes-256-gcm', key, combined.subarray(0, 12));
+  decipher.setAuthTag(combined.subarray(12, 28));
+  return Buffer.concat([decipher.update(combined.subarray(28)), decipher.final()]).toString('utf8');
+}
 
-  // Gerar IV aleatório (12 bytes recomendado para GCM)
+export function isLegacyEncrypted(stored: string): boolean {
+  return !stored.startsWith('v2:');
+}
+
+/** Cifra uma chave privada (PEM) com a chave mestra do cofre */
+export async function encryptPrivateKey(privateKey: string): Promise<string> {
+  const key = await getCertMasterKey();
   const iv = crypto.randomBytes(12);
-
-  // Criar cipher
-  const cipher = crypto.createCipheriv(algorithm, key, iv);
-
-  // Criptografar
-  let encrypted = cipher.update(privateKey, 'utf8');
-  encrypted = Buffer.concat([encrypted, cipher.final()]);
-
-  // Obter authentication tag
-  const authTag = cipher.getAuthTag();
-
-  // Combinar: IV (12 bytes) + Auth Tag (16 bytes) + Dados criptografados
-  const combined = Buffer.concat([iv, authTag, encrypted]);
-
-  // Retornar como base64
-  return combined.toString('base64');
+  const cipher = crypto.createCipheriv('aes-256-gcm', key, iv);
+  const encrypted = Buffer.concat([cipher.update(privateKey, 'utf8'), cipher.final()]);
+  return `v2:${Buffer.concat([iv, cipher.getAuthTag(), encrypted]).toString('base64')}`;
 }
 
-/**
- * Descriptografa uma chave privada usando AES-256-GCM
- * @param encryptedData - String base64 contendo IV + Auth Tag + Dados criptografados
- * @returns Chave privada em formato PEM
- */
-export function decryptPrivateKey(encryptedData: string): string {
-  const algorithm = 'aes-256-gcm';
-  const key = getMasterKey();
-
-  // Converter de base64
-  const combined = Buffer.from(encryptedData, 'base64');
-
-  // Extrair componentes
-  const iv = combined.subarray(0, 12);
-  const authTag = combined.subarray(12, 28);
-  const encrypted = combined.subarray(28);
-
-  // Criar decipher
-  const decipher = crypto.createDecipheriv(algorithm, key, iv);
-  decipher.setAuthTag(authTag);
-
-  // Descriptografar
-  let decrypted = decipher.update(encrypted);
-  decrypted = Buffer.concat([decrypted, decipher.final()]);
-
-  return decrypted.toString('utf8');
-}
-
-/**
- * Testa se a criptografia/descriptografia está funcionando corretamente
- */
-export function testEncryption(): boolean {
-  const testData = '-----BEGIN PRIVATE KEY-----\nTEST\n-----END PRIVATE KEY-----';
-
-  try {
-    const encrypted = encryptPrivateKey(testData);
-    const decrypted = decryptPrivateKey(encrypted);
-
-    return testData === decrypted;
-  } catch (error) {
-    console.error('Teste de criptografia falhou:', error);
-    return false;
+/** Decifra a chave privada (formato atual ou antigo) */
+export async function decryptPrivateKey(stored: string): Promise<string> {
+  if (!isLegacyEncrypted(stored)) {
+    return open(Buffer.from(stored.slice(3), 'base64'), await getCertMasterKey());
   }
+  const combined = Buffer.from(stored, 'base64');
+  for (const key of legacyKeys()) {
+    try {
+      return open(combined, key);
+    } catch {
+      // tenta a próxima chave antiga
+    }
+  }
+  throw new Error('Não foi possível decifrar a chave privada do certificado');
 }

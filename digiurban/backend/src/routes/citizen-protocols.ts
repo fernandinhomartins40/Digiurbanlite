@@ -1484,7 +1484,7 @@ router.get('/:id/generated-documents/:documentId/download', async (req, res) => 
     }
 
     // Verificar se arquivo existe
-    const filePathFromDB = document.filePath;
+    const filePathFromDB = document.signedFilePath || document.filePath;
 
     if (!filePathFromDB) {
       return res.status(404).json({

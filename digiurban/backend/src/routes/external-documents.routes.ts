@@ -501,6 +501,7 @@ router.get('/:id/view', authenticateToken, async (req, res) => {
       select: {
         fileName: true,
         filePath: true,
+        signedFilePath: true,
         citizenId: true,
       },
     });
@@ -512,7 +513,7 @@ router.get('/:id/view', authenticateToken, async (req, res) => {
       });
     }
 
-    const fullPath = path.join(process.cwd(), document.filePath);
+    const fullPath = path.join(process.cwd(), document.signedFilePath || document.filePath);
 
     // Verificar se o arquivo existe
     try {
@@ -549,6 +550,7 @@ router.get('/external/:id/download', authenticateToken, async (req, res) => {
       select: {
         fileName: true,
         filePath: true,
+        signedFilePath: true,
         citizenId: true,
       },
     });
@@ -560,7 +562,7 @@ router.get('/external/:id/download', authenticateToken, async (req, res) => {
       });
     }
 
-    const fullPath = path.join(process.cwd(), document.filePath);
+    const fullPath = path.join(process.cwd(), document.signedFilePath || document.filePath);
 
     // Verificar se o arquivo existe
     try {

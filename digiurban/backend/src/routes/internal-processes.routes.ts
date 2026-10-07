@@ -261,7 +261,7 @@ router.delete('/documents/:docId', handle(async (req, res) => {
 }));
 
 router.post('/documents/:docId/sign', handle(async (req, res) => {
-  res.json({ success: true, data: await signDocument(await actorOf(req), req.params.docId, String(req.body?.password || '')) });
+  res.json({ success: true, data: await signDocument(await actorOf(req), req.params.docId, String(req.body?.password || ''), { ipAddress: String(req.headers['x-forwarded-for'] || req.ip || '').split(',')[0].trim(), userAgent: String(req.headers['user-agent'] || '') }) });
 }));
 
 router.post('/documents/:docId/signers', handle(async (req, res) => {

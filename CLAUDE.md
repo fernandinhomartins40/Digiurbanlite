@@ -307,22 +307,16 @@ DATABASE_URL=postgresql://user:pass@postgres:5432/digiurban
 JWT_SECRET=<chave-secreta-longa>
 ```
 
-## Assinatura Digital Automática
+## Assinatura digital (motor único, 2026-10-07)
 
-### Fluxo
-1. Admin insere placeholder via botão PenTool no editor WYSIWYG TipTap
-2. HTML: `<div class="signature-placeholder" data-signature-width="200" data-signature-height="80">`
-3. Backend detecta class `signature-placeholder` no HTML compilado
-4. Busca certificado do sistema: `userId=null AND citizenId=null AND status=ACTIVE`
-5. Descriptografa chave privada com AES-256-GCM (`CERTIFICATE_ENCRYPTION_KEY`)
-6. Assina PDF e atualiza `isSigned=true`
-7. Se assinatura falhar, documento é gerado sem assinatura (falha silenciosa)
-
-### Seed de Certificado
-```bash
-cd digiurban/backend
-npx ts-node prisma/seeds/seed-system-certificate.ts
-```
+- **Um motor só** (`backend/src/services/signing/signature.service.ts`) para documento gerado no protocolo (`GeneratedDocument`, tipo GENERATED), documento enviado para assinar (`ExternalDocument`, EXTERNAL) e documento do processo interno (`InternalProcessDocument`, INTERNAL). Assinar = **confirmar a senha** (servidor ou cidadão) — sem PIN, sem chave no navegador, sem carimbo por cima do PDF
+- **Certificado da pessoa emitido sozinho** na 1ª assinatura (`ensureUserCertificate`/`ensureCitizenCertificate`, `certificate-authority.service.ts`) pela **AC DigiUrban** (`signing/keystore.service.ts`). Chave mestra das chaves privadas e chave da AC ficam cifradas em `platform_secrets` (criadas sozinhas; NÃO usar `.env`). Formato de cifra `v2:`; o antigo (texto fixo do código) é recifrado pela rotina `jobs/signing-keys-startup.job.ts`. A chave privada NUNCA sai do servidor (nenhuma resposta a devolve)
+- A assinatura cobre o SHA-256 do **conteúdo original** (que nunca é alterado) → várias pessoas assinam o mesmo documento. Cada assinatura (`Signature`) tem `code` público (XXXX-XXXX-XXXX-XXXX), `signerName/Role`, `tenantId`
+- **PDF assinado** = original + "Folha de assinaturas" (QR da conferência) + selo PDF do município (`signing/signed-pdf.service.ts`, `@signpdf`, certificado SYSTEM do município). Gravado em `signedFilePath` (`-assinado.pdf`, mesmo caminho a cada nova assinatura) com `finalHash`; baixar/enviar/publicar usam SEMPRE `signedFilePath || filePath`
+- **Pedidos de assinatura**: fila única `SignatureRequest` (os 3 tipos) — `/api/signatures/requests|queue|target/:type/:id`; processo interno usa as mesmas funções. A tabela antiga `internal_process_signature_requests` só serve para conferir assinaturas antigas
+- **Conferência pública** `/validar-documento` (QR abre com `?codigo=`) → `GET /api/public/validate/code/:code` (código da assinatura OU `VAL-...` do documento do protocolo; busca em todos os municípios com `runAsPlatform`); mostra versão substituída, nome do cidadão abreviado, sigiloso sem assunto. Códigos antigos do processo interno: `verifyLegacyInternalPublic`
+- Assinatura eletrônica **avançada** (Lei 14.063/2020, art. 4º, II) — NÃO é ICP-Brasil; não escrever nos documentos que tem validade de MP 2.200-2/ICP
+- Documentos do protocolo seguem o acesso ao protocolo (`protocolScope` em `routes/document-templates.ts`); entregar ao cidadão exige ao menos uma assinatura
 
 ## Gotchas e Armadilhas Comuns
 

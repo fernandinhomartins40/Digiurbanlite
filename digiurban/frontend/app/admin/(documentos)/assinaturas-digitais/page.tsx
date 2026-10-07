@@ -28,6 +28,7 @@ import { toast } from 'sonner';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { DocumentSigningModalSimple } from '@/components/shared/DocumentSigningModalSimple';
+import { SignatureQueueCard } from '@/components/shared/SignatureQueueCard';
 
 interface Signature {
   id: string;
@@ -291,6 +292,8 @@ export default function AssinaturasDigitaisPage() {
           </Button>
         </div>
       </div>
+
+      <SignatureQueueCard />
 
       {/* Stats Cards */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">

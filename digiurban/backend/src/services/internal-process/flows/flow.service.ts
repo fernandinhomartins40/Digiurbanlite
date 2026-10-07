@@ -30,6 +30,16 @@ import {
   stageRoute,
 } from './flows';
 import { getRoleUnits, RoleUnits, roleRoutes } from './roles.service';
+import {
+  answerRequest,
+  createSignature,
+  internalContentHash,
+  listRequests,
+  listSignatures,
+  requestSignatures as requestDocumentSignatures,
+  SignMeta,
+  SigningError,
+} from '../../signing/signature.service';
 import { DOCUMENT_TEMPLATES, fillTemplate } from './templates';
 
 const nestedTenant = () => ({ tenantId: tryGetTenantId() || null });
@@ -164,19 +174,23 @@ export async function getDocument(actor: ProcessActor, documentId: string) {
   const document = await prisma.internalProcessDocument.findFirst({ where: { id: documentId } });
   if (!document) throw new InternalProcessError('Documento não encontrado', 404);
   const process = await loadProcess(actor, document.processId, false);
-  const requests = await prisma.internalProcessSignatureRequest.findMany({ where: { documentId }, orderBy: { createdAt: 'asc' } });
+  const [requests, signed, legacy] = await Promise.all([
+    listRequests('INTERNAL', documentId),
+    listSignatures('INTERNAL', documentId),
+    // assinaturas de antes do motor único (senha + código, sem certificado)
+    signedSignaturesBeforeEngine(document),
+  ]);
   const myRequest = requests.find((request) => request.userId === actor.id && request.status === 'PENDENTE') || null;
   const holder = isOpen(process.status) && canActOnProcess(actor, process);
   const signatures = [
-    ...(document.signedAt ? [{ name: document.signedByName, signedAt: document.signedAt, code: codeOf(document.signatureHash) }] : []),
-    ...requests
-      .filter((request) => request.status === 'ASSINADO' && request.signatureHash && request.signatureHash !== document.signatureHash)
-      .map((request) => ({ name: request.userName, signedAt: request.signedAt, code: codeOf(request.signatureHash) })),
+    ...legacy,
+    ...signed.map((item) => ({ name: item.signerName, signedAt: item.signedAt, code: item.code })),
   ];
+  const mine = signed.some((item) => item.signerUserId === actor.id) || legacy.some((item) => item.userId === actor.id);
   return {
     document,
     canEdit: !document.signedAt && holder,
-    canSign: isOpen(process.status) && ((holder && !document.signedAt) || !!myRequest),
+    canSign: isOpen(process.status) && !mine && (holder || !!myRequest),
     canRequest: holder,
     myRequest: myRequest ? { id: myRequest.id, requestedByName: myRequest.requestedByName, note: myRequest.note } : null,
     signatures,
@@ -193,6 +207,21 @@ export async function getDocument(actor: ProcessActor, documentId: string) {
     })),
     process: { id: process.id, number: process.number },
   };
+}
+
+/** Assinaturas antigas (antes do motor único): a principal do documento e as coassinaturas */
+async function signedSignaturesBeforeEngine(document: { id: string; signatureHash: string | null; signedAt: Date | null; signedByName: string | null; signedById: string | null }) {
+  const hasEngine = await prisma.signature.findFirst({ where: { internalDocumentId: document.id }, select: { id: true } });
+  const legacyMain = document.signedAt && document.signatureHash && !(hasEngine && (await prisma.signature.findFirst({ where: { internalDocumentId: document.id, signerUserId: document.signedById || '' }, select: { id: true } })))
+    ? [{ name: document.signedByName, signedAt: document.signedAt, code: codeOf(document.signatureHash), userId: document.signedById }]
+    : [];
+  const old = await prisma.internalProcessSignatureRequest.findMany({ where: { documentId: document.id, status: 'ASSINADO' }, orderBy: { signedAt: 'asc' } });
+  return [
+    ...legacyMain,
+    ...old
+      .filter((request) => request.signatureHash && request.signatureHash !== document.signatureHash)
+      .map((request) => ({ name: request.userName, signedAt: request.signedAt, code: codeOf(request.signatureHash), userId: request.userId })),
+  ];
 }
 
 /** Editar o texto (documento assinado não muda — faça uma nova versão) */
@@ -222,48 +251,41 @@ export function documentHash(document: { id: string; title: string; content: str
 }
 
 /**
- * Assinar o documento (pede a senha). A primeira assinatura trava o texto.
- * Quem está com o processo assina; quem recebeu um PEDIDO de assinatura
- * também (mesmo de outra unidade) — se já houver assinatura, a dele soma.
+ * Assinar o documento (pede a senha) — motor único de assinatura: certificado
+ * da pessoa, código de conferência público. A primeira assinatura trava o
+ * texto. Quem está com o processo assina; quem recebeu um PEDIDO também (mesmo
+ * de outra unidade) — as assinaturas seguintes somam.
  */
-export async function signDocument(actor: ProcessActor & { name: string }, documentId: string, password: string) {
+export async function signDocument(actor: ProcessActor & { name: string }, documentId: string, password: string, meta: SignMeta = {}) {
   const document = await prisma.internalProcessDocument.findFirst({ where: { id: documentId } });
   if (!document) throw new InternalProcessError('Documento não encontrado', 404);
   const process = await loadProcess(actor, document.processId, false);
   if (!isOpen(process.status)) throw new InternalProcessError('Este processo já foi encerrado.');
-  const request = await prisma.internalProcessSignatureRequest.findFirst({ where: { documentId, userId: actor.id, status: 'PENDENTE' } });
-  const holder = canActOnProcess(actor, process);
-  if (!request && !holder) throw new InternalProcessError('O processo não está com a sua unidade.', 403);
-  if (!request && document.signedAt) throw new InternalProcessError('Este documento já foi assinado.');
+  const request = await prisma.signatureRequest.findFirst({ where: { targetType: 'INTERNAL', targetId: documentId, userId: actor.id, status: 'PENDENTE' } });
+  if (!request && !canActOnProcess(actor, process)) throw new InternalProcessError('O processo não está com a sua unidade.', 403);
 
   const user = await prisma.user.findFirst({ where: { id: actor.id }, select: { password: true, name: true } });
   if (!user || !password || !(await bcrypt.compare(password, user.password))) throw new InternalProcessError('Senha incorreta.');
-  const signedAt = new Date();
-  const hash = documentHash(document, actor.id, signedAt);
-  const code = codeOf(hash)!;
+
+  let signature;
+  try {
+    ({ signature } = await createSignature('INTERNAL', documentId, { kind: 'user', id: actor.id }, internalContentHash(document), meta));
+  } catch (error) {
+    if (error instanceof SigningError) throw new InternalProcessError(error.message, error.status);
+    throw error;
+  }
+  const code = signature.code!;
 
   let updated = document;
   if (!document.signedAt) {
+    // trava o texto; signatureHash = SHA-256 da assinatura (o código é o começo dele)
     updated = await prisma.internalProcessDocument.update({
       where: { id: documentId },
-      data: { signatureHash: hash, signedById: actor.id, signedByName: user.name, signedAt },
+      data: { signatureHash: createHash('sha256').update(signature.signatureValue).digest('hex'), signedById: actor.id, signedByName: user.name, signedAt: signature.signedAt },
     });
   }
-  if (request) {
-    await prisma.internalProcessSignatureRequest.update({ where: { id: request.id }, data: { status: 'ASSINADO', signatureHash: hash, signedAt } });
-    await notificationService
-      .notify({
-        recipientType: 'user',
-        recipientId: request.requestedById,
-        type: 'INTERNAL_PROCESS',
-        title: `${user.name} assinou`,
-        message: `${document.title} — ${process.number}`,
-        data: { actionUrl: `/admin/processos-internos/${process.id}/documentos/${documentId}` },
-      })
-      .catch(() => undefined);
-  }
   await prisma.internalProcessMovement.create({
-    data: { processId: document.processId, action: 'ASSINADO', note: `${document.title} assinado por ${user.name} — código ${code}`, userId: actor.id, userName: user.name, readAt: signedAt },
+    data: { processId: document.processId, action: 'ASSINADO', note: `${document.title} assinado por ${user.name} — código ${code}`, userId: actor.id, userName: user.name, readAt: signature.signedAt },
   });
   return { document: updated, code };
 }
@@ -273,20 +295,15 @@ export async function requestSignatures(actor: ProcessActor & { name: string }, 
   const document = await prisma.internalProcessDocument.findFirst({ where: { id: documentId } });
   if (!document) throw new InternalProcessError('Documento não encontrado', 404);
   const process = await loadProcess(actor, document.processId, true);
-  const ids = [...new Set((userIds || []).map(String).filter(Boolean))].slice(0, 10);
-  if (ids.length === 0) throw new InternalProcessError('Escolha quem vai assinar.');
-  const users = await prisma.user.findMany({ where: { id: { in: ids }, isActive: true }, select: { id: true, name: true } });
-  if (users.length === 0) throw new InternalProcessError('Servidor não encontrado.', 404);
-  const text = String(note || '').trim().slice(0, 1000) || null;
-  const created: string[] = [];
-  for (const user of users) {
-    const pending = await prisma.internalProcessSignatureRequest.findFirst({ where: { documentId, userId: user.id, status: 'PENDENTE' }, select: { id: true } });
-    if (pending) continue;
-    const signedBefore = document.signedById === user.id;
-    if (signedBefore) continue;
-    await prisma.internalProcessSignatureRequest.create({
-      data: { processId: process.id, documentId, userId: user.id, userName: user.name, requestedById: actor.id, requestedByName: actor.name, note: text },
-    });
+  let result;
+  try {
+    result = await requestDocumentSignatures('INTERNAL', documentId, { id: actor.id, name: actor.name }, userIds, note);
+  } catch (error) {
+    if (error instanceof SigningError) throw new InternalProcessError(error.message, error.status);
+    throw error;
+  }
+  const text = String(note || '').trim().slice(0, 1000);
+  for (const person of result.requested) {
     // o movimento com toUserId deixa a pessoa ver o processo e conta como novo para ela
     await prisma.internalProcessMovement.create({
       data: {
@@ -295,48 +312,34 @@ export async function requestSignatures(actor: ProcessActor & { name: string }, 
         note: `Assinar: ${document.title}${text ? `\n${text}` : ''}`,
         userId: actor.id,
         userName: actor.name,
-        toUserId: user.id,
-        toUserName: user.name,
+        toUserId: person.id,
+        toUserName: person.name,
       },
     });
-    await notificationService
-      .notify({
-        recipientType: 'user',
-        recipientId: user.id,
-        type: 'INTERNAL_PROCESS',
-        title: `Assinatura pedida: ${process.number}`,
-        message: `${actor.name} pediu a sua assinatura em: ${document.title}`,
-        data: { actionUrl: `/admin/processos-internos/${process.id}/documentos/${documentId}` },
-      })
-      .catch(() => undefined);
-    created.push(user.name);
   }
-  return { requested: created };
+  return { requested: result.requested.map((person) => person.name) };
 }
 
 /** Recusar o pedido de assinatura (com motivo) ou, para quem pediu, cancelar */
 export async function answerSignatureRequest(actor: ProcessActor & { name: string }, requestId: string, action: 'RECUSADO' | 'CANCELADO', note?: string) {
-  const request = await prisma.internalProcessSignatureRequest.findFirst({ where: { id: requestId } });
-  if (!request || request.status !== 'PENDENTE') throw new InternalProcessError('Pedido não encontrado.', 404);
-  if (action === 'RECUSADO' && request.userId !== actor.id) throw new InternalProcessError('O pedido não é para você.', 403);
-  if (action === 'CANCELADO' && request.requestedById !== actor.id) throw new InternalProcessError('Só quem pediu pode cancelar.', 403);
-  const text = String(note || '').trim().slice(0, 1000);
-  if (action === 'RECUSADO' && !text) throw new InternalProcessError('Diga por que não vai assinar.');
-  await prisma.internalProcessSignatureRequest.update({ where: { id: requestId }, data: { status: action, answerNote: text || null } });
-  await prisma.internalProcessMovement.create({
-    data: {
-      processId: request.processId,
-      action: action === 'RECUSADO' ? 'ASSINATURA_RECUSADA' : 'DESPACHO',
-      note: action === 'RECUSADO' ? `${request.userName} não assinou: ${text}` : `Pedido de assinatura a ${request.userName} cancelado.`,
-      userId: actor.id,
-      userName: actor.name,
-      readAt: new Date(),
-    },
-  });
-  if (action === 'RECUSADO') {
-    await notificationService
-      .notify({ recipientType: 'user', recipientId: request.requestedById, type: 'INTERNAL_PROCESS', title: `${request.userName} não assinou`, message: text, data: { actionUrl: `/admin/processos-internos/${request.processId}/documentos/${request.documentId}` } })
-      .catch(() => undefined);
+  let request;
+  try {
+    request = await answerRequest(requestId, { id: actor.id, name: actor.name }, action, note);
+  } catch (error) {
+    if (error instanceof SigningError) throw new InternalProcessError(error.message, error.status);
+    throw error;
+  }
+  if (request.targetType === 'INTERNAL' && request.processId) {
+    await prisma.internalProcessMovement.create({
+      data: {
+        processId: request.processId,
+        action: action === 'RECUSADO' ? 'ASSINATURA_RECUSADA' : 'DESPACHO',
+        note: action === 'RECUSADO' ? `${request.userName} não assinou: ${request.answerNote}` : `Pedido de assinatura a ${request.userName} cancelado.`,
+        userId: actor.id,
+        userName: actor.name,
+        readAt: new Date(),
+      },
+    });
   }
   return { ok: true };
 }

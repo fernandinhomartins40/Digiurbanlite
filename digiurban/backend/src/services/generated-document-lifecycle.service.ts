@@ -92,7 +92,7 @@ export async function publishGeneratedDocument(input: PublishGeneratedDocumentIn
       citizenId: document.protocol.citizenId,
       documentType: buildCitizenDocumentType(document),
       fileName: document.fileName,
-      filePath: document.filePath,
+      filePath: document.signedFilePath || document.filePath,
       fileUrl: document.fileUrl || undefined,
       fileSize: document.fileSize,
       mimeType: document.mimeType,

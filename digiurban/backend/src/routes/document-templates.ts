@@ -6,6 +6,7 @@
 
 import { Router } from 'express';
 import { uploadUrlToDiskPath } from '../config/upload';
+import { assertProtocolAccess } from '../services/protocol-access.service';
 import { authenticateToken, requireAdmin, requireSuperAdmin } from '../middleware/auth';
 import { adminAuthMiddleware, requireMinRole } from '../middleware/admin-auth';
 import { UserRole } from '@prisma/client';
@@ -224,11 +225,43 @@ router.delete('/document-templates/:id', authenticateToken, requireAdmin, async 
 // GERAÇÃO DE DOCUMENTOS
 // ============================================================================
 
+
+/**
+ * Documentos do protocolo seguem o acesso ao protocolo (protocol-access): o
+ * servidor só gera, vê, baixa, publica ou envia documentos dos protocolos que
+ * ele pode ver. Antes, qualquer servidor do município podia.
+ */
+async function protocolScope(req: any, res: any, next: any) {
+  try {
+    const user = req.user;
+    let protocolIds: string[] = [];
+    if (req.params?.protocolId) {
+      protocolIds = [req.params.protocolId];
+    } else if (req.params?.id) {
+      const doc = await prisma.generatedDocument.findFirst({ where: { id: req.params.id }, select: { protocolId: true } });
+      if (!doc) return res.status(404).json({ success: false, error: 'Documento não encontrado' });
+      protocolIds = [doc.protocolId];
+    } else {
+      const raw = typeof req.body?.documentIds === 'string' ? JSON.parse(req.body.documentIds) : req.body?.documentIds;
+      const ids = Array.isArray(raw) ? raw.map(String) : [];
+      const docs = ids.length ? await prisma.generatedDocument.findMany({ where: { id: { in: ids } }, select: { protocolId: true } }) : [];
+      protocolIds = [...new Set(docs.map((doc) => doc.protocolId))];
+    }
+    for (const protocolId of protocolIds) {
+      await assertProtocolAccess({ id: user.id, role: user.role, departmentId: user.departmentId, departmentIds: user.departmentIds } as any, protocolId);
+    }
+    next();
+  } catch (error: any) {
+    if (/não encontrado/i.test(error?.message || '')) return res.status(404).json({ success: false, error: 'Protocolo não encontrado' });
+    return res.status(403).json({ success: false, error: 'Você não tem acesso a este protocolo.' });
+  }
+}
+
 /**
  * GET /api/protocols/:protocolId/document-templates
  * Listar templates disponíveis para a etapa atual do protocolo
  */
-router.get('/protocols/:protocolId/document-templates', adminAuthMiddleware, async (req, res) => {
+router.get('/protocols/:protocolId/document-templates', adminAuthMiddleware, protocolScope, async (req, res) => {
   try {
     const templates = await getAvailableTemplatesForProtocol(req.params.protocolId);
     res.json({ success: true, data: templates });
@@ -245,7 +278,7 @@ router.get('/protocols/:protocolId/document-templates', adminAuthMiddleware, asy
  * POST /api/protocols/:protocolId/generate-document
  * Gerar documento para protocolo com assinatura digital
  */
-router.post('/protocols/:protocolId/generate-document', adminAuthMiddleware, requireMinRole(UserRole.USER), async (req, res) => {
+router.post('/protocols/:protocolId/generate-document', adminAuthMiddleware, protocolScope, requireMinRole(UserRole.USER), async (req, res) => {
   try {
     console.log('=== DEBUG GENERATE DOCUMENT ===');
     console.log('Params:', req.params);
@@ -437,7 +470,7 @@ router.post('/protocols/:protocolId/generate-document', adminAuthMiddleware, req
  * POST /api/generated-documents/:id/revise
  * Criar nova revisão de um documento gerado
  */
-router.post('/generated-documents/:id/revise', adminAuthMiddleware, requireMinRole(UserRole.USER), async (req, res) => {
+router.post('/generated-documents/:id/revise', adminAuthMiddleware, protocolScope, requireMinRole(UserRole.USER), async (req, res) => {
   try {
     const userId = req.user!.id;
     const sourceDocument = await prisma.generatedDocument.findUnique({
@@ -541,7 +574,7 @@ router.post('/generated-documents/:id/revise', adminAuthMiddleware, requireMinRo
  * POST /api/generated-documents/:id/publish
  * Publicar documento assinado ao cidadão
  */
-router.post('/generated-documents/:id/publish', adminAuthMiddleware, async (req, res) => {
+router.post('/generated-documents/:id/publish', adminAuthMiddleware, protocolScope, async (req, res) => {
   try {
     if (!req.user?.id) {
       return res.status(401).json({
@@ -573,7 +606,7 @@ router.post('/generated-documents/:id/publish', adminAuthMiddleware, async (req,
  * GET /api/protocols/:protocolId/generated-documents
  * Listar documentos gerados de um protocolo
  */
-router.get('/protocols/:protocolId/generated-documents', adminAuthMiddleware, async (req, res) => {
+router.get('/protocols/:protocolId/generated-documents', adminAuthMiddleware, protocolScope, async (req, res) => {
   try {
     const documents = await documentGenerator.getGeneratedDocuments(req.params.protocolId);
 
@@ -591,7 +624,7 @@ router.get('/protocols/:protocolId/generated-documents', adminAuthMiddleware, as
  * GET /api/generated-documents/:id
  * Obter documento gerado específico
  */
-router.get('/generated-documents/:id', adminAuthMiddleware, async (req, res) => {
+router.get('/generated-documents/:id', adminAuthMiddleware, protocolScope, async (req, res) => {
   try {
     const document = await prisma.generatedDocument.findUnique({
       where: { id: req.params.id },
@@ -641,7 +674,7 @@ router.get('/generated-documents/:id', adminAuthMiddleware, async (req, res) => 
  * Query params: ?inline=true para visualização, sem parâmetro para download
  * NOTA: Usa adminAuthMiddleware para permitir visualização no painel admin
  */
-router.get('/generated-documents/:id/download', adminAuthMiddleware, async (req, res) => {
+router.get('/generated-documents/:id/download', adminAuthMiddleware, protocolScope, async (req, res) => {
   try {
     const inline = req.query.inline === 'true';
 
@@ -656,7 +689,8 @@ router.get('/generated-documents/:id/download', adminAuthMiddleware, async (req,
       });
     }
 
-    const filePath = path.join(process.cwd(), document.filePath);
+    // a versão assinada (original + folha de assinaturas + selo), se houver
+    const filePath = uploadUrlToDiskPath(document.signedFilePath || document.filePath);
 
     // Verificar se arquivo existe
     const fs = require('fs');
@@ -692,7 +726,7 @@ router.get('/generated-documents/:id/download', adminAuthMiddleware, async (req,
  * POST /api/generated-documents/:id/send
  * Enviar documento por email
  */
-router.post('/generated-documents/:id/send', adminAuthMiddleware, async (req, res) => {
+router.post('/generated-documents/:id/send', adminAuthMiddleware, protocolScope, async (req, res) => {
   try {
     const { recipientEmail, recipientName, subject, message } = req.body;
 
@@ -742,7 +776,7 @@ router.post('/generated-documents/:id/send', adminAuthMiddleware, async (req, re
  * Enviar múltiplos documentos por email e adicionar aos documentos do cidadão
  * Aceita arquivos adicionais via multipart/form-data
  */
-router.post('/generated-documents/send-multiple', adminAuthMiddleware, uploadDocuments, async (req, res) => {
+router.post('/generated-documents/send-multiple', adminAuthMiddleware, uploadDocuments, protocolScope, async (req, res) => {
   try {
     // Parse documentIds como JSON se vier como string (FormData)
     const documentIds = typeof req.body.documentIds === 'string'
@@ -818,7 +852,7 @@ router.post('/generated-documents/send-multiple', adminAuthMiddleware, uploadDoc
       // Preparar anexos dos documentos gerados
       const documentAttachments = documents.map(doc => ({
         filename: doc.fileName,
-        path: uploadUrlToDiskPath(doc.filePath)
+        path: uploadUrlToDiskPath(doc.signedFilePath || doc.filePath)
       }));
 
       // Preparar anexos dos arquivos adicionais

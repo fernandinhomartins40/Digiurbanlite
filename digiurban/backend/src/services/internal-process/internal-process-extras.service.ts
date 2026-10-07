@@ -11,11 +11,12 @@
 import { createHash } from 'crypto';
 import * as bcrypt from 'bcryptjs';
 import { prisma } from '../../lib/prisma';
-import { tryGetTenantId } from '../../lib/tenant-context';
+import { runAsPlatform, tryGetTenantId } from '../../lib/tenant-context';
 import { complete } from '../ai-gateway/gateway';
 import { getProcess, InternalProcessError } from './internal-process.service';
 import { canViewProcess, ProcessActor } from './rules';
 import { documentHash, getDocument } from './flows/flow.service';
+import { buildSignedPdf, internalContentHash, listSignatures, verifyPublicCode } from '../signing/signature.service';
 
 /** Resumo curto do processo (assunto, texto, despachos e pareceres) para quem chega agora */
 export async function summarizeProcess(actor: ProcessActor & { name: string }, id: string): Promise<string> {
@@ -93,6 +94,18 @@ export async function signProcess(actor: ProcessActor & { name: string }, id: st
 export async function verifySignature(actor: ProcessActor, code: string) {
   const clean = String(code || '').replace(/[^0-9a-f]/gi, '').toLowerCase();
   if (clean.length < 16) throw new InternalProcessError('Código inválido.');
+  // assinatura do motor único (certificado): mesma conferência da página pública
+  const engine = await verifyPublicCode(code).catch(() => null);
+  if (engine && engine.signatures.length) {
+    const hit = engine.signatures.find((item: any) => item.highlighted) || engine.signatures[0];
+    return {
+      number: (engine.document as any).number || '',
+      subject: `${(engine.document as any).title || ''}`,
+      signer: hit.name,
+      signedAt: hit.signedAt,
+      valid: hit.valid,
+    };
+  }
   // documento do processo (DFD, ETP, parecer...)
   const signedDoc = await prisma.internalProcessDocument.findFirst({
     where: { signatureHash: { startsWith: clean.slice(0, 16) } },
@@ -150,6 +163,25 @@ export async function verifySignature(actor: ProcessActor, code: string) {
     signedAt: movement.createdAt,
     valid: expected === movement.signatureHash,
   };
+}
+
+/**
+ * Conferência PÚBLICA de código antigo do processo interno (assinaturas feitas
+ * antes do motor único, só com senha). Processo sigiloso não aparece.
+ */
+export async function verifyLegacyInternalPublic(code: string) {
+  const anonymous: ProcessActor = { id: 'public', role: 'PUBLIC', unitIds: [], departmentIds: [] };
+  try {
+    const result = await runAsPlatform(async () => verifySignature(anonymous, code));
+    return {
+      municipality: null,
+      status: result.valid ? 'VALID' : 'INVALID',
+      document: { kind: 'Processo interno', title: result.subject, number: result.number },
+      signatures: [{ name: result.signer, role: null, signedAt: result.signedAt, code: String(code).toUpperCase(), highlighted: true, valid: result.valid, fromPlatformCA: false, revoked: false, reason: result.valid ? null : 'O conteúdo mudou depois da assinatura.' }],
+    };
+  } catch {
+    return null;
+  }
 }
 
 const escapeHtml = (value: unknown) =>
@@ -215,16 +247,23 @@ async function renderPdf(html: string): Promise<Buffer> {
 
 /** PDF de um documento do processo (texto do modelo + assinatura) */
 export async function documentPdf(actor: ProcessActor, documentId: string): Promise<{ buffer: Buffer; filename: string }> {
-  const { document, signatures } = await getDocument(actor, documentId);
+  const { document, signatures, process } = await getDocument(actor, documentId);
+  const engineSignatures = await listSignatures('INTERNAL', documentId);
+  // assinaturas antigas (antes do motor único) continuam no corpo do PDF
+  const engineCodes = new Set(engineSignatures.map((item) => item.code));
+  const legacy = signatures.filter((sig: any) => !engineCodes.has(sig.code));
   const html = `<!DOCTYPE html><html><head><meta charset="UTF-8"><style>
     body { font-family: 'Times New Roman', serif; font-size: 12.5px; color: #111; line-height: 1.55; }
     .text { white-space: pre-wrap; } .sig { margin-top: 24px; border-top: 1px solid #999; padding-top: 6px; font-family: Arial, sans-serif; font-size: 10.5px; color: #333; }
   </style></head><body>
     <div class="text">${escapeHtml(document.content)}</div>
-    ${signatures.length
-      ? signatures.map((sig) => `<div class="sig">Documento assinado eletronicamente por ${escapeHtml(sig.name)} em ${new Date(sig.signedAt as any).toLocaleString('pt-BR')} (Lei 14.063/2020). Código de verificação: ${escapeHtml(sig.code)}</div>`).join('')
-      : '<div class="sig">Documento ainda não assinado.</div>'}
+    ${legacy.map((sig: any) => `<div class="sig">Documento assinado eletronicamente por ${escapeHtml(sig.name)} em ${new Date(sig.signedAt as any).toLocaleString('pt-BR')} (Lei 14.063/2020). Código de verificação: ${escapeHtml(sig.code)}</div>`).join('')}
+    ${!signatures.length ? '<div class="sig">Documento ainda não assinado.</div>' : ''}
   </body></html>`;
   const safe = document.title.normalize('NFD').replace(/[̀-ͯ]/g, '').replace(/[^a-zA-Z0-9]+/g, '-').slice(0, 60);
-  return { buffer: await renderPdf(html), filename: `${safe}.pdf` };
+  const body = await renderPdf(html);
+  if (!engineSignatures.length) return { buffer: body, filename: `${safe}.pdf` };
+  // folha de assinaturas (QR da conferência pública) + selo do município
+  const buffer = await buildSignedPdf(body, 'INTERNAL', documentId, `${document.title} - ${process.number}`, internalContentHash(document));
+  return { buffer, filename: `${safe}.pdf` };
 }

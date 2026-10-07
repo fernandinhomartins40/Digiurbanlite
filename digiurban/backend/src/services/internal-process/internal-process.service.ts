@@ -20,6 +20,7 @@ import { findDepartmentRootOrganizationalUnit } from '../department-organogram.s
 import { FlowDefinition, flowBaseKey, getFlow, resolveFlow, stageRoute } from './flows/flows';
 import { buildFlowViewFor, flowWarnings, sanitizeFields } from './flows/flow.service';
 import { getRoleUnits, roleRoutes } from './flows/roles.service';
+import { requestUrl } from '../signing/signature.service';
 import {
   canActOnProcess,
   canViewProcess,
@@ -652,18 +653,9 @@ export async function dashboard(actor: ProcessActor) {
       take: 60,
       select: { processId: true, action: true, userName: true, fromUnitName: true, createdAt: true, process: { select: { number: true, subject: true } } },
     }),
-    prisma.internalProcessSignatureRequest.findMany({
-      where: { userId: actor.id, status: 'PENDENTE' },
-      orderBy: { createdAt: 'asc' },
-      take: 20,
-      select: { id: true, processId: true, documentId: true, requestedByName: true, createdAt: true, document: { select: { title: true } } },
-    }),
-    prisma.internalProcessSignatureRequest.findMany({
-      where: { requestedById: actor.id, status: 'PENDENTE' },
-      orderBy: { createdAt: 'asc' },
-      take: 20,
-      select: { id: true, processId: true, documentId: true, userName: true, createdAt: true, document: { select: { title: true } } },
-    }),
+    // fila única: documentos de protocolo, enviados e do processo interno
+    prisma.signatureRequest.findMany({ where: { userId: actor.id, status: 'PENDENTE' }, orderBy: { createdAt: 'asc' }, take: 20 }),
+    prisma.signatureRequest.findMany({ where: { requestedById: actor.id, status: 'PENDENTE' }, orderBy: { createdAt: 'asc' }, take: 20 }),
     prisma.internalProcess.findMany({
       where: { AND: [mine, { status: { in: ['ABERTO', 'EM_TRAMITE'] } }, { OR: [{ stageDueAt: { lte: soon } }, { dueAt: { lte: soon } }] }] },
       take: 40,
@@ -673,12 +665,6 @@ export async function dashboard(actor: ProcessActor) {
 
   const seen = new Set<string>();
   const unread = unreadMoves.filter((move) => !seen.has(move.processId) && seen.add(move.processId));
-  const processNumbers = new Map<string, string>();
-  if (toSign.length + asked.length) {
-    const ids = [...new Set([...toSign, ...asked].map((item) => item.processId))];
-    const rows = await prisma.internalProcess.findMany({ where: { id: { in: ids } }, select: { id: true, number: true } });
-    rows.forEach((row) => processNumbers.set(row.id, row.number));
-  }
   const deadlines = dueProcesses
     .map((item) => {
       const useStage = !!item.stageDueAt && (!item.dueAt || item.stageDueAt <= item.dueAt);
@@ -695,8 +681,8 @@ export async function dashboard(actor: ProcessActor) {
       count: unread.length,
       items: unread.slice(0, 10).map((move) => ({ id: move.processId, number: move.process.number, subject: move.process.subject, action: move.action, from: move.fromUnitName || move.userName, at: move.createdAt })),
     },
-    toSign: toSign.map((item) => ({ id: item.id, processId: item.processId, documentId: item.documentId, number: processNumbers.get(item.processId) || '', title: item.document.title, by: item.requestedByName, at: item.createdAt })),
-    asked: asked.map((item) => ({ id: item.id, processId: item.processId, documentId: item.documentId, number: processNumbers.get(item.processId) || '', title: item.document.title, to: item.userName, at: item.createdAt })),
+    toSign: toSign.map((item) => ({ id: item.id, url: requestUrl(item), title: item.title, by: item.requestedByName, at: item.createdAt })),
+    asked: asked.map((item) => ({ id: item.id, url: requestUrl(item), title: item.title, to: item.userName, at: item.createdAt })),
     deadlines,
   };
 }

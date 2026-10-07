@@ -407,6 +407,7 @@ try { require('./jobs/revertExpiredDelegations.job').initRevertExpiredDelegation
 try { require('./jobs/privacy-retention.job').initPrivacyRetentionJob(); } catch (e) { logger.error('Failed to start privacy retention job', { error: e }); }
 try { require('./jobs/doc-reading.job').initDocReadingJob(); } catch (e) { logger.error('Failed to start document reading job', { error: e }); }
 try { require('./jobs/org-chart-startup.job').initOrgChartStartupSync(); } catch (e) { logger.error('Failed to start org chart sync', { error: e }); }
+try { require('./jobs/signing-keys-startup.job').initSigningKeysStartup(); } catch (e) { logger.error('Failed to start signing keys setup', { error: e }); }
 try { require('./jobs/internal-process-deadlines.job').initInternalProcessDeadlinesJob(); } catch (e) { logger.error('Failed to start internal process deadlines job', { error: e }); }
 
 // Saúde - Apps integrados
