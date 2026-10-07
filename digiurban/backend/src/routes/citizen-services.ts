@@ -399,9 +399,15 @@ router.get('/:id', async (req, res) => {
       isArray: Array.isArray(normalizedRequiredDocuments)
     });
 
+    // etiqueta exigida para pedir (o portal avisa antes do formulário)
+    const requiredTag = service.requiredTagId
+      ? await prisma.citizenCategory.findFirst({ where: { id: service.requiredTagId, active: true }, select: { id: true, name: true } })
+      : null;
+
     return res.json({
       service: {
         ...service,
+        requiredTag,
         requiredDocuments: normalizedRequiredDocuments,
         formSchema: formSchemaConverted,
         stats: {

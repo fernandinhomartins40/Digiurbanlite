@@ -363,6 +363,19 @@ npx ts-node prisma/seeds/seed-system-certificate.ts
 - Smoke ponta a ponta: `backend/scripts/smoke-biometria.ts` (requer banco + motor + face-server + fotos de teste)
 - `PrismaPromise` é preguiçosa: em `runAsTenant(id, () => prisma.x.create())` a consulta roda FORA do contexto — usar `async () =>`
 
+### Serviços e protocolos (refeito 2026-10-07)
+- **Catálogo da plataforma** em `backend/src/catalog/services/*.seed.ts` (21 secretarias, ~404 serviços; dentro de src, vai no build). `applyServiceCatalog()` é a ÚNICA forma de semear: município novo (no próprio processo, com nova tentativa e aviso), botão "Atualizar catálogo de serviços" (Super-admin › município) e `prisma/seeds/services` (repasse). Regra "só acrescenta": `catalogKey` + `catalogHash` — cria o que falta, melhora o que o município NÃO editou, nunca sobrescreve nem religa o que ele editou
+- Serviço novo no catálogo precisa passar em `__tests__/unit/service-catalog-quality.test.ts` (prazo, subtipo, formulário, LGPD dos dados do cadastro, telefone em emergência)
+- **Itens só de informação** (`serviceSubtype` CONSULTA_PUBLICA/CONSULTA_AUTENTICADA) NÃO abrem pedido em nenhum canal (`isInformationOnly`); o portal mostra a informação
+- **Sugestões de serviço** (~940) em `backend/src/catalog/suggestions/`, servidas por `GET /api/services/suggestions?department=<slug>` (escondem o que o município já tem e o que o catálogo cobre). Não recriar listas de sugestões no frontend
+- **Fluxo de etapas**: só `ServiceWorkflow` (o que o protocolo usa), garantido por `ensureServiceWorkflow()` na criação do serviço e no 1º pedido. `ModuleWorkflow` é legado: não gravar nem ler. Prazo padrão único `serviceDays()` (`config/service-defaults.ts`, 10 dias úteis); mudar o prazo do serviço atualiza o fluxo
+- **Conclusão**: efeitos de conclusão (etiquetas...) em `runConclusionHooks()` chamado pelo motor de status — não chamar etiqueta em rota/serviço avulso
+- **Formulário do serviço** sempre normalizado para JSON Schema (`utils/form-schema-normalize.ts`); o editor (`DataCaptureStep`) lê `fields` e `properties`
+- Dados da família só entram no pedido quando o formulário do serviço pede os campos
+- Criar/editar serviço só em `/api/services` (as cópias em `/api/admin/services` foram removidas)
+- **Etiquetas × serviços**: o formulário do serviço escolhe as etiquetas que ele dá (`tagIds` ↔ `triggerServiceIds`) e a etiqueta exigida para pedir (`requiredTagId`, conferida em `checkServiceLevel`). Etiquetas prontas do catálogo em `src/catalog/tags.ts` (ligadas só a serviços criados pelo catálogo; o que o município desligou não volta). Cidadão: `GET /citizen/auth/my-tags` (etiquetas + serviços sugeridos), no perfil
+- Tipos de dados do Registry montados por `syncRegistryTypes()` (catálogo e criação/edição de serviço). Ler/gravar registros continua atrás das flags REGISTRY_* do .env
+
 ### Cidadão: níveis, família, etiquetas e LGPD (refeito 2026-10-06)
 - **Níveis** (`verificationStatus`: PENDING=Bronze, VERIFIED=Prata, GOLD=Ouro, REJECTED): cada serviço tem `minLevel` (BRONZE padrão) conferido em `services/service-access-level.ts` nos 3 caminhos do cidadão (portal ×2 e bot); balcão não confere. Recusa NÃO desativa a conta: o cidadão corrige e chama `POST /citizen/auth/verification/resubmit`. Mudar nome/nascimento/RG/nome da mãe sendo Prata/Ouro volta para PENDING. Ouro = perfil completo + `rg_frente`/`rg_verso`/`comprovante_residencia` aprovados + biometria (o CPF não é mais documento separado). Avisos de nível sempre por `notifyCitizenLevel()` (central de avisos)
 - **Família**: acesso a pedidos/documentos de familiar SÓ com vínculo `ACTIVE` — usar `canActForFamilyMember()` (`services/family-access.ts`); nunca consultar `familyComposition` sem `status`. Alterar/remover exige ser parte do vínculo. Vínculo feito pelo servidor nasce ACTIVE; pelo app fica PENDING até o familiar confirmar (`pendingLinks` em `GET /citizen/family`). Dados de quem não confirmou saem mascarados

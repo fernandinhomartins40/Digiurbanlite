@@ -21,6 +21,7 @@ import { ModernMaskedInput, formatValue } from '@/components/ui/modern-masked-in
 import { useViaCEP, formatCEP, isValidCEP } from '@/hooks/useViaCEP';
 import { cn } from '@/lib/utils';
 import { citizenDocumentLabel } from '@/lib/citizen-document-types';
+import { tagColorClass } from '@/lib/citizen-tags';
 import type { CitizenAccessLevelSummary } from '@/types/citizen-access';
 
 const MARITAL = ['Solteiro(a)', 'Casado(a)', 'Divorciado(a)', 'Viúvo(a)', 'União Estável'];
@@ -75,6 +76,17 @@ function Field({ id, label, children, wide }: { id: string; label: string; child
 export default function PerfilPage() {
   const { citizen, updateProfile, apiRequest, refreshCitizenData } = useCitizenAuth();
   const [resubmitting, setResubmitting] = useState(false);
+
+  // etiquetas do cidadão e serviços sugeridos a partir delas
+  const [myTags, setMyTags] = useState<{
+    tags: Array<{ id: string; name: string; color: string | null }>;
+    services: Array<{ id: string; name: string; department: string | null; forTag: string | null }>;
+  } | null>(null);
+  useEffect(() => {
+    apiRequest('/citizen/auth/my-tags')
+      .then((response: any) => setMyTags(response?.data || null))
+      .catch(() => setMyTags(null));
+  }, [apiRequest]);
 
   // LGPD: baixar os meus dados e excluir a minha conta
   const [deleting, setDeleting] = useState(false);
@@ -578,6 +590,38 @@ export default function PerfilPage() {
             </div>
           )}
         </Section>
+
+        {myTags && myTags.tags.length > 0 && (
+          <Section title="No cadastro da prefeitura, você é">
+            <div className="flex flex-wrap gap-2">
+              {myTags.tags.map((tag) => (
+                <span key={tag.id} className={cn('rounded-full px-3 py-1 text-sm font-medium', tagColorClass(tag.color))}>
+                  {tag.name}
+                </span>
+              ))}
+            </div>
+            {myTags.services.length > 0 && (
+              <div className="mt-4">
+                <p className="text-sm font-medium text-gray-900">Serviços para você</p>
+                <ul className="mt-1 divide-y">
+                  {myTags.services.map((service) => (
+                    <li key={service.id}>
+                      <Link href={`/cidadao/servicos/${service.id}/solicitar`} className="flex items-center justify-between gap-3 py-2.5 text-sm hover:text-blue-700">
+                        <span className="min-w-0">
+                          <span className="block truncate text-gray-900">{service.name}</span>
+                          <span className="block truncate text-xs text-gray-500">
+                            {service.forTag ? `Só para quem é ${service.forTag}` : service.department}
+                          </span>
+                        </span>
+                        <ChevronRight className="h-4 w-4 shrink-0 text-gray-400" />
+                      </Link>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            )}
+          </Section>
+        )}
 
         <Section title="Meus dados e privacidade">
           <p className="text-sm text-gray-500">Você pode baixar uma cópia de tudo o que a prefeitura guarda sobre você aqui, ou excluir a sua conta.</p>

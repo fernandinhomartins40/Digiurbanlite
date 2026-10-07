@@ -31,6 +31,8 @@ interface Service {
   /** nível mínimo para pedir: BRONZE | SILVER | GOLD */
   minLevel?: string;
   serviceSubtype?: string | null;
+  /** só quem tem esta etiqueta pode pedir */
+  requiredTag?: { id: string; name: string } | null;
   department: {
     name: string;
   };
@@ -66,6 +68,14 @@ export default function SolicitarServicoPage() {
   const { apiRequest, citizen } = useCitizenAuth();
 
   const [service, setService] = useState<Service | null>(null);
+  // etiquetas do cidadão (para serviço exclusivo de quem tem a etiqueta)
+  const [myTagIds, setMyTagIds] = useState<string[] | null>(null);
+  useEffect(() => {
+    apiRequest('/citizen/auth/my-tags')
+      .then((response: any) => setMyTagIds((response?.data?.tags || []).map((tag: any) => tag.id)))
+      .catch(() => setMyTagIds([]));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
   const [description, setDescription] = useState('');
@@ -388,7 +398,8 @@ export default function SolicitarServicoPage() {
   const levelBlocked = !!service && (levelRank[service.minLevel || 'BRONZE'] || 1) > myRank;
   // item só de informação (consulta): não abre pedido
   const informationOnly = service?.serviceSubtype === 'CONSULTA_PUBLICA' || service?.serviceSubtype === 'CONSULTA_AUTENTICADA';
-  const showForm = !informationOnly && !levelBlocked && (!isProgramEnrollment || selectedProgram);
+  const tagBlocked = !!service?.requiredTag && myTagIds !== null && !myTagIds.includes(service.requiredTag.id);
+  const showForm = !informationOnly && !tagBlocked && !levelBlocked && (!isProgramEnrollment || selectedProgram);
   const docsToSend: any[] = selectedProgram
     ? (Array.isArray(selectedProgram.requiredDocuments) ? selectedProgram.requiredDocuments : [])
     : service.requiresDocuments && Array.isArray(service.requiredDocuments)
@@ -429,7 +440,14 @@ export default function SolicitarServicoPage() {
           </div>
         )}
 
-        {!informationOnly && levelBlocked && (
+        {!informationOnly && tagBlocked && (
+          <div className="rounded-2xl border border-amber-200 bg-amber-50 p-4 text-sm text-amber-900">
+            <p className="font-medium">Este serviço é para quem já é &quot;{service.requiredTag?.name}&quot; no cadastro da prefeitura.</p>
+            <p className="mt-1">Se acha que é o seu caso, procure a secretaria responsável.</p>
+          </div>
+        )}
+
+        {!informationOnly && !tagBlocked && levelBlocked && (
           <div className="rounded-2xl border border-amber-200 bg-amber-50 p-4 text-sm text-amber-900">
             <p className="font-medium">
               {service.minLevel === 'GOLD' ? 'Este serviço pede cadastro nível Ouro.' : 'Este serviço pede cadastro conferido (nível Prata).'}

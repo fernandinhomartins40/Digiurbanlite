@@ -143,3 +143,91 @@ export async function assignTagsOnProtocolConcluded(protocolId: string): Promise
     return [];
   }
 }
+
+/** Etiquetas que um serviço dá ao concluir (ids das etiquetas) */
+export async function tagIdsForService(serviceId: string): Promise<string[]> {
+  const tags = await prisma.citizenCategory.findMany({
+    where: { triggerServiceIds: { has: serviceId } },
+    select: { id: true },
+  });
+  return tags.map((tag) => tag.id);
+}
+
+/**
+ * Define quais etiquetas o serviço dá ao concluir (formulário do serviço).
+ * Liga/desliga o serviço na lista de cada etiqueta do município.
+ */
+export async function setServiceTags(serviceId: string, wantedTagIds: string[]): Promise<void> {
+  const wanted = new Set(wantedTagIds.filter((id) => typeof id === 'string' && id));
+  const tags = await prisma.citizenCategory.findMany({
+    where: { OR: [{ id: { in: [...wanted] } }, { triggerServiceIds: { has: serviceId } }] },
+    select: { id: true, triggerServiceIds: true },
+  });
+  for (const tag of tags) {
+    const has = tag.triggerServiceIds.includes(serviceId);
+    if (wanted.has(tag.id) && !has) {
+      await prisma.citizenCategory.update({ where: { id: tag.id }, data: { triggerServiceIds: [...tag.triggerServiceIds, serviceId] } });
+    } else if (!wanted.has(tag.id) && has) {
+      await prisma.citizenCategory.update({ where: { id: tag.id }, data: { triggerServiceIds: tag.triggerServiceIds.filter((id) => id !== serviceId) } });
+    }
+  }
+}
+
+/** O cidadão tem a etiqueta (ativa)? */
+export async function citizenHasTag(citizenId: string, tagId: string): Promise<boolean> {
+  const found = await prisma.citizenCategoryAssignment.findFirst({ where: { citizenId, categoryId: tagId, active: true }, select: { id: true } });
+  return Boolean(found);
+}
+
+/**
+ * Etiquetas do cidadão e serviços sugeridos a partir delas:
+ *  1. serviços exclusivos de quem tem a etiqueta (ex.: renovação para Produtor Rural);
+ *  2. outros serviços da mesma secretaria do serviço que deu a etiqueta.
+ * Nunca sugere o que ele já pediu nem item só de informação.
+ */
+export async function citizenTagsAndSuggestions(citizenId: string) {
+  const assignments = await prisma.citizenCategoryAssignment.findMany({
+    where: { citizenId, active: true, category: { active: true } },
+    orderBy: { assignedAt: 'desc' },
+    select: { assignedAt: true, category: { select: { id: true, name: true, color: true, triggerServiceIds: true } } },
+  });
+  const tags = assignments.map((item) => ({ id: item.category.id, name: item.category.name, color: item.category.color, since: item.assignedAt }));
+  if (tags.length === 0) return { tags, services: [] };
+
+  const tagIds = tags.map((tag) => tag.id);
+  const originServiceIds = [...new Set(assignments.flatMap((item) => item.category.triggerServiceIds))];
+  const [origins, requested] = await Promise.all([
+    originServiceIds.length
+      ? prisma.serviceSimplified.findMany({ where: { id: { in: originServiceIds } }, select: { departmentId: true } })
+      : Promise.resolve([] as Array<{ departmentId: string }>),
+    prisma.protocolSimplified.findMany({ where: { citizenId }, select: { serviceId: true }, distinct: ['serviceId'] }),
+  ]);
+  const departmentIds = [...new Set(origins.map((service) => service.departmentId))];
+  const requestedIds = requested.map((item) => item.serviceId).filter(Boolean) as string[];
+
+  const candidates = await prisma.serviceSimplified.findMany({
+    where: {
+      isActive: true,
+      id: { notIn: [...requestedIds, ...originServiceIds] },
+      serviceSubtype: { notIn: ['CONSULTA_PUBLICA', 'CONSULTA_AUTENTICADA'] },
+      OR: [{ requiredTagId: { in: tagIds } }, ...(departmentIds.length ? [{ departmentId: { in: departmentIds } }] : [])],
+    },
+    orderBy: [{ priority: 'desc' }, { name: 'asc' }],
+    take: 30,
+    select: { id: true, name: true, description: true, icon: true, requiredTagId: true, department: { select: { name: true } } },
+  });
+
+  // os exclusivos da etiqueta primeiro
+  const services = candidates
+    .sort((a, b) => Number(Boolean(b.requiredTagId)) - Number(Boolean(a.requiredTagId)))
+    .slice(0, 6)
+    .map((service) => ({
+      id: service.id,
+      name: service.name,
+      description: service.description,
+      icon: service.icon,
+      department: service.department?.name || null,
+      forTag: service.requiredTagId ? tags.find((tag) => tag.id === service.requiredTagId)?.name || null : null,
+    }));
+  return { tags, services };
+}

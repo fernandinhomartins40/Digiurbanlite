@@ -7,11 +7,26 @@ import { allServices, applyServiceCatalog, catalogFields, catalogHashOf, catalog
 
 function fakeDb(departments: Array<{ id: string; code: string }>, services: any[]) {
   let seq = 0;
+  const tags: any[] = [];
   return {
     services,
+    tags,
+    citizenCategory: {
+      findMany: async () => tags.map((tag) => ({ ...tag })),
+      create: async ({ data }: any) => {
+        const row = { id: `tag${++seq}`, ...data };
+        tags.push(row);
+        return row;
+      },
+      update: async ({ where, data }: any) => Object.assign(tags.find((tag) => tag.id === where.id), data),
+    },
     department: { findMany: async () => departments },
     serviceSimplified: {
-      findMany: async () => services.map((service) => ({ ...service })),
+      findMany: async ({ where }: any = {}) => {
+        const keys: string[] | undefined = where?.OR?.[0]?.catalogKey?.in;
+        const list = keys ? services.filter((service) => keys.includes(service.catalogKey) || keys.includes(service.moduleType)) : services;
+        return list.map((service) => ({ ...service }));
+      },
       create: async ({ data }: any) => {
         const row = { id: `new${++seq}`, ...data };
         services.push(row);
@@ -126,5 +141,34 @@ describe('formulário do serviço num formato só', () => {
   it('JSON Schema do catálogo fica como está', () => {
     const catalog = { type: 'object', properties: { x: { type: 'string', title: 'X' } }, required: ['x'] };
     expect(normalizeFormSchema(catalog)).toEqual(catalog);
+  });
+});
+
+import { applyCatalogTags, CATALOG_TAGS, unknownTagKeys } from '../../src/catalog/tags';
+
+describe('etiquetas prontas do catálogo', () => {
+  it('toda etiqueta aponta para serviços que existem no catálogo', () => {
+    expect(unknownTagKeys()).toEqual([]);
+  });
+
+  it('município novo nasce com a etiqueta ligada aos serviços', async () => {
+    const agro = { id: 'd-agro', code: 'AGRICULTURA' };
+    const db = fakeDb([agro], []);
+    const result = await applyServiceCatalog(db, 't1');
+    expect(result.tagsCreated).toBeGreaterThan(0);
+    const produtor = db.tags.find((tag) => tag.name === 'Produtor Rural');
+    const cadastro = db.services.find((service) => service.catalogKey === 'CADASTRO_PRODUTOR');
+    expect(produtor.triggerServiceIds).toContain(cadastro.id);
+  });
+
+  it('serviço que o município tirou da etiqueta não volta', async () => {
+    const agro = { id: 'd-agro', code: 'AGRICULTURA' };
+    const db = fakeDb([agro], []);
+    await applyServiceCatalog(db, 't1');
+    const produtor = db.tags.find((tag) => tag.name === 'Produtor Rural');
+    produtor.triggerServiceIds = [];
+    await applyCatalogTags(db, 't1', new Set());
+    expect(produtor.triggerServiceIds).toEqual([]);
+    expect(CATALOG_TAGS.length).toBeGreaterThan(10);
   });
 });

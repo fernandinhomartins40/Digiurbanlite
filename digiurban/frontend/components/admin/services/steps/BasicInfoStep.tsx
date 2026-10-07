@@ -6,6 +6,7 @@ import { Label } from '@/components/ui/label'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { IconPicker } from '@/components/ui/icon-picker'
 import { Info } from 'lucide-react'
+import { ServiceTagsField } from '@/components/admin/services/ServiceTagsField'
 
 interface Department {
   id: string
@@ -21,6 +22,8 @@ interface BasicInfoStepProps {
     departmentId: string
     estimatedDays: string
     minLevel?: string
+    tagIds?: string[]
+    requiredTagId?: string | null
     priority: number
     icon: string
     color: string
@@ -136,6 +139,10 @@ export function BasicInfoStep({ formData, departments, onChange, errors }: Basic
             </SelectContent>
           </Select>
           <p className="text-xs text-gray-500">Vale para o portal e o assistente. No balcão o servidor confere a pessoa.</p>
+        </div>
+
+        <div className="md:col-span-2">
+          <ServiceTagsField tagIds={formData.tagIds || []} requiredTagId={formData.requiredTagId || null} onChange={onChange} />
         </div>
 
         <div className="space-y-2">

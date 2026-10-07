@@ -26,6 +26,7 @@ async function contactEmailFor(tenantId: string | null) {
 import { syncCitizenPersonIdentity } from '../services/person-identity.service';
 import { sendTemplatedMail } from '../services/mail/templated';
 import { countOpenProtocols, deleteCitizenAccount, exportCitizenData } from '../services/citizen-privacy.service';
+import { citizenTagsAndSuggestions } from '../services/citizen-tags.service';
 import { isCpfLike, normalizeCpf, normalizeEmail, normalizeNullableString } from '../utils/identity';
 import { citizenAuthMiddleware } from '../middleware/citizen-auth';
 import facePlatformClientService from '../services/face-platform-client.service';
@@ -1165,6 +1166,18 @@ router.put('/profile', asyncHandler(async (req: Request, res: Response) => {
     return res.status(500).json({ error: 'Erro interno do servidor' });
   }
 }));
+
+// GET /api/auth/citizen/my-tags - Minhas etiquetas e serviços sugeridos a partir delas
+router.get(
+  '/my-tags',
+  citizenAuthMiddleware,
+  asyncHandler(async (req: Request, res: Response) => {
+    const citizenId = (req as any).citizenId as string | undefined;
+    if (!citizenId) return res.status(401).json({ error: 'Cidadão não autenticado' });
+    const result = await citizenTagsAndSuggestions(citizenId);
+    return res.json({ success: true, data: result });
+  })
+);
 
 // GET /api/auth/citizen/my-data - Baixar uma cópia dos meus dados (LGPD art. 18)
 router.get(

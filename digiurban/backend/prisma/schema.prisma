@@ -998,6 +998,8 @@ model ServiceSimplified {
   // foi aplicado (melhoria do catálogo só chega se o município não editou)
   catalogKey  String?
   catalogHash String?
+  // Só quem tem esta etiqueta (CitizenCategory.id) pode pedir pelo portal/assistente
+  requiredTagId String?
 
   allowMultipleActiveProtocols Boolean @default(true) // Permite múltiplos protocolos ativos do mesmo serviço por cidadão
   uniquenessScope              String? // 'CITIZEN' | 'CUSTOM' | 'CITIZEN_PER_FIELD'

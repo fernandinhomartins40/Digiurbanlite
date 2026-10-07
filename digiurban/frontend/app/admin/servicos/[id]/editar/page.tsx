@@ -48,6 +48,8 @@ interface Service {
   requiredDocuments: any[] | null
   estimatedDays: number | null
   minLevel?: string
+  tagIds?: string[]
+  requiredTagId?: string | null
   priority: number
   icon: string | null
   color: string | null
@@ -74,6 +76,8 @@ interface ServiceFormData {
   departmentId: string
   estimatedDays: string
   minLevel: string
+  tagIds: string[]
+  requiredTagId: string | null
   priority: number
   icon: string
   color: string
@@ -117,6 +121,8 @@ export default function EditServicePage() {
     departmentId: '',
     estimatedDays: '',
     minLevel: 'BRONZE',
+    tagIds: [],
+    requiredTagId: null,
     priority: 3,
     icon: '',
     color: '#3b82f6',
@@ -200,6 +206,8 @@ export default function EditServicePage() {
         departmentId: serviceData.departmentId,
         estimatedDays: serviceData.estimatedDays?.toString() || '',
         minLevel: serviceData.minLevel || 'BRONZE',
+        tagIds: serviceData.tagIds || [],
+        requiredTagId: serviceData.requiredTagId || null,
         priority: serviceData.priority,
         icon: serviceData.icon || '',
         color: serviceData.color || '#3b82f6',
@@ -276,6 +284,8 @@ export default function EditServicePage() {
         requiredDocuments: formData.requiredDocuments.length > 0 ? formData.requiredDocuments : null,
         estimatedDays: formData.estimatedDays ? parseInt(formData.estimatedDays) : null,
         minLevel: formData.minLevel || 'BRONZE',
+        tagIds: formData.tagIds || [],
+        requiredTagId: formData.requiredTagId || null,
         priority: formData.priority,
         icon: formData.icon || null,
         color: formData.color || null,

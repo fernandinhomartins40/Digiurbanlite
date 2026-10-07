@@ -139,6 +139,7 @@ export interface CatalogApplyResult {
   updated: number;
   keptEdited: number;
   skippedNoDepartment: number;
+  tagsCreated: number;
 }
 
 /**
@@ -152,7 +153,8 @@ export interface CatalogApplyResult {
  */
 export async function applyServiceCatalog(db: any, tenantId: string, options: { log?: boolean } = {}): Promise<CatalogApplyResult> {
   const log = options.log ? console.log : () => undefined;
-  const result: CatalogApplyResult = { created: 0, updated: 0, keptEdited: 0, skippedNoDepartment: 0 };
+  const result: CatalogApplyResult = { created: 0, updated: 0, keptEdited: 0, skippedNoDepartment: 0, tagsCreated: 0 };
+  const createdKeys = new Set<string>();
 
   const departments: Array<{ id: string; code: string | null }> = await db.department.findMany({
     where: { tenantId },
@@ -200,6 +202,7 @@ export async function applyServiceCatalog(db: any, tenantId: string, options: { 
           },
         });
         result.created++;
+        createdKeys.add(key);
         log(`   + ${def.name}`);
         continue;
       }
@@ -240,6 +243,15 @@ export async function applyServiceCatalog(db: any, tenantId: string, options: { 
     } catch (error: any) {
       console.error(`   ❌ catálogo: ${def.name}: ${error?.message || error}`);
     }
+  }
+
+  // etiquetas prontas do catálogo (Produtor Rural, Atleta...) ligadas aos serviços
+  try {
+    const { applyCatalogTags } = await import('../tags');
+    const tags = await applyCatalogTags(db, tenantId, createdKeys);
+    result.tagsCreated = tags.created;
+  } catch (error: any) {
+    console.error(`   ❌ etiquetas do catálogo: ${error?.message || error}`);
   }
 
   return result;

@@ -50,14 +50,28 @@ export const INFORMATION_ONLY_MESSAGE =
 export async function checkServiceLevel(
   citizenId: string,
   serviceId: string
-): Promise<{ minLevel: CitizenLevel; message: string; reason?: 'INFO_ONLY' } | null> {
+): Promise<{ minLevel: CitizenLevel; message: string; reason?: 'INFO_ONLY' | 'TAG_REQUIRED' } | null> {
   const [citizen, service] = await Promise.all([
     prisma.citizen.findUnique({ where: { id: citizenId }, select: { verificationStatus: true } }),
-    prisma.serviceSimplified.findFirst({ where: { id: serviceId }, select: { minLevel: true, serviceSubtype: true } }),
+    prisma.serviceSimplified.findFirst({ where: { id: serviceId }, select: { minLevel: true, serviceSubtype: true, requiredTagId: true } }),
   ]);
   if (!citizen || !service) return null; // quem chamou já trata "não encontrado"
   if (isInformationOnly(service.serviceSubtype)) {
     return { minLevel: normalizeLevel(service.minLevel), message: INFORMATION_ONLY_MESSAGE, reason: 'INFO_ONLY' };
+  }
+  // serviço só para quem tem a etiqueta (ex.: renovação só para Produtor Rural)
+  if (service.requiredTagId) {
+    const [has, tag] = await Promise.all([
+      prisma.citizenCategoryAssignment.findFirst({ where: { citizenId, categoryId: service.requiredTagId, active: true }, select: { id: true } }),
+      prisma.citizenCategory.findFirst({ where: { id: service.requiredTagId }, select: { name: true, active: true } }),
+    ]);
+    if (tag?.active && !has) {
+      return {
+        minLevel: normalizeLevel(service.minLevel),
+        message: `Este serviço é para quem já é "${tag.name}" no cadastro da prefeitura. Procure a secretaria se acha que é o seu caso.`,
+        reason: 'TAG_REQUIRED',
+      };
+    }
   }
   if (meetsLevel(citizen.verificationStatus, service.minLevel)) return null;
   return { minLevel: normalizeLevel(service.minLevel), message: levelBlockMessage(service.minLevel) };

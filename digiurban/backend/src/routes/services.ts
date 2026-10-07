@@ -1,3 +1,4 @@
+import { setServiceTags, tagIdsForService } from '../services/citizen-tags.service';
 import { normalizeFormSchema } from '../utils/form-schema-normalize';
 import { serviceDays } from '../config/service-defaults';
 import { ensureServiceWorkflow } from '../services/service-workflow.service';
@@ -186,7 +187,9 @@ router.get('/:id', async (req, res) => {
       service: {
         ...service,
         ...effectiveDestination(service),
-        requiredDocuments: normalizedRequiredDocuments
+        requiredDocuments: normalizedRequiredDocuments,
+        // etiquetas que o serviço dá ao concluir (formulário do serviço)
+        tagIds: await tagIdsForService(service.id).catch(() => [])
       }
     });
   } catch (error) {
@@ -236,6 +239,9 @@ router.post('/', adminAuthMiddleware, requireMinRole(UserRole.MANAGER), async (r
       // Destino do pedido (FILA | APP + ação do catálogo de apps)
       destination,
       appAction,
+      // etiquetas que o serviço dá ao concluir e etiqueta exigida para pedir
+      tagIds,
+      requiredTagId,
     } = authReq.body;
 
     if (destination !== undefined && destination !== null) {
@@ -452,6 +458,7 @@ router.post('/', adminAuthMiddleware, requireMinRole(UserRole.MANAGER), async (r
 
           // ✅ NOVO: Configuração de unicidade de protocolos (agora obrigatório)
           minLevel: normalizeLevel(minLevel),
+          requiredTagId: typeof requiredTagId === 'string' && requiredTagId ? requiredTagId : null,
           allowMultipleActiveProtocols: allowMultipleActiveProtocols,
           uniquenessScope: allowMultipleActiveProtocols === false ? uniquenessScope : null,
           uniquenessRules: allowMultipleActiveProtocols === false && uniquenessRules ? uniquenessRules : null,
@@ -485,6 +492,9 @@ router.post('/', adminAuthMiddleware, requireMinRole(UserRole.MANAGER), async (r
       console.warn('[services] fluxo não criado agora (será criado no 1º pedido):', workflowError instanceof Error ? workflowError.message : workflowError);
     }
     const workflowCreated = Boolean(workflow);
+    if (Array.isArray(tagIds)) {
+      await setServiceTags(result.service.id, tagIds).catch((error) => console.warn('[services] etiquetas do serviço:', error?.message || error));
+    }
     if (result.service.serviceType === 'COM_DADOS') {
       void import('../services/registry/registry-sync.service').then(({ syncRegistryTypes }) => syncRegistryTypes());
     }
@@ -555,7 +565,9 @@ router.put('/:id', adminAuthMiddleware, requireMinRole(UserRole.MANAGER), async 
 
       // Destino do pedido (FILA | APP + ação do catálogo de apps)
       destination,
-      appAction
+      appAction,
+      tagIds,
+      requiredTagId
         } = authReq.body;
 
     // DEBUG: Log dos campos de configuração recebidos
@@ -668,6 +680,7 @@ router.put('/:id', adminAuthMiddleware, requireMinRole(UserRole.MANAGER), async 
 
         // Campos de unicidade
         ...(minLevel !== undefined && { minLevel: normalizeLevel(minLevel) }),
+        ...(requiredTagId !== undefined && { requiredTagId: typeof requiredTagId === 'string' && requiredTagId ? requiredTagId : null }),
         ...(allowMultipleActiveProtocols !== undefined && { allowMultipleActiveProtocols }),
         ...(uniquenessScope !== undefined && { uniquenessScope }),
         ...(uniquenessRules !== undefined && { uniquenessRules })
@@ -688,6 +701,10 @@ router.put('/:id', adminAuthMiddleware, requireMinRole(UserRole.MANAGER), async 
       enabledFieldsSaved: updatedService.enabledFields ? 'sim' : 'null',
       formFieldsConfigSaved: updatedService.formFieldsConfig ? 'sim' : 'null'
     });
+
+    if (Array.isArray(tagIds)) {
+      await setServiceTags(updatedService.id, tagIds).catch((error) => console.warn('[services] etiquetas do serviço:', error?.message || error));
+    }
 
     if (formSchema !== undefined && updatedService.serviceType === 'COM_DADOS') {
       void import('../services/registry/registry-sync.service').then(({ syncRegistryTypes }) => syncRegistryTypes());
