@@ -11,6 +11,7 @@ import Link from 'next/link'
 import { useParams } from 'next/navigation'
 import { AlertTriangle, ArrowLeft, CheckCircle2, CornerUpLeft, FileText, Loader2, MessageSquare, Send, UserRound, HelpCircle, Archive, RotateCcw, PenLine, Download, Sparkles } from 'lucide-react'
 import { getFullApiUrl } from '@/lib/api-config'
+import { FlowPanel } from '@/components/admin/internal-process/FlowPanel'
 import { useAdminAuth } from '@/contexts/AdminAuthContext'
 import { Button } from '@/components/ui/button'
 import { Label } from '@/components/ui/label'
@@ -212,6 +213,19 @@ export default function ProcessoInternoPage() {
         </Button>
         {!isOpen && <Button variant="outline" size="sm" onClick={() => open('reopen')}><RotateCcw className="mr-2 h-4 w-4" />Reabrir</Button>}
       </div>
+
+      {process.flow && (
+        <FlowPanel
+          processId={process.id}
+          flow={process.flow}
+          documents={process.documents || []}
+          stageDueAt={process.stageDueAt}
+          fields={process.fields}
+          warnings={process.warnings || []}
+          canAct={process.canAct}
+          onChanged={() => void load()}
+        />
+      )}
 
       {(process.protocol || process.parent || process.children?.length > 0) && (
         <div className="space-y-2 rounded-xl border bg-white p-4 text-sm">

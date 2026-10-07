@@ -17,6 +17,8 @@ import notificationService from '../notification.service';
 import { addWorkingDays } from '../protocol-sla.service';
 import { getUserDepartmentIds, getUserUnitIds, WORKING_ASSIGNMENT_STATUSES } from '../staff-scope.service';
 import { findDepartmentRootOrganizationalUnit } from '../department-organogram.service';
+import { getFlow } from './flows/flows';
+import { buildFlowView, flowWarnings } from './flows/flow.service';
 import {
   canActOnProcess,
   canViewProcess,
@@ -37,6 +39,10 @@ export const DEFAULT_TYPES = [
   { prefix: 'REQ', name: 'Requisição', description: 'Pedido de material, serviço ou providência a outra unidade', defaultDays: 5, sortOrder: 3 },
   { prefix: 'PAR', name: 'Pedido de parecer', description: 'Pedido de análise técnica ou jurídica a outra unidade', defaultDays: 5, sortOrder: 4 },
   { prefix: 'PAD', name: 'Processo administrativo', description: 'Processo com várias etapas e unidades', defaultDays: 30, sortOrder: 5 },
+  // contratação pública (Lei 14.133/2021) — com etapas, documentos e prazos
+  { prefix: 'LIC', name: 'Licitação (Lei 14.133)', description: 'Planejamento, edital, sessão, habilitação, recursos, homologação e contrato', defaultDays: 90, sortOrder: 6, flowKey: 'LICITACAO' },
+  { prefix: 'DIS', name: 'Dispensa de licitação (Lei 14.133)', description: 'Contratação direta por dispensa (art. 75), instruída conforme o art. 72', defaultDays: 30, sortOrder: 7, flowKey: 'DISPENSA' },
+  { prefix: 'INX', name: 'Inexigibilidade (Lei 14.133)', description: 'Contratação direta por inexigibilidade (art. 74), instruída conforme o art. 72', defaultDays: 30, sortOrder: 8, flowKey: 'INEXIGIBILIDADE' },
 ];
 
 export interface ActorInput {
@@ -146,6 +152,8 @@ export interface CreateInput {
   confidential?: boolean;
   protocolId?: string;
   parentId?: string;
+  /** dados da contratação (valor estimado, modalidade, critério, hipótese) */
+  fields?: Record<string, any>;
 }
 
 export async function createProcess(actor: ProcessActor & { name: string }, input: CreateInput) {
@@ -169,6 +177,17 @@ export async function createProcess(actor: ProcessActor & { name: string }, inpu
 
   const number = await nextNumber(type.prefix);
   const current = destination || origin;
+  // fluxo de contratação: começa na primeira etapa, com o prazo dela
+  const flow = getFlow(type.flowKey);
+  const firstStage = flow?.stages[0] || null;
+  const fields = flow && input.fields
+    ? {
+        ...(input.fields.valorEstimado !== undefined ? { valorEstimado: Math.max(0, Number(input.fields.valorEstimado) || 0) } : {}),
+        ...(typeof input.fields.modalidade === 'string' ? { modalidade: input.fields.modalidade.slice(0, 60) } : {}),
+        ...(typeof input.fields.criterio === 'string' ? { criterio: input.fields.criterio.slice(0, 80) } : {}),
+        ...(typeof input.fields.hipotese === 'string' ? { hipotese: input.fields.hipotese.slice(0, 200) } : {}),
+      }
+    : undefined;
   const process = await prisma.internalProcess.create({
     data: {
       number,
@@ -191,6 +210,10 @@ export async function createProcess(actor: ProcessActor & { name: string }, inpu
       protocolId: input.protocolId || null,
       parentId: input.parentId || null,
       dueAt: addWorkingDays(new Date(), type.defaultDays),
+      flowKey: flow?.key || null,
+      stageKey: firstStage?.key || null,
+      stageDueAt: firstStage ? addWorkingDays(new Date(), firstStage.days) : null,
+      fields: fields as any,
       movements: {
         create: [
           { ...nestedTenant(), action: 'CRIADO', userId: actor.id, userName: actor.name, toUnitId: origin.id, toUnitName: origin.nome, readAt: new Date() },
@@ -520,7 +543,7 @@ export async function getProcess(actor: ProcessActor, id: string) {
     where: { processId: id, readAt: null, OR: [{ toUnitId: { in: actor.unitIds } }, { toUserId: actor.id }] },
     data: { readAt: new Date() },
   });
-  const [full, protocol] = await Promise.all([
+  const [full, protocol, documents] = await Promise.all([
     prisma.internalProcess.findFirst({
       where: { id },
       include: {
@@ -533,10 +556,19 @@ export async function getProcess(actor: ProcessActor, id: string) {
     process.protocolId
       ? prisma.protocolSimplified.findFirst({ where: { id: process.protocolId }, select: { id: true, number: true, title: true, status: true } })
       : Promise.resolve(null),
+    prisma.internalProcessDocument.findMany({
+      where: { processId: id },
+      orderBy: { createdAt: 'asc' },
+      select: { id: true, templateKey: true, title: true, stageKey: true, signedAt: true, signedByName: true, createdByName: true, updatedAt: true },
+    }),
   ]);
+  const flow = getFlow(process.flowKey);
   return {
     ...full,
     protocol,
+    documents,
+    flow: flow ? buildFlowView(flow, process.stageKey, documents) : null,
+    warnings: flowWarnings(process.flowKey, process.fields as Record<string, any>),
     canAct: isOpen(process.status) && canActOnProcess(actor, process),
     overdue: !!process.dueAt && isOpen(process.status) && process.dueAt < new Date(),
   };

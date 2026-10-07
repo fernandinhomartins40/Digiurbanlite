@@ -3,7 +3,10 @@
  * Substitui /api/flow (proxy do digiurban-flow, que nunca foi para produção).
  */
 
-import { processPdf, signProcess, summarizeProcess, verifySignature } from '../services/internal-process/internal-process-extras.service';
+import { advanceStage, createDocument, deleteDocument, getDocument, signDocument, updateDocument, updateFields } from '../services/internal-process/flows/flow.service';
+import { CRITERIOS, DISPENSA_LIMITS, FLOWS, HIPOTESES_DISPENSA, HIPOTESES_INEXIGIBILIDADE, MODALIDADES } from '../services/internal-process/flows/flows';
+import { DOCUMENT_TEMPLATES } from '../services/internal-process/flows/templates';
+import { documentPdf, processPdf, signProcess, summarizeProcess, verifySignature } from '../services/internal-process/internal-process-extras.service';
 import { assertProtocolAccess } from '../services/protocol-access.service';
 import { Router, Request, Response } from 'express';
 import { adminAuthMiddleware } from '../middleware/admin-auth';
@@ -83,6 +86,47 @@ router.put('/types/:id', handle(async (req, res) => {
   res.json({ success: true, data: { type: await prisma.internalProcessType.update({ where: { id: type.id }, data }) } });
 }));
 
+// fluxos de contratação (Lei 14.133/2021): etapas, modelos e limites — para a tela
+router.get('/flows', handle(async (_req, res) => {
+  res.json({
+    success: true,
+    data: {
+      flows: Object.values(FLOWS).map((flow) => ({ key: flow.key, name: flow.name, description: flow.description, stages: flow.stages.map((stage) => ({ key: stage.key, name: stage.name, legal: stage.legal })) })),
+      templates: Object.values(DOCUMENT_TEMPLATES).map((template) => ({ key: template.key, title: template.title, legal: template.legal })),
+      modalidades: MODALIDADES,
+      criterios: CRITERIOS,
+      hipotesesDispensa: HIPOTESES_DISPENSA,
+      hipotesesInexigibilidade: HIPOTESES_INEXIGIBILIDADE,
+      limites: DISPENSA_LIMITS,
+    },
+  });
+}));
+
+// documentos do processo (feitos a partir dos modelos)
+router.get('/documents/:docId', handle(async (req, res) => {
+  res.json({ success: true, data: await getDocument(await actorOf(req), req.params.docId) });
+}));
+
+router.put('/documents/:docId', handle(async (req, res) => {
+  res.json({ success: true, data: { document: await updateDocument(await actorOf(req), req.params.docId, String(req.body?.content || '')) } });
+}));
+
+router.delete('/documents/:docId', handle(async (req, res) => {
+  await deleteDocument(await actorOf(req), req.params.docId);
+  res.json({ success: true });
+}));
+
+router.post('/documents/:docId/sign', handle(async (req, res) => {
+  res.json({ success: true, data: await signDocument(await actorOf(req), req.params.docId, String(req.body?.password || '')) });
+}));
+
+router.get('/documents/:docId/pdf', handle(async (req, res) => {
+  const { buffer, filename } = await documentPdf(await actorOf(req), req.params.docId);
+  res.setHeader('Content-Type', 'application/pdf');
+  res.setHeader('Content-Disposition', `attachment; filename="${filename}"`);
+  res.send(buffer);
+}));
+
 // destinos (unidades do organograma) + sugestão pelo assunto
 router.get('/units', handle(async (req, res) => {
   res.json({ success: true, data: await destinationUnits(typeof req.query.text === 'string' ? req.query.text : undefined) });
@@ -143,6 +187,7 @@ router.post('/', handle(async (req, res) => {
     priority: Number(req.body?.priority) === 1 ? 1 : 0,
     confidential: Boolean(req.body?.confidential),
     protocolId: typeof req.body?.protocolId === 'string' && req.body.protocolId ? req.body.protocolId : undefined,
+    fields: req.body?.fields && typeof req.body.fields === 'object' ? req.body.fields : undefined,
   });
   res.status(201).json({ success: true, data: { process } });
 }));
@@ -187,6 +232,18 @@ router.post('/:id/archive', handle(async (req, res) => {
 
 router.post('/:id/cancel', handle(async (req, res) => {
   res.json({ success: true, data: { process: await closeProcess(await actorOf(req), req.params.id, 'CANCELADO', req.body?.note) } });
+}));
+
+router.post('/:id/documents', handle(async (req, res) => {
+  res.status(201).json({ success: true, data: { document: await createDocument(await actorOf(req), req.params.id, String(req.body?.templateKey || '')) } });
+}));
+
+router.post('/:id/advance', handle(async (req, res) => {
+  res.json({ success: true, data: await advanceStage(await actorOf(req), req.params.id, typeof req.body?.note === 'string' ? req.body.note : undefined) });
+}));
+
+router.put('/:id/fields', handle(async (req, res) => {
+  res.json({ success: true, data: await updateFields(await actorOf(req), req.params.id, req.body || {}) });
 }));
 
 router.post('/:id/summary', handle(async (req, res) => {

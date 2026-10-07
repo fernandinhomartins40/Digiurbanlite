@@ -15,6 +15,7 @@ import { tryGetTenantId } from '../../lib/tenant-context';
 import { complete } from '../ai-gateway/gateway';
 import { getProcess, InternalProcessError } from './internal-process.service';
 import { canViewProcess, ProcessActor } from './rules';
+import { documentHash, getDocument } from './flows/flow.service';
 
 /** Resumo curto do processo (assunto, texto, despachos e pareceres) para quem chega agora */
 export async function summarizeProcess(actor: ProcessActor & { name: string }, id: string): Promise<string> {
@@ -92,6 +93,25 @@ export async function signProcess(actor: ProcessActor & { name: string }, id: st
 export async function verifySignature(actor: ProcessActor, code: string) {
   const clean = String(code || '').replace(/[^0-9a-f]/gi, '').toLowerCase();
   if (clean.length < 16) throw new InternalProcessError('Código inválido.');
+  // documento do processo (DFD, ETP, parecer...)
+  const signedDoc = await prisma.internalProcessDocument.findFirst({
+    where: { signatureHash: { startsWith: clean.slice(0, 16) } },
+    include: { process: true },
+  });
+  if (signedDoc) {
+    if (!canViewProcess(actor, { ...signedDoc.process, involvedUnitIds: [], involvedUserIds: [] }) && signedDoc.process.confidential) {
+      throw new InternalProcessError('Assinatura não encontrada.', 404);
+    }
+    const expectedDoc = documentHash(signedDoc, signedDoc.signedById || '', signedDoc.signedAt!);
+    return {
+      number: signedDoc.process.number,
+      subject: `${signedDoc.title} — ${signedDoc.process.subject}`,
+      signer: signedDoc.signedByName,
+      signedAt: signedDoc.signedAt,
+      valid: expectedDoc === signedDoc.signatureHash,
+    };
+  }
+
   const movement = await prisma.internalProcessMovement.findFirst({
     where: { signatureHash: { startsWith: clean.slice(0, 16) } },
     include: { process: true },
@@ -149,20 +169,42 @@ export async function processPdf(actor: ProcessActor & { name: string }, id: str
     ${history.length ? `<h2>Tramitação e despachos</h2>${history
       .map((move) => `<div class="item"><b>${escapeHtml(move.action)}</b> — ${escapeHtml(move.userName)}, ${date(move.createdAt)}${move.fromUnitName && move.toUnitName ? ` · ${escapeHtml(move.fromUnitName)} → ${escapeHtml(move.toUnitName)}` : ''}${move.note ? `<div class="box">${escapeHtml(move.note)}</div>` : ''}</div>`)
       .join('')}` : ''}
+    ${(process.documents || []).length ? `<h2>Documentos</h2>${(process.documents as any[])
+      .map((doc) => `<div class="item">${escapeHtml(doc.title)}${doc.signedAt ? ` — assinado por ${escapeHtml(doc.signedByName)} em ${date(doc.signedAt)}` : ' — não assinado'}</div>`)
+      .join('')}` : ''}
     ${process.conclusion ? `<h2>Conclusão</h2><div class="box">${escapeHtml(process.conclusion)}</div>` : ''}
     ${signatures.length ? `<h2>Assinaturas eletrônicas</h2>${signatures
       .map((move) => `<div class="sig">${escapeHtml(move.userName)} — ${date(move.createdAt)}<br><span class="muted">Código de verificação: ${escapeHtml(String(move.signatureHash || '').slice(0, 16).toUpperCase().match(/.{1,4}/g)?.join('-'))}</span></div>`)
       .join('')}<p class="muted">Assinatura eletrônica com login e senha (Lei 14.063/2020). Confira o código em Processos internos › Conferir assinatura.</p>` : ''}
   </body></html>`;
 
+  return { buffer: await renderPdf(html), filename: `${process.number}.pdf` };
+}
+
+async function renderPdf(html: string): Promise<Buffer> {
   const { chromium } = await import('playwright');
   const browser = await chromium.launch({ headless: true, args: ['--no-sandbox', '--disable-setuid-sandbox', '--disable-dev-shm-usage'] });
   try {
     const page = await browser.newPage();
     await page.setContent(html, { waitUntil: 'load' });
-    const buffer = await page.pdf({ format: 'A4', margin: { top: '20mm', bottom: '20mm', left: '18mm', right: '18mm' }, printBackground: true });
-    return { buffer: Buffer.from(buffer), filename: `${process.number}.pdf` };
+    const buffer = await page.pdf({ format: 'A4', margin: { top: '20mm', bottom: '20mm', left: '20mm', right: '18mm' }, printBackground: true });
+    return Buffer.from(buffer);
   } finally {
     await browser.close();
   }
+}
+
+/** PDF de um documento do processo (texto do modelo + assinatura) */
+export async function documentPdf(actor: ProcessActor, documentId: string): Promise<{ buffer: Buffer; filename: string }> {
+  const { document } = await getDocument(actor, documentId);
+  const code = document.signatureHash ? document.signatureHash.slice(0, 16).toUpperCase().match(/.{1,4}/g)!.join('-') : null;
+  const html = `<!DOCTYPE html><html><head><meta charset="UTF-8"><style>
+    body { font-family: 'Times New Roman', serif; font-size: 12.5px; color: #111; line-height: 1.55; }
+    .text { white-space: pre-wrap; } .sig { margin-top: 24px; border-top: 1px solid #999; padding-top: 6px; font-family: Arial, sans-serif; font-size: 10.5px; color: #333; }
+  </style></head><body>
+    <div class="text">${escapeHtml(document.content)}</div>
+    ${code ? `<div class="sig">Documento assinado eletronicamente por ${escapeHtml(document.signedByName)} em ${new Date(document.signedAt!).toLocaleString('pt-BR')} (Lei 14.063/2020). Código de verificação: ${code}</div>` : '<div class="sig">Documento ainda não assinado.</div>'}
+  </body></html>`;
+  const safe = document.title.normalize('NFD').replace(/[̀-ͯ]/g, '').replace(/[^a-zA-Z0-9]+/g, '-').slice(0, 60);
+  return { buffer: await renderPdf(html), filename: `${safe}.pdf` };
 }

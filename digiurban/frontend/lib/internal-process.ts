@@ -21,6 +21,9 @@ export const MOVEMENT_LABEL: Record<string, string> = {
   CANCELADO: 'Cancelado',
   REABERTO: 'Reaberto',
   ASSINADO: 'Assinado',
+  DOCUMENTO: 'Documento',
+  ETAPA: 'Etapa',
+  PRAZO: 'Prazo vencido',
 };
 
 export function formatDateTime(value: string | null | undefined): string {

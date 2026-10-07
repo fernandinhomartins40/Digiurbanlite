@@ -11640,6 +11640,8 @@ model InternalProcessType {
   defaultDays Int      @default(5) // prazo padrão (dias úteis)
   isActive    Boolean  @default(true)
   sortOrder   Int      @default(0)
+  // fluxo com etapas (LICITACAO | DISPENSA | INEXIGIBILIDADE) — services/internal-process/flows
+  flowKey     String?
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 
@@ -11687,10 +11689,17 @@ model InternalProcess {
   concludedAt         DateTime?
   conclusion          String?   @db.Text
   summary             String?   @db.Text // resumo gerado (IA)
+  // fluxo com etapas (licitação/contratação direta): etapa atual e prazo dela
+  flowKey             String?
+  stageKey            String?
+  stageDueAt          DateTime?
+  // dados da contratação: valor estimado, modalidade, critério, inciso...
+  fields              Json?
   createdAt           DateTime  @default(now())
   updatedAt           DateTime  @updatedAt
 
   type      InternalProcessType       @relation(fields: [typeId], references: [id])
+  documents InternalProcessDocument[]
   parent    InternalProcess?          @relation("InternalProcessChildren", fields: [parentId], references: [id], onDelete: SetNull)
   children  InternalProcess[]         @relation("InternalProcessChildren")
   movements InternalProcessMovement[]
@@ -11702,6 +11711,7 @@ model InternalProcess {
   @@index([currentUserId])
   @@index([protocolId])
   @@index([parentId])
+  @@index([flowKey, stageKey])
   @@map("internal_processes")
 }
 
@@ -11731,4 +11741,33 @@ model InternalProcessMovement {
   @@index([toUnitId, readAt])
   @@index([signatureHash])
   @@map("internal_process_movements")
+}
+
+/// Documento do processo interno feito a partir de um modelo (DFD, ETP,
+/// Termo de Referência, parecer...), editável e assinável eletronicamente
+model InternalProcessDocument {
+  id            String    @id @default(cuid())
+  tenantId      String?
+  processId     String
+  templateKey   String
+  title         String
+  stageKey      String?
+  content       String    @db.Text
+  createdById   String
+  createdByName String
+  updatedById   String?
+  updatedByName String?
+  signatureHash String?
+  signedById    String?
+  signedByName  String?
+  signedAt      DateTime?
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  process InternalProcess @relation(fields: [processId], references: [id], onDelete: Cascade)
+
+  @@index([processId])
+  @@index([tenantId])
+  @@index([signatureHash])
+  @@map("internal_process_documents")
 }
