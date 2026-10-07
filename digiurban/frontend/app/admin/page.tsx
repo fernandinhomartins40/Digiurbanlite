@@ -158,8 +158,8 @@ const getSearchItems = () => [
   { title: 'Assinaturas Digitais', description: 'Assinatura eletronica de documentos', href: '/admin/assinaturas-digitais', category: 'Documentos', keywords: ['assinatura', 'digital'] },
   { title: 'Painel do Prefeito', description: 'Visao executiva municipal', href: '/admin/gabinete/painel-prefeito', category: 'Gabinete', keywords: ['prefeito', 'executivo'] },
   { title: 'Demandas do Gabinete', description: 'Enviar e acompanhar demandas às secretarias', href: '/admin/chamados', category: 'Gabinete', keywords: ['chamado', 'demanda', 'gabinete'] },
-  { title: 'Agenda', description: 'Agenda centralizada', href: '/admin/agenda', category: 'Gabinete', keywords: ['agenda', 'calendario'] },
-  { title: 'Mapa de Demandas', description: 'Mapa dos protocolos', href: '/admin/gabinete/mapa-demandas', category: 'Gabinete', keywords: ['mapa', 'demandas'] },
+  { title: 'Agenda', description: 'Minha agenda, da unidade e da secretaria', href: '/admin/agenda', category: 'Atendimento', keywords: ['agenda', 'calendario', 'compromisso'] },
+  { title: 'Mapa dos pedidos', description: 'Pedidos no mapa', href: '/admin/mapa', category: 'Atendimento', keywords: ['mapa', 'demandas', 'territorio', 'bairro'] },
   { title: 'Equipe', description: 'Equipe e permissoes', href: '/admin/servidores/equipe', category: 'Sistema', keywords: ['equipe', 'servidores'] },
   { title: 'Organograma', description: 'Estrutura administrativa', href: '/admin/organograma', category: 'Sistema', keywords: ['organograma', 'estrutura'] },
   { title: 'Configuracoes', description: 'Configuracoes do sistema', href: '/admin/configuracoes', category: 'Sistema', keywords: ['configuracao', 'sistema'] },
@@ -169,6 +169,8 @@ const getSearchItems = () => [
 export default function AdminPage() {
   const { user, stats, loading, apiRequest } = useAdminAuth()
   const { hasPermission, hasMinRole } = useAdminPermissions()
+  // perfil Gabinete do Prefeito (o Super-admin sempre pode)
+  const hasGabinete = user?.role === 'SUPER_ADMIN' || user?.gabineteAccess === true
   const { trackCardClick } = useAnalytics()
   const [mounted, setMounted] = useState(false)
   const [pendingProtocols, setPendingProtocols] = useState<PendingProtocol[]>([])
@@ -347,7 +349,7 @@ export default function AdminPage() {
         category: 'Comunicacao',
         section: 'Atalhos',
       },
-      hasMinRole('ADMIN') && {
+      hasGabinete && {
         title: 'Demandas do Gabinete',
         description: 'Enviar e acompanhar',
         href: '/admin/chamados',
@@ -407,17 +409,17 @@ export default function AdminPage() {
         category: 'Documentos',
         section: 'Atalhos',
       },
-      hasMinRole('ADMIN') && {
+      {
         title: 'Agenda',
         description: 'Compromissos',
         href: '/admin/agenda',
         icon: Calendar,
         color: 'text-blue-600',
         bg: 'bg-blue-50',
-        category: 'Gabinete',
+        category: 'Atendimento',
         section: 'Atalhos',
       },
-      hasMinRole('ADMIN') && {
+      hasGabinete && {
         title: 'Painel do Prefeito',
         description: 'KPIs executivos',
         href: '/admin/gabinete/painel-prefeito',
@@ -427,14 +429,14 @@ export default function AdminPage() {
         category: 'Gabinete',
         section: 'Atalhos',
       },
-      hasMinRole('ADMIN') && {
-        title: 'Mapa de Demandas',
+      hasPermission('protocols:read') && {
+        title: 'Mapa dos pedidos',
         description: 'Visao territorial',
-        href: '/admin/gabinete/mapa-demandas',
+        href: '/admin/mapa',
         icon: Map,
         color: 'text-emerald-600',
         bg: 'bg-emerald-50',
-        category: 'Gabinete',
+        category: 'Atendimento',
         section: 'Atalhos',
       },
       hasMinRole('ADMIN') && {
@@ -850,12 +852,12 @@ export default function AdminPage() {
         />
       </section>
 
-      {hasMinRole('ADMIN') && (
+      {(hasGabinete || hasMinRole('ADMIN')) && (
         <section className="grid gap-4 lg:grid-cols-4">
-          <ActionCard title="Painel do Prefeito" description="KPIs executivos" href="/admin/gabinete/painel-prefeito" icon={Building2} color="text-yellow-600" bg="bg-yellow-50" />
+          {hasGabinete && <ActionCard title="Painel do Prefeito" description="Hoje, secretarias, território" href="/admin/gabinete/painel-prefeito" icon={Building2} color="text-yellow-600" bg="bg-yellow-50" />}
           <ActionCard title="Agenda" description="Compromissos e reunioes" href="/admin/agenda" icon={Calendar} color="text-blue-600" bg="bg-blue-50" />
-          <ActionCard title="Mapa de Demandas" description="Protocolos no territorio" href="/admin/gabinete/mapa-demandas" icon={Map} color="text-green-600" bg="bg-green-50" />
-          <ActionCard title="DigiBot" description="Assistente do cidadão" href="/admin/digibot" icon={Cpu} color="text-cyan-600" bg="bg-cyan-50" />
+          <ActionCard title="Mapa dos pedidos" description="Pedidos no territorio" href="/admin/mapa" icon={Map} color="text-green-600" bg="bg-green-50" />
+          {hasMinRole('ADMIN') && <ActionCard title="DigiBot" description="Assistente do cidadão" href="/admin/digibot" icon={Cpu} color="text-cyan-600" bg="bg-cyan-50" />}
         </section>
       )}
 

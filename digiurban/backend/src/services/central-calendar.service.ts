@@ -62,10 +62,15 @@ export type CentralCalendarEventWithRelations = Prisma.CentralCalendarEventGetPa
   include: typeof CALENDAR_EVENT_INCLUDE;
 }>;
 
+/** agenda do sistema: Agenda do Prefeito (uma por município) */
+export const MAYOR_CALENDAR_KEY = 'MAYOR';
+
 interface UserContext {
   userId: string;
   role: UserRole;
   isAdmin: boolean;
+  /** perfil Gabinete do Prefeito (mantém a Agenda do Prefeito) */
+  gabinete: boolean;
   departmentIds: string[];
   organizationalUnitIds: string[];
 }
@@ -244,6 +249,7 @@ export class CentralCalendarService {
       userId: user.id,
       role: user.role,
       isAdmin: user.role === UserRole.ADMIN || user.role === UserRole.SUPER_ADMIN,
+      gabinete: user.role === UserRole.SUPER_ADMIN || (user as any).gabineteAccess === true,
       departmentIds: Array.from(departmentIds),
       organizationalUnitIds: Array.from(organizationalUnitIds),
     };
@@ -290,6 +296,8 @@ export class CentralCalendarService {
           },
         },
       },
+      // compromissos públicos da Agenda do Prefeito: todo servidor vê
+      { isPrivate: false, calendar: { systemKey: MAYOR_CALENDAR_KEY } },
     ];
 
     if (context.departmentIds.length > 0) {
@@ -808,6 +816,9 @@ export class CentralCalendarService {
 
     if (!input.includeAll || !context.isAdmin) {
       Object.assign(where, this.buildVisibilityWhere(context));
+    } else {
+      // "ver tudo" do administrador NÃO inclui compromissos particulares dos outros
+      Object.assign(where, { OR: [this.buildVisibilityWhere(context), { isPrivate: false }] });
     }
 
     if (input.startAt || input.endAt) {
@@ -858,14 +869,12 @@ export class CentralCalendarService {
 
   private async assertCanManageEvent(userId: string, eventId: string): Promise<void> {
     const context = await this.getUserContext(userId);
-    if (context.isAdmin) {
-      return;
-    }
 
     const event = await prisma.centralCalendarEvent.findUnique({
       where: { id: eventId },
       select: {
         ownerUserId: true,
+        isPrivate: true,
         calendar: {
           select: {
             members: {
@@ -885,6 +894,11 @@ export class CentralCalendarService {
       return;
     }
 
+    // administrador mexe em compromisso de outra pessoa, menos nos particulares
+    if (context.isAdmin && !event.isPrivate) {
+      return;
+    }
+
     const member = event.calendar.members[0];
     if (member && (member.role === 'OWNER' || member.role === 'EDITOR')) {
       return;
@@ -893,7 +907,74 @@ export class CentralCalendarService {
     throw new Error('Usuário sem permissão para alterar este evento');
   }
 
+  /** Agenda do Prefeito do município (criada na primeira vez) */
+  async ensureMayorCalendar(tx: PrismaClientLike = prisma): Promise<string> {
+    const existing = await tx.centralCalendar.findFirst({ where: { systemKey: MAYOR_CALENDAR_KEY }, select: { id: true } });
+    if (existing) return existing.id;
+    try {
+      const calendar = await tx.centralCalendar.create({
+        data: {
+          type: CentralCalendarType.SHARED,
+          name: 'Agenda do Prefeito',
+          description: 'Compromissos do prefeito, mantidos pela equipe do gabinete',
+          systemKey: MAYOR_CALENDAR_KEY,
+        } as any,
+      });
+      return calendar.id;
+    } catch {
+      const again = await tx.centralCalendar.findFirst({ where: { systemKey: MAYOR_CALENDAR_KEY }, select: { id: true } });
+      if (!again) throw new Error('Agenda do Prefeito não criada');
+      return again.id;
+    }
+  }
+
+  /** Equipe do gabinete = editores da Agenda do Prefeito (quem saiu do gabinete deixa de ser) */
+  async syncMayorCalendarMembers(): Promise<string> {
+    const calendarId = await this.ensureMayorCalendar();
+    const team = await prisma.user.findMany({ where: { isActive: true, gabineteAccess: true } as any, select: { id: true } });
+    const teamIds = new Set(team.map((user) => user.id));
+    const members = await prisma.centralCalendarMember.findMany({ where: { calendarId }, select: { id: true, userId: true } });
+    const memberIds = new Set(members.map((member) => member.userId));
+    for (const user of team) {
+      if (!memberIds.has(user.id)) {
+        await prisma.centralCalendarMember
+          .create({ data: { calendarId, userId: user.id, role: 'EDITOR' as any } })
+          .catch(() => undefined);
+      }
+    }
+    const leaving = members.filter((member) => !teamIds.has(member.userId)).map((member) => member.id);
+    if (leaving.length) await prisma.centralCalendarMember.deleteMany({ where: { id: { in: leaving } } });
+    return calendarId;
+  }
+
+  /** Pode marcar compromisso nesta agenda? (dono, editor, a própria secretaria/unidade, administrador) */
+  private async assertCanWriteCalendar(userId: string, calendarId: string): Promise<void> {
+    const context = await this.getUserContext(userId);
+    const calendar = await prisma.centralCalendar.findUnique({
+      where: { id: calendarId },
+      select: {
+        ownerUserId: true,
+        departmentId: true,
+        organizationalUnitId: true,
+        systemKey: true,
+        members: { where: { userId }, select: { role: true } },
+      } as any,
+    }) as any;
+    if (!calendar) throw new Error('Agenda selecionada não encontrada');
+    if (calendar.systemKey === MAYOR_CALENDAR_KEY) {
+      if (context.gabinete) return;
+      throw new Error('Só a equipe do gabinete marca compromissos na Agenda do Prefeito');
+    }
+    if (context.isAdmin || calendar.ownerUserId === userId) return;
+    const member = calendar.members?.[0];
+    if (member && (member.role === 'OWNER' || member.role === 'EDITOR')) return;
+    if (calendar.departmentId && context.departmentIds.includes(calendar.departmentId)) return;
+    if (calendar.organizationalUnitId && context.organizationalUnitIds.includes(calendar.organizationalUnitId)) return;
+    throw new Error('Sem permissão para marcar compromisso nesta agenda');
+  }
+
   async createManualEvent(userId: string, input: Omit<UpsertCalendarEventInput, 'ownerUserId'>) {
+    if (input.calendarId) await this.assertCanWriteCalendar(userId, input.calendarId);
     return this.upsertEventBySource({
       ...input,
       ownerUserId: userId,
@@ -1016,6 +1097,8 @@ export class CentralCalendarService {
 
   async listMyCalendars(userId: string) {
     const context = await this.getUserContext(userId);
+    // equipe do gabinete: Agenda do Prefeito aparece (e a equipe fica em dia)
+    if (context.gabinete) await this.syncMayorCalendarMembers().catch(() => undefined);
     return prisma.centralCalendar.findMany({
       where: context.isAdmin
         ? undefined

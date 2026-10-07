@@ -40,6 +40,8 @@ interface CentralAgendaEventModalProps {
   event?: CentralAgendaEvent | null;
   presetStartAt?: string;
   presetEndAt?: string;
+  /** agendas onde a pessoa pode marcar (minha, unidade, secretaria, Agenda do Prefeito...) */
+  calendars?: Array<{ id: string; name: string; type: string }>;
 }
 
 const STATUS_OPTIONS: Array<{ value: CentralCalendarEventStatus; label: string }> = [
@@ -76,6 +78,7 @@ export function CentralAgendaEventModal({
   event,
   presetStartAt,
   presetEndAt,
+  calendars,
 }: CentralAgendaEventModalProps) {
   const [formData, setFormData] = useState<CentralAgendaEventFormInput>({
     title: '',
@@ -87,6 +90,7 @@ export function CentralAgendaEventModal({
     allDay: false,
     status: 'SCHEDULED',
     isPrivate: true,
+    calendarId: undefined,
   });
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -107,6 +111,7 @@ export function CentralAgendaEventModal({
         allDay: Boolean(event.allDay),
         status: event.status,
         isPrivate: Boolean(event.isPrivate),
+        calendarId: event.calendarId,
       });
       setError(null);
       return;
@@ -130,8 +135,10 @@ export function CentralAgendaEventModal({
       allDay: false,
       status: 'SCHEDULED',
       isPrivate: true,
+      calendarId: calendars?.find((item) => item.type === 'PERSONAL')?.id,
     });
     setError(null);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [open, event, presetStartAt, presetEndAt]);
 
   const durationLabel = useMemo(() => {
@@ -306,6 +313,22 @@ export function CentralAgendaEventModal({
               </Select>
             </div>
 
+            {!event && calendars && calendars.length > 1 && (
+              <div className="space-y-2">
+                <Label htmlFor="calendarId">Em qual agenda</Label>
+                <select
+                  id="calendarId"
+                  value={formData.calendarId || ''}
+                  onChange={(e) => setFormData((prev) => ({ ...prev, calendarId: e.target.value || undefined }))}
+                  className="h-10 w-full rounded-md border border-input bg-background px-2 text-sm"
+                >
+                  {calendars.map((calendar) => (
+                    <option key={calendar.id} value={calendar.id}>{calendar.name}</option>
+                  ))}
+                </select>
+              </div>
+            )}
+
             <div className="space-y-3 pt-2">
               <div className="flex items-center justify-between">
                 <Label htmlFor="allDay">Dia inteiro</Label>
@@ -319,7 +342,7 @@ export function CentralAgendaEventModal({
               </div>
 
               <div className="flex items-center justify-between">
-                <Label htmlFor="isPrivate">Privado</Label>
+                <Label htmlFor="isPrivate" title="Particular: só você (ou a equipe dessa agenda) vê">Particular</Label>
                 <Switch
                   id="isPrivate"
                   checked={Boolean(formData.isPrivate)}

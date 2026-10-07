@@ -352,9 +352,9 @@ loadRoute('/api/protocols', './routes/protocols-simplified.routes');
 loadRoute('/api/admin/chamados', './routes/admin-chamados');
 loadRoute('/api/departments', './routes/departments-tickets');
 loadRoute('/api/admin/relatorios', './routes/admin-reports');
-loadRoute('/api/admin/gabinete/agenda', './routes/admin-gabinete-agenda-central.routes');
-loadRoute('/api/admin/gabinete', './routes/admin-gabinete');
 loadRoute('/api/admin/gabinete/painel-prefeito', './routes/admin-gabinete-painel');
+// Mapa dos pedidos para todo servidor (no escopo dele; Gabinete vê tudo)
+loadRoute('/api/map', './routes/map.routes');
 loadRoute('/api/admin/citizens', './routes/admin-citizens');
 loadRoute('/api/admin/citizen-documents', './routes/admin-citizen-documents');
 loadRoute('/api/admin/citizen-tags', './routes/admin-citizen-tags');
@@ -408,6 +408,7 @@ try { require('./jobs/privacy-retention.job').initPrivacyRetentionJob(); } catch
 try { require('./jobs/doc-reading.job').initDocReadingJob(); } catch (e) { logger.error('Failed to start document reading job', { error: e }); }
 try { require('./jobs/org-chart-startup.job').initOrgChartStartupSync(); } catch (e) { logger.error('Failed to start org chart sync', { error: e }); }
 try { require('./jobs/signing-keys-startup.job').initSigningKeysStartup(); } catch (e) { logger.error('Failed to start signing keys setup', { error: e }); }
+try { require('./jobs/protocol-geocoding.job').initProtocolGeocodingJob(); } catch (e) { logger.error('Failed to start protocol geocoding job', { error: e }); }
 try { require('./jobs/document-templates-startup.job').initDocumentTemplatesStartup(); } catch (e) { logger.error('Failed to start document templates catalog', { error: e }); }
 try { require('./jobs/internal-process-deadlines.job').initInternalProcessDeadlinesJob(); } catch (e) { logger.error('Failed to start internal process deadlines job', { error: e }); }
 

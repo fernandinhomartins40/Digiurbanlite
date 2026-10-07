@@ -121,7 +121,8 @@ function canManageTicket(user: User, requestedById: string): boolean {
   return (
     user.id === requestedById ||
     user.role === UserRole.ADMIN ||
-    user.role === UserRole.SUPER_ADMIN
+    user.role === UserRole.SUPER_ADMIN ||
+    (user as any).gabineteAccess === true
   );
 }
 
@@ -410,7 +411,8 @@ router.get(
     const departmentId = getStringParam(req.query.departmentId);
     const skip = (page - 1) * limit;
     const where: Record<string, unknown> = {};
-    const canSeeAll = user.role === UserRole.ADMIN || user.role === UserRole.SUPER_ADMIN;
+    // o gabinete acompanha todas as demandas do gabinete, não só as que a pessoa criou
+    const canSeeAll = user.role === UserRole.ADMIN || user.role === UserRole.SUPER_ADMIN || (user as any).gabineteAccess === true;
 
     if (!canSeeAll) {
       where.requestedById = user.id;

@@ -1,363 +1,414 @@
 'use client'
 
-import { useEffect, useState } from 'react'
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
-import { Badge } from '@/components/ui/badge'
-import { Button } from '@/components/ui/button'
-import { Circle, RefreshCw, AlertTriangle, Bell, Calendar, Map, CheckCircle } from 'lucide-react'
+/**
+ * Painel do Prefeito — perfil Gabinete (marcado no cadastro do servidor).
+ * Uma página com abas, para analisar e administrar o que acontece:
+ *  - Hoje: pedidos (no prazo/atrasados/concluídos), satisfação, alertas,
+ *    Agenda do Prefeito, assinaturas esperando, demandas do gabinete;
+ *  - Secretarias: como cada uma está, com "ver atrasados" e "cobrar";
+ *  - Território: o mapa dos pedidos do município;
+ *  - Gestão interna: processos internos, contratações por etapa, ordens do gabinete;
+ *  - Cidadão: busca e histórico completo.
+ */
+
+import { Suspense, useEffect, useState } from 'react'
 import Link from 'next/link'
+import { usePathname, useRouter, useSearchParams } from 'next/navigation'
+import { AlertTriangle, Bell, Building2, Calendar, ChevronDown, ChevronUp, Circle, Loader2, PenLine, Plus, RefreshCw, Star } from 'lucide-react'
 import { useAdminAuth } from '@/contexts/AdminAuthContext'
+import { Button } from '@/components/ui/button'
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
+import { useToast } from '@/hooks/use-toast'
 import { CitizenSearchBar } from '@/components/admin/gabinete/CitizenSearchBar'
 import { ChamadosRecentesList } from '@/components/admin/gabinete/ChamadosRecentesList'
-import { useToast } from '@/hooks/use-toast'
-import { getFullApiUrl } from '@/lib/api-config'
+import { ProtocolsMapView } from '@/components/admin/map/ProtocolsMapView'
+import { cn } from '@/lib/utils'
 
-interface SimpleStats {
-  totalActive: number
-  totalCompleted: number
-  completionRate: number
-  avgResponseTime: number
+const TABS = ['hoje', 'secretarias', 'territorio', 'gestao', 'cidadao'] as const
+type Tab = (typeof TABS)[number]
+
+const time = (value: string) => new Date(value).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })
+const date = (value?: string | null) => (value ? new Date(value).toLocaleDateString('pt-BR') : '-')
+const brl = (value?: number | null) => (value ? value.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL', maximumFractionDigits: 0 }) : '')
+
+async function call(path: string, init?: RequestInit) {
+  const response = await fetch(`/api/admin/gabinete/painel-prefeito${path}`, {
+    credentials: 'include',
+    ...init,
+    headers: { 'Content-Type': 'application/json', ...(init?.headers || {}) },
+  })
+  const data = await response.json().catch(() => ({}))
+  if (!response.ok || data?.success === false) throw new Error(data?.error || 'Não foi possível concluir')
+  return data
 }
 
-interface OverdueSLA {
-  id: string
-  protocol: {
-    id: string
-    number: string
-    title: string
-    status: string
-    department: { name: string } | null
-    citizen: { name: string }
-  }
-  dueDate: string
-  daysOverdue: number
+function Kpi({ label, value, hint, tone = 'text-gray-900' }: { label: string; value: string | number; hint?: string; tone?: string }) {
+  return (
+    <Card>
+      <CardHeader className="pb-1">
+        <CardTitle className="text-xs font-medium text-gray-600 sm:text-sm">{label}</CardTitle>
+      </CardHeader>
+      <CardContent>
+        <div className={cn('text-2xl font-bold sm:text-3xl', tone)}>{value}</div>
+        {hint && <p className="mt-1 text-xs text-gray-500">{hint}</p>}
+      </CardContent>
+    </Card>
+  )
 }
 
-export default function PainelPrefeitoPage() {
+function PainelPrefeito() {
   const { user } = useAdminAuth()
   const { toast } = useToast()
-  const [stats, setStats] = useState<SimpleStats | null>(null)
-  const [overdueSLAs, setOverdueSLAs] = useState<OverdueSLA[]>([])
-  const [isLoading, setIsLoading] = useState(true)
-  const [lastUpdate, setLastUpdate] = useState<Date | null>(null)
-  const [lastUpdateText, setLastUpdateText] = useState('agora')
+  const router = useRouter()
+  const pathname = usePathname()
+  const searchParams = useSearchParams()
+  const tab: Tab = (TABS as readonly string[]).includes(searchParams.get('aba') || '') ? (searchParams.get('aba') as Tab) : 'hoje'
+  const [data, setData] = useState<any>(null)
+  const [loading, setLoading] = useState(true)
+  const [updatedAt, setUpdatedAt] = useState<Date | null>(null)
+  const [openDept, setOpenDept] = useState<string | null>(null)
+  const [overdueList, setOverdueList] = useState<any[]>([])
+  const [busy, setBusy] = useState<string | null>(null)
 
-  // Verificar se usuário tem permissão
-  if (!user || user.role !== 'ADMIN') {
+  const hasGabinete = user?.role === 'SUPER_ADMIN' || user?.gabineteAccess === true
+
+  const load = async () => {
+    try {
+      setLoading(true)
+      const result = await call('/overview')
+      setData(result.data)
+      setUpdatedAt(new Date())
+    } catch (error: any) {
+      toast({ title: 'Erro', description: error?.message || 'Não foi possível carregar o painel', variant: 'destructive' })
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  useEffect(() => {
+    if (!hasGabinete) return
+    void load()
+    const interval = setInterval(load, 120000)
+    return () => clearInterval(interval)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [hasGabinete])
+
+  if (!user || !hasGabinete) {
     return (
-      <div className="flex items-center justify-center min-h-96">
+      <div className="flex min-h-96 items-center justify-center">
         <Card>
           <CardHeader>
-            <CardTitle>Acesso Restrito</CardTitle>
-            <CardDescription>
-              Apenas o Prefeito (ADMIN) pode acessar este painel
-            </CardDescription>
+            <CardTitle>Acesso restrito</CardTitle>
+            <CardDescription>Só quem tem o perfil Gabinete do Prefeito (marcado no cadastro do servidor) acessa este painel.</CardDescription>
           </CardHeader>
         </Card>
       </div>
     )
   }
 
-  // Carregar dados do painel
-  const loadData = async () => {
+  const changeTab = (next: string) => router.replace(next === 'hoje' ? pathname : `${pathname}?aba=${next}`, { scroll: false })
+
+  const toggleDept = async (departmentId: string) => {
+    if (openDept === departmentId) return setOpenDept(null)
+    setOpenDept(departmentId)
+    setOverdueList([])
     try {
-      setIsLoading(true)
+      const result = await call(`/secretarias/${departmentId}/atrasados`)
+      setOverdueList(result.data || [])
+    } catch {
+      setOverdueList([])
+    }
+  }
 
-      // Buscar estatísticas simples
-      const statsResponse = await fetch(getFullApiUrl('/api/admin/gabinete/painel-prefeito/simple-stats'), {
-        credentials: 'include'
-      })
-
-      if (statsResponse.ok) {
-        const statsData = await statsResponse.json()
-        setStats(statsData.data)
-      }
-
-      // Buscar SLAs atrasados
-      const slaResponse = await fetch(getFullApiUrl('/api/sla/overdue'), {
-        credentials: 'include'
-      })
-
-      if (slaResponse.ok) {
-        const slaData = await slaResponse.json()
-        setOverdueSLAs(slaData.data || [])
-      }
-
-      setLastUpdate(new Date())
-    } catch (error) {
-      console.error('Erro ao carregar dados:', error)
-      toast({
-        title: 'Erro',
-        description: 'Não foi possível carregar os dados do painel',
-        variant: 'destructive'
-      })
+  const chargeDept = async (departmentId: string, name: string) => {
+    try {
+      setBusy(`dept:${departmentId}`)
+      const result = await call(`/secretarias/${departmentId}/cobrar`, { method: 'POST', body: JSON.stringify({}) })
+      toast({ title: `Cobrança enviada à ${name}`, description: result.data?.notified ? `${result.data.notified} pessoa(s) da chefia avisada(s)` : 'A secretaria não tem gerente/coordenador cadastrado para avisar' })
+    } catch (error: any) {
+      toast({ title: 'Não foi possível cobrar', description: error?.message, variant: 'destructive' })
     } finally {
-      setIsLoading(false)
+      setBusy(null)
     }
   }
 
-  useEffect(() => {
-    loadData()
-    // Auto-refresh a cada 2 minutos
-    const interval = setInterval(loadData, 120000)
-    return () => clearInterval(interval)
-  }, [])
-
-  // Atualizar texto de "há X segundos"
-  useEffect(() => {
-    if (!lastUpdate) return
-
-    const interval = setInterval(() => {
-      const seconds = Math.floor((Date.now() - lastUpdate.getTime()) / 1000)
-      if (seconds < 60) {
-        setLastUpdateText(`há ${seconds}s`)
-      } else {
-        const minutes = Math.floor(seconds / 60)
-        setLastUpdateText(`há ${minutes}min`)
-      }
-    }, 1000)
-
-    return () => clearInterval(interval)
-  }, [lastUpdate])
-
-  const handleRefresh = () => {
-    loadData()
-    toast({
-      title: 'Dados atualizados',
-      description: 'O painel foi atualizado com sucesso'
-    })
-  }
-
-  const handleRequestUrgency = async (protocolId: string) => {
+  const chargeProtocol = async (protocolId: string) => {
     try {
-      const response = await fetch(getFullApiUrl(`/api/admin/gabinete/painel-prefeito/request-urgency/${protocolId}`), {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        credentials: 'include'
-      })
-
-      if (!response.ok) throw new Error('Falha ao enviar')
-
-      toast({
-        title: 'Cobrança enviada',
-        description: 'A solicitação de urgência foi registrada e notificada aos responsáveis'
-      })
-
-      loadData()
-    } catch (error) {
-      toast({
-        title: 'Erro',
-        description: 'Não foi possível enviar a cobrança',
-        variant: 'destructive'
-      })
+      setBusy(`protocol:${protocolId}`)
+      const result = await call(`/request-urgency/${protocolId}`, { method: 'POST', body: JSON.stringify({}) })
+      toast({ title: 'Cobrança enviada', description: result.message })
+    } catch (error: any) {
+      toast({ title: 'Não foi possível cobrar', description: error?.message, variant: 'destructive' })
+    } finally {
+      setBusy(null)
     }
   }
+
+  const hoje = data?.hoje
+  const variation = hoje && hoje.concluidosMesAnterior ? Math.round(((hoje.concluidosMes - hoje.concluidosMesAnterior) / hoje.concluidosMesAnterior) * 100) : null
 
   return (
     <div className="space-y-6">
-      {/* Cabeçalho */}
-      <div className="bg-gradient-to-r from-blue-600 to-blue-800 text-white rounded-lg p-4 sm:p-6 md:p-8">
-        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
+      <div className="rounded-lg bg-gradient-to-r from-blue-600 to-blue-800 p-4 text-white sm:p-6">
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
           <div>
-            <h1 className="text-2xl sm:text-3xl md:text-4xl font-bold mb-2">Painel do Prefeito</h1>
-            <p className="text-blue-100 text-sm sm:text-base">Gestão executiva simplificada e prática</p>
+            <h1 className="text-2xl font-bold sm:text-3xl">Painel do Prefeito</h1>
+            <p className="text-sm text-blue-100">O que acontece na administração, hoje.</p>
           </div>
-          <div className="flex items-center gap-2 sm:gap-4 flex-wrap">
-            <Badge
-              variant="secondary"
-              className="bg-white/20 text-white border-white/30 text-xs sm:text-sm"
-            >
-              <Circle className="h-2 w-2 fill-current mr-2" />
-              {lastUpdateText}
-            </Badge>
-            <Button
-              variant="secondary"
-              size="sm"
-              onClick={handleRefresh}
-              disabled={isLoading}
-              className="text-xs sm:text-sm"
-            >
-              <RefreshCw className={`h-4 w-4 mr-2 ${isLoading ? 'animate-spin' : ''}`} />
-              <span className="hidden sm:inline">Atualizar</span>
+          <div className="flex items-center gap-2">
+            <span className="inline-flex items-center gap-1 rounded-full bg-white/20 px-3 py-1 text-xs">
+              <Circle className="h-2 w-2 fill-current" />
+              {updatedAt ? `atualizado às ${updatedAt.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}` : 'carregando'}
+            </span>
+            <Button variant="secondary" size="sm" onClick={load} disabled={loading}>
+              <RefreshCw className={cn('mr-2 h-4 w-4', loading && 'animate-spin')} />Atualizar
             </Button>
           </div>
         </div>
-
-        {/* Busca de Cidadão */}
-        <div className="w-full max-w-3xl">
-          <CitizenSearchBar />
-        </div>
       </div>
 
-      {/* Cards de Métricas Simples */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
-        <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-xs sm:text-sm font-medium text-gray-600">Protocolos Ativos</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl sm:text-3xl font-bold text-blue-600">
-              {isLoading ? '...' : stats?.totalActive || 0}
-            </div>
-          </CardContent>
-        </Card>
+      <Tabs value={tab} onValueChange={changeTab}>
+        <TabsList className="flex h-auto flex-wrap">
+          <TabsTrigger value="hoje">Hoje</TabsTrigger>
+          <TabsTrigger value="secretarias">Secretarias</TabsTrigger>
+          <TabsTrigger value="territorio">Território</TabsTrigger>
+          <TabsTrigger value="gestao">Gestão interna</TabsTrigger>
+          <TabsTrigger value="cidadao">Cidadão</TabsTrigger>
+        </TabsList>
 
-        <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-xs sm:text-sm font-medium text-gray-600">Concluídos (Total)</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl sm:text-3xl font-bold text-green-600">
-              {isLoading ? '...' : stats?.totalCompleted || 0}
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-xs sm:text-sm font-medium text-gray-600">Taxa de Conclusão</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl sm:text-3xl font-bold text-purple-600">
-              {isLoading ? '...' : `${stats?.completionRate || 0}%`}
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-xs sm:text-sm font-medium text-gray-600">Tempo Médio</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl sm:text-3xl font-bold text-orange-600">
-              {isLoading ? '...' : `${stats?.avgResponseTime || 0}d`}
-            </div>
-          </CardContent>
-        </Card>
-      </div>
-
-      {/* Links Rápidos */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-3 sm:gap-4">
-        <Link href="/admin/gabinete/mapa-demandas">
-          <Card className="hover:shadow-lg transition-shadow cursor-pointer border-green-200 bg-green-50">
-            <CardHeader className="p-4 sm:p-6">
-              <div className="flex items-center gap-3">
-                <div className="h-10 w-10 sm:h-12 sm:w-12 rounded-full bg-green-600 text-white flex items-center justify-center flex-shrink-0">
-                  <Map className="h-5 w-5 sm:h-6 sm:w-6" />
-                </div>
-                <div className="min-w-0">
-                  <CardTitle className="text-base sm:text-lg">Mapa de Demandas</CardTitle>
-                  <CardDescription className="text-green-700 text-xs sm:text-sm">
-                    Visualização geográfica dos protocolos
-                  </CardDescription>
-                </div>
-              </div>
-            </CardHeader>
-          </Card>
-        </Link>
-
-        <Link href="/admin/agenda">
-          <Card className="hover:shadow-lg transition-shadow cursor-pointer border-purple-200 bg-purple-50">
-            <CardHeader className="p-4 sm:p-6">
-              <div className="flex items-center gap-3">
-                <div className="h-10 w-10 sm:h-12 sm:w-12 rounded-full bg-purple-600 text-white flex items-center justify-center flex-shrink-0">
-                  <Calendar className="h-5 w-5 sm:h-6 sm:w-6" />
-                </div>
-                <div className="min-w-0">
-                  <CardTitle className="text-base sm:text-lg">Agenda Centralizada</CardTitle>
-                  <CardDescription className="text-purple-700 text-xs sm:text-sm">
-                    Compromissos e eventos oficiais
-                  </CardDescription>
-                </div>
-              </div>
-            </CardHeader>
-          </Card>
-        </Link>
-      </div>
-
-      {/* Chamados Recentes */}
-      <ChamadosRecentesList />
-
-      {/* Protocolos Atrasados (SLA Vencido) */}
-      <Card>
-        <CardHeader>
-          <div>
-            <CardTitle className="flex items-center gap-2 text-lg sm:text-xl">
-              <AlertTriangle className="h-5 w-5 sm:h-6 sm:w-6 text-red-600" />
-              <span className="break-words">Protocolos Atrasados que Requerem Urgência</span>
-            </CardTitle>
-            <CardDescription className="text-xs sm:text-sm">
-              Protocolos com SLA vencido que precisam de atenção imediata
-            </CardDescription>
-          </div>
-        </CardHeader>
-        <CardContent>
-          {isLoading ? (
-            <div className="flex items-center justify-center py-8">
-              <RefreshCw className="h-6 w-6 animate-spin text-gray-400" />
-            </div>
-          ) : overdueSLAs.length === 0 ? (
-            <div className="text-center py-8 text-gray-500">
-              <div className="h-16 w-16 rounded-full bg-green-100 flex items-center justify-center mx-auto mb-3">
-                <CheckCircle className="h-8 w-8 text-green-600" />
-              </div>
-              <p className="text-lg font-medium text-gray-900 mb-1">Nenhum protocolo atrasado!</p>
-              <p className="text-sm text-gray-500">Todos os SLAs estão dentro do prazo</p>
-            </div>
+        {/* ------------------------------------------------ HOJE */}
+        <TabsContent value="hoje" className="mt-4 space-y-4">
+          {!data ? (
+            <div className="flex justify-center py-12"><Loader2 className="h-6 w-6 animate-spin text-blue-600" /></div>
           ) : (
-            <div className="space-y-3">
-              {overdueSLAs.map((sla) => (
-                <div
-                  key={sla.id}
-                  className="border border-red-300 bg-red-50 rounded-lg p-3 sm:p-4"
-                >
-                  <div className="flex flex-col gap-3">
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-center gap-2 mb-2 flex-wrap">
-                        <a
-                          href={`/admin/protocolos?search=${sla.protocol.number}`}
-                          className="font-medium text-blue-600 hover:underline text-sm"
-                        >
-                          #{sla.protocol.number}
-                        </a>
-                        <Badge variant="destructive" className="animate-pulse text-xs flex items-center gap-1">
-                          <AlertTriangle className="h-3 w-3" />
-                          {sla.daysOverdue} dias de atraso
-                        </Badge>
-                      </div>
-                      <p className="text-sm font-medium text-gray-900 mb-2 line-clamp-2">
-                        {sla.protocol.title}
+            <>
+              <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
+                <Kpi label="Pedidos em aberto" value={hoje.abertos} hint={`${hoje.novosHoje} novo(s) hoje`} tone="text-blue-700" />
+                <Kpi label="Atrasados" value={hoje.atrasados} hint={`${hoje.noPrazo} no prazo`} tone={hoje.atrasados ? 'text-red-600' : 'text-green-600'} />
+                <Kpi
+                  label="Concluídos no mês"
+                  value={hoje.concluidosMes}
+                  hint={variation === null ? `mês anterior: ${hoje.concluidosMesAnterior}` : `${variation >= 0 ? '+' : ''}${variation}% sobre o mês anterior`}
+                  tone="text-green-700"
+                />
+                <Kpi
+                  label="Satisfação (90 dias)"
+                  value={hoje.satisfacao === null ? '—' : `${hoje.satisfacao.toFixed(1)} / 5`}
+                  hint={`${hoje.avaliacoes} avaliação(ões) · tempo médio ${hoje.tempoMedioDias ?? '—'} dias`}
+                  tone="text-amber-600"
+                />
+              </div>
+
+              {data.alertas.length > 0 && (
+                <Card className="border-red-200">
+                  <CardHeader className="pb-2">
+                    <CardTitle className="flex items-center gap-2 text-base"><AlertTriangle className="h-5 w-5 text-red-600" />Atenção</CardTitle>
+                  </CardHeader>
+                  <CardContent className="space-y-1.5 text-sm">
+                    {data.alertas.map((alert: any) => (
+                      <p key={alert.text} className={cn('rounded-md px-3 py-2', alert.level === 'alto' ? 'bg-red-50 text-red-800' : 'bg-amber-50 text-amber-900')}>
+                        {alert.href ? <Link href={alert.href} className="hover:underline">{alert.text}</Link> : alert.text}
                       </p>
-                      <div className="flex flex-col sm:flex-row sm:items-center gap-1 sm:gap-4 text-xs text-gray-600">
-                        <span className="truncate">
-                          <strong>Cidadão:</strong> {sla.protocol.citizen?.name || 'N/A'}
-                        </span>
-                        <span className="truncate">
-                          <strong>Secretaria:</strong>{' '}
-                          {sla.protocol.department?.name || 'Não definido'}
-                        </span>
-                        <span className="whitespace-nowrap">
-                          <strong>Prazo:</strong>{' '}
-                          {new Date(sla.dueDate).toLocaleDateString('pt-BR')}
-                        </span>
+                    ))}
+                  </CardContent>
+                </Card>
+              )}
+
+              <div className="grid gap-4 lg:grid-cols-2">
+                <Card>
+                  <CardHeader className="pb-2">
+                    <CardTitle className="flex items-center justify-between text-base">
+                      <span className="flex items-center gap-2"><Calendar className="h-5 w-5 text-purple-600" />Agenda do Prefeito — hoje</span>
+                      <Link href="/admin/agenda" className="text-xs font-normal text-blue-700 hover:underline">abrir agenda</Link>
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent className="space-y-2 text-sm">
+                    {data.agendaHoje.length === 0 && <p className="text-gray-500">Nenhum compromisso hoje.</p>}
+                    {data.agendaHoje.map((event: any) => (
+                      <div key={event.id} className="flex gap-3 rounded-md border p-2">
+                        <span className="w-14 shrink-0 font-mono text-gray-700">{time(event.startAt)}</span>
+                        <div className="min-w-0">
+                          <p className="font-medium text-gray-900">{event.title}{event.isPrivate ? ' (particular)' : ''}</p>
+                          {event.location && <p className="text-xs text-gray-500">{event.location}</p>}
+                        </div>
+                      </div>
+                    ))}
+                  </CardContent>
+                </Card>
+
+                <Card>
+                  <CardHeader className="pb-2">
+                    <CardTitle className="flex items-center gap-2 text-base"><PenLine className="h-5 w-5 text-amber-600" />Esperando a sua assinatura</CardTitle>
+                  </CardHeader>
+                  <CardContent className="space-y-1.5 text-sm">
+                    {data.assinaturas.length === 0 && <p className="text-gray-500">Nada para assinar.</p>}
+                    {data.assinaturas.map((item: any) => (
+                      <Link key={item.id} href={item.url} className="block rounded-md bg-amber-50 px-3 py-2 hover:bg-amber-100">
+                        <span className="block truncate text-gray-900">{item.title}</span>
+                        <span className="text-xs text-gray-600">pedido por {item.by}</span>
+                      </Link>
+                    ))}
+                  </CardContent>
+                </Card>
+              </div>
+
+              <ChamadosRecentesList />
+            </>
+          )}
+        </TabsContent>
+
+        {/* ------------------------------------------------ SECRETARIAS */}
+        <TabsContent value="secretarias" className="mt-4 space-y-3">
+          {!data ? (
+            <div className="flex justify-center py-12"><Loader2 className="h-6 w-6 animate-spin text-blue-600" /></div>
+          ) : data.secretarias.length === 0 ? (
+            <p className="text-sm text-gray-500">Nenhum pedido nas secretarias ainda.</p>
+          ) : (
+            data.secretarias.map((dept: any) => (
+              <Card key={dept.id}>
+                <CardContent className="space-y-3 p-4">
+                  <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
+                    <div className="min-w-0 flex-1">
+                      <p className="flex items-center gap-2 font-medium text-gray-900"><Building2 className="h-4 w-4 text-gray-500" />{dept.name}</p>
+                      <div className="mt-2 h-2 w-full max-w-md overflow-hidden rounded-full bg-gray-100" title={`${dept.percentualAtraso}% atrasados`}>
+                        <div className={cn('h-full', dept.percentualAtraso >= 50 ? 'bg-red-500' : dept.percentualAtraso >= 30 ? 'bg-amber-500' : 'bg-green-500')} style={{ width: `${Math.max(dept.percentualAtraso, dept.abertos ? 3 : 0)}%` }} />
                       </div>
                     </div>
-                    <Button
-                      size="sm"
-                      variant="destructive"
-                      onClick={() => handleRequestUrgency(sla.protocol.id)}
-                      className="w-full sm:w-auto text-xs sm:text-sm"
-                    >
-                      <Bell className="h-4 w-4 mr-1" />
-                      Cobrar Urgência
+                    <div className="grid grid-cols-2 gap-x-6 gap-y-1 text-sm sm:grid-cols-5">
+                      <span><strong>{dept.abertos}</strong> em aberto</span>
+                      <span className={dept.atrasados ? 'text-red-700' : ''}><strong>{dept.atrasados}</strong> atrasados</span>
+                      <span><strong>{dept.concluidos30}</strong> concluídos (30d)</span>
+                      <span>{dept.tempoMedioDias ?? '—'} dias em média</span>
+                      <span className="inline-flex items-center gap-1"><Star className="h-3.5 w-3.5 text-amber-500" />{dept.satisfacao ?? '—'}</span>
+                    </div>
+                  </div>
+                  <div className="flex flex-wrap gap-2">
+                    <Button size="sm" variant="outline" onClick={() => toggleDept(dept.id)} disabled={!dept.atrasados}>
+                      {openDept === dept.id ? <ChevronUp className="mr-1 h-4 w-4" /> : <ChevronDown className="mr-1 h-4 w-4" />}Ver atrasados
+                    </Button>
+                    <Button size="sm" variant="destructive" onClick={() => chargeDept(dept.id, dept.name)} disabled={!dept.atrasados || busy === `dept:${dept.id}`}>
+                      <Bell className="mr-1 h-4 w-4" />Cobrar a secretaria
                     </Button>
                   </div>
-                </div>
-              ))}
-            </div>
+                  {openDept === dept.id && (
+                    <div className="space-y-2">
+                      {overdueList.length === 0 && <p className="text-sm text-gray-500">Carregando...</p>}
+                      {overdueList.map((item: any) => (
+                        <div key={item.id} className="flex flex-col gap-2 rounded-md border border-red-200 bg-red-50 p-2 text-sm sm:flex-row sm:items-center sm:justify-between">
+                          <div className="min-w-0">
+                            <Link href={`/admin/protocolos/${item.id}`} className="font-medium text-blue-700 hover:underline">#{item.number}</Link>{' '}
+                            <span className="text-gray-900">{item.title}</span>
+                            <p className="text-xs text-gray-600">
+                              {item.service?.name} · {item.sla?.daysOverdue || 0} dia(s) de atraso · com {item.currentAssignedUser?.name || 'ninguém atribuído'}
+                            </p>
+                          </div>
+                          <Button size="sm" variant="outline" onClick={() => chargeProtocol(item.id)} disabled={busy === `protocol:${item.id}`}>
+                            <Bell className="mr-1 h-4 w-4" />Cobrar
+                          </Button>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
+            ))
           )}
-        </CardContent>
-      </Card>
+        </TabsContent>
+
+        {/* ------------------------------------------------ TERRITÓRIO */}
+        <TabsContent value="territorio" className="mt-4">
+          {tab === 'territorio' && <ProtocolsMapView defaultSituacao="abertos" />}
+        </TabsContent>
+
+        {/* ------------------------------------------------ GESTÃO INTERNA */}
+        <TabsContent value="gestao" className="mt-4 space-y-4">
+          {!data ? (
+            <div className="flex justify-center py-12"><Loader2 className="h-6 w-6 animate-spin text-blue-600" /></div>
+          ) : (
+            <>
+              <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
+                <Kpi label="Processos internos em aberto" value={data.gestaoInterna.abertos} tone="text-blue-700" />
+                <Kpi label="Fora do prazo" value={data.gestaoInterna.atrasados} tone={data.gestaoInterna.atrasados ? 'text-red-600' : 'text-green-600'} />
+                <Kpi label="Contratações em andamento" value={data.gestaoInterna.licitacoes.length} tone="text-indigo-700" />
+                <Kpi label="Contratações com etapa vencida" value={data.gestaoInterna.licitacoesAtrasadas} tone={data.gestaoInterna.licitacoesAtrasadas ? 'text-red-600' : 'text-green-600'} />
+              </div>
+
+              {data.gestaoInterna.porTipo.length > 0 && (
+                <div className="flex flex-wrap gap-2 text-sm">
+                  {data.gestaoInterna.porTipo.map((item: any) => (
+                    <span key={item.name} className="rounded-full bg-gray-100 px-3 py-1">{item.name}: {item.count}</span>
+                  ))}
+                </div>
+              )}
+
+              <Card>
+                <CardHeader className="pb-2">
+                  <CardTitle className="text-base">Contratações (Lei 14.133) por etapa</CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-2 text-sm">
+                  {data.gestaoInterna.licitacoes.length === 0 && <p className="text-gray-500">Nenhuma contratação em andamento.</p>}
+                  {data.gestaoInterna.licitacoes.map((item: any) => (
+                    <Link key={item.id} href={`/admin/processos-internos/${item.id}`} className={cn('block rounded-md border p-2 hover:bg-gray-50', item.overdue && 'border-red-200 bg-red-50')}>
+                      <p className="flex flex-wrap items-center gap-2">
+                        <span className="font-mono text-xs text-gray-500">{item.number}</span>
+                        <span className="font-medium text-gray-900">{item.subject}</span>
+                        {item.valor && <span className="text-xs text-gray-600">{brl(item.valor)}</span>}
+                      </p>
+                      <p className="text-xs text-gray-600">
+                        {item.flow} · etapa {item.stageIndex}/{item.stages}: <strong>{item.stage}</strong> · com {item.unit} · prazo da etapa {date(item.stageDueAt)}
+                        {item.overdue && <span className="ml-1 font-medium text-red-700">(vencido)</span>}
+                      </p>
+                    </Link>
+                  ))}
+                </CardContent>
+              </Card>
+
+              <Card>
+                <CardHeader className="pb-2">
+                  <CardTitle className="flex flex-wrap items-center justify-between gap-2 text-base">
+                    <span>Ordens do gabinete às secretarias</span>
+                    <Button size="sm" asChild>
+                      <Link href="/admin/processos-internos/novo?tipo=OFI"><Plus className="mr-1 h-4 w-4" />Nova ordem</Link>
+                    </Button>
+                  </CardTitle>
+                  <CardDescription>Ofícios e memorandos enviados pela equipe do gabinete, em andamento.</CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-2 text-sm">
+                  {data.gestaoInterna.ordens.length === 0 && <p className="text-gray-500">Nenhuma ordem em andamento.</p>}
+                  {data.gestaoInterna.ordens.map((item: any) => (
+                    <Link key={item.id} href={`/admin/processos-internos/${item.id}`} className={cn('block rounded-md border p-2 hover:bg-gray-50', item.overdue && 'border-red-200 bg-red-50')}>
+                      <p><span className="font-mono text-xs text-gray-500">{item.number}</span> <span className="font-medium text-gray-900">{item.subject}</span></p>
+                      <p className="text-xs text-gray-600">com {item.currentUnitName} · prazo {date(item.dueAt)} · por {item.createdByName}{item.overdue && <span className="ml-1 font-medium text-red-700">(vencido)</span>}</p>
+                    </Link>
+                  ))}
+                </CardContent>
+              </Card>
+            </>
+          )}
+        </TabsContent>
+
+        {/* ------------------------------------------------ CIDADÃO */}
+        <TabsContent value="cidadao" className="mt-4 space-y-3">
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-base">Buscar cidadão</CardTitle>
+              <CardDescription>Nome ou CPF — abre o histórico completo: pedidos, avaliações e demandas.</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <CitizenSearchBar />
+            </CardContent>
+          </Card>
+        </TabsContent>
+      </Tabs>
     </div>
+  )
+}
+
+export default function PainelPrefeitoPage() {
+  return (
+    <Suspense fallback={null}>
+      <PainelPrefeito />
+    </Suspense>
   )
 }

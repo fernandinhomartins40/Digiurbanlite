@@ -36,6 +36,8 @@ export interface ServerFormData {
   departmentIds?: string[]
   primaryDepartmentId?: string
   isActive?: boolean
+  /** perfil Gabinete do Prefeito (painel, agenda do prefeito, demandas do gabinete) */
+  gabineteAccess?: boolean
   cpf?: string
   matricula?: string
   rg?: string
@@ -120,6 +122,8 @@ export function ServerManagementForm({
 }: ServerManagementFormProps) {
   const router = useRouter()
   const { apiRequest } = useAdminAuth()
+  // só o administrador do município marca quem é do gabinete
+  const canSetGabinete = currentUserRole === 'ADMIN' || currentUserRole === 'SUPER_ADMIN'
   const isEditMode = mode === 'edit'
   const currentUserLevel = ROLE_HIERARCHY[currentUserRole as keyof typeof ROLE_HIERARCHY] || 0
   const [formData, setFormData] = useState<ServerFormData>({
@@ -344,6 +348,7 @@ export function ServerManagementForm({
         name: formData.name.trim(), email: formData.email.trim(),
         ...(normalizedRole ? { role: normalizedRole } : {}),
         departmentIds: formData.departmentIds, primaryDepartmentId, isActive: formData.isActive,
+        ...(canSetGabinete ? { gabineteAccess: formData.gabineteAccess === true } : {}),
         cpf: cleanCpf, matricula: formData.matricula || null, rg: formData.rg || null,
         dataNascimento: formData.dataNascimento || null, telefone: formData.telefone || null,
         telefoneSecundario: formData.telefoneSecundario || null, cargoEfetivo: formData.cargoEfetivo || null,
@@ -462,6 +467,15 @@ export function ServerManagementForm({
               </div>
 
               {isEditMode && <div className="flex items-center space-x-2"><input type="checkbox" id="isActive" checked={formData.isActive} onChange={(event) => setFormData({ ...formData, isActive: event.target.checked })} disabled={loading} className="h-4 w-4" /><Label htmlFor="isActive" className="cursor-pointer">Servidor ativo</Label></div>}
+              {isEditMode && canSetGabinete && (
+                <div className="space-y-1 rounded-lg border border-indigo-200 bg-indigo-50 p-3">
+                  <div className="flex items-center space-x-2">
+                    <input type="checkbox" id="gabineteAccess" checked={formData.gabineteAccess === true} onChange={(event) => setFormData({ ...formData, gabineteAccess: event.target.checked })} disabled={loading} className="h-4 w-4" />
+                    <Label htmlFor="gabineteAccess" className="cursor-pointer">Acesso ao Gabinete do Prefeito</Label>
+                  </div>
+                  <p className="text-xs text-indigo-900">Prefeito, vice, chefe de gabinete e equipe: Painel do Prefeito, Agenda do Prefeito e Demandas do Gabinete. Não depende do perfil de acesso (o técnico de TI pode ser administrador sem ver o gabinete).</p>
+                </div>
+              )}
             </TabsContent>
 
             <TabsContent value="pessoal" className="space-y-3">

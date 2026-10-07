@@ -275,6 +275,7 @@ router.get('/me', handleAsyncRoute(async (req, res) => {
         email: true,
         name: true,
         role: true,
+        gabineteAccess: true,
         departmentId: true,
         isActive: true,
         lastLogin: true,

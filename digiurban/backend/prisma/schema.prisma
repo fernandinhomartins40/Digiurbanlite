@@ -249,6 +249,9 @@ model User {
   name                String
   password            String
   role                UserRole  @default(USER)
+  // Gabinete do Prefeito (painel, agenda do prefeito, demandas): prefeito,
+  // vice, chefe de gabinete e equipe — independe de ser administrador do sistema
+  gabineteAccess      Boolean   @default(false)
   isActive            Boolean   @default(true)
   departmentId        String? // ✅ MANTIDO: compatibilidade (primary department)
   personId            String?   @unique
@@ -3000,6 +3003,10 @@ model CentralCalendar {
   members CentralCalendarMember[]
   events  CentralCalendarEvent[]
 
+  // agenda do sistema por município (ex.: MAYOR = Agenda do Prefeito)
+  systemKey String?
+
+  @@unique([tenantId, systemKey])
   @@unique([type, ownerUserId])
   @@unique([type, departmentId])
   @@unique([type, organizationalUnitId])

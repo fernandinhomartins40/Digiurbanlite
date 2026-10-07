@@ -55,6 +55,8 @@ export interface AdminNavItem {
   permissions?: string[];
   minRole?: AdminRole;
   badge?: string;
+  /** só para quem tem o perfil Gabinete do Prefeito (marcado no cadastro do servidor) */
+  gabinete?: boolean;
 }
 
 export interface AdminNavSection {
@@ -120,6 +122,20 @@ export function getAdminMainNavigation(stats?: AdminNavStats): AdminNavSection[]
           href: '/admin/apps',
           icon: LayoutGrid,
           minRole: 'USER',
+        },
+        {
+          // agenda pessoal, da unidade e da secretaria (+ o que o sistema agenda sozinho)
+          title: 'Agenda',
+          href: '/admin/agenda',
+          icon: Calendar,
+          minRole: 'USER',
+        },
+        {
+          // pedidos no mapa, no escopo de cada servidor
+          title: 'Mapa dos pedidos',
+          href: '/admin/mapa',
+          icon: Map,
+          permissions: ['protocols:read'],
         },
         {
           title: 'Cidadãos',
@@ -243,18 +259,12 @@ export function getAdminMainNavigation(stats?: AdminNavStats): AdminNavSection[]
 }
 
 export const mayorPortalNavigation: AdminNavSection = {
-  title: 'Portal do Prefeito',
+  title: 'Gabinete do Prefeito',
   color: 'indigo',
   items: [
-    {
-      title: 'Painel do Prefeito',
-      href: '/admin/gabinete/painel-prefeito',
-      icon: Building2,
-      minRole: 'ADMIN',
-    },
-    { title: 'Mapa de Demandas', href: '/admin/gabinete/mapa-demandas', icon: Map, minRole: 'ADMIN' },
-    { title: 'Agenda', href: '/admin/agenda', icon: Calendar, minRole: 'ADMIN' },
-    { title: 'Demandas do Gabinete', href: '/admin/chamados', icon: AlertCircle, minRole: 'ADMIN' },
+    // painel com abas: Hoje, Secretarias, Território, Gestão interna, Cidadão
+    { title: 'Painel do Prefeito', href: '/admin/gabinete/painel-prefeito', icon: Building2, gabinete: true },
+    { title: 'Demandas do Gabinete', href: '/admin/chamados', icon: AlertCircle, gabinete: true },
   ],
 };
 
@@ -301,8 +311,10 @@ export const superAdminNavigation: AdminNavSection = {
 export function shouldShowNavItem(
   item: AdminNavItem,
   hasPermission: PermissionChecker,
-  hasMinRole: RoleChecker
+  hasMinRole: RoleChecker,
+  hasGabinete = false
 ) {
+  if (item.gabinete) return hasGabinete;
   if (item.permissions && !item.permissions.some(hasPermission)) return false;
   if (item.minRole && !hasMinRole(item.minRole)) return false;
   return true;

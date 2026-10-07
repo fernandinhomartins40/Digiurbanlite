@@ -13,6 +13,8 @@ export interface AdminUser {
   name: string
   email: string
   role: UserRole
+  // perfil Gabinete do Prefeito (painel, agenda do prefeito, demandas do gabinete)
+  gabineteAccess?: boolean
   isActive: boolean
   tenantId?: string
   departmentId?: string

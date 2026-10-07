@@ -1001,6 +1001,7 @@ router.get(
         situacaoFuncional: true,
         dataAdmissao: true,
         observacoes: true,
+        gabineteAccess: true,
         department: {
           select: {
             id: true,
@@ -1707,6 +1708,10 @@ router.put(
     if (data.situacaoFuncional !== undefined) updateData.situacaoFuncional = data.situacaoFuncional || null;
     if (data.dataAdmissao !== undefined) updateData.dataAdmissao = data.dataAdmissao ? new Date(data.dataAdmissao) : null;
     if (data.observacoes !== undefined) updateData.observacoes = data.observacoes || null;
+    // perfil Gabinete do Prefeito (painel, agenda do prefeito, demandas): só administrador marca
+    if (typeof req.body?.gabineteAccess === 'boolean' && (user.role === 'ADMIN' || user.role === 'SUPER_ADMIN')) {
+      updateData.gabineteAccess = req.body.gabineteAccess;
+    }
 
     const updatedUser = await prisma.$transaction(async (tx) => {
       const updated = await tx.user.update({
@@ -1766,6 +1771,12 @@ router.put(
         }
       });
     });
+
+    // perfil Gabinete mudou: a equipe da Agenda do Prefeito acompanha
+    if (updateData.gabineteAccess !== undefined) {
+      const { centralCalendarService } = await import('../services/central-calendar.service');
+      await centralCalendarService.syncMayorCalendarMembers().catch(() => undefined);
+    }
 
     // ✅ Adicionar campos computed
     if (departmentIds !== undefined) {

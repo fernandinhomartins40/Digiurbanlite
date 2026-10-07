@@ -223,6 +223,16 @@ export default function AdminCentralAgendaPage() {
   const [startDateFilter, setStartDateFilter] = useState('');
   const [endDateFilter, setEndDateFilter] = useState('');
   const [includeAll, setIncludeAll] = useState(false);
+  // onde a pessoa pode marcar: a própria agenda, a da unidade/secretaria e as compartilhadas
+  // (a Agenda do Prefeito só aparece para a equipe do gabinete); nunca a agenda pessoal de outro servidor
+  const writableCalendars = useMemo(
+    () =>
+      calendars
+        .filter((calendar: any) => calendar.type !== 'PERSONAL' || calendar.ownerUserId === user?.id)
+        .filter((calendar: any) => calendar.type !== 'SERVICE' && calendar.type !== 'SYSTEM')
+        .sort((a: any, b: any) => (a.type === 'PERSONAL' ? -1 : b.type === 'PERSONAL' ? 1 : a.name.localeCompare(b.name))),
+    [calendars, user?.id]
+  );
   const [modalOpen, setModalOpen] = useState(false);
   const [selectedEvent, setSelectedEvent] = useState<CentralAgendaEvent | null>(null);
   const [presetStartAt, setPresetStartAt] = useState<string | undefined>(undefined);
@@ -637,6 +647,7 @@ export default function AdminCentralAgendaPage() {
         event={selectedEvent}
         presetStartAt={presetStartAt}
         presetEndAt={presetEndAt}
+        calendars={writableCalendars}
       />
 
       {viewMode === 'calendar' ? (

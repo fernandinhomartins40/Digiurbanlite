@@ -769,7 +769,7 @@ export function ProtocolMapEnhanced({
                         </div>
 
                         <a
-                          href={`/admin/protocolos?search=${protocol.number}`}
+                          href={`/admin/protocolos/${protocol.id}`}
                           className="inline-block mt-2 text-blue-600 hover:underline text-xs font-medium"
                         >
                           Ver detalhes →
@@ -846,7 +846,7 @@ export function ProtocolMapEnhanced({
                         </div>
 
                         <a
-                          href={`/admin/protocolos?search=${protocol.number}`}
+                          href={`/admin/protocolos/${protocol.id}`}
                           className="inline-block mt-2 text-blue-600 hover:underline text-xs"
                         >
                           Ver detalhes →

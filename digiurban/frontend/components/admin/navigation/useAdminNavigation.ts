@@ -22,6 +22,8 @@ import {
 
 export function useAdminNavigation() {
   const { stats, user } = useAdminAuth();
+  // perfil Gabinete do Prefeito (o Super-admin sempre pode)
+  const hasGabinete = user?.role === 'SUPER_ADMIN' || (user as any)?.gabineteAccess === true;
   // Identidade de plataforma (cookie digiurban_platform_token), não o role do User
   const { isPlatformOperator } = usePlatformIdentity();
   const { hasPermission, hasMinRole } = useAdminPermissions();
@@ -61,7 +63,7 @@ export function useAdminNavigation() {
         .map((section) => ({
           ...section,
           items: section.items
-            .filter((item) => shouldShowNavItem(item, hasPermission, hasMinRole))
+            .filter((item) => shouldShowNavItem(item, hasPermission, hasMinRole, hasGabinete))
             // Secretarias fora do plano do município somem (o backend também nega)
             .filter((item) => {
               const m = item.href.match(/^\/admin\/secretarias\/([a-z0-9-]+)/);
@@ -71,12 +73,12 @@ export function useAdminNavigation() {
             .filter((item) => canSeeSecretaria(item.href, user?.role, userDepartmentCodes)),
         }))
         .filter((section) => section.items.length > 0),
-    [allSections, hasMinRole, hasPermission, isFeatureEnabled, user?.role, userDepartmentCodes]
+    [allSections, hasMinRole, hasPermission, hasGabinete, isFeatureEnabled, user?.role, userDepartmentCodes]
   );
 
   const visibleMayorPortalItems = useMemo(
-    () => mayorPortalNavigation.items.filter((item) => shouldShowNavItem(item, hasPermission, hasMinRole)),
-    [hasMinRole, hasPermission]
+    () => mayorPortalNavigation.items.filter((item) => shouldShowNavItem(item, hasPermission, hasMinRole, hasGabinete)),
+    [hasMinRole, hasPermission, hasGabinete]
   );
 
   return { visibleSections, visibleMayorPortalItems, stats, user, hasPermission, hasMinRole };

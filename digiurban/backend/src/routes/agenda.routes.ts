@@ -224,6 +224,10 @@ router.post('/', async (req: Request, res: Response) => {
     return res.status(201).json({ success: true, data: event });
   } catch (error) {
     console.error('Erro ao criar evento da agenda:', error);
+    const message = error instanceof Error ? error.message : '';
+    if (/permiss|Só a equipe/i.test(message)) {
+      return res.status(403).json({ success: false, error: message, details: message });
+    }
     return res.status(500).json({
       success: false,
       error: 'Erro ao criar evento',

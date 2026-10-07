@@ -142,8 +142,10 @@ export const requirePermission = (permission: string) => {
     }
 
     const userPermissions = getRolePermissions(user.role);
+    // Demandas do Gabinete: quem tem o perfil Gabinete pode, qualquer que seja o papel
+    const gabinetePermission = permission.startsWith('chamados:') && (user as any).gabineteAccess === true;
 
-    if (!hasPermissionToken(userPermissions, permission)) {
+    if (!gabinetePermission && !hasPermissionToken(userPermissions, permission)) {
       res.status(403).json({
         error: 'Acesso negado',
         required: permission,
