@@ -99,7 +99,7 @@ export function buildProtocolScopeWhere(actor: ProtocolAccessActor): Record<stri
   if (role === 'MANAGER' || role === 'COORDINATOR') {
     // Sem departamento vinculado → não vê nada (erro de cadastro, não acesso total)
     const ids = actorDepartments(actor);
-    return [{ departmentId: ids.length ? { in: ids } : '__no_department__' }];
+    return [{ departmentId: ids.length === 0 ? '__no_department__' : ids.length === 1 ? ids[0] : { in: ids } }];
   }
 
   if (role === 'USER') {
