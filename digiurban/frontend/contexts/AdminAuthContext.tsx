@@ -70,6 +70,7 @@ export interface AdminAuthStats {
   completedProtocols: number
   pendingCitizens: number
   unreadMessages?: number
+  internalProcessInbox?: number
   protocolsByStatus: Array<{
     status: string
     _count: { _all: number }

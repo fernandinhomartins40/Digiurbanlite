@@ -232,7 +232,8 @@ loadRoute('/api/registry', './routes/registry.routes');
 loadRoute('/api/prices', './routes/prices-proxy.routes');
 
 // Módulo de Processos Internos (proxy → digiurban-flow)
-loadRoute('/api/flow', './routes/flow-proxy.routes');
+// Processo interno (substitui o proxy /api/flow do antigo digiurban-flow)
+loadRoute('/api/internal-processes', './routes/internal-processes.routes');
 
 // Assistente de IA dos servidores (gateway da plataforma; substitui o proxy do digiurban-ai)
 loadRoute('/api/ai', './routes/admin-ai-assistant.routes');

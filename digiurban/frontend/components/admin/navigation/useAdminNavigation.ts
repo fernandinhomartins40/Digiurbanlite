@@ -33,8 +33,9 @@ export function useAdminNavigation() {
         pendingProtocols: stats?.pendingProtocols,
         pendingCitizens: stats?.pendingCitizens,
         unreadMessages: stats?.unreadMessages,
+        internalProcessInbox: stats?.internalProcessInbox,
       }),
-    [stats?.pendingCitizens, stats?.pendingProtocols, stats?.unreadMessages]
+    [stats?.pendingCitizens, stats?.pendingProtocols, stats?.unreadMessages, stats?.internalProcessInbox]
   );
 
   const allSections = useMemo(() => {

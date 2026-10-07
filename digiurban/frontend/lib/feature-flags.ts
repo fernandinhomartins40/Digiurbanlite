@@ -7,9 +7,6 @@ export const FEATURE_FLAGS = {
   /** Cotação / Pesquisa de Preços */
   PESQUISA_PRECOS: false,
 
-  /** Processos Internos (hub + fluxos de tramitação + novo processo) */
-  PROCESSOS_INTERNOS: false,
-
   /** Workflows de serviço (/admin/workflows) */
   WORKFLOWS: false,
 

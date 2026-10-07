@@ -26,7 +26,7 @@ function calculateWorkingDays(startDate: Date, endDate: Date): number {
 /**
  * Adiciona dias úteis a uma data
  */
-function addWorkingDays(date: Date, days: number): Date {
+export function addWorkingDays(date: Date, days: number): Date {
   let result = new Date(date);
   let addedDays = 0;
 

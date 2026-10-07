@@ -70,6 +70,7 @@ export interface AdminNavStats {
   pendingProtocols?: number;
   pendingCitizens?: number;
   unreadMessages?: number;
+  internalProcessInbox?: number;
 }
 
 export type PermissionChecker = (permission: string) => boolean;
@@ -170,8 +171,14 @@ export function getAdminMainNavigation(stats?: AdminNavStats): AdminNavSection[]
         },
         // WORKFLOWS: disabled via FEATURE_FLAGS.WORKFLOWS
         // { title: 'Workflows', href: '/admin/workflows', icon: GitBranch, minRole: 'ADMIN' },
-        // PROCESSOS_INTERNOS: disabled via FEATURE_FLAGS.PROCESSOS_INTERNOS
-        // { title: 'Processos Internos', href: '/admin/processos-internos', icon: Workflow, minRole: 'COORDINATOR', badge: 'NOVO' },
+        {
+          // memorandos, ofícios, pareceres entre unidades (caixa de entrada da unidade)
+          title: 'Processos internos',
+          href: '/admin/processos-internos',
+          icon: Workflow,
+          minRole: 'USER',
+          badge: numberBadge(stats?.internalProcessInbox),
+        },
         {
           title: 'DigiBot',
           href: '/admin/digibot',

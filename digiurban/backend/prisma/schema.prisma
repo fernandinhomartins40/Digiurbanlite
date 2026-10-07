@@ -11624,3 +11624,108 @@ model BotUnanswered {
   @@index([tenantId, status])
   @@map("bot_unanswered")
 }
+
+// ============================================================================
+// PROCESSO INTERNO (2026-10-07) — tramitação entre unidades do organograma.
+// Ids de unidade/servidor com o nome guardado junto (o histórico não muda se a
+// unidade for renomeada). O cidadão nunca vê.
+// ============================================================================
+
+model InternalProcessType {
+  id          String   @id @default(cuid())
+  tenantId    String?
+  name        String // "Memorando", "Ofício interno", "Pedido de parecer"...
+  prefix      String // MEM, OFI, REQ, PAR, PAD
+  description String?
+  defaultDays Int      @default(5) // prazo padrão (dias úteis)
+  isActive    Boolean  @default(true)
+  sortOrder   Int      @default(0)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  processes InternalProcess[]
+
+  @@unique([tenantId, prefix])
+  @@index([tenantId])
+  @@map("internal_process_types")
+}
+
+model InternalProcessSequence {
+  id       String  @id @default(cuid())
+  tenantId String?
+  prefix   String
+  year     Int
+  last     Int     @default(0)
+
+  @@unique([tenantId, prefix, year])
+  @@map("internal_process_sequences")
+}
+
+model InternalProcess {
+  id                  String    @id @default(cuid())
+  tenantId            String?
+  number              String // MEM-2026-00001
+  typeId              String
+  subject             String
+  body                String?   @db.Text
+  priority            Int       @default(0) // 0 normal, 1 urgente
+  confidential        Boolean   @default(false) // só quem participa vê
+  status              String    @default("ABERTO") // ABERTO | EM_TRAMITE | CONCLUIDO | ARQUIVADO | CANCELADO
+  originUnitId        String
+  originUnitName      String
+  originDepartmentId  String?
+  currentUnitId       String
+  currentUnitName     String
+  currentDepartmentId String?
+  currentUserId       String?
+  currentUserName     String?
+  createdById         String
+  createdByName       String
+  protocolId          String? // protocolo do cidadão ligado (pedido de parecer)
+  parentId            String? // processo de onde saiu (pedido de parecer)
+  dueAt               DateTime?
+  concludedAt         DateTime?
+  conclusion          String?   @db.Text
+  summary             String?   @db.Text // resumo gerado (IA)
+  createdAt           DateTime  @default(now())
+  updatedAt           DateTime  @updatedAt
+
+  type      InternalProcessType       @relation(fields: [typeId], references: [id])
+  parent    InternalProcess?          @relation("InternalProcessChildren", fields: [parentId], references: [id], onDelete: SetNull)
+  children  InternalProcess[]         @relation("InternalProcessChildren")
+  movements InternalProcessMovement[]
+
+  @@unique([tenantId, number])
+  @@index([tenantId])
+  @@index([currentUnitId, status])
+  @@index([originUnitId])
+  @@index([currentUserId])
+  @@index([protocolId])
+  @@index([parentId])
+  @@map("internal_processes")
+}
+
+model InternalProcessMovement {
+  id           String    @id @default(cuid())
+  tenantId     String?
+  processId    String
+  action       String // CRIADO | ENCAMINHADO | DEVOLVIDO | ATRIBUIDO | DESPACHO | PARECER_PEDIDO | PARECER_RESPONDIDO | CONCLUIDO | ARQUIVADO | CANCELADO | REABERTO
+  note         String?   @db.Text
+  fromUnitId   String?
+  fromUnitName String?
+  toUnitId     String?
+  toUnitName   String?
+  toUserId     String?
+  toUserName   String?
+  userId       String
+  userName     String
+  readAt       DateTime?
+  createdAt    DateTime  @default(now())
+
+  process InternalProcess @relation(fields: [processId], references: [id], onDelete: Cascade)
+
+  @@index([processId, createdAt])
+  @@index([tenantId])
+  @@index([toUnitId, readAt])
+  @@map("internal_process_movements")
+}

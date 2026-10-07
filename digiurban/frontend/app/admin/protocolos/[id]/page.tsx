@@ -45,6 +45,7 @@ import { ForwardProtocolDialog } from '@/components/protocols/ForwardProtocolDia
 import { AssignTeamDialog } from '@/components/protocols/AssignTeamDialog'
 import { AssignmentHistoryTimeline } from '@/components/protocols/AssignmentHistoryTimeline'
 import { CurrentAssignmentCard } from '@/components/protocols/CurrentAssignmentCard'
+import { ProtocolInternalProcessesCard } from '@/components/admin/internal-process/ProtocolInternalProcessesCard'
 import { buildPendingCreationHref, PendingCreationContext } from '@/src/components/admin/protocol/protocol-pending-context'
 
 export default function ProtocolDetailPage() {
@@ -608,6 +609,8 @@ export default function ProtocolDetailPage() {
                 )}
               </CardContent>
             </Card>
+
+            <ProtocolInternalProcessesCard protocolId={protocolId} protocolNumber={protocol.number} />
           </div>
         </div>
       </div>

@@ -638,6 +638,7 @@ async function getUserStats(
   completedProtocols: number;
   protocolsByStatus: ProtocolStatusGroupResult[];
   pendingCitizens: number;
+  internalProcessInbox?: number;
 }> {
   try {
     let protocolFilter: ProtocolFilterInput = {};
@@ -702,7 +703,16 @@ async function getUserStats(
       pendingProtocols,
       completedProtocols,
       protocolsByStatus,
-      pendingCitizens
+      pendingCitizens,
+      // processos internos esperando a unidade/pessoa (contador do menu)
+      internalProcessInbox: await (async () => {
+        try {
+          const { buildActor, inboxCount } = await import('../services/internal-process/internal-process.service');
+          return await inboxCount(await buildActor({ id: userId, role, name: '' }));
+        } catch {
+          return 0;
+        }
+      })()
         };
   } catch (error) {
     console.error('Erro ao buscar estatísticas:', error);
