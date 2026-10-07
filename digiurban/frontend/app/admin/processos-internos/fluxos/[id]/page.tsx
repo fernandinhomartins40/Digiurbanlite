@@ -1,10 +1,12 @@
 'use client'
 
 /**
- * Editor de fluxo próprio do município (administrador), sem nada técnico:
- * etapas em cartões — nome, quem faz, prazo, o que fazer e os documentos
- * (obrigatório / precisa assinar). Começa de uma cópia de um fluxo pronto
- * (?base=LICITACAO) ou de outro fluxo próprio (?copia=<id>), ou do zero.
+ * Editor de fluxo (administrador), sem nada técnico: etapas em cartões —
+ * nome, quem faz (papel ou unidade/servidor fixo), prazo, o que fazer e os
+ * documentos (obrigatório / precisa assinar).
+ *  - /fluxos/<id do tipo>: edita um fluxo próprio OU um fluxo pronto da lei
+ *    (a edição vale só para o município; dá para voltar ao padrão da lei)
+ *  - /fluxos/novo?base=LICITACAO ou ?copia=<id>: nova cópia; /fluxos/novo: do zero
  * Processos já abertos continuam com o fluxo de quando foram abertos.
  */
 
@@ -13,6 +15,7 @@ import Link from 'next/link'
 import { useParams, useRouter } from 'next/navigation'
 import { ArrowDown, ArrowLeft, ArrowUp, Loader2, Plus, Save, Trash2 } from 'lucide-react'
 import { useAdminAuth } from '@/contexts/AdminAuthContext'
+import { UnitPersonSelect } from '@/components/admin/internal-process/UnitPersonSelect'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
@@ -34,6 +37,9 @@ interface StageForm {
   description: string
   checklist: string
   docs: StageDoc[]
+  unitId: string
+  userId: string
+  userName: string | null
 }
 
 interface FlowStageDef {
@@ -47,6 +53,9 @@ interface FlowStageDef {
   requiredDocs?: string[]
   signedDocs?: string[]
   optionalDocs?: string[]
+  unitId?: string | null
+  userId?: string | null
+  userName?: string | null
 }
 
 const toForm = (stage: FlowStageDef): StageForm => ({
@@ -61,9 +70,12 @@ const toForm = (stage: FlowStageDef): StageForm => ({
     ...(stage.requiredDocs || []).map((key) => ({ key, required: true, sign: (stage.signedDocs || []).includes(key) })),
     ...(stage.optionalDocs || []).map((key) => ({ key, required: false, sign: false })),
   ],
+  unitId: stage.unitId || '',
+  userId: stage.userId || '',
+  userName: stage.userName || null,
 })
 
-const emptyStage = (): StageForm => ({ name: '', role: 'DEMANDANTE', days: 5, legal: '', description: '', checklist: '', docs: [] })
+const emptyStage = (): StageForm => ({ name: '', role: 'DEMANDANTE', days: 5, legal: '', description: '', checklist: '', docs: [], unitId: '', userId: '', userName: null })
 
 export default function FluxoEditorPage() {
   const { id } = useParams() as { id: string }
@@ -80,6 +92,9 @@ export default function FluxoEditorPage() {
   const [description, setDescription] = useState('')
   const [baseKey, setBaseKey] = useState('')
   const [stages, setStages] = useState<StageForm[]>([emptyStage()])
+  const [units, setUnits] = useState<Array<{ id: string; nome: string; department?: string | null }>>([])
+  // fluxo pronto da lei sendo editado (a sigla e os dados da contratação não mudam)
+  const [standardKey, setStandardKey] = useState<string | null>(null)
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState<string | null>(null)
@@ -87,7 +102,11 @@ export default function FluxoEditorPage() {
   useEffect(() => {
     const load = async () => {
       try {
-        const flowsResponse: any = await apiRequest('/internal-processes/flows')
+        const [flowsResponse, unitsResponse]: any[] = await Promise.all([
+          apiRequest('/internal-processes/flows'),
+          apiRequest('/internal-processes/units').catch(() => null),
+        ])
+        setUnits(unitsResponse?.data?.units || [])
         const info = flowsResponse?.data || {}
         setRoles(info.roles || [])
         setTemplates(info.templates || [])
@@ -99,6 +118,7 @@ export default function FluxoEditorPage() {
           const typeResponse: any = await apiRequest(`/internal-processes/flow-types/${isNew ? copy : id}`)
           const type = typeResponse?.data?.type
           const definition = type?.flowDefinition
+          if (!isNew) setStandardKey(typeResponse?.data?.standardKey || null)
           if (definition?.stages?.length) {
             setName(isNew ? `${type.name} (cópia)` : type.name)
             if (!isNew) setPrefix(type.prefix)
@@ -150,6 +170,8 @@ export default function FluxoEditorPage() {
         key: stage.key,
         name: stage.name,
         role: stage.role,
+        unitId: stage.unitId || null,
+        userId: stage.unitId ? stage.userId || null : null,
         days: stage.days,
         legal: stage.legal,
         description: stage.description,
@@ -190,6 +212,11 @@ export default function FluxoEditorPage() {
         <div>
           <h1 className="text-2xl font-bold text-gray-900">{isNew ? 'Novo fluxo' : 'Editar fluxo'}</h1>
           <p className="text-sm text-gray-600">Processos já abertos continuam com o fluxo de quando foram abertos.</p>
+          {standardKey && (
+            <p className="mt-2 rounded-md bg-amber-50 p-2 text-sm text-amber-900">
+              Este é um fluxo pronto da Lei 14.133. As mudanças valem só para o seu município e dá para voltar ao padrão da lei a qualquer momento. Cuidado ao tirar etapas ou documentos que a lei exige.
+            </p>
+          )}
         </div>
       </div>
 
@@ -210,7 +237,7 @@ export default function FluxoEditorPage() {
         </div>
         <div className="space-y-1">
           <Label htmlFor="flow-base">Pede os dados da contratação?</Label>
-          <select id="flow-base" value={baseKey} onChange={(e) => setBaseKey(e.target.value)} className="h-10 w-full rounded-md border border-input bg-background px-2 text-sm">
+          <select id="flow-base" value={baseKey} disabled={!!standardKey} onChange={(e) => setBaseKey(e.target.value)} className="h-10 w-full rounded-md border border-input bg-background px-2 text-sm">
             <option value="">Não (processo comum com etapas)</option>
             {readyFlows.filter((flow) => flow.fieldsKind).map((flow) => (
               <option key={flow.key} value={flow.key}>Sim, como em: {flow.name}</option>
@@ -251,8 +278,27 @@ export default function FluxoEditorPage() {
               </div>
             </div>
             <div className="space-y-1">
-              <Label>O que acontece nesta etapa (opcional)</Label>
-              <Textarea rows={2} maxLength={500} value={stage.description} onChange={(e) => update(index, { description: e.target.value })} />
+              <Label>Mandar sempre para (opcional)</Label>
+              <UnitPersonSelect
+                units={units}
+                value={{ unitId: stage.unitId, userId: stage.userId }}
+                userName={stage.userName}
+                emptyLabel="— quem estiver em “Quem faz cada etapa” —"
+                onChange={(next) => update(index, { unitId: next.unitId, userId: next.userId, userName: null })}
+              />
+              <p className="text-xs text-gray-500">
+                {stage.unitId ? 'Esta etapa vai sempre para esta unidade, mesmo que o papel aponte para outra.' : 'Vazio: segue o papel escolhido acima.'}
+              </p>
+            </div>
+            <div className="grid gap-3 sm:grid-cols-[1fr_200px]">
+              <div className="space-y-1">
+                <Label>O que acontece nesta etapa (opcional)</Label>
+                <Textarea rows={2} maxLength={500} value={stage.description} onChange={(e) => update(index, { description: e.target.value })} />
+              </div>
+              <div className="space-y-1">
+                <Label>Fundamento legal (opcional)</Label>
+                <Input maxLength={120} value={stage.legal} onChange={(e) => update(index, { legal: e.target.value })} placeholder="Ex.: Art. 53" />
+              </div>
             </div>
             <div className="space-y-1">
               <Label>O que conferir — um item por linha (opcional)</Label>

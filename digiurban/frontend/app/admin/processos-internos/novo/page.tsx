@@ -140,7 +140,7 @@ export default function NovoProcessoInternoPage() {
   const baseKey = flowKey === 'CUSTOM' ? selectedType?.flowDefinition?.baseKey || null : flowKey
   const flowInfo = flows?.flows.find((flow) => flow.key === baseKey)
   const kind = flowInfo?.fieldsKind || null
-  const stageNames = flowKey === 'CUSTOM' ? (selectedType?.flowDefinition?.stages || []).map((stage) => stage.name) : (flowInfo?.stages || []).map((stage) => stage.name)
+  const stageNames = selectedType?.flowDefinition?.stages?.length ? selectedType.flowDefinition.stages.map((stage) => stage.name) : (flowInfo?.stages || []).map((stage) => stage.name)
   const valorNumber = Number(valor.replace(/\./g, '').replace(',', '.')) || 0
   const limitWarning =
     baseKey === 'DISPENSA' && flows && valorNumber > 0

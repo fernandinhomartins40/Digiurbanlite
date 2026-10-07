@@ -15,16 +15,17 @@ import {
   updateDocument,
   updateFields,
 } from '../services/internal-process/flows/flow.service';
-import { CRITERIOS, DISPENSA_LIMITS, fieldsKind, FLOWS, HIPOTESES_DISPENSA, HIPOTESES_INEXIGIBILIDADE, MODALIDADES } from '../services/internal-process/flows/flows';
+import { CRITERIOS, DISPENSA_LIMITS, fieldsKind, FlowKey, FLOWS, getFlow, HIPOTESES_DISPENSA, HIPOTESES_INEXIGIBILIDADE, MODALIDADES } from '../services/internal-process/flows/flows';
 import { buildCustomFlow, CustomFlowError, flowTotalDays } from '../services/internal-process/flows/custom-flow';
 import { FLOW_ROLES } from '../services/internal-process/flows/roles';
-import { getRoleSettings, saveRoleSettings } from '../services/internal-process/flows/roles.service';
+import { getRoleSettings, hydrateStageTargets, saveRoleSettings } from '../services/internal-process/flows/roles.service';
 import { DOCUMENT_TEMPLATES } from '../services/internal-process/flows/templates';
 import { documentPdf, processPdf, signProcess, summarizeProcess, verifySignature } from '../services/internal-process/internal-process-extras.service';
 import { assertProtocolAccess } from '../services/protocol-access.service';
 import { Router, Request, Response } from 'express';
 import { adminAuthMiddleware } from '../middleware/admin-auth';
 import { prisma } from '../lib/prisma';
+import { Prisma } from '@prisma/client';
 import {
   addNote,
   assignProcess,
@@ -32,6 +33,7 @@ import {
   closeProcess,
   concludeProcess,
   createProcess,
+  DEFAULT_TYPES,
   dashboard,
   destinationUnits,
   ensureDefaultTypes,
@@ -159,12 +161,21 @@ router.put('/settings/roles', handle(async (req, res) => {
 router.get('/flow-types/:id', handle(async (req, res) => {
   const type = await prisma.internalProcessType.findFirst({ where: { id: req.params.id } });
   if (!type) throw new InternalProcessError('Tipo não encontrado', 404);
-  res.json({ success: true, data: { type } });
+  // fluxo pronto sem edição do município: devolve o padrão da lei para o editor
+  const standard = type.flowKey && type.flowKey !== 'CUSTOM' ? getFlow(type.flowKey) : null;
+  res.json({
+    success: true,
+    data: {
+      type: { ...type, flowDefinition: type.flowDefinition || (standard ? { ...standard, baseKey: standard.key } : null) },
+      standardKey: standard?.key || null,
+      customized: Boolean(standard && type.flowDefinition),
+    },
+  });
 }));
 
 router.post('/flow-types', handle(async (req, res) => {
   if (!isAdmin(req)) throw new InternalProcessError('Só administradores criam fluxos.', 403);
-  const flow = buildCustomFlow(req.body || {});
+  const flow = await hydrateStageTargets(buildCustomFlow(req.body || {}));
   const prefix = String(req.body?.prefix || '').toUpperCase().replace(/[^A-Z]/g, '').slice(0, 4);
   if (prefix.length < 2) throw new InternalProcessError('Informe a sigla (2 a 4 letras).');
   const exists = await prisma.internalProcessType.findFirst({ where: { prefix } });
@@ -184,14 +195,32 @@ router.post('/flow-types', handle(async (req, res) => {
   res.status(201).json({ success: true, data: { type } });
 }));
 
+// editar um fluxo: o próprio do município ou um pronto (a edição vale só para o município;
+// processos já abertos seguem o fluxo de quando foram abertos)
 router.put('/flow-types/:id', handle(async (req, res) => {
   if (!isAdmin(req)) throw new InternalProcessError('Só administradores alteram fluxos.', 403);
   const type = await prisma.internalProcessType.findFirst({ where: { id: req.params.id } });
-  if (!type || type.flowKey !== 'CUSTOM') throw new InternalProcessError('Fluxo não encontrado (os fluxos prontos não mudam: faça uma cópia).', 404);
-  const flow = buildCustomFlow(req.body || {});
+  if (!type || !type.flowKey) throw new InternalProcessError('Fluxo não encontrado.', 404);
+  const standard = type.flowKey !== 'CUSTOM' && type.flowKey in FLOWS ? (type.flowKey as FlowKey) : null;
+  const built = await hydrateStageTargets(buildCustomFlow({ ...(req.body || {}), ...(standard ? { baseKey: standard } : {}) }));
+  const flow = standard ? { ...built, key: standard, baseKey: standard } : built;
   const updated = await prisma.internalProcessType.update({
     where: { id: type.id },
     data: { name: flow.name, description: flow.description || null, defaultDays: flowTotalDays(flow), flowDefinition: { ...flow, prefix: type.prefix } as any },
+  });
+  res.json({ success: true, data: { type: updated } });
+}));
+
+// fluxo pronto editado: voltar ao padrão da lei
+router.delete('/flow-types/:id/custom', handle(async (req, res) => {
+  if (!isAdmin(req)) throw new InternalProcessError('Só administradores alteram fluxos.', 403);
+  const type = await prisma.internalProcessType.findFirst({ where: { id: req.params.id } });
+  const standard = type?.flowKey && type.flowKey !== 'CUSTOM' ? getFlow(type.flowKey) : null;
+  if (!type || !standard) throw new InternalProcessError('Fluxo pronto não encontrado.', 404);
+  const original = DEFAULT_TYPES.find((item) => item.flowKey === standard.key);
+  const updated = await prisma.internalProcessType.update({
+    where: { id: type.id },
+    data: { flowDefinition: Prisma.DbNull, ...(original ? { name: original.name, description: original.description, defaultDays: original.defaultDays } : {}) },
   });
   res.json({ success: true, data: { type: updated } });
 }));
@@ -364,6 +393,7 @@ router.post('/:id/advance', handle(async (req, res) => {
     data: await advanceStage(await actorOf(req), req.params.id, {
       note: typeof req.body?.note === 'string' ? req.body.note : undefined,
       toUnitId: typeof req.body?.toUnitId === 'string' && req.body.toUnitId ? req.body.toUnitId : undefined,
+      toUserId: typeof req.body?.toUserId === 'string' && req.body.toUserId ? req.body.toUserId : undefined,
     }),
   });
 }));

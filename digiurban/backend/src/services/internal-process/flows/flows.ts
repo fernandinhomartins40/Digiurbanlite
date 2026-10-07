@@ -36,6 +36,12 @@ export interface FlowStage {
   owner: string;
   /** papel que conduz: ao chegar na etapa, o processo vai sozinho para a unidade desse papel */
   role: FlowRole;
+  /** destino fixo desta etapa (fluxo editado pelo município): vale mais que o papel */
+  unitId?: string | null;
+  unitName?: string | null;
+  /** pessoa que recebe (opcional; sem ela, a unidade toda vê) */
+  userId?: string | null;
+  userName?: string | null;
 }
 
 export interface FlowDefinition {
@@ -652,6 +658,29 @@ export function previousStage(flow: FlowDefinition, stageKey: string | null | un
 export function stageUnitId(stage: Pick<FlowStage, 'role'>, originUnitId: string, roleUnits: Partial<Record<string, string>>): string | null {
   if (!stage.role || stage.role === 'DEMANDANTE') return originUnitId;
   return roleUnits[stage.role] || null;
+}
+
+export interface RoleRoute {
+  unitId: string;
+  unitName?: string | null;
+  userId?: string | null;
+  userName?: string | null;
+}
+
+/**
+ * Destino completo da etapa (unidade + pessoa): 1) destino fixo da etapa,
+ * 2) unidade que pediu, 3) papel configurado (unidade e, se houver, o
+ * servidor responsável). null = ninguém definido.
+ */
+export function stageRoute(
+  stage: Pick<FlowStage, 'role' | 'unitId' | 'unitName' | 'userId' | 'userName'>,
+  origin: { id: string; name?: string | null },
+  roleRoutes: Partial<Record<string, RoleRoute>>
+): RoleRoute | null {
+  if (stage.unitId) return { unitId: stage.unitId, unitName: stage.unitName || null, userId: stage.userId || null, userName: stage.userName || null };
+  if (!stage.role || stage.role === 'DEMANDANTE') return { unitId: origin.id, unitName: origin.name || null, userId: null, userName: null };
+  const route = roleRoutes[stage.role];
+  return route ? { unitId: route.unitId, unitName: route.unitName || null, userId: route.userId || null, userName: route.userName || null } : null;
 }
 
 /** O que falta para avançar a etapa (regra pura, testável) */

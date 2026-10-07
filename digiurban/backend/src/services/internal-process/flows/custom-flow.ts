@@ -16,7 +16,7 @@ const text = (value: unknown, max: number) => String(value ?? '').replace(/\s+/g
 const docList = (value: unknown): string[] =>
   Array.isArray(value) ? [...new Set(value.map(String).filter((key) => key in DOCUMENT_TEMPLATES))] : [];
 
-export function buildCustomFlow(input: { name?: unknown; baseKey?: unknown; stages?: unknown }): FlowDefinition {
+export function buildCustomFlow(input: { name?: unknown; baseKey?: unknown; stages?: unknown; description?: unknown }): FlowDefinition {
   const name = text(input.name, 80);
   if (name.length < 3) throw new CustomFlowError('Dê um nome ao fluxo.');
   const baseKey = typeof input.baseKey === 'string' && input.baseKey in FLOWS ? (input.baseKey as FlowKey) : null;
@@ -52,6 +52,9 @@ export function buildCustomFlow(input: { name?: unknown; baseKey?: unknown; stag
       days: Number.isFinite(days) ? Math.min(90, Math.max(1, days)) : 5,
       owner: FLOW_ROLES[raw.role as keyof typeof FLOW_ROLES].name,
       role: raw.role,
+      // destino fixo (os nomes são conferidos no banco pela rota)
+      unitId: typeof raw?.unitId === 'string' && raw.unitId ? raw.unitId.slice(0, 40) : null,
+      userId: typeof raw?.unitId === 'string' && raw.unitId && typeof raw?.userId === 'string' && raw.userId ? raw.userId.slice(0, 40) : null,
     };
   });
 

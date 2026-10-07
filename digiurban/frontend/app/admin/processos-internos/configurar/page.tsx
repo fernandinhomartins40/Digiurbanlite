@@ -3,15 +3,17 @@
 /**
  * Fluxos e responsáveis do processo interno (administrador).
  *  1. Quem faz cada etapa: cada papel (Compras, Jurídico, Finanças...) ligado
- *     a uma unidade do organograma UMA vez — todos os fluxos passam a se
- *     encaminhar sozinhos. O sistema sugere pelo nome das unidades.
- *  2. Fluxos: os prontos (Lei 14.133) e os próprios do município, feitos a
- *     partir de uma cópia.
+ *     a uma unidade do organograma e, se quiser, ao servidor que recebe — UMA
+ *     vez, e todos os fluxos passam a se encaminhar sozinhos. O sistema
+ *     sugere a unidade pelo nome.
+ *  2. Fluxos: os prontos (Lei 14.133), editáveis pelo município (com volta ao
+ *     padrão da lei), e os próprios, feitos do zero ou a partir de uma cópia.
  */
 
 import { useEffect, useState } from 'react'
 import Link from 'next/link'
-import { ArrowLeft, Copy, Loader2, Pencil, Plus, Save, Sparkles } from 'lucide-react'
+import { ArrowLeft, Copy, Loader2, Pencil, Plus, RotateCcw, Save, Sparkles } from 'lucide-react'
+import { UnitPersonSelect, UnitPersonValue } from '@/components/admin/internal-process/UnitPersonSelect'
 import { useAdminAuth } from '@/contexts/AdminAuthContext'
 import { Button } from '@/components/ui/button'
 import { useToast } from '@/hooks/use-toast'
@@ -23,6 +25,8 @@ interface RoleRow {
   hint: string
   configurable: boolean
   unitId: string | null
+  userId: string | null
+  userName: string | null
   suggestedUnitId: string | null
   suggestedUnitName: string | null
 }
@@ -46,7 +50,7 @@ interface TypeRow {
   prefix: string
   isActive: boolean
   flowKey: string | null
-  flowDefinition?: { stages?: Array<{ name: string; role: string }> } | null
+  flowDefinition?: { stages?: Array<{ key: string; name: string; role: string; unitName?: string | null; userName?: string | null }> } | null
 }
 
 export default function ConfigurarProcessosPage() {
@@ -55,7 +59,7 @@ export default function ConfigurarProcessosPage() {
   const [tab, setTab] = useState<'roles' | 'flows'>('roles')
   const [roles, setRoles] = useState<RoleRow[]>([])
   const [units, setUnits] = useState<UnitOption[]>([])
-  const [chosen, setChosen] = useState<Record<string, string>>({})
+  const [chosen, setChosen] = useState<Record<string, UnitPersonValue>>({})
   const [flows, setFlows] = useState<FlowInfo[]>([])
   const [roleNames, setRoleNames] = useState<Record<string, string>>({})
   const [types, setTypes] = useState<TypeRow[]>([])
@@ -75,7 +79,7 @@ export default function ConfigurarProcessosPage() {
       const rows: RoleRow[] = rolesResponse?.data?.roles || []
       setRoles(rows)
       setUnits(rolesResponse?.data?.units || [])
-      setChosen(Object.fromEntries(rows.filter((row) => row.configurable).map((row) => [row.key, row.unitId || ''])))
+      setChosen(Object.fromEntries(rows.filter((row) => row.configurable).map((row) => [row.key, { unitId: row.unitId || '', userId: row.userId || '' }])))
       setFlows(flowsResponse?.data?.flows || [])
       setRoleNames(Object.fromEntries((flowsResponse?.data?.roles || []).map((role: any) => [role.key, role.name])))
       setTypes(typesResponse?.data?.types || [])
@@ -107,9 +111,20 @@ export default function ConfigurarProcessosPage() {
   const useSuggestions = () => {
     setChosen((current) => {
       const next = { ...current }
-      for (const role of roles) if (role.configurable && !next[role.key] && role.suggestedUnitId) next[role.key] = role.suggestedUnitId
+      for (const role of roles) if (role.configurable && !next[role.key]?.unitId && role.suggestedUnitId) next[role.key] = { unitId: role.suggestedUnitId, userId: '' }
       return next
     })
+  }
+
+  const resetType = async (type: TypeRow) => {
+    if (!window.confirm(`Voltar "${type.name}" ao padrão da lei? As suas mudanças nesse fluxo se perdem (processos já abertos não mudam).`)) return
+    try {
+      await apiRequest(`/internal-processes/flow-types/${type.id}/custom`, { method: 'DELETE' })
+      toast({ title: 'Fluxo de volta ao padrão da lei' })
+      await load()
+    } catch (error: any) {
+      toast({ variant: 'destructive', title: 'Não foi possível', description: error?.message })
+    }
   }
 
   const toggleType = async (type: TypeRow) => {
@@ -130,8 +145,8 @@ export default function ConfigurarProcessosPage() {
   }
 
   const configurable = roles.filter((role) => role.configurable)
-  const missing = configurable.filter((role) => !chosen[role.key]).length
-  const hasSuggestion = configurable.some((role) => !chosen[role.key] && role.suggestedUnitId)
+  const missing = configurable.filter((role) => !chosen[role.key]?.unitId).length
+  const hasSuggestion = configurable.some((role) => !chosen[role.key]?.unitId && role.suggestedUnitId)
   const customTypes = types.filter((type) => type.flowKey === 'CUSTOM')
   const typeOfFlow = (key: string) => types.find((type) => type.flowKey === key)
 
@@ -171,7 +186,7 @@ export default function ConfigurarProcessosPage() {
             </p>
           )}
           <p className="text-sm text-gray-700">
-            A <strong>unidade que pediu</strong> é sempre a que abriu o processo. Para os outros papéis, escolha a unidade do organograma.
+            A <strong>unidade que pediu</strong> é sempre a que abriu o processo. Para os outros papéis, escolha a unidade e, se quiser, o servidor que recebe (sem servidor, todos da unidade veem).
             {missing > 0 && <span className="text-amber-700"> Faltam {missing}: etapas desses papéis ficam com a unidade anterior até você escolher.</span>}
           </p>
           {hasSuggestion && isAdmin && (
@@ -181,23 +196,21 @@ export default function ConfigurarProcessosPage() {
           )}
           <ul className="divide-y">
             {configurable.map((role) => (
-              <li key={role.key} className="flex flex-col gap-2 py-3 sm:flex-row sm:items-center sm:justify-between">
-                <div className="min-w-0">
+              <li key={role.key} className="flex flex-col gap-2 py-3 lg:flex-row lg:items-center lg:justify-between">
+                <div className="min-w-0 lg:max-w-xs">
                   <p className="font-medium text-gray-900">{role.name}</p>
                   <p className="text-xs text-gray-500">{role.hint}</p>
-                  {!chosen[role.key] && role.suggestedUnitName && <p className="text-xs text-amber-700">Sugestão: {role.suggestedUnitName}</p>}
+                  {!chosen[role.key]?.unitId && role.suggestedUnitName && <p className="text-xs text-amber-700">Sugestão: {role.suggestedUnitName}</p>}
                 </div>
-                <select
-                  value={chosen[role.key] || ''}
-                  onChange={(e) => setChosen((current) => ({ ...current, [role.key]: e.target.value }))}
-                  disabled={!isAdmin}
-                  className="h-10 w-full rounded-md border border-input bg-background px-2 text-sm sm:w-80"
-                >
-                  <option value="">— ninguém definido —</option>
-                  {units.map((unit) => (
-                    <option key={unit.id} value={unit.id}>{unit.nome}{unit.department ? ` · ${unit.department}` : ''}</option>
-                  ))}
-                </select>
+                <div className="w-full lg:w-[30rem]">
+                  <UnitPersonSelect
+                    units={units}
+                    value={chosen[role.key] || { unitId: '', userId: '' }}
+                    userName={role.userId === chosen[role.key]?.userId ? role.userName : null}
+                    onChange={(next) => setChosen((current) => ({ ...current, [role.key]: next }))}
+                    disabled={!isAdmin}
+                  />
+                </div>
               </li>
             ))}
           </ul>
@@ -231,6 +244,7 @@ export default function ConfigurarProcessosPage() {
                     <div>
                       <p className={cn('font-medium', type.isActive ? 'text-gray-900' : 'text-gray-400')}>{type.name} <span className="font-mono text-xs text-gray-500">{type.prefix}</span></p>
                       <p className="text-xs text-gray-500">{(type.flowDefinition?.stages || []).map((stage) => stage.name).join(' → ')}</p>
+                      <Link href={`/admin/processos-internos/fluxos/novo?copia=${type.id}`} className="text-xs text-blue-700 hover:underline">Fazer uma cópia</Link>
                     </div>
                     {isAdmin && (
                       <div className="flex gap-2">
@@ -248,33 +262,51 @@ export default function ConfigurarProcessosPage() {
 
           <div className="space-y-2 rounded-xl border bg-white p-4">
             <p className="font-medium text-gray-900">Fluxos prontos (Lei 14.133/2021)</p>
-            <p className="text-xs text-gray-500">Seguem a lei e são atualizados pela plataforma. Para mudar, faça uma cópia.</p>
+            <p className="text-xs text-gray-500">Seguem a lei. Dá para editar (vale só para o município, com volta ao padrão da lei) ou fazer uma cópia para ter os dois.</p>
             <ul className="divide-y">
               {flows.map((flow) => {
                 const type = typeOfFlow(flow.key)
+                const customized = Boolean(type?.flowDefinition?.stages?.length)
+                const stages = customized ? type!.flowDefinition!.stages! : flow.stages
                 return (
                   <li key={flow.key} className="space-y-2 py-3">
                     <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
                       <div className="min-w-0">
-                        <p className={cn('font-medium', type && !type.isActive ? 'text-gray-400' : 'text-gray-900')}>{flow.name}</p>
+                        <p className={cn('font-medium', type && !type.isActive ? 'text-gray-400' : 'text-gray-900')}>
+                          {type?.name || flow.name}
+                          {customized && <span className="ml-2 rounded bg-amber-100 px-1.5 text-xs font-normal text-amber-800">Ajustado pelo município</span>}
+                        </p>
                         <p className="text-xs text-gray-600">{flow.description}</p>
                         <button type="button" className="text-xs text-blue-700 hover:underline" onClick={() => setOpen(open === flow.key ? null : flow.key)}>
-                          {open === flow.key ? 'Esconder etapas' : `Ver as ${flow.stages.length} etapas`}
+                          {open === flow.key ? 'Esconder etapas' : `Ver as ${stages.length} etapas`}
                         </button>
                       </div>
                       {isAdmin && (
-                        <div className="flex shrink-0 gap-2">
+                        <div className="flex shrink-0 flex-wrap gap-2">
+                          {type && (
+                            <Button size="sm" asChild>
+                              <Link href={`/admin/processos-internos/fluxos/${type.id}`}><Pencil className="mr-1 h-4 w-4" />Editar</Link>
+                            </Button>
+                          )}
                           <Button size="sm" variant="outline" asChild>
                             <Link href={`/admin/processos-internos/fluxos/novo?base=${flow.key}`}><Copy className="mr-1 h-4 w-4" />Fazer uma cópia</Link>
                           </Button>
+                          {type && customized && (
+                            <Button size="sm" variant="ghost" onClick={() => resetType(type)}><RotateCcw className="mr-1 h-4 w-4" />Padrão da lei</Button>
+                          )}
                           {type && <Button size="sm" variant="ghost" onClick={() => toggleType(type)}>{type.isActive ? 'Desligar' : 'Ligar'}</Button>}
                         </div>
                       )}
                     </div>
                     {open === flow.key && (
                       <ol className="list-decimal space-y-0.5 pl-6 text-sm text-gray-700">
-                        {flow.stages.map((stage) => (
-                          <li key={stage.key}>{stage.name} <span className="text-xs text-gray-500">— {roleNames[stage.role] || stage.role}</span></li>
+                        {stages.map((stage: any) => (
+                          <li key={stage.key}>
+                            {stage.name}{' '}
+                            <span className="text-xs text-gray-500">
+                              — {stage.unitName ? `${stage.unitName}${stage.userName ? ` (${stage.userName})` : ''}` : roleNames[stage.role] || stage.role}
+                            </span>
+                          </li>
                         ))}
                       </ol>
                     )}

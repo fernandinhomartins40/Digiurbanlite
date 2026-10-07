@@ -26,9 +26,10 @@ import {
   previousStage,
   resolveFlow,
   roleName,
-  stageUnitId,
+  RoleRoute,
+  stageRoute,
 } from './flows';
-import { getRoleUnits, RoleUnits, roleUnitIds } from './roles.service';
+import { getRoleUnits, RoleUnits, roleRoutes } from './roles.service';
 import { DOCUMENT_TEMPLATES, fillTemplate } from './templates';
 
 const nestedTenant = () => ({ tenantId: tryGetTenantId() || null });
@@ -52,14 +53,6 @@ async function loadProcess(actor: ProcessActor, id: string, mustAct: boolean) {
   return process;
 }
 
-/** Unidade de destino de uma etapa (id + nome) */
-function stageTarget(stage: { role: string }, origin: { id: string; name: string }, roleUnits: RoleUnits) {
-  const unitId = stageUnitId(stage as any, origin.id, roleUnitIds(roleUnits));
-  if (!unitId) return null;
-  if (unitId === origin.id) return { unitId, unitName: origin.name };
-  const entry = Object.values(roleUnits).find((item) => item?.unitId === unitId);
-  return { unitId, unitName: entry?.unitName || '' };
-}
 
 /** Etapas com situação (feita / atual / a fazer), para onde cada uma vai e o que falta na atual */
 export function buildFlowView(
@@ -74,7 +67,7 @@ export function buildFlowView(
     baseKey: flowBaseKey(flow),
     name: flow.name,
     stages: flow.stages.map((stage, index) => {
-      const target = routing ? stageTarget(stage, routing.origin, routing.roleUnits) : null;
+      const target = routing ? stageRoute(stage, routing.origin, roleRoutes(routing.roleUnits)) : null;
       return {
         key: stage.key,
         name: stage.name,
@@ -89,6 +82,8 @@ export function buildFlowView(
         roleName: roleName(stage.role),
         unitId: target?.unitId || null,
         unitName: target?.unitName || null,
+        userId: target?.userId || null,
+        userName: target?.userName || null,
         status: currentIndex < 0 ? 'done' : index < currentIndex ? 'done' : index === currentIndex ? 'current' : 'todo',
       };
     }),
@@ -353,16 +348,25 @@ async function moveToStage(
   stage: { key: string; name: string; days: number },
   target: { id: string; nome: string; departmentId: string | null } | null,
   action: 'ETAPA' | 'ETAPA_DEVOLVIDA',
-  note: string
+  note: string,
+  person: { id: string; name: string } | null = null
 ) {
-  const moving = !!target && target.id !== process.currentUnitId;
+  const changesUnit = !!target && target.id !== process.currentUnitId;
+  const moving = changesUnit || !!person;
   const updated = await prisma.internalProcess.update({
     where: { id: process.id },
     data: {
       stageKey: stage.key,
       stageDueAt: addWorkingDays(new Date(), stage.days),
-      ...(moving
-        ? { status: 'EM_TRAMITE', currentUnitId: target!.id, currentUnitName: target!.nome, currentDepartmentId: target!.departmentId, currentUserId: null, currentUserName: null }
+      ...(moving && target
+        ? {
+            status: 'EM_TRAMITE',
+            currentUnitId: target.id,
+            currentUnitName: target.nome,
+            currentDepartmentId: target.departmentId,
+            currentUserId: person?.id || null,
+            currentUserName: person?.name || null,
+          }
         : {}),
       movements: {
         create: {
@@ -371,18 +375,35 @@ async function moveToStage(
           note,
           userId: actor.id,
           userName: actor.name,
-          ...(moving
-            ? { fromUnitId: process.currentUnitId, fromUnitName: process.currentUnitName, toUnitId: target!.id, toUnitName: target!.nome }
+          ...(moving && target
+            ? {
+                fromUnitId: process.currentUnitId,
+                fromUnitName: process.currentUnitName,
+                toUnitId: target.id,
+                toUnitName: target.nome,
+                toUserId: person?.id || null,
+                toUserName: person?.name || null,
+              }
             : { readAt: new Date() }),
         },
       },
     },
   });
-  if (moving) {
-    const title = action === 'ETAPA' ? `Processo ${process.number}: etapa "${stage.name}" com a sua unidade` : `Processo ${process.number} devolvido para ajuste`;
-    await notifyUnit(target!.id, null, title, process.subject, process.id, actor.id);
+  if (moving && target) {
+    const title = action === 'ETAPA' ? `Processo ${process.number}: etapa "${stage.name}" com você` : `Processo ${process.number} devolvido para ajuste`;
+    await notifyUnit(target.id, person?.id || null, title, process.subject, process.id, actor.id);
   }
-  return { updated, moved: moving ? target!.nome : null };
+  return { updated, moved: moving && target ? `${target.nome}${person ? ` (${person.name})` : ''}` : null };
+}
+
+/** Unidade e pessoa (conferidas no banco) de um destino de etapa */
+async function loadRoute(route: RoleRoute | null) {
+  if (!route) return { unit: null, person: null };
+  const unit = await getUnit(route.unitId).catch(() => null);
+  const person = unit && route.userId
+    ? await prisma.user.findFirst({ where: { id: route.userId, isActive: true }, select: { id: true, name: true } })
+    : null;
+  return { unit, person };
 }
 
 /**
@@ -390,7 +411,7 @@ async function moveToStage(
  * prontos). O processo vai sozinho para a unidade do papel da próxima etapa;
  * `toUnitId` troca o destino só desta vez.
  */
-export async function advanceStage(actor: ProcessActor & { name: string }, processId: string, input: { note?: string; toUnitId?: string } = {}) {
+export async function advanceStage(actor: ProcessActor & { name: string }, processId: string, input: { note?: string; toUnitId?: string; toUserId?: string } = {}) {
   const process = await loadProcess(actor, processId, true);
   const flow = resolveFlow(process);
   if (!flow) throw new InternalProcessError('Este processo não tem etapas.');
@@ -403,11 +424,17 @@ export async function advanceStage(actor: ProcessActor & { name: string }, proce
   const next = nextStage(flow, stage.key);
   if (!next) throw new InternalProcessError('Esta é a última etapa. Conclua o processo.');
   const roleUnits = await getRoleUnits();
-  const targetId = input.toUnitId || stageUnitId(next, process.originUnitId, roleUnitIds(roleUnits));
-  const target = targetId ? await getUnit(targetId) : null;
+  const route = input.toUnitId
+    ? { unitId: input.toUnitId, userId: input.toUserId || null }
+    : stageRoute(next, { id: process.originUnitId, name: process.originUnitName }, roleRoutes(roleUnits));
+  const { unit: target, person } = await loadRoute(route);
   const extra = input.note ? `\n${String(input.note).slice(0, 2000)}` : '';
-  const where = target ? (target.id === process.currentUnitId ? ' Continua com esta unidade.' : ` Enviado para ${target.nome}.`) : ` Ninguém definido para "${roleName(next.role)}": continua com esta unidade.`;
-  const { updated, moved } = await moveToStage(actor, process, next, target, 'ETAPA', `Etapa concluída: ${stage.name}. Próxima: ${next.name}${next.legal ? ` (${next.legal})` : ''}.${where}${extra}`);
+  const where = target
+    ? target.id === process.currentUnitId && !person
+      ? ' Continua com esta unidade.'
+      : ` Enviado para ${target.nome}${person ? ` (${person.name})` : ''}.`
+    : ` Ninguém definido para "${roleName(next.role)}": continua com esta unidade.`;
+  const { updated, moved } = await moveToStage(actor, process, next, target, 'ETAPA', `Etapa concluída: ${stage.name}. Próxima: ${next.name}${next.legal ? ` (${next.legal})` : ''}.${where}${extra}`, person);
   return { process: updated, next, movedTo: moved, warnings: flowWarnings(flowBaseKey(flow), process.fields as Record<string, any>) };
 }
 
@@ -422,9 +449,8 @@ export async function returnStage(actor: ProcessActor & { name: string }, proces
   const previous = previousStage(flow, process.stageKey);
   if (!stage || !previous) throw new InternalProcessError('Não há etapa anterior.');
   const roleUnits = await getRoleUnits();
-  const targetId = stageUnitId(previous, process.originUnitId, roleUnitIds(roleUnits));
-  const target = targetId ? await getUnit(targetId) : null;
-  const { updated, moved } = await moveToStage(actor, process, previous, target, 'ETAPA_DEVOLVIDA', `Devolvido de "${stage.name}" para "${previous.name}": ${text.slice(0, 2000)}`);
+  const { unit: target, person } = await loadRoute(stageRoute(previous, { id: process.originUnitId, name: process.originUnitName }, roleRoutes(roleUnits)));
+  const { updated, moved } = await moveToStage(actor, process, previous, target, 'ETAPA_DEVOLVIDA', `Devolvido de "${stage.name}" para "${previous.name}": ${text.slice(0, 2000)}`, person);
   return { process: updated, previous, movedTo: moved };
 }
 

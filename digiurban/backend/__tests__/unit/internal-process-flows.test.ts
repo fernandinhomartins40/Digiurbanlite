@@ -4,7 +4,7 @@
 
 jest.mock('../../src/lib/prisma', () => ({ prisma: {} }));
 
-import { DISPENSA_LIMITS, dispensaLimitWarning, FLOWS, missingForStage, previousStage, resolveFlow, stageUnitId, flowBaseKey } from '../../src/services/internal-process/flows/flows';
+import { DISPENSA_LIMITS, dispensaLimitWarning, FLOWS, missingForStage, previousStage, resolveFlow, stageRoute, stageUnitId, flowBaseKey } from '../../src/services/internal-process/flows/flows';
 import { FLOW_ROLES, suggestRoleUnits } from '../../src/services/internal-process/flows/roles';
 import { buildCustomFlow, CustomFlowError, flowTotalDays } from '../../src/services/internal-process/flows/custom-flow';
 import { DOCUMENT_TEMPLATES, fillTemplate } from '../../src/services/internal-process/flows/templates';
@@ -88,6 +88,15 @@ describe('quem faz cada etapa', () => {
     expect(stageUnitId({ role: 'DEMANDANTE' }, 'origem', { JURIDICO: 'jur' })).toBe('origem');
     expect(stageUnitId({ role: 'JURIDICO' }, 'origem', { JURIDICO: 'jur' })).toBe('jur');
     expect(stageUnitId({ role: 'COMPRAS' }, 'origem', { JURIDICO: 'jur' })).toBeNull();
+  });
+
+  it('destino com pessoa: etapa fixa > unidade que pediu > papel (com o servidor)', () => {
+    const roles = { JURIDICO: { unitId: 'jur', unitName: 'Procuradoria', userId: 'ana', userName: 'Ana' } };
+    const origin = { id: 'origem', name: 'Saúde' };
+    expect(stageRoute({ role: 'JURIDICO' }, origin, roles)).toEqual({ unitId: 'jur', unitName: 'Procuradoria', userId: 'ana', userName: 'Ana' });
+    expect(stageRoute({ role: 'DEMANDANTE' }, origin, roles)).toEqual({ unitId: 'origem', unitName: 'Saúde', userId: null, userName: null });
+    expect(stageRoute({ role: 'JURIDICO', unitId: 'gab', unitName: 'Gabinete', userId: 'pref', userName: 'Prefeito' }, origin, roles)?.userId).toBe('pref');
+    expect(stageRoute({ role: 'COMPRAS' }, origin, roles)).toBeNull();
   });
 
   it('sugere a unidade pelo nome, preferindo a mais específica', () => {

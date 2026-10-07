@@ -35,6 +35,7 @@ interface FlowStageView {
   roleName: string
   unitId: string | null
   unitName: string | null
+  userName?: string | null
   status: 'done' | 'current' | 'todo'
 }
 
@@ -143,7 +144,13 @@ export function FlowPanel({ processId, flow, documents, stageDueAt, fields, warn
 
   const docsFor = (key: string) => documents.filter((doc) => doc.templateKey === key)
   const goesTo = (stage: FlowStageView | null) =>
-    !stage ? null : stage.unitId ? (stage.unitId === currentUnitId ? 'continua com esta unidade' : stage.unitName || stage.roleName) : null
+    !stage
+      ? null
+      : stage.unitId
+        ? stage.unitId === currentUnitId && !stage.userName
+          ? 'continua com esta unidade'
+          : `${stage.unitName || stage.roleName}${stage.userName ? ` (${stage.userName})` : ''}`
+        : null
 
   return (
     <div className="space-y-4 rounded-xl border bg-white p-4">
@@ -200,7 +207,7 @@ export function FlowPanel({ processId, flow, documents, stageDueAt, fields, warn
               {shown.legal && <p className="text-xs text-blue-800">{shown.legal}</p>}
             </div>
             <p className="text-xs text-gray-600">
-              Faz: {shown.roleName}{shown.unitName ? ` (${shown.unitName})` : ''}
+              Faz: {shown.roleName}{shown.unitName ? ` (${shown.unitName}${shown.userName ? ` — ${shown.userName}` : ''})` : ''}
               {shown.status === 'current' && stageDueAt && <> · prazo da etapa: {formatDate(stageDueAt)}</>}
               {shown.status !== 'current' && <> · prazo sugerido: {shown.days} dias úteis</>}
             </p>

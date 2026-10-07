@@ -17,9 +17,9 @@ import notificationService from '../notification.service';
 import { addWorkingDays } from '../protocol-sla.service';
 import { getUserDepartmentIds, getUserUnitIds, WORKING_ASSIGNMENT_STATUSES } from '../staff-scope.service';
 import { findDepartmentRootOrganizationalUnit } from '../department-organogram.service';
-import { FlowDefinition, flowBaseKey, getFlow, resolveFlow, stageUnitId } from './flows/flows';
+import { FlowDefinition, flowBaseKey, getFlow, resolveFlow, stageRoute } from './flows/flows';
 import { buildFlowViewFor, flowWarnings, sanitizeFields } from './flows/flow.service';
-import { getRoleUnits, roleUnitIds } from './flows/roles.service';
+import { getRoleUnits, roleRoutes } from './flows/roles.service';
 import {
   canActOnProcess,
   canViewProcess,
@@ -180,12 +180,17 @@ export async function createProcess(actor: ProcessActor & { name: string }, inpu
 
   // fluxo com etapas: começa na primeira etapa, com o prazo dela, na unidade do papel dela
   // (o fluxo próprio do município fica gravado no processo)
-  const flow: FlowDefinition | null = type.flowKey === 'CUSTOM' ? resolveFlow({ flowSnapshot: type.flowDefinition }) : getFlow(type.flowKey);
+  // fluxo pronto editado pelo município também fica em flowDefinition (vale mais que o da lei)
+  const flow: FlowDefinition | null = resolveFlow({ flowKey: type.flowKey === 'CUSTOM' ? null : type.flowKey, flowSnapshot: type.flowDefinition });
   const firstStage = flow?.stages[0] || null;
   let routed = destination;
+  let routedUser = toUser;
   if (flow && firstStage && !routed) {
-    const firstUnitId = stageUnitId(firstStage, origin.id, roleUnitIds(await getRoleUnits()));
-    if (firstUnitId && firstUnitId !== origin.id) routed = await getUnit(firstUnitId);
+    const route = stageRoute(firstStage, { id: origin.id, name: origin.nome }, roleRoutes(await getRoleUnits()));
+    if (route && (route.unitId !== origin.id || route.userId)) {
+      routed = await getUnit(route.unitId);
+      routedUser = route.userId ? await prisma.user.findFirst({ where: { id: route.userId, isActive: true }, select: { id: true, name: true } }) : null;
+    }
   }
   const current = routed || origin;
   const fields: Record<string, any> | undefined = flow && input.fields ? sanitizeFields(input.fields) : undefined;
@@ -213,15 +218,15 @@ export async function createProcess(actor: ProcessActor & { name: string }, inpu
       currentUnitId: current.id,
       currentUnitName: current.nome,
       currentDepartmentId: current.departmentId,
-      currentUserId: toUser?.id || null,
-      currentUserName: toUser?.name || null,
+      currentUserId: routedUser?.id || null,
+      currentUserName: routedUser?.name || null,
       createdById: actor.id,
       createdByName: actor.name,
       protocolId: input.protocolId || null,
       parentId: input.parentId || null,
       dueAt: addWorkingDays(new Date(), type.defaultDays),
-      flowKey: flow ? (type.flowKey === 'CUSTOM' ? 'CUSTOM' : flow.key) : null,
-      flowSnapshot: type.flowKey === 'CUSTOM' && flow ? (flow as any) : undefined,
+      flowKey: flow ? type.flowKey : null,
+      flowSnapshot: type.flowDefinition && flow ? (flow as any) : undefined,
       stageKey: firstStage?.key || null,
       stageDueAt: firstStage ? addWorkingDays(new Date(), firstStage.days) : null,
       fields: fields as any,
@@ -238,8 +243,8 @@ export async function createProcess(actor: ProcessActor & { name: string }, inpu
                 fromUnitName: origin.nome,
                 toUnitId: routed.id,
                 toUnitName: routed.nome,
-                toUserId: toUser?.id || null,
-                toUserName: toUser?.name || null,
+                toUserId: routedUser?.id || null,
+                toUserName: routedUser?.name || null,
               }]
             : []),
           ...participants
@@ -259,7 +264,7 @@ export async function createProcess(actor: ProcessActor & { name: string }, inpu
   });
 
   if (routed) {
-    await notifyUnit(routed.id, toUser?.id || null, `${type.name} recebido: ${number}`, `${origin.nome} enviou: ${subject}`, process.id, actor.id);
+    await notifyUnit(routed.id, routedUser?.id || null, `${type.name} recebido: ${number}`, `${origin.nome} enviou: ${subject}`, process.id, actor.id);
   }
   for (const unit of participants.filter((item) => item.id !== origin.id)) {
     await notifyUnit(unit.id, null, `Participação no ${number}`, `${origin.nome} incluiu a sua unidade como participante: ${subject}`, process.id, actor.id);
