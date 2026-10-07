@@ -444,6 +444,16 @@ export async function concludeProcess(actor: ProcessActor & { name: string }, id
   }
 
   if (process.protocolId) {
+    // documentos assinados do processo vão junto (com o código para conferir)
+    const signed = await prisma.signature.findMany({
+      where: { internalDocument: { processId: id }, isValid: true },
+      orderBy: { signedAt: 'asc' },
+      select: { code: true, signerName: true, internalDocument: { select: { title: true } } },
+    });
+    const signedText = signed.length
+      ? `
+Documentos assinados: ${signed.map((item) => `${item.internalDocument?.title} (${item.signerName}, código ${item.code})`).join('; ')}`
+      : '';
     await prisma.protocolInteraction
       .create({
         data: {
@@ -452,7 +462,7 @@ export async function concludeProcess(actor: ProcessActor & { name: string }, id
           authorType: 'SERVER',
           authorId: actor.id,
           authorName: actor.name,
-          message: `Processo interno ${process.number} (${process.currentUnitName}) concluído: ${conclusion || 'sem observações'}`,
+          message: `Processo interno ${process.number} (${process.currentUnitName}) concluído: ${conclusion || 'sem observações'}${signedText}`,
           isInternal: true,
         },
       })

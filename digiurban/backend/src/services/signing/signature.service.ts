@@ -240,16 +240,25 @@ export async function signTarget(type: Exclude<SignTargetType, 'INTERNAL'>, id: 
   await assertCanSign(type, id, target, actor);
   const { signature } = await createSignature(type, id, actor, target.contentHash, meta);
 
+  let autoPublish = false;
   if (type === 'GENERATED') {
-    const doc = await prisma.generatedDocument.findFirst({ where: { id }, select: { status: true } });
+    const doc = await prisma.generatedDocument.findFirst({ where: { id }, select: { status: true, sourceStageName: true, publishedToCitizen: true } });
     await prisma.generatedDocument.update({
       where: { id },
       data: { isSigned: true, ...(doc?.status === 'PENDING_SIGNATURE' ? { status: 'SIGNED' } : {}) },
     });
+    // documento final do serviço (gerado na conclusão): vai sozinho ao cidadão
+    autoPublish = doc?.sourceStageName === 'Documento final do serviço' && !doc.publishedToCitizen;
   } else {
     await prisma.externalDocument.update({ where: { id }, data: { isSigned: true } });
   }
   await renderSignedFile(type, id).catch((error) => console.warn('[assinatura] PDF assinado não refeito:', error?.message || error));
+  if (autoPublish && actor.kind === 'user') {
+    const { publishGeneratedDocument } = await import('../generated-document-lifecycle.service');
+    await publishGeneratedDocument({ documentId: id, publishedBy: actor.id }).catch((error) =>
+      console.warn('[assinatura] documento final não publicado:', error?.message || error)
+    );
+  }
   return { signature, code: signature.code };
 }
 

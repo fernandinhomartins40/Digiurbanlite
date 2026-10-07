@@ -949,6 +949,9 @@ model ProtocolCitizenLink {
 
 model ServiceSimplified {
   id           String  @id @default(cuid())
+  // documento entregue ao cidadão quando o pedido é concluído (modelo do
+  // protocolo): gerado sozinho, assinado por quem concluiu e publicado
+  finalDocumentTemplateId String?
   // Fase 2 Multi-Tenant (onda piloto) — ver nota em User.tenantId
   tenantId     String?
   tenant       Tenant? @relation("TenantServices", fields: [tenantId], references: [id])

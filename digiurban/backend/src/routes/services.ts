@@ -242,6 +242,7 @@ router.post('/', adminAuthMiddleware, requireMinRole(UserRole.MANAGER), async (r
       // etiquetas que o serviço dá ao concluir e etiqueta exigida para pedir
       tagIds,
       requiredTagId,
+      finalDocumentTemplateId,
     } = authReq.body;
 
     if (destination !== undefined && destination !== null) {
@@ -459,6 +460,7 @@ router.post('/', adminAuthMiddleware, requireMinRole(UserRole.MANAGER), async (r
           // ✅ NOVO: Configuração de unicidade de protocolos (agora obrigatório)
           minLevel: normalizeLevel(minLevel),
           requiredTagId: typeof requiredTagId === 'string' && requiredTagId ? requiredTagId : null,
+          finalDocumentTemplateId: typeof finalDocumentTemplateId === 'string' && finalDocumentTemplateId ? finalDocumentTemplateId : null,
           allowMultipleActiveProtocols: allowMultipleActiveProtocols,
           uniquenessScope: allowMultipleActiveProtocols === false ? uniquenessScope : null,
           uniquenessRules: allowMultipleActiveProtocols === false && uniquenessRules ? uniquenessRules : null,
@@ -567,7 +569,8 @@ router.put('/:id', adminAuthMiddleware, requireMinRole(UserRole.MANAGER), async 
       destination,
       appAction,
       tagIds,
-      requiredTagId
+      requiredTagId,
+      finalDocumentTemplateId
         } = authReq.body;
 
     // DEBUG: Log dos campos de configuração recebidos
@@ -681,6 +684,7 @@ router.put('/:id', adminAuthMiddleware, requireMinRole(UserRole.MANAGER), async 
         // Campos de unicidade
         ...(minLevel !== undefined && { minLevel: normalizeLevel(minLevel) }),
         ...(requiredTagId !== undefined && { requiredTagId: typeof requiredTagId === 'string' && requiredTagId ? requiredTagId : null }),
+        ...(finalDocumentTemplateId !== undefined && { finalDocumentTemplateId: typeof finalDocumentTemplateId === 'string' && finalDocumentTemplateId ? finalDocumentTemplateId : null }),
         ...(allowMultipleActiveProtocols !== undefined && { allowMultipleActiveProtocols }),
         ...(uniquenessScope !== undefined && { uniquenessScope }),
         ...(uniquenessRules !== undefined && { uniquenessRules })

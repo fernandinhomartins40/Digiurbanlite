@@ -43,6 +43,7 @@ interface ServiceFormData {
   minLevel: string
   tagIds: string[]
   requiredTagId: string | null
+  finalDocumentTemplateId: string | null
   priority: number
   icon: string
   color: string
@@ -89,6 +90,7 @@ export default function NewServicePage() {
     minLevel: 'BRONZE',
     tagIds: [],
     requiredTagId: null,
+    finalDocumentTemplateId: null,
     priority: 3,
     icon: '',
     color: '#3b82f6',
@@ -381,6 +383,7 @@ export default function NewServicePage() {
         minLevel: formData.minLevel || 'BRONZE',
         tagIds: formData.tagIds || [],
         requiredTagId: formData.requiredTagId || null,
+        finalDocumentTemplateId: formData.finalDocumentTemplateId || null,
         priority: formData.priority,
         icon: formData.icon || null,
         color: formData.color || null,

@@ -50,6 +50,7 @@ interface Service {
   minLevel?: string
   tagIds?: string[]
   requiredTagId?: string | null
+  finalDocumentTemplateId?: string | null
   priority: number
   icon: string | null
   color: string | null
@@ -78,6 +79,7 @@ interface ServiceFormData {
   minLevel: string
   tagIds: string[]
   requiredTagId: string | null
+  finalDocumentTemplateId: string | null
   priority: number
   icon: string
   color: string
@@ -123,6 +125,7 @@ export default function EditServicePage() {
     minLevel: 'BRONZE',
     tagIds: [],
     requiredTagId: null,
+    finalDocumentTemplateId: null,
     priority: 3,
     icon: '',
     color: '#3b82f6',
@@ -208,6 +211,7 @@ export default function EditServicePage() {
         minLevel: serviceData.minLevel || 'BRONZE',
         tagIds: serviceData.tagIds || [],
         requiredTagId: serviceData.requiredTagId || null,
+        finalDocumentTemplateId: serviceData.finalDocumentTemplateId || null,
         priority: serviceData.priority,
         icon: serviceData.icon || '',
         color: serviceData.color || '#3b82f6',
@@ -286,6 +290,7 @@ export default function EditServicePage() {
         minLevel: formData.minLevel || 'BRONZE',
         tagIds: formData.tagIds || [],
         requiredTagId: formData.requiredTagId || null,
+        finalDocumentTemplateId: formData.finalDocumentTemplateId || null,
         priority: formData.priority,
         icon: formData.icon || null,
         color: formData.color || null,

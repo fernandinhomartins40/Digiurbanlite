@@ -7,6 +7,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { IconPicker } from '@/components/ui/icon-picker'
 import { Info } from 'lucide-react'
 import { ServiceTagsField } from '@/components/admin/services/ServiceTagsField'
+import { ServiceFinalDocumentField } from '@/components/admin/services/ServiceFinalDocumentField'
 
 interface Department {
   id: string
@@ -24,6 +25,7 @@ interface BasicInfoStepProps {
     minLevel?: string
     tagIds?: string[]
     requiredTagId?: string | null
+    finalDocumentTemplateId?: string | null
     priority: number
     icon: string
     color: string
@@ -143,6 +145,10 @@ export function BasicInfoStep({ formData, departments, onChange, errors }: Basic
 
         <div className="md:col-span-2">
           <ServiceTagsField tagIds={formData.tagIds || []} requiredTagId={formData.requiredTagId || null} onChange={onChange} />
+        </div>
+
+        <div className="md:col-span-2">
+          <ServiceFinalDocumentField value={formData.finalDocumentTemplateId || null} onChange={onChange} />
         </div>
 
         <div className="space-y-2">
