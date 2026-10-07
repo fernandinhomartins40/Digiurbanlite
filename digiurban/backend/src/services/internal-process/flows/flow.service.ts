@@ -139,8 +139,14 @@ export function sanitizeFields(input: Record<string, any> | null | undefined, cu
 /** Novo documento a partir do modelo, já preenchido com os dados do processo */
 export async function createDocument(actor: ProcessActor & { name: string }, processId: string, templateKey: string) {
   const process = await loadProcess(actor, processId, true);
-  const template = DOCUMENT_TEMPLATES[templateKey];
-  if (!template) throw new InternalProcessError('Modelo não encontrado.');
+  const base = DOCUMENT_TEMPLATES[templateKey];
+  if (!base) throw new InternalProcessError('Modelo não encontrado.');
+  // o modelo do município (editável em Modelos de documentos) vale mais que o padrão
+  const own = await prisma.documentTemplate.findFirst({
+    where: { scope: 'INTERNAL_PROCESS', code: templateKey, isActive: true },
+    select: { name: true, htmlTemplate: true },
+  });
+  const template = own ? { ...base, title: own.name || base.title, body: own.htmlTemplate || base.body } : base;
 
   const tenantId = tryGetTenantId();
   const [tenant, user, assignment] = await Promise.all([

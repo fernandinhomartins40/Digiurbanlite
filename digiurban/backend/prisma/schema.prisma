@@ -6575,8 +6575,16 @@ model DocumentTemplate {
 
   // Identificação
   name        String // Ex: "Certidão de Protocolo"
-  code        String  @unique // Ex: "CERTIDAO_PROTOCOLO"
+  code        String // Ex: "CERTIDAO_PROTOCOLO" (único por município)
   description String?
+
+  // Onde o modelo é usado: PROTOCOL (documento do protocolo, HTML) ou
+  // INTERNAL_PROCESS (processo interno/licitação, texto com {{campos}})
+  scope       String  @default("PROTOCOL")
+  // Catálogo da plataforma (regra "só acrescenta"): catalogHash nulo = o
+  // município editou e o catálogo não mexe mais
+  catalogKey  String?
+  catalogHash String?
 
   // Tipo de documento
   documentType DocumentTemplateType // PROTOCOL_CERTIFICATE, COMPLETION_REPORT, etc
@@ -6618,9 +6626,11 @@ model DocumentTemplate {
   // Relacionamentos
   generatedDocuments GeneratedDocument[]
 
+  @@unique([tenantId, code])
   @@index([isActive])
   @@index([documentType])
   @@index([tenantId])
+  @@index([scope])
   @@map("document_templates")
 }
 

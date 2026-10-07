@@ -17,7 +17,8 @@ import {
   Download,
   Globe,
   Building2,
-  AlertCircle
+  AlertCircle,
+  RotateCcw
 } from 'lucide-react'
 import { Alert, AlertDescription } from '@/components/ui/alert'
 import { useRouter } from 'next/navigation'
@@ -32,17 +33,24 @@ export default function TemplatesDocumentosPage() {
   const [services, setServices] = useState<Array<{ id: string; name: string }>>([])
   const [loading, setLoading] = useState(true)
   const [filter, setFilter] = useState<'all' | 'PROTOCOL_CERTIFICATE' | 'COMPLETION_REPORT'>('all')
+  // documentos do protocolo (HTML) ou do processo interno e licitações (texto)
+  const [scope, setScope] = useState<'PROTOCOL' | 'INTERNAL_PROCESS'>('PROTOCOL')
 
   // Carregar templates e serviços
   useEffect(() => {
     loadTemplates()
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [scope])
+
+  useEffect(() => {
     loadServices()
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
   const loadTemplates = async () => {
     setLoading(true)
     try {
-      const result = await apiRequest('/document-templates')
+      const result = await apiRequest(`/document-templates?scope=${scope}`)
 
       if (result.success) {
         setTemplates(result.data || [])
@@ -88,11 +96,14 @@ export default function TemplatesDocumentosPage() {
           loadTemplates()
         }
       } else {
-        toast({
-          title: 'Funcionalidade em desenvolvimento',
-          description: 'Ativar template será implementado em breve',
-          variant: 'destructive'
+        const result = await apiRequest(`/document-templates/${templateId}`, {
+          method: 'PUT',
+          body: JSON.stringify({ isActive: true })
         })
+        if (result.success) {
+          toast({ title: 'Modelo ativado' })
+          loadTemplates()
+        }
       }
     } catch (error: any) {
       toast({
@@ -104,11 +115,25 @@ export default function TemplatesDocumentosPage() {
   }
 
   const handleViewTemplate = (templateId: string) => {
-    router.push(`/admin/templates-documentos/${templateId}/view`)
+    router.push(scope === 'INTERNAL_PROCESS' ? `/admin/templates-documentos/${templateId}/texto` : `/admin/templates-documentos/${templateId}/view`)
   }
 
   const handleEditTemplate = (templateId: string) => {
-    router.push(`/admin/templates-documentos/${templateId}/edit`)
+    router.push(scope === 'INTERNAL_PROCESS' ? `/admin/templates-documentos/${templateId}/texto` : `/admin/templates-documentos/${templateId}/edit`)
+  }
+
+  // modelo do catálogo editado pelo município: desfaz as mudanças
+  const handleRestore = async (templateId: string) => {
+    if (!window.confirm('Voltar este modelo ao padrão? As mudanças feitas pelo município nele se perdem.')) return
+    try {
+      const result = await apiRequest(`/document-templates/${templateId}/restore`, { method: 'POST' })
+      if (result.success) {
+        toast({ title: 'Modelo voltou ao padrão' })
+        loadTemplates()
+      }
+    } catch (error: any) {
+      toast({ title: 'Erro', description: error.message, variant: 'destructive' })
+    }
   }
 
   const getTypeLabel = (type: string) => {
@@ -139,9 +164,9 @@ export default function TemplatesDocumentosPage() {
     ? templates
     : templates.filter(t => t.documentType === filter)
 
-  // Verificar permissões - SUPER_ADMIN, ADMIN e MANAGER podem editar templates
-  const canEdit = user?.role === 'SUPER_ADMIN' || user?.role === 'ADMIN' || user?.role === 'MANAGER'
-  const canCreate = user?.role === 'SUPER_ADMIN'
+  // Administrador do município cria e edita os modelos
+  const canEdit = user?.role === 'SUPER_ADMIN' || user?.role === 'ADMIN'
+  const canCreate = canEdit
 
   if (loading) {
     return (
@@ -174,7 +199,7 @@ export default function TemplatesDocumentosPage() {
             Gerenciar templates para geração de documentos PDF
           </p>
         </div>
-        {canCreate && (
+        {canCreate && scope === 'PROTOCOL' && (
           <Button onClick={() => router.push('/admin/templates-documentos/novo')}>
             <Plus className="h-4 w-4 mr-2" />
             Novo Template
@@ -182,12 +207,29 @@ export default function TemplatesDocumentosPage() {
         )}
       </div>
 
+      {/* Onde o modelo é usado */}
+      <div className="flex gap-1 rounded-xl bg-gray-100 p-1">
+        {[
+          { id: 'PROTOCOL' as const, label: 'Documentos do protocolo' },
+          { id: 'INTERNAL_PROCESS' as const, label: 'Processo interno e licitações' },
+        ].map((item) => (
+          <button
+            key={item.id}
+            type="button"
+            onClick={() => { setScope(item.id); setFilter('all') }}
+            className={`flex-1 rounded-lg px-3 py-1.5 text-sm ${scope === item.id ? 'bg-white font-medium shadow-sm' : 'text-gray-600'}`}
+          >
+            {item.label}
+          </button>
+        ))}
+      </div>
+
       {/* Avisos e Informações */}
       {!canEdit && (
         <Alert>
           <AlertCircle className="h-4 w-4" />
           <AlertDescription>
-            Apenas SUPER_ADMIN, ADMIN e MANAGER podem criar/editar templates. Você pode visualizar os templates existentes.
+            Só o administrador do município cria e edita modelos. Você pode visualizar os modelos existentes.
           </AlertDescription>
         </Alert>
       )}
@@ -257,7 +299,7 @@ export default function TemplatesDocumentosPage() {
       </div>
 
       {/* Filtros */}
-      <div className="flex gap-2">
+      {scope === 'PROTOCOL' && <div className="flex gap-2">
         <Button
           variant={filter === 'all' ? 'default' : 'outline'}
           size="sm"
@@ -279,7 +321,7 @@ export default function TemplatesDocumentosPage() {
         >
           Relatórios ({templates.filter(t => t.documentType === 'COMPLETION_REPORT').length})
         </Button>
-      </div>
+      </div>}
 
       {/* Lista de Templates */}
       {filteredTemplates.length === 0 ? (
@@ -294,23 +336,9 @@ export default function TemplatesDocumentosPage() {
                 <p className="text-sm text-muted-foreground mb-4 max-w-md mx-auto">
                   Os templates de documentos são necessários para gerar certidões, relatórios e outros documentos oficiais.
                 </p>
-                <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4 max-w-lg mx-auto mb-4">
-                  <p className="text-sm text-yellow-800 font-medium mb-2">
-                    📋 Como adicionar templates?
-                  </p>
-                  <p className="text-xs text-yellow-700 text-left">
-                    Execute o comando no backend:<br/>
-                    <code className="bg-yellow-100 px-2 py-1 rounded mt-1 inline-block">
-                      npm run db:seed:document-templates
-                    </code>
-                  </p>
-                </div>
-                {canEdit && (
-                  <Button className="mt-4" disabled>
-                    <Plus className="h-4 w-4 mr-2" />
-                    Criar Primeiro Template
-                  </Button>
-                )}
+                <p className="text-sm text-muted-foreground mb-4 max-w-md mx-auto">
+                  Os modelos prontos do catálogo chegam sozinhos em alguns minutos. Se não aparecerem, peça ao suporte para atualizar o catálogo do município.
+                </p>
               </>
             ) : (
               <p className="text-muted-foreground">
@@ -356,6 +384,11 @@ export default function TemplatesDocumentosPage() {
                   <Badge variant="outline" className="text-xs">
                     v{template.version}
                   </Badge>
+                  {(template as any).fromCatalog && (
+                    <Badge variant="outline" className="text-xs">
+                      {(template as any).edited ? 'Editado pelo município' : 'Modelo padrão'}
+                    </Badge>
+                  )}
                 </div>
 
                 {/* Estatísticas e Vinculação */}
@@ -400,14 +433,18 @@ export default function TemplatesDocumentosPage() {
                         <Edit className="h-4 w-4 mr-1" />
                         Editar
                       </Button>
-                      {template.isActive && (
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={() => handleToggleActive(template.id, template.isActive)}
-                        >
-                          <Trash2 className="h-4 w-4 mr-1" />
-                          Desativar
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => handleToggleActive(template.id, template.isActive)}
+                      >
+                        <Trash2 className="h-4 w-4 mr-1" />
+                        {template.isActive ? 'Desativar' : 'Ativar'}
+                      </Button>
+                      {(template as any).fromCatalog && (template as any).edited && (
+                        <Button variant="ghost" size="sm" onClick={() => handleRestore(template.id)}>
+                          <RotateCcw className="h-4 w-4 mr-1" />
+                          Padrão
                         </Button>
                       )}
                     </>

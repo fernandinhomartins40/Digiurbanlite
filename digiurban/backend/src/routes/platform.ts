@@ -242,6 +242,8 @@ router.post(
       const result = await runAsTenant(tenantId, async () => applyServiceCatalog(prisma, tenantId));
       const { syncRegistryTypes } = await import('../services/registry/registry-sync.service');
       await runAsTenant(tenantId, async () => syncRegistryTypes());
+      const { applyDocumentTemplateCatalog } = await import('../catalog/document-templates');
+      const templates = await runAsTenant(tenantId, async () => applyDocumentTemplateCatalog(prisma, tenantId));
       await logAuditEvent({
         action: AUDIT_EVENTS.TENANT_CONFIG_CHANGE,
         resource: req.originalUrl,
@@ -252,7 +254,8 @@ router.post(
       return res.json({
         success: true,
         result,
-        message: `Catálogo aplicado: ${result.created} serviço(s) novo(s), ${result.updated} atualizado(s), ${result.keptEdited} mantido(s) como o município editou.`,
+        templates,
+        message: `Catálogo aplicado: ${result.created} serviço(s) novo(s), ${result.updated} atualizado(s), ${result.keptEdited} mantido(s) como o município editou; ${templates.created} modelo(s) de documento novo(s).`,
       });
     } catch (error) {
       console.error('[platform] catálogo de serviços:', error);

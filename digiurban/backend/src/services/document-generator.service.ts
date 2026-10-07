@@ -17,6 +17,53 @@ import {
 } from '../utils/validation-code.utils';
 import { sendTemplatedMail } from './mail/templated';
 import { resolveUploadTenantId, getTenantUploadDir, getTenantUploadUrl } from '../config/upload';
+import { tenantPortalUrl } from './mail/links';
+
+/** Endereço do cidadão {cep, logradouro, numero, complemento, bairro, cidade, uf} → partes para o modelo */
+function citizenAddressParts(address: unknown) {
+  const value = (address && typeof address === 'object' ? address : {}) as Record<string, any>;
+  const text = typeof address === 'string' ? address : '';
+  const street = [value.logradouro, value.numero].filter(Boolean).join(', ');
+  return {
+    line: text || [street, value.complemento].filter(Boolean).join(' - ') || '-',
+    neighborhood: value.bairro || '-',
+    city: value.cidade || '-',
+    state: value.uf || '-',
+    zipCode: value.cep || '-',
+  };
+}
+
+/** Dados do município para o cabeçalho dos modelos (nome, CNPJ, brasão, site) */
+async function municipalityVariables(tenantId: string | null) {
+  const tenant = tenantId
+    ? await prisma.tenant.findFirst({ where: { id: tenantId }, select: { nome: true, cnpj: true, nomeMunicipio: true, ufMunicipio: true, branding: true } }).catch(() => null)
+    : null;
+  const branding = ((tenant as any)?.branding || {}) as Record<string, any>;
+  let logo = '';
+  if (typeof branding.logoUrl === 'string' && branding.logoUrl) {
+    // o PDF é montado sem servidor por trás: o brasão vai embutido
+    try {
+      const bytes = await fs.readFile(uploadUrlToDiskPath(branding.logoUrl));
+      const ext = path.extname(branding.logoUrl).toLowerCase();
+      const mime = ext === '.svg' ? 'image/svg+xml' : ext === '.png' ? 'image/png' : ext === '.webp' ? 'image/webp' : 'image/jpeg';
+      logo = `data:${mime};base64,${bytes.toString('base64')}`;
+    } catch {
+      logo = '';
+    }
+  }
+  const portal = await tenantPortalUrl(tenantId);
+  return {
+    municipalityName: (tenant as any)?.nome || 'Prefeitura Municipal',
+    municipalityCity: tenant ? `${(tenant as any).nomeMunicipio}/${(tenant as any).ufMunicipio}` : '',
+    municipalityCnpj: (tenant as any)?.cnpj || '',
+    municipalityLogo: logo,
+    municipalityAddress: branding.address || branding.endereco || '',
+    municipalityPhone: branding.phone || branding.telefone || '',
+    municipalityWebsite: portal,
+    citizenPortalUrl: `${portal}/cidadao`,
+    validationUrl: `${portal}/validar-documento`,
+  };
+}
 
 
 
@@ -184,14 +231,20 @@ export async function generateDocument(input: GenerateDocumentInput) {
   }
 
   // Buscar dados relacionados
-  const [citizen, service, department, assignedUser] = await Promise.all([
+  const responsibleId = (protocol as any).currentAssignedUserId || protocol.assignedUserId;
+  const historyUserIds = [...new Set(protocol.history.map((h) => h.userId).filter(Boolean) as string[])];
+  const [citizen, service, department, assignedUser, issuer, historyUsers, municipality] = await Promise.all([
     prisma.citizen.findUnique({ where: { id: protocol.citizenId } }),
     prisma.serviceSimplified.findUnique({ where: { id: protocol.serviceId } }),
     prisma.department.findUnique({ where: { id: protocol.departmentId } }),
-    protocol.assignedUserId
-      ? prisma.user.findUnique({ where: { id: protocol.assignedUserId } })
-      : Promise.resolve(null)
+    responsibleId ? prisma.user.findUnique({ where: { id: responsibleId } }) : Promise.resolve(null),
+    prisma.user.findFirst({ where: { id: generatedBy }, select: { name: true, role: true } }).catch(() => null),
+    historyUserIds.length ? prisma.user.findMany({ where: { id: { in: historyUserIds } }, select: { id: true, name: true } }) : Promise.resolve([]),
+    municipalityVariables((protocol as any).tenantId || null),
   ]);
+  const actorName = new Map(historyUsers.map((user) => [user.id, user.name]));
+  const address = citizenAddressParts(citizen?.address);
+  const issuerName = issuer?.name || 'Servidor responsável';
 
   // 3. Preparar variáveis para o template
   const variables = {
@@ -213,11 +266,11 @@ export async function generateDocument(input: GenerateDocumentInput) {
     citizenCpf: formatCPF(citizen?.cpf),
     citizenEmail: citizen?.email || '-',
     citizenPhone: formatPhone(citizen?.phone),
-    citizenAddress: citizen?.address || '-',
-    citizenNeighborhood: '-',
-    citizenCity: '-',
-    citizenState: '-',
-    citizenZipCode: '-',
+    citizenAddress: address.line,
+    citizenNeighborhood: address.neighborhood,
+    citizenCity: address.city,
+    citizenState: address.state,
+    citizenZipCode: address.zipCode,
     citizenBirthDate: citizen?.birthDate ? formatDate(citizen.birthDate) : '-',
 
     // ===== SERVIÇO =====
@@ -232,6 +285,16 @@ export async function generateDocument(input: GenerateDocumentInput) {
     // ===== RESPONSÁVEL =====
     assignedUserName: assignedUser?.name || 'Não atribuído',
     assignedUserEmail: assignedUser?.email || '-',
+
+    // ===== QUEM EMITE (nomes usados pelos modelos do catálogo) =====
+    issuerName,
+    approverName: issuerName,
+    technicalResponsible: issuerName,
+    attendantName: assignedUser?.name || issuerName,
+    attendantRole: 'Servidor(a) municipal',
+
+    // ===== MUNICÍPIO =====
+    ...municipality,
 
     // ===== CAMPOS APROVADOS =====
     dataFields: protocol.dataFields.map(f => ({
@@ -256,7 +319,7 @@ export async function generateDocument(input: GenerateDocumentInput) {
       date: formatDateTime(h.timestamp),
       action: h.action,
       comment: h.comment || '',
-      actorName: 'Sistema'
+      actorName: (h.userId && actorName.get(h.userId)) || 'Sistema'
     })),
     hasHistory: protocol.history.length > 0,
 
@@ -389,7 +452,7 @@ export async function generateDocument(input: GenerateDocumentInput) {
 
           /* Página */
           @page { margin: 0; }
-          .page-content { padding: 40px; padding-bottom: ${input.certificateInfo ? '120px' : '40px'}; }
+          .page-content { padding: 40px; }
 
           /* Assinatura Digital */
           .digital-signature {
@@ -442,25 +505,7 @@ export async function generateDocument(input: GenerateDocumentInput) {
         <div class="page-content">
           ${html}
         </div>
-        ${input.certificateInfo ? `
-        <div class="digital-signature">
-          <h4>
-            <span class="shield-icon">🔐</span>
-            DOCUMENTO ASSINADO DIGITALMENTE
-          </h4>
-          <div class="cert-info">
-            <span><strong>Assinado por:</strong> ${variables.certificateCommonName}</span>
-            <span><strong>Emissor:</strong> ${variables.certificateIssuer}</span>
-            <span><strong>Certificado Nº:</strong> ${variables.certificateSerialNumber}</span>
-            <span><strong>Validade:</strong> ${variables.certificateIssuedAt} até ${variables.certificateExpiresAt}</span>
-            <span style="grid-column: 1 / -1; font-size: 7pt;"><strong>Identificador (Thumbprint):</strong> ${variables.certificateThumbprint.substring(0, 40)}...</span>
-          </div>
-          <p style="margin: 8px 0 0 0; font-size: 7pt; text-align: center; color: #546e7a;">
-            Este documento foi assinado eletronicamente e possui validade jurídica conforme MP 2.200-2/2001 e Lei 14.063/2020.
-            Verifique a autenticidade em: https://digiurban.com.br/validar-documento usando o código ${variables.validationCode}
-          </p>
-        </div>
-        ` : ''}
+
       </body>
       </html>
     `;

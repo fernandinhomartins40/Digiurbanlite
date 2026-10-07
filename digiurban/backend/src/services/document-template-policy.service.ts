@@ -132,6 +132,7 @@ export async function getAvailableTemplatesForProtocol(protocolId: string) {
   const templates = await prisma.documentTemplate.findMany({
     where: {
       isActive: true,
+      scope: 'PROTOCOL',
       OR: [
         { isGlobal: true },
         { serviceIds: { array_contains: [protocol.serviceId] } },
@@ -140,10 +141,15 @@ export async function getAvailableTemplatesForProtocol(protocolId: string) {
     orderBy: { name: 'asc' },
   });
 
+  // etapa que aponta para modelos que este município não tem (fluxos semeados
+  // com modelos de outro município): ignora a restrição em vez de esconder tudo
+  const knownIds = new Set(templates.map(template => template.id));
+  const stageTemplateIds = documentTemplateIds.filter(id => knownIds.has(id));
+
   return templates.filter(template => {
     const allowedStageTypes = normalizeStringArray(template.allowedStageTypes);
 
-    if (documentTemplateIds.length > 0 && !documentTemplateIds.includes(template.id)) {
+    if (stageTemplateIds.length > 0 && !stageTemplateIds.includes(template.id)) {
       return false;
     }
 

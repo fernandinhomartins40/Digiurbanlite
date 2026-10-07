@@ -7,6 +7,7 @@
 import { Router } from 'express';
 import { uploadUrlToDiskPath } from '../config/upload';
 import { assertProtocolAccess } from '../services/protocol-access.service';
+import { catalogTemplateDefinitions, catalogTemplateHash } from '../catalog/document-templates';
 import { authenticateToken, requireAdmin, requireSuperAdmin } from '../middleware/auth';
 import { adminAuthMiddleware, requireMinRole } from '../middleware/admin-auth';
 import { UserRole } from '@prisma/client';
@@ -36,6 +37,16 @@ import { prisma } from '../lib/prisma';
 // CRUD DE TEMPLATES (ADMIN+)
 // ============================================================================
 
+/** Só os campos editáveis do modelo (nada de tenantId, id, contadores...) */
+function pickTemplateFields(body: any): Record<string, any> {
+  const allowed = [
+    'name', 'description', 'documentType', 'outputFormat', 'serviceIds', 'isGlobal', 'allowedStageTypes',
+    'htmlTemplate', 'headerHtml', 'footerHtml', 'cssStyles', 'availableVariables', 'inputSchema',
+    'pageSize', 'orientation', 'margins', 'requiresSignature', 'signatureFields', 'isActive',
+  ];
+  return Object.fromEntries(Object.entries(body || {}).filter(([key, value]) => allowed.includes(key) && value !== undefined));
+}
+
 /**
  * GET /api/document-templates
  * Listar todos os templates
@@ -43,8 +54,10 @@ import { prisma } from '../lib/prisma';
 router.get('/document-templates', authenticateToken, requireAdmin, async (req, res) => {
   try {
     const { serviceId, documentType, isActive } = req.query;
+    // PROTOCOL (padrão) | INTERNAL_PROCESS | ALL
+    const scope = typeof req.query.scope === 'string' ? req.query.scope : 'PROTOCOL';
 
-    const where: any = {};
+    const where: any = scope === 'ALL' ? {} : { scope };
 
     if (serviceId) {
       where.OR = [
@@ -90,13 +103,20 @@ router.get('/document-templates', authenticateToken, requireAdmin, async (req, r
         allowedStageTypes: true,
         requiresSignature: true,
         signatureFields: true,
+        scope: true,
+        catalogKey: true,
+        catalogHash: true,
         _count: {
           select: { generatedDocuments: true }
         }
       }
     });
 
-    res.json({ success: true, data: templates });
+    // fromCatalog: veio do catálogo da plataforma; edited: o município mudou (o catálogo não mexe mais)
+    res.json({
+      success: true,
+      data: templates.map(({ catalogHash, ...template }) => ({ ...template, fromCatalog: !!template.catalogKey, edited: !!template.catalogKey && !catalogHash })),
+    });
   } catch (error: any) {
     console.error('Error fetching templates:', error);
     res.status(500).json({
@@ -142,13 +162,26 @@ router.get('/document-templates/:id', authenticateToken, requireAdmin, async (re
  * POST /api/document-templates
  * Criar novo template
  */
-router.post('/document-templates', authenticateToken, requireSuperAdmin, async (req, res) => {
+router.post('/document-templates', authenticateToken, requireAdmin, async (req, res) => {
   try {
+    const data = pickTemplateFields(req.body);
+    if (!data.name || String(data.name).trim().length < 3) {
+      return res.status(400).json({ success: false, error: 'Dê um nome ao modelo.' });
+    }
+    if (!data.htmlTemplate) return res.status(400).json({ success: false, error: 'O modelo está vazio.' });
+    const code = String(req.body?.code || data.name)
+      .normalize('NFD').replace(/[\u0300-\u036f]/g, '')
+      .toUpperCase().replace(/[^A-Z0-9]+/g, '_').replace(/^_+|_+$/g, '').slice(0, 60) || `MODELO_${Date.now()}`;
+    const exists = await prisma.documentTemplate.findFirst({ where: { code }, select: { id: true } });
     const template = await prisma.documentTemplate.create({
       data: {
-        ...req.body,
+        ...data,
+        code: exists ? `${code}_${Date.now().toString(36).toUpperCase()}` : code,
+        scope: req.body?.scope === 'INTERNAL_PROCESS' ? 'INTERNAL_PROCESS' : 'PROTOCOL',
+        documentType: data.documentType || 'CUSTOM',
+        outputFormat: data.outputFormat || 'PDF',
         createdBy: req.user!.id
-      }
+      } as any
     });
 
     res.json({
@@ -171,15 +204,24 @@ router.post('/document-templates', authenticateToken, requireSuperAdmin, async (
  */
 router.put('/document-templates/:id', authenticateToken, requireAdmin, async (req, res) => {
   try {
-    const { id, createdBy, createdAt, updatedAt, _count, ...updateData } = req.body;
+    const current = await prisma.documentTemplate.findFirst({ where: { id: req.params.id }, select: { id: true, scope: true } });
+    if (!current) return res.status(404).json({ success: false, error: 'Modelo não encontrado' });
+    const fields = pickTemplateFields(req.body);
+    // modelo do processo interno: só nome, descrição, texto e ligado/desligado
+    const updateData =
+      current.scope === 'INTERNAL_PROCESS'
+        ? Object.fromEntries(Object.entries(fields).filter(([key]) => ['name', 'description', 'htmlTemplate', 'isActive'].includes(key)))
+        : fields;
 
     const template = await prisma.documentTemplate.update({
       where: { id: req.params.id },
       data: {
         ...updateData,
+        // editado pelo município: o catálogo não mexe mais neste modelo
+        catalogHash: null,
         version: { increment: 1 },
         updatedAt: new Date()
-      }
+      } as any
     });
 
     res.json({
@@ -193,6 +235,27 @@ router.put('/document-templates/:id', authenticateToken, requireAdmin, async (re
       success: false,
       error: error.message || 'Erro ao atualizar template'
     });
+  }
+});
+
+/**
+ * POST /api/document-templates/:id/restore
+ * Voltar ao modelo padrão do catálogo (desfaz as edições do município)
+ */
+router.post('/document-templates/:id/restore', authenticateToken, requireAdmin, async (req, res) => {
+  try {
+    const current = await prisma.documentTemplate.findFirst({ where: { id: req.params.id }, select: { id: true, catalogKey: true } });
+    if (!current?.catalogKey) return res.status(404).json({ success: false, error: 'Este modelo não veio do catálogo.' });
+    const definition = catalogTemplateDefinitions().find((item) => item.code === current.catalogKey);
+    if (!definition) return res.status(404).json({ success: false, error: 'O catálogo não tem mais este modelo.' });
+    const template = await prisma.documentTemplate.update({
+      where: { id: current.id },
+      data: { ...definition.data, scope: definition.scope, catalogHash: catalogTemplateHash(definition), isActive: true, version: { increment: 1 } } as any,
+    });
+    res.json({ success: true, data: template, message: 'Modelo voltou ao padrão' });
+  } catch (error: any) {
+    console.error('Error restoring template:', error);
+    res.status(400).json({ success: false, error: 'Não foi possível voltar ao padrão' });
   }
 });
 

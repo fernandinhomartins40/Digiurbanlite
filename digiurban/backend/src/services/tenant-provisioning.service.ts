@@ -319,6 +319,11 @@ async function seedFullServiceCatalog(tenantId: string): Promise<number> {
   // tipos de dados (Registry) dos serviços com formulário
   const { syncRegistryTypes } = await import('./registry/registry-sync.service');
   await runAsTenant(tenantId, async () => syncRegistryTypes());
+  // modelos de documento (certidão, alvará, DFD, contrato...) do catálogo
+  const { applyDocumentTemplateCatalog } = await import('../catalog/document-templates');
+  await runAsTenant(tenantId, async () => applyDocumentTemplateCatalog(prisma, tenantId)).catch((error) =>
+    console.error('[provisionamento] modelos de documento não aplicados:', error)
+  );
   return result.created;
 }
 
