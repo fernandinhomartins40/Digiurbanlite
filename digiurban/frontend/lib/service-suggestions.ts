@@ -1,12 +1,9 @@
-// Arquivo principal de sugestões de serviços
-// IMPORTANTE: As sugestões agora estão organizadas em arquivos modulares em ./suggestions/
-// Cada secretaria tem seu próprio arquivo com 50 sugestões completas
-
+// Tipos das sugestões de serviços. As sugestões em si vêm do servidor
+// (GET /api/services/suggestions), junto com o catálogo da plataforma — um
+// lugar só (antes eram ~23 mil linhas aqui no frontend, separadas do catálogo).
 export {
-  SUGGESTIONS_POOL,
-  getSuggestionsForDepartment,
   type ServiceSuggestion,
   type FormFieldSuggestion,
   ServiceSubtype,
   ServiceType,
-} from './suggestions/index';
+} from './suggestions/types';

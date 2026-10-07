@@ -316,6 +316,9 @@ async function seedFullServiceCatalog(tenantId: string): Promise<number> {
   // no próprio processo (o catálogo está em src/): sem o processo externo que
   // podia estourar o tempo e deixar o município sem serviços sem ninguém saber
   const result = await runAsTenant(tenantId, async () => applyServiceCatalog(prisma, tenantId));
+  // tipos de dados (Registry) dos serviços com formulário
+  const { syncRegistryTypes } = await import('./registry/registry-sync.service');
+  await runAsTenant(tenantId, async () => syncRegistryTypes());
   return result.created;
 }
 

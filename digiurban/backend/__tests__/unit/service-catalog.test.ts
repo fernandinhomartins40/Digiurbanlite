@@ -105,3 +105,26 @@ describe('catálogo de serviços', () => {
     expect(row.catalogHash).toBe(catalogHashOf(row));
   });
 });
+
+import { normalizeFormSchema } from '../../src/utils/form-schema-normalize';
+
+describe('formulário do serviço num formato só', () => {
+  it('lista de campos da tela vira JSON Schema com obrigatórios no lugar certo', () => {
+    const schema = normalizeFormSchema({
+      fields: [
+        { id: 'area', type: 'number', label: 'Área', required: true },
+        { id: 'tipo', type: 'select', label: 'Tipo', required: false, options: ['A', 'B'] },
+      ],
+      properties: { area: { type: 'number', title: 'Área', required: true } },
+    });
+    expect(schema.required).toEqual(['area']);
+    expect(schema.properties.area.required).toBeUndefined();
+    expect(schema.properties.tipo).toMatchObject({ type: 'string', title: 'Tipo', enum: ['A', 'B'] });
+    expect(schema.fields).toHaveLength(2);
+  });
+
+  it('JSON Schema do catálogo fica como está', () => {
+    const catalog = { type: 'object', properties: { x: { type: 'string', title: 'X' } }, required: ['x'] };
+    expect(normalizeFormSchema(catalog)).toEqual(catalog);
+  });
+});

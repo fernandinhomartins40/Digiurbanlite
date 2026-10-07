@@ -240,6 +240,8 @@ router.post(
       if (!tenant) return res.status(404).json({ error: 'Município não encontrado' });
       const { applyServiceCatalog } = await import('../catalog/services');
       const result = await runAsTenant(tenantId, async () => applyServiceCatalog(prisma, tenantId));
+      const { syncRegistryTypes } = await import('../services/registry/registry-sync.service');
+      await runAsTenant(tenantId, async () => syncRegistryTypes());
       await logAuditEvent({
         action: AUDIT_EVENTS.TENANT_CONFIG_CHANGE,
         resource: req.originalUrl,

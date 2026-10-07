@@ -69,10 +69,64 @@ const CITIZEN_PROFILE_FIELDS = [
   { id: 'citizen_familyincome', label: 'Renda Familiar', type: 'text' as const, description: 'Faixa de renda familiar' },
 ]
 
+/**
+ * Campos do formulário em lista, venha o formulário do jeito que vier:
+ * `fields` (criado por esta tela) ou `properties` (catálogo da plataforma).
+ * Antes só lia `fields`: um serviço do catálogo abria com 0 campos e, ao
+ * mexer no formulário, todos os campos dele eram apagados.
+ */
+function fieldsFromSchema(schema: any): FormField[] {
+  if (Array.isArray(schema?.fields) && schema.fields.length > 0) return schema.fields
+  const properties = schema?.properties
+  if (!properties || typeof properties !== 'object') return []
+  const required: string[] = Array.isArray(schema.required) ? schema.required : []
+  return Object.entries<any>(properties).map(([id, prop]) => {
+    let type: FormField['type'] = 'text'
+    if (Array.isArray(prop?.enum)) type = 'select'
+    else if (prop?.type === 'number' || prop?.type === 'integer') type = 'number'
+    else if (prop?.type === 'boolean') type = 'checkbox'
+    else if (prop?.format === 'date') type = 'date'
+    else if (prop?.format === 'email') type = 'email'
+    else if (prop?.widget === 'textarea' || (prop?.maxLength || 0) > 300) type = 'textarea'
+    return {
+      id,
+      type,
+      label: prop?.title || id,
+      required: required.includes(id) || prop?.required === true,
+      ...(Array.isArray(prop?.enum) ? { options: prop.enum.map(String) } : {}),
+    }
+  })
+}
+
+/** Formulário completo: lista de campos + JSON Schema (com obrigatórios no lugar certo) */
+function schemaFromFields(fields: FormField[], citizenFields: string[], previous: any) {
+  const previousProps = previous?.properties || {}
+  return {
+    type: 'object',
+    fields,
+    citizenFields,
+    properties: fields.reduce((acc, field) => {
+      const kept = previousProps[field.id] || {}
+      acc[field.id] = {
+        // mantém o que o catálogo já definia (tamanho, padrão, formato...)
+        ...kept,
+        type: field.type === 'number' ? 'number' : field.type === 'checkbox' ? 'boolean' : 'string',
+        title: field.label,
+        ...(field.type === 'date' ? { format: 'date' } : {}),
+        ...(field.type === 'email' ? { format: 'email' } : {}),
+        ...(field.type === 'textarea' ? { widget: 'textarea' } : {}),
+        ...(field.options ? { enum: field.options } : {}),
+      }
+      if (field.type !== 'select') delete acc[field.id].enum
+      delete acc[field.id].required
+      return acc
+    }, {} as Record<string, any>),
+    required: fields.filter((field) => field.required).map((field) => field.id),
+  }
+}
+
 export function DataCaptureStep({ formData, onChange }: DataCaptureStepProps) {
-  const [fields, setFields] = useState<FormField[]>(
-    formData.formSchema?.fields || []
-  )
+  const [fields, setFields] = useState<FormField[]>(() => fieldsFromSchema(formData.formSchema))
   const [documentInput, setDocumentInput] = useState('')
   const [requiredDocuments, setRequiredDocuments] = useState<string[]>(
     formData.requiredDocuments || []
@@ -142,21 +196,7 @@ export function DataCaptureStep({ formData, onChange }: DataCaptureStepProps) {
   }
 
   const updateFormSchema = (updatedFields: FormField[]) => {
-    const schema = {
-      type: 'object',
-      fields: updatedFields,
-      citizenFields: selectedCitizenFields, // ✅ Incluir campos do cidadão
-      properties: updatedFields.reduce((acc, field) => {
-        acc[field.id] = {
-          type: field.type === 'number' ? 'number' : 'string',
-          title: field.label,
-          required: field.required,
-          ...(field.options && { enum: field.options }),
-        }
-        return acc
-      }, {} as Record<string, any>),
-    }
-    onChange('formSchema', schema)
+    onChange('formSchema', schemaFromFields(updatedFields, selectedCitizenFields, formData.formSchema))
   }
 
   const toggleCitizenField = (fieldId: string) => {
@@ -166,21 +206,7 @@ export function DataCaptureStep({ formData, onChange }: DataCaptureStepProps) {
 
     setSelectedCitizenFields(updated)
     // Atualizar formSchema imediatamente
-    const schema = {
-      type: 'object',
-      fields: fields,
-      citizenFields: updated,
-      properties: fields.reduce((acc, field) => {
-        acc[field.id] = {
-          type: field.type === 'number' ? 'number' : 'string',
-          title: field.label,
-          required: field.required,
-          ...(field.options && { enum: field.options }),
-        }
-        return acc
-      }, {} as Record<string, any>),
-    }
-    onChange('formSchema', schema)
+    onChange('formSchema', schemaFromFields(fields, updated, formData.formSchema))
   }
 
   const addField = () => {

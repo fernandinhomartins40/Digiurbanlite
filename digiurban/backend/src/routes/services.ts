@@ -1,3 +1,4 @@
+import { normalizeFormSchema } from '../utils/form-schema-normalize';
 import { serviceDays } from '../config/service-defaults';
 import { ensureServiceWorkflow } from '../services/service-workflow.service';
 import { normalizeLevel } from '../services/service-access-level';
@@ -110,6 +111,38 @@ router.get(
  * GET /api/services/:id
  * Obter serviço específico (público - sem autenticação)
  */
+/**
+ * GET /api/services/suggestions?department=<slug> — sugestões de serviços que
+ * o município ainda não tem (servidor). Compara com TODOS os serviços dele
+ * (inclusive desativados) e com o catálogo da plataforma.
+ */
+router.get('/suggestions', adminAuthMiddleware, async (req, res) => {
+  try {
+    const slug = String(req.query.department || '').trim().toLowerCase();
+    const { getSuggestionsForDepartment } = await import('../catalog/suggestions');
+    const { isSameService } = await import('../catalog/suggestions/match');
+    const { allServices } = await import('../catalog/services');
+    const pool = getSuggestionsForDepartment(slug);
+    if (pool.length === 0) return res.json({ success: true, data: { suggestions: [] } });
+
+    const existing = await prisma.serviceSimplified.findMany({ select: { name: true } });
+    const known = [...existing.map((service) => service.name), ...allServices.map((service) => service.name)];
+    const seen = new Set<string>();
+    const suggestions = pool
+      .filter((suggestion) => !known.some((name) => isSameService(name, suggestion.name)))
+      // id único na lista (havia ids repetidos no conjunto de sugestões)
+      .map((suggestion, index) => {
+        const id = seen.has(suggestion.id) ? `${suggestion.id}-${index}` : suggestion.id;
+        seen.add(id);
+        return { ...suggestion, id };
+      });
+    return res.json({ success: true, data: { suggestions } });
+  } catch (error) {
+    console.error('Erro ao listar sugestões de serviços:', error);
+    return res.status(500).json({ success: false, error: 'Não foi possível carregar as sugestões' });
+  }
+});
+
 router.get('/:id', async (req, res) => {
   try {
     const { id } = req.params;
@@ -415,7 +448,7 @@ router.post('/', adminAuthMiddleware, requireMinRole(UserRole.MANAGER), async (r
 
           // Campos para COM_DADOS
           moduleType: resolvedServiceType === 'COM_DADOS' ? moduleType : null,
-          formSchema: resolvedServiceType === 'COM_DADOS' ? formSchema : null,
+          formSchema: resolvedServiceType === 'COM_DADOS' ? normalizeFormSchema(formSchema) : null,
 
           // ✅ NOVO: Configuração de unicidade de protocolos (agora obrigatório)
           minLevel: normalizeLevel(minLevel),
@@ -452,6 +485,9 @@ router.post('/', adminAuthMiddleware, requireMinRole(UserRole.MANAGER), async (r
       console.warn('[services] fluxo não criado agora (será criado no 1º pedido):', workflowError instanceof Error ? workflowError.message : workflowError);
     }
     const workflowCreated = Boolean(workflow);
+    if (result.service.serviceType === 'COM_DADOS') {
+      void import('../services/registry/registry-sync.service').then(({ syncRegistryTypes }) => syncRegistryTypes());
+    }
     const workflowType = workflowCreated ? `SUBTYPE_${result.service.serviceSubtype || 'PADRAO'}` : 'NONE';
 
     // ========== RESPOSTA COM INFORMAÇÕES COMPLETAS ==========
@@ -618,7 +654,7 @@ router.put('/:id', adminAuthMiddleware, requireMinRole(UserRole.MANAGER), async 
         color: color !== undefined ? color : service.color,
 
         // Campos avançados
-        formSchema: formSchema !== undefined ? formSchema : service.formSchema,
+        formSchema: formSchema !== undefined ? normalizeFormSchema(formSchema) : service.formSchema,
         moduleType: moduleType !== undefined ? moduleType : service.moduleType,
         ...(destination !== undefined && destination !== null && {
           destination,
@@ -652,6 +688,10 @@ router.put('/:id', adminAuthMiddleware, requireMinRole(UserRole.MANAGER), async 
       enabledFieldsSaved: updatedService.enabledFields ? 'sim' : 'null',
       formFieldsConfigSaved: updatedService.formFieldsConfig ? 'sim' : 'null'
     });
+
+    if (formSchema !== undefined && updatedService.serviceType === 'COM_DADOS') {
+      void import('../services/registry/registry-sync.service').then(({ syncRegistryTypes }) => syncRegistryTypes());
+    }
 
     // prazo mudou: o fluxo do serviço (e os próximos pedidos) acompanham
     if (estimatedDays !== undefined && Number(estimatedDays || 0) !== Number(service.estimatedDays || 0)) {
