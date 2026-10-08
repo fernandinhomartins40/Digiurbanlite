@@ -32,6 +32,17 @@ function colorOf(point: TvPoint) {
   return '#f59e0b'
 }
 
+/** Leaflet não percebe sozinho quando o quadro muda de tamanho (ex.: recolher "ao vivo") */
+function FollowResize() {
+  const map = useMap()
+  useEffect(() => {
+    const observer = new ResizeObserver(() => map.invalidateSize())
+    observer.observe(map.getContainer())
+    return () => observer.disconnect()
+  }, [map])
+  return null
+}
+
 function FitOnce({ points, center }: { points: TvPoint[]; center?: { lat: number; lng: number } | null }) {
   const map = useMap()
   const done = useRef(false)
@@ -93,6 +104,7 @@ function OsmTvMap({ points, highlight, center }: TvMapProps) {
         url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
       />
       <FitOnce points={points} center={center} />
+      <FollowResize />
       {points.map((point) => {
         const isNew = highlight.has(point.id)
         return (

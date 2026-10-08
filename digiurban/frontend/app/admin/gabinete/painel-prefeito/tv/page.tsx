@@ -5,7 +5,7 @@
  * aplicação (DigiUrban Glass, cartões padrão, faixa azul do Painel):
  *  - números do dia em cartões coloridos;
  *  - mapa grande dos pedidos em aberto (abre no município mesmo sem pedidos);
- *  - faixa de gráficos embaixo: pedidos por situação, % no prazo, últimos 7 dias (chegaram ×
+ *  - faixa de gráficos acima do mapa, passando em loop: pedidos por situação, % no prazo, últimos 7 dias (chegaram ×
  *    concluídos), chegadas por hora hoje, atrasos por secretaria, demandas do
  *    gabinete;
  *  - lista de pedidos ao vivo rolando sozinha; o que chega entra no topo em destaque.
@@ -21,7 +21,6 @@ import {
   Bar,
   BarChart,
   Cell,
-  Legend,
   Pie,
   PieChart,
   PolarAngleAxis,
@@ -32,7 +31,7 @@ import {
   XAxis,
   YAxis,
 } from 'recharts'
-import { AlertTriangle, ArrowLeft, CheckCircle2, Clock, FolderOpen, Inbox, Maximize, Minimize, Star } from 'lucide-react'
+import { AlertTriangle, ArrowLeft, CheckCircle2, Clock, FolderOpen, Inbox, Maximize, Minimize, PanelRightClose, PanelRightOpen, Star } from 'lucide-react'
 import { useAdminAuth } from '@/contexts/AdminAuthContext'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
@@ -77,14 +76,16 @@ async function get(path: string) {
 function Kpi({ label, value, hint, icon: Icon, color, bg }: { label: string; value: string | number; hint?: string; icon: any; color: string; bg: string }) {
   return (
     <Card>
-      <CardContent className="flex items-center gap-3 p-3">
-        <span className={cn('flex h-10 w-10 shrink-0 items-center justify-center rounded-full xl:h-12 xl:w-12', bg)}>
-          <Icon className={cn('h-6 w-6 xl:h-7 xl:w-7', color)} />
+      <CardContent className="flex items-center gap-2 px-3 py-1.5">
+        <span className={cn('flex h-7 w-7 shrink-0 items-center justify-center rounded-full xl:h-8 xl:w-8', bg)}>
+          <Icon className={cn('h-4 w-4 xl:h-5 xl:w-5', color)} />
         </span>
-        <div className="min-w-0">
-          <p className="truncate text-xs font-medium text-gray-600 xl:text-sm">{label}</p>
-          <p className={cn('text-2xl font-bold tabular-nums leading-tight xl:text-3xl', color)}>{value}</p>
-          {hint && <p className="truncate text-xs text-gray-500">{hint}</p>}
+        <div className="min-w-0 flex-1">
+          <p className="truncate text-[11px] font-medium text-gray-600 xl:text-xs">{label}</p>
+          <p className="flex items-baseline gap-1.5 leading-tight">
+            <span className={cn('text-lg font-bold tabular-nums xl:text-xl', color)}>{value}</span>
+            {hint && <span className="truncate text-[10px] text-gray-500 xl:text-[11px]">{hint}</span>}
+          </p>
         </div>
       </CardContent>
     </Card>
@@ -93,11 +94,11 @@ function Kpi({ label, value, hint, icon: Icon, color, bg }: { label: string; val
 
 function ChartCard({ title, children, className }: { title: string; children: React.ReactNode; className?: string }) {
   return (
-    <Card className={cn('flex h-full w-[260px] shrink-0 flex-col xl:w-[300px]', className)}>
-      <CardHeader className="px-3 pb-0 pt-3">
-        <CardTitle className="text-sm xl:text-base">{title}</CardTitle>
+    <Card className={cn('flex h-full w-[210px] shrink-0 flex-col xl:w-[250px]', className)}>
+      <CardHeader className="px-2.5 pb-0 pt-1.5">
+        <CardTitle className="truncate text-xs xl:text-sm">{title}</CardTitle>
       </CardHeader>
-      <CardContent className="min-h-0 flex-1 p-2">{children}</CardContent>
+      <CardContent className="min-h-0 flex-1 px-1.5 pb-1 pt-0.5">{children}</CardContent>
     </Card>
   )
 }
@@ -232,6 +233,23 @@ export default function PainelTvPage() {
   const [fullscreen, setFullscreen] = useState(false)
   const [fresh, setFresh] = useState<Set<string>>(new Set())
   const knownFeed = useRef<Set<string> | null>(null)
+  // "Pedidos ao vivo" pode ser recolhido para o mapa ocupar tudo (lembrado neste aparelho)
+  const [liveOpen, setLiveOpen] = useState(true)
+  useEffect(() => {
+    try {
+      if (localStorage.getItem('tv-live-open') === '0') setLiveOpen(false)
+    } catch {
+      // sem armazenamento: fica aberto
+    }
+  }, [])
+  const toggleLive = (open: boolean) => {
+    setLiveOpen(open)
+    try {
+      localStorage.setItem('tv-live-open', open ? '1' : '0')
+    } catch {
+      // ignora
+    }
+  }
 
   // números, gráficos e pedidos ao vivo (30 s); o que mudou desde a última leitura fica em destaque
   useEffect(() => {
@@ -344,13 +362,13 @@ export default function PainelTvPage() {
               <RadialBar dataKey="value" cornerRadius={10} background fill={prazoColor} />
             </RadialBarChart>
           </ResponsiveContainer>
-          <span className="absolute inset-0 flex items-center justify-center text-lg font-bold tabular-nums xl:text-2xl" style={{ color: prazoColor }}>
+          <span className="absolute inset-0 flex items-center justify-center text-sm font-bold tabular-nums xl:text-base" style={{ color: prazoColor }}>
             {noPrazoPct}%
           </span>
         </div>
       </ChartCard>
 
-      <ChartCard title="7 dias: chegaram × concluídos">
+      <ChartCard title="7 dias: chegaram (azul) × concluídos (verde)" className="w-[280px] xl:w-[330px]">
         <ResponsiveContainer width="100%" height="100%">
           <AreaChart data={data?.graficos?.semana || []} margin={{ top: 6, right: 10, left: -22, bottom: 0 }}>
             <defs>
@@ -366,7 +384,6 @@ export default function PainelTvPage() {
             <XAxis dataKey="dia" tick={{ fontSize: 9 }} interval={0} tickFormatter={(value: string) => value.slice(0, 2)} />
             <YAxis allowDecimals={false} tick={{ fontSize: 10 }} />
             <Tooltip />
-            <Legend wrapperStyle={{ fontSize: 10 }} iconSize={8} />
             <Area type="monotone" dataKey="chegaram" name="Chegaram" stroke={C.blue} fill="url(#tvIn)" strokeWidth={2} />
             <Area type="monotone" dataKey="concluidos" name="Concluídos" stroke={C.green} fill="url(#tvOut)" strokeWidth={2} />
           </AreaChart>
@@ -393,12 +410,12 @@ export default function PainelTvPage() {
           <Empty text="Nenhuma secretaria com atraso" good />
         ) : (
           <ResponsiveContainer width="100%" height="100%">
-            <BarChart data={data.secretariasAtrasadas.slice(0, 5)} layout="vertical" margin={{ top: 2, right: 10, left: 2, bottom: 0 }}>
+            <BarChart data={data.secretariasAtrasadas.slice(0, 3)} layout="vertical" margin={{ top: 2, right: 10, left: 2, bottom: 0 }}>
               <XAxis type="number" allowDecimals={false} hide />
-              <YAxis type="category" dataKey="name" width={96} tick={{ fontSize: 10 }} />
+              <YAxis type="category" dataKey="name" width={90} tick={{ fontSize: 9 }} />
               <Tooltip />
               <Bar dataKey="count" name="Atrasados" radius={[0, 4, 4, 0]}>
-                {data.secretariasAtrasadas.slice(0, 5).map((item: any, index: number) => (
+                {data.secretariasAtrasadas.slice(0, 3).map((item: any, index: number) => (
                   <Cell key={item.name} fill={[C.red, C.pink, C.amber, C.purple, C.indigo][index % 5]} />
                 ))}
               </Bar>
@@ -488,12 +505,24 @@ export default function PainelTvPage() {
       </section>
 
       {/* gráficos em cima do mapa: passam sozinhos em loop; dá para arrastar para o lado */}
-      <AutoMarquee className="relative h-40 shrink-0 xl:h-48">{charts}</AutoMarquee>
+      <AutoMarquee className="relative h-24 shrink-0 xl:h-28">{charts}</AutoMarquee>
 
       {/* mapa grande + pedidos ao vivo */}
-      <section className="relative grid min-h-0 flex-1 gap-3 lg:grid-cols-[1fr_340px] xl:grid-cols-[1fr_420px]">
+      <section className={cn('relative grid min-h-0 flex-1 gap-3', liveOpen && 'lg:grid-cols-[1fr_320px] xl:grid-cols-[1fr_380px]')}>
         <Card className="relative min-h-[240px] overflow-hidden p-0">
           <TvMap points={points} highlight={fresh} center={data?.center} />
+          {!liveOpen && (
+            <button
+              type="button"
+              onClick={() => toggleLive(true)}
+              className="absolute right-3 top-3 z-[400] flex items-center gap-2 rounded-full border bg-white/95 px-3 py-1.5 text-sm font-medium text-gray-800 shadow-md hover:bg-white"
+            >
+              <span className="h-2.5 w-2.5 animate-pulse rounded-full bg-red-500" />
+              Ao vivo
+              {fresh.size > 0 && <span className="rounded-full bg-blue-600 px-1.5 text-xs text-white">{fresh.size} novo{fresh.size > 1 ? 's' : ''}</span>}
+              <PanelRightOpen className="h-4 w-4" />
+            </button>
+          )}
           <div className="pointer-events-none absolute bottom-3 left-3 z-[400] flex flex-wrap items-center gap-3 rounded-lg border bg-white/90 px-3 py-2 text-xs text-gray-700 shadow-sm xl:text-sm">
             <span className="flex items-center gap-1"><span className="h-3 w-3 rounded-full bg-red-500" />Atrasado</span>
             <span className="flex items-center gap-1"><span className="h-3 w-3 rounded-full bg-blue-500" />Novo</span>
@@ -503,10 +532,15 @@ export default function PainelTvPage() {
           </div>
         </Card>
 
+        {liveOpen && (
         <Card className="flex min-h-0 flex-col">
           <CardHeader className="px-3 pb-2 pt-3">
             <CardTitle className="flex items-center gap-2 text-sm xl:text-base">
-              <span className="h-2.5 w-2.5 animate-pulse rounded-full bg-red-500" />Pedidos ao vivo
+              <span className="h-2.5 w-2.5 animate-pulse rounded-full bg-red-500" />
+              <span className="flex-1">Pedidos ao vivo</span>
+              <button type="button" onClick={() => toggleLive(false)} className="rounded-md p-1 text-gray-500 hover:bg-gray-100" aria-label="Recolher pedidos ao vivo" title="Recolher (mapa maior)">
+                <PanelRightClose className="h-4 w-4" />
+              </button>
             </CardTitle>
           </CardHeader>
           <CardContent className="min-h-0 flex-1 px-3 pb-3">
@@ -547,8 +581,8 @@ export default function PainelTvPage() {
             )}
           </CardContent>
         </Card>
+        )}
       </section>
-
     </div>
   )
 }
@@ -560,7 +594,7 @@ function Empty({ text, good = false }: { text: string; good?: boolean }) {
 /** Legenda compacta ao lado da rosca */
 function Legendary({ items }: { items: Array<{ name: string; value: number; color: string }> }) {
   return (
-    <ul className="space-y-0.5 text-[11px] xl:text-xs">
+    <ul className="space-y-0 text-[10px] leading-tight xl:text-[11px]">
       {items.map((item) => (
         <li key={item.name} className="flex items-center gap-1.5 whitespace-nowrap">
           <span className="h-2 w-2 shrink-0 rounded-full" style={{ background: item.color }} />
