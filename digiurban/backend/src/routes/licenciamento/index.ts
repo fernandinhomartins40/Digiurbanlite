@@ -8,7 +8,7 @@ import { requireDepartmentAccess } from '../../middleware/department-access';
  */
 const router = Router();
 // Equipe da secretaria + ADMIN (antes: só ADMIN)
-router.use(...requireDepartmentAccess('OBRAS_PUBLICAS', 'PLANEJAMENTO_URBANO'));
+router.use(...requireDepartmentAccess('OBRAS_PUBLICAS', 'PLANEJAMENTO_URBANO', 'DESENVOLVIMENTO_ECONOMICO'));
 
 const handle = (fn: (req: any, res: any) => Promise<any>) => async (req: any, res: any) => {
   try {

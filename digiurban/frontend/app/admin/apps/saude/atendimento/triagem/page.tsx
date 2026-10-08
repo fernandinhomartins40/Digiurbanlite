@@ -49,7 +49,6 @@ export default function TriagemPage() {
     try {
       await criarTriagem({
         atendimentoId: formData.atendimentoId,
-        profissionalId: 'profissional-default', // TODO: Obter do contexto
         pressaoArterial: formData.pressaoArterial || undefined,
         frequenciaCardiaca: formData.frequenciaCardiaca ? parseInt(formData.frequenciaCardiaca) : undefined,
         temperatura: formData.temperatura ? parseFloat(formData.temperatura) : undefined,

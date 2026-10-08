@@ -167,6 +167,7 @@ export const socialServices: ServiceDefinition[] = [
     serviceType: 'COM_DADOS',
     serviceSubtype: ServiceSubtype.SOLICITACAO_SIMPLES,
     moduleType: 'INSCRICAO_GRUPO_OFICINA',
+    appAction: null,
     requiresDocuments: true,
     requiredDocuments: ['RG', 'CPF', 'Comprovante de Endereço'],
     estimatedDays: 5,

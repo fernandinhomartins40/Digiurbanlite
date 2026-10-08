@@ -368,7 +368,6 @@ export default function EnfermagemPage() {
     try {
       const payload: Record<string, any> = {
         filaAtendimentoId: filaId,
-        enfermeiroId: 'profissional-default', // TODO: obter do contexto autenticado
         unidadeId: contexto?.fila?.unidade?.id || '',
         queixaPrincipal: avaliacaoEnf.queixaPrincipal,
         classificacaoRisco,

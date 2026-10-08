@@ -67,3 +67,37 @@ describe('catálogo × conversor protocolo→app', () => {
     expect(orphan).toEqual([]);
   });
 });
+
+describe('catálogo de serviços × apps', () => {
+  // Trava contra "o pedido nunca chega ao app": antes o TFD, poda, capina,
+  // bueiro e licença ambiental do catálogo caíam na fila porque o código
+  // técnico do serviço não era igual ao código da ação do app.
+  // eslint-disable-next-line @typescript-eslint/no-var-requires
+  const { allServices, catalogRouteOf } = require('../../src/catalog/services');
+  const routed = allServices
+    .map((def: any) => ({ def, route: catalogRouteOf(def) }))
+    .filter((item: any) => item.route.destination === 'APP');
+
+  it('todo serviço que vai para app aponta para uma ação que existe, de app da mesma secretaria', () => {
+    const wrong = routed
+      .filter(({ def, route }: any) => {
+        const found = findAppAction(route.appAction);
+        return !found || !found.app.departments.includes(def.departmentCode);
+      })
+      .map(({ def, route }: any) => `${def.departmentCode} | ${def.name} → ${route.appAction}`);
+    expect(wrong).toEqual([]);
+  });
+
+  it('apps com porta de entrada recebem pelo menos um serviço do catálogo', () => {
+    const reached = new Set(routed.map(({ route }: any) => findAppAction(route.appAction)?.app.code));
+    const withActions = ['tfd', 'servicos-publicos', 'licenciamento', 'meio-ambiente', 'habitacao', 'defesa-civil',
+      'politicas-mulheres', 'esportes', 'cultura', 'transportes-transito', 'mobilidade-urbana', 'agricultura'];
+    expect(withActions.filter((code) => !reached.has(code))).toEqual([]);
+  });
+
+  it('o TFD do catálogo pede o que o app de TFD precisa', () => {
+    const tfd = routed.find(({ route }: any) => route.appAction === 'ENCAMINHAMENTOS_TFD');
+    const props = Object.keys(tfd?.def.formSchema?.properties || {});
+    expect(props).toEqual(expect.arrayContaining(['especialidade', 'procedimento', 'justificativa', 'cidadeDestino', 'estadoDestino']));
+  });
+});

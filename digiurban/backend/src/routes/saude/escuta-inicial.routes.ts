@@ -6,7 +6,7 @@ const router = Router();
 // POST /api/saude/escuta-inicial - Criar escuta inicial
 router.post('/', async (req, res) => {
   try {
-    const escuta = await escutaInicialService.criar(req.body);
+    const escuta = await escutaInicialService.criar({ ...req.body, profissionalId: req.body.profissionalId || (req as any).userId });
     res.status(201).json(escuta);
   } catch (error) {
     console.error('Erro ao criar escuta inicial:', error);

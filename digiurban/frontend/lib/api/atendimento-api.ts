@@ -61,11 +61,12 @@ export async function obterFilaUnidade(unidadeId: string) {
   return requestJson(`${SAUDE_BASE}/fila-atendimento?unidadeId=${unidadeId}`);
 }
 
-export async function chamarProximo(unidadeId: string, profissionalId: string) {
+/** Chama o próximo paciente para o profissional logado (no consultório informado). */
+export async function chamarProximo(unidadeId: string, consultorio?: string) {
   return requestJson(`${SAUDE_BASE}/fila-atendimento/chamar-proximo`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ unidadeId, profissionalId }),
+    body: JSON.stringify({ unidadeId, consultorio }),
   });
 }
 
@@ -114,7 +115,8 @@ export async function finalizarAtendimento(id: string) {
 export async function realizarTriagem(data: {
   atendimentoId?: string;
   filaAtendimentoId?: string;
-  profissionalId: string;
+  /** Ignorado: o servidor grava o profissional logado */
+  profissionalId?: string;
   pressaoArterial?: string;
   frequenciaCardiaca?: number;
   frequenciaRespiratoria?: number;

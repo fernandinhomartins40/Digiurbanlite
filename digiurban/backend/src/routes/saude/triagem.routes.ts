@@ -6,7 +6,9 @@ const router = Router();
 // POST /api/saude/triagem - Criar triagem
 router.post('/', async (req, res) => {
   try {
-    const triagem = await triagemService.criar(req.body);
+    // Quem registra a triagem é o profissional logado (antes a tela mandava um
+    // id fixo que não existe e a gravação falhava sempre)
+    const triagem = await triagemService.criar({ ...req.body, enfermeiroId: (req as any).userId });
     res.status(201).json(triagem);
   } catch (error) {
     console.error('Erro ao criar triagem:', error);

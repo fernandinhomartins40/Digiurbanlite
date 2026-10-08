@@ -53,23 +53,36 @@ export class ProtocolToTFDService {
       return existente;
     }
 
-    // 4. Extrair dados do customData do protocolo
-    const customData = protocol.customData as any;
+    // 4. Extrair dados do customData do protocolo. Aceita também os nomes do
+    // formulário antigo do catálogo ("destino", "finalidade", "dataIda") para
+    // pedidos feitos antes do formulário ser alinhado ao app.
+    const customData = (protocol.customData || {}) as any;
+    const text = (...values: unknown[]) => {
+      for (const value of values) if (typeof value === 'string' && value.trim()) return value.trim();
+      return undefined;
+    };
+    const extras = [
+      text(customData.tipoTransporte) && `Transporte: ${customData.tipoTransporte}`,
+      text(customData.dataConsulta, customData.dataIda) && `Data da consulta/ida: ${text(customData.dataConsulta, customData.dataIda)}`,
+      text(customData.dataRetorno) && `Retorno: ${customData.dataRetorno}`,
+      customData.acompanhante === true || customData.necessitaAcompanhante === true ? 'Precisa de acompanhante' : undefined,
+      text(customData.observacoes),
+    ].filter(Boolean);
 
     // 5. Criar solicitação TFD
     const solicitacaoData = {
       citizenId: protocol.citizenId,
-      especialidade: customData?.especialidade || 'Não informado',
-      procedimento: customData?.procedimento || 'Não informado',
-      justificativaMedica: customData?.justificativa || customData?.justificativaMedica || 'Não informado',
-      medicoSolicitante: customData?.medicoSolicitante || 'Não informado',
-      cid10: customData?.cid10,
-      cidadeDestino: customData?.cidadeDestino || 'Não informado',
-      estadoDestino: customData?.estadoDestino || 'SP',
-      hospitalDestino: customData?.hospitalDestino,
-      prioridade: this.mapPrioridade(customData?.prioridade),
-      acompanhanteId: customData?.acompanhanteId,
-      observacoes: customData?.observacoes,
+      especialidade: text(customData.especialidade) || 'Não informado',
+      procedimento: text(customData.procedimento, customData.finalidade) || 'Não informado',
+      justificativaMedica: text(customData.justificativa, customData.justificativaMedica, customData.finalidade) || 'Não informado',
+      medicoSolicitante: text(customData.medicoSolicitante) || 'Não informado',
+      cid10: text(customData.cid10),
+      cidadeDestino: text(customData.cidadeDestino, customData.destino) || 'Não informado',
+      estadoDestino: text(customData.estadoDestino) || 'SP',
+      hospitalDestino: text(customData.hospitalDestino),
+      prioridade: this.mapPrioridade(customData.prioridade),
+      acompanhanteId: customData.acompanhanteId,
+      observacoes: extras.length ? extras.join(' · ') : undefined,
       // URLs de documentos
       encaminhamentoMedicoUrl: this.extractDocumentUrl(protocol, 'encaminhamento'),
       examesUrls: this.extractExamesUrls(protocol),
@@ -193,7 +206,7 @@ export class ProtocolToTFDService {
   /**
    * Mapear prioridade do formulário para enum TFD
    */
-  private mapPrioridade(prioridade: string): any {
+  private mapPrioridade(prioridade: unknown): any {
     const map: Record<string, string> = {
       'emergencia': 'EMERGENCIA',
       'alta': 'ALTA',
@@ -202,7 +215,8 @@ export class ProtocolToTFDService {
       'normal': 'MEDIA',
     };
 
-    return map[prioridade?.toLowerCase()] || 'MEDIA';
+    const key = String(prioridade || '').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '');
+    return map[key] || 'MEDIA';
   }
 
   /**

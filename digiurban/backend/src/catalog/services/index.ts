@@ -8,7 +8,7 @@
  */
 
 import { createHash } from 'crypto';
-import { effectiveDestination } from '../../config/app-catalog';
+import { effectiveDestination, findAppAction } from '../../config/app-catalog';
 import { ServiceDefinition } from './types';
 import { healthServices } from './health.seed';
 import { educationServices } from './education.seed';
@@ -70,6 +70,17 @@ const slug = (value: string) =>
 /** Chave estável do item do catálogo (o código técnico, ou secretaria + nome) */
 export function catalogKeyOf(def: ServiceDefinition): string {
   return def.moduleType ? def.moduleType : `${def.departmentCode}:${slug(def.name)}`;
+}
+
+/**
+ * Destino do pedido pelo catálogo: o `appAction` declarado no item vale mais
+ * (null = fila do protocolo); sem ele, deduz pelo código técnico (legado).
+ */
+export function catalogRouteOf(def: ServiceDefinition): { destination: 'FILA' | 'APP'; appAction: string | null } {
+  if (def.appAction !== undefined) {
+    return def.appAction ? { destination: 'APP', appAction: def.appAction } : { destination: 'FILA', appAction: null };
+  }
+  return effectiveDestination({ moduleType: def.moduleType || null });
 }
 
 /** Campos que o catálogo controla (o resto é do município: ativo, nível, destino...) */
@@ -140,6 +151,8 @@ export interface CatalogApplyResult {
   keptEdited: number;
   skippedNoDepartment: number;
   tagsCreated: number;
+  /** Serviços cujo destino (fila/app) foi acertado */
+  rerouted: number;
 }
 
 /**
@@ -153,7 +166,7 @@ export interface CatalogApplyResult {
  */
 export async function applyServiceCatalog(db: any, tenantId: string, options: { log?: boolean } = {}): Promise<CatalogApplyResult> {
   const log = options.log ? console.log : () => undefined;
-  const result: CatalogApplyResult = { created: 0, updated: 0, keptEdited: 0, skippedNoDepartment: 0, tagsCreated: 0 };
+  const result: CatalogApplyResult = { created: 0, updated: 0, keptEdited: 0, skippedNoDepartment: 0, tagsCreated: 0, rerouted: 0 };
   const createdKeys = new Set<string>();
 
   const departments: Array<{ id: string; code: string | null }> = await db.department.findMany({
@@ -184,7 +197,7 @@ export async function applyServiceCatalog(db: any, tenantId: string, options: { 
     try {
       if (!current) {
         // destino gravado já na criação (fila ou app da secretaria, pelo catálogo de apps)
-        const route = effectiveDestination({ moduleType: def.moduleType || null });
+        const route = catalogRouteOf(def);
         await db.serviceSimplified.create({
           data: {
             tenantId,
@@ -209,6 +222,24 @@ export async function applyServiceCatalog(db: any, tenantId: string, options: { 
 
       const currentHash = catalogHashOf(current);
       const untouched = current.catalogHash ? current.catalogHash === currentHash : false;
+
+      // Destino do pedido: ação que deixou de existir volta para a fila; e o
+      // pedido que o catálogo passou a mandar para um app (TFD, ordens de
+      // serviço, licença ambiental...) é ligado se o município não mexeu no serviço.
+      const route = catalogRouteOf(def);
+      const deadAction = current.destination === 'APP' && current.appAction && !findAppAction(current.appAction);
+      const shouldRoute =
+        route.destination === 'APP' &&
+        current.destination !== 'APP' &&
+        (!current.catalogHash || untouched);
+      if (deadAction || shouldRoute) {
+        await db.serviceSimplified.update({
+          where: { id: current.id },
+          data: shouldRoute ? { destination: 'APP', appAction: route.appAction } : { destination: 'FILA', appAction: null },
+        });
+        result.rerouted++;
+        log(`   → ${def.name}: ${shouldRoute ? route.appAction : 'fila'}`);
+      }
 
       if (!current.catalogHash) {
         // serviço antigo, de antes desta regra: adota o conteúdo de hoje como base

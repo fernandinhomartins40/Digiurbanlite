@@ -270,8 +270,9 @@ export const healthServices: ServiceDefinition[] = [
     serviceType: 'COM_DADOS',
     serviceSubtype: ServiceSubtype.CAPTURA_COMPLETA,
     moduleType: 'TRANSPORTE_PACIENTES',
+    appAction: 'ENCAMINHAMENTOS_TFD',
     requiresDocuments: true,
-    requiredDocuments: ['Atestado Médico', 'Comprovante de Endereço', 'Cartão SUS', 'RG ou CPF'],
+    requiredDocuments: ['Encaminhamento Médico', 'Comprovante de Endereço', 'Cartão SUS', 'RG ou CPF'],
     estimatedDays: 10,
     priority: 5,
     category: 'Transporte',
@@ -282,14 +283,19 @@ export const healthServices: ServiceDefinition[] = [
       citizenFields: ['citizen_name', 'citizen_cpf', 'citizen_rg', 'citizen_birthdate', 'citizen_email', 'citizen_phone', 'citizen_phonesecondary', 'citizen_zipcode', 'citizen_address', 'citizen_addressnumber', 'citizen_addresscomplement', 'citizen_neighborhood'],
       properties: {
         cartaoSUS: { type: 'string', title: 'Número do Cartão SUS', pattern: '^\\d{15}$', minLength: 15, maxLength: 15 },
+        especialidade: { type: 'string', title: 'Especialidade do tratamento', maxLength: 120 },
+        procedimento: { type: 'string', title: 'Consulta, exame ou procedimento', maxLength: 200 },
+        justificativa: { type: 'string', title: 'Por que precisa ser fora do município (o que o médico disse)', maxLength: 500, widget: 'textarea' },
+        medicoSolicitante: { type: 'string', title: 'Médico que encaminhou', maxLength: 150 },
+        cidadeDestino: { type: 'string', title: 'Cidade de Destino', maxLength: 120 },
+        estadoDestino: { type: 'string', title: 'Estado (UF) de Destino', minLength: 2, maxLength: 2 },
+        hospitalDestino: { type: 'string', title: 'Hospital ou clínica de destino', maxLength: 200 },
+        dataConsulta: { type: 'string', title: 'Data marcada da consulta (se já tiver)', format: 'date' },
         tipoTransporte: { type: 'string', title: 'Tipo de Transporte', enum: ['Ambulância', 'Veículo Adaptado', 'Transporte Coletivo'] },
-        destino: { type: 'string', title: 'Cidade de Destino', maxLength: 200 },
-        finalidade: { type: 'string', title: 'Finalidade do Transporte', maxLength: 300, widget: 'textarea' },
-        dataIda: { type: 'string', title: 'Data de Ida', format: 'date' },
-        dataRetorno: { type: 'string', title: 'Data de Retorno (se aplicável)', format: 'date' },
-        acompanhante: { type: 'boolean', title: 'Necessita Acompanhante' }
+        acompanhante: { type: 'boolean', title: 'Necessita Acompanhante' },
+        observacoes: { type: 'string', title: 'Observações', maxLength: 300, widget: 'textarea' }
       },
-      required: ['cartaoSUS', 'tipoTransporte', 'destino', 'finalidade', 'dataIda']
+      required: ['cartaoSUS', 'especialidade', 'procedimento', 'justificativa', 'cidadeDestino', 'estadoDestino', 'tipoTransporte']
     }
   },
 

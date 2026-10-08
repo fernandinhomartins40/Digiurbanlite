@@ -100,7 +100,8 @@ export const APP_CATALOG: AppDefinition[] = [
     code: 'licenciamento',
     name: 'Licenciamento Urbano',
     description: 'Análise de projetos, vistorias e emissão de alvarás',
-    departments: ['OBRAS_PUBLICAS', 'PLANEJAMENTO_URBANO'],
+    // Desenvolvimento Econômico: o alvará de funcionamento é dela no catálogo
+    departments: ['OBRAS_PUBLICAS', 'PLANEJAMENTO_URBANO', 'DESENVOLVIMENTO_ECONOMICO'],
     route: '/admin/apps/licenciamento',
     actions: [
       criacao('APROVACAO_PROJETO', 'Processo — aprovação de projeto'),
@@ -192,7 +193,6 @@ export const APP_CATALOG: AppDefinition[] = [
     actions: [
       criacao('INSCRICAO_OFICINA', 'Matrícula em oficina'),
       criacao('INSCRICAO_OFICINA_CULTURAL', 'Matrícula em oficina cultural'),
-      criacao('INSCRICAO_GRUPO_OFICINA', 'Matrícula de grupo em oficina'),
       criacao('RESERVA_ESPACO_CULTURAL', 'Reserva de espaço cultural'),
       criacao('INSCRICAO_EDITAL', 'Projeto — inscrição em edital'),
       criacao('PROJETO_CULTURAL', 'Projeto cultural'),

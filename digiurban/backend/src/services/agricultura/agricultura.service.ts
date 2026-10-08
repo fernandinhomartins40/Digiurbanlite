@@ -1,4 +1,7 @@
 import { prisma } from '../../lib/prisma';
+import { concludeProtocolFromApp, markProtocolInProgressFromApp } from '../apps/app-protocol-bridge.service';
+
+const APP_NAME = 'Assistência Técnica Rural';
 
 /**
  * Serviço do app de Agricultura (Fase 1C do plano de apps).
@@ -280,7 +283,17 @@ class AgriculturaService {
       visitas: _v,
       ...rest
     } = data || {};
-    return prisma.solicitacaoAssistenciaTecnica.update({ where: { id }, data: rest });
+    const solicitacao = await prisma.solicitacaoAssistenciaTecnica.update({ where: { id }, data: rest });
+    // Cancelar pela tela também encerra o pedido do cidadão
+    if (rest.status === 'CANCELADA') {
+      await concludeProtocolFromApp({
+        protocolId: solicitacao.protocolId,
+        app: APP_NAME,
+        message: 'Solicitação cancelada pela equipe técnica',
+        outcome: 'INDEFERIDO',
+      });
+    }
+    return solicitacao;
   }
 
   async getSolicitacaoStatistics(ano?: number) {
@@ -341,6 +354,11 @@ class AgriculturaService {
         ...(data.tecnicoId ? { tecnicoId: data.tecnicoId } : {}),
       },
     });
+    await markProtocolInProgressFromApp({
+      protocolId: solicitacao.protocolId,
+      app: APP_NAME,
+      message: `visita técnica agendada para ${new Date(data.dataAgendada).toLocaleDateString('pt-BR')}`,
+    });
     return visita;
   }
 
@@ -382,9 +400,16 @@ class AgriculturaService {
         observacoes: data?.observacoes,
       },
     });
-    await prisma.solicitacaoAssistenciaTecnica.update({
+    const solicitacao = await prisma.solicitacaoAssistenciaTecnica.update({
       where: { id: visita.solicitacaoId },
       data: { status: 'CONCLUIDA' },
+    });
+    // Antes o pedido do cidadão ficava aberto para sempre depois da visita
+    await concludeProtocolFromApp({
+      protocolId: solicitacao.protocolId,
+      app: APP_NAME,
+      message: data?.recomendacoes ? `Visita técnica realizada. Recomendações: ${data.recomendacoes}` : 'Visita técnica realizada',
+      outcome: 'DEFERIDO',
     });
     return visita;
   }

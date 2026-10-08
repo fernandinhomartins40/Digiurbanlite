@@ -72,6 +72,11 @@ export interface ServiceDefinition {
   serviceType: ServiceType;
   serviceSubtype?: ServiceSubtype;  // 🆕 NOVO: Campo opcional de subtipo
   moduleType: string | null;
+  /**
+   * Para qual app o pedido vai (código de ação de config/app-catalog.ts).
+   * Ausente = deduzido do moduleType; null = fica na fila do protocolo.
+   */
+  appAction?: string | null;
   requiresDocuments: boolean;
   requiredDocuments?: string[];
   estimatedDays: number | null;

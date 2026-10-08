@@ -46,7 +46,9 @@ router.patch('/:id/status', async (req, res) => {
 router.post('/chamar-proximo', async (req, res) => {
   try {
     const { unidadeId, profissionalId, consultorio } = req.body;
-    const proximo = await filaAtendimentoService.chamarProximo(unidadeId, profissionalId, consultorio);
+    if (!unidadeId) return res.status(400).json({ error: 'Escolha a unidade' });
+    // Sem profissional informado, chama para quem está logado
+    const proximo = await filaAtendimentoService.chamarProximo(unidadeId, profissionalId || (req as any).userId, consultorio);
     res.json(proximo);
   } catch (error) {
     console.error('Erro ao chamar próximo:', error);
