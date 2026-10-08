@@ -1,18 +1,38 @@
 'use client'
 
 /**
- * Painel do Prefeito — modo TV (perfil Gabinete). Para deixar aberto numa TV,
- * no visual padrão da aplicação (DigiUrban Glass, mesmos cartões do Painel):
- * mapa grande com os pedidos em aberto, barra lateral com os pedidos
- * chegando/andando ao vivo, Demandas do Gabinete e secretarias com mais
- * atraso, e os números do dia no topo. Atualiza sozinho (30 s; mapa 60 s).
- * Sem barra de cima nem menu inferior (AdminLayout não desenha nesta rota).
+ * Painel do Prefeito — modo TV (perfil Gabinete), no visual padrão da
+ * aplicação (DigiUrban Glass, cartões padrão, faixa azul do Painel):
+ *  - números do dia em cartões coloridos;
+ *  - mapa dos pedidos em aberto;
+ *  - gráficos: pedidos por situação, % no prazo, últimos 7 dias (chegaram ×
+ *    concluídos), chegadas por hora hoje, atrasos por secretaria, demandas do
+ *    gabinete;
+ *  - lista de pedidos ao vivo rolando sozinha; o que chega entra no topo em destaque.
+ * Atualiza sozinho (30 s; mapa 60 s). Sem barra de cima nem menu inferior.
  */
 
 import { useEffect, useMemo, useRef, useState } from 'react'
 import dynamic from 'next/dynamic'
 import Link from 'next/link'
-import { ArrowLeft, Maximize, Minimize } from 'lucide-react'
+import {
+  Area,
+  AreaChart,
+  Bar,
+  BarChart,
+  Cell,
+  Legend,
+  Pie,
+  PieChart,
+  PolarAngleAxis,
+  RadialBar,
+  RadialBarChart,
+  ResponsiveContainer,
+  Tooltip,
+  XAxis,
+  YAxis,
+} from 'recharts'
+import { AlertTriangle, ArrowLeft, CheckCircle2, Clock, FolderOpen, Inbox, Maximize, Minimize, Star } from 'lucide-react'
 import { useAdminAuth } from '@/contexts/AdminAuthContext'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
@@ -22,24 +42,27 @@ import type { TvPoint } from '@/components/admin/gabinete/tv/TvMap'
 
 const TvMap = dynamic(() => import('@/components/admin/gabinete/tv/TvMap'), {
   ssr: false,
-  loading: () => <div className="h-full w-full animate-pulse rounded-lg bg-gray-100" />,
+  loading: () => <div className="h-full w-full animate-pulse bg-gray-100" />,
 })
 
-const STATUS: Record<string, { label: string; className: string }> = {
-  VINCULADO: { label: 'Novo', className: 'bg-blue-100 text-blue-800' },
-  PROGRESSO: { label: 'Em andamento', className: 'bg-amber-100 text-amber-800' },
-  ATUALIZACAO: { label: 'Atualização', className: 'bg-purple-100 text-purple-800' },
-  PENDENCIA: { label: 'Pendência', className: 'bg-purple-100 text-purple-800' },
-  CONCLUIDO: { label: 'Concluído', className: 'bg-green-100 text-green-800' },
-  CANCELADO: { label: 'Cancelado', className: 'bg-gray-200 text-gray-700' },
+// cores padrão (Tailwind) usadas nas outras telas
+const C = { blue: '#3b82f6', green: '#22c55e', red: '#ef4444', amber: '#f59e0b', purple: '#8b5cf6', pink: '#ec4899', cyan: '#06b6d4', indigo: '#6366f1', gray: '#9ca3af' }
+
+const STATUS: Record<string, { label: string; className: string; color: string }> = {
+  VINCULADO: { label: 'Novo', className: 'bg-blue-100 text-blue-800', color: C.blue },
+  PROGRESSO: { label: 'Em andamento', className: 'bg-amber-100 text-amber-800', color: C.amber },
+  ATUALIZACAO: { label: 'Atualização', className: 'bg-purple-100 text-purple-800', color: C.purple },
+  PENDENCIA: { label: 'Pendência', className: 'bg-pink-100 text-pink-800', color: C.pink },
+  CONCLUIDO: { label: 'Concluído', className: 'bg-green-100 text-green-800', color: C.green },
+  CANCELADO: { label: 'Cancelado', className: 'bg-gray-200 text-gray-700', color: C.gray },
 }
 
-const TICKET: Record<string, string> = {
-  PENDING: 'Aguardando a secretaria',
-  ACCEPTED: 'Aceitas',
-  PROTOCOL_CREATED: 'Viraram pedido',
-  REJECTED: 'Recusadas',
-  CANCELLED: 'Canceladas',
+const TICKET: Record<string, { label: string; color: string }> = {
+  PENDING: { label: 'Aguardando', color: C.amber },
+  ACCEPTED: { label: 'Aceitas', color: C.blue },
+  PROTOCOL_CREATED: { label: 'Viraram pedido', color: C.green },
+  REJECTED: { label: 'Recusadas', color: C.red },
+  CANCELLED: { label: 'Canceladas', color: C.gray },
 }
 
 const hhmm = (value: string | Date) => new Date(value).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })
@@ -51,16 +74,75 @@ async function get(path: string) {
   return data
 }
 
-function Kpi({ label, value, tone }: { label: string; value: string | number; tone: string }) {
+function Kpi({ label, value, hint, icon: Icon, color, bg }: { label: string; value: string | number; hint?: string; icon: any; color: string; bg: string }) {
   return (
     <Card>
-      <CardHeader className="pb-1">
-        <CardTitle className="text-xs font-medium text-gray-600 sm:text-sm">{label}</CardTitle>
-      </CardHeader>
-      <CardContent>
-        <div className={cn('text-3xl font-bold tabular-nums xl:text-4xl', tone)}>{value}</div>
+      <CardContent className="flex items-center gap-3 p-3 xl:p-4">
+        <span className={cn('flex h-11 w-11 shrink-0 items-center justify-center rounded-full xl:h-14 xl:w-14', bg)}>
+          <Icon className={cn('h-6 w-6 xl:h-7 xl:w-7', color)} />
+        </span>
+        <div className="min-w-0">
+          <p className="truncate text-xs font-medium text-gray-600 xl:text-sm">{label}</p>
+          <p className={cn('text-2xl font-bold tabular-nums leading-tight xl:text-4xl', color)}>{value}</p>
+          {hint && <p className="truncate text-xs text-gray-500">{hint}</p>}
+        </div>
       </CardContent>
     </Card>
+  )
+}
+
+function ChartCard({ title, children, className }: { title: string; children: React.ReactNode; className?: string }) {
+  return (
+    <Card className={cn('flex min-h-0 flex-col', className)}>
+      <CardHeader className="px-3 pb-0 pt-3">
+        <CardTitle className="text-sm xl:text-base">{title}</CardTitle>
+      </CardHeader>
+      <CardContent className="min-h-0 flex-1 p-2">{children}</CardContent>
+    </Card>
+  )
+}
+
+/** Lista que rola sozinha (pausa com o mouse em cima); volta ao topo quando chega coisa nova */
+function AutoScrollList({ children, resetKey }: { children: React.ReactNode; resetKey: string }) {
+  const box = useRef<HTMLDivElement>(null)
+  const paused = useRef(false)
+  useEffect(() => {
+    if (box.current) box.current.scrollTop = 0
+  }, [resetKey])
+  useEffect(() => {
+    let frame = 0
+    let last = performance.now()
+    let hold = 0
+    const step = (time: number) => {
+      const element = box.current
+      const elapsed = time - last
+      last = time
+      if (element && !paused.current) {
+        const max = element.scrollHeight - element.clientHeight
+        if (max > 0) {
+          if (hold > 0) {
+            hold -= elapsed
+            if (hold <= 0 && element.scrollTop >= max - 1) element.scrollTop = 0
+          } else {
+            element.scrollTop += elapsed * 0.025 // ~25 px por segundo
+            if (element.scrollTop >= max - 1) hold = 3000 // espera no fim e volta ao começo
+          }
+        }
+      }
+      frame = requestAnimationFrame(step)
+    }
+    frame = requestAnimationFrame(step)
+    return () => cancelAnimationFrame(frame)
+  }, [])
+  return (
+    <div
+      ref={box}
+      className="h-full overflow-hidden"
+      onMouseEnter={() => (paused.current = true)}
+      onMouseLeave={() => (paused.current = false)}
+    >
+      {children}
+    </div>
   )
 }
 
@@ -75,7 +157,7 @@ export default function PainelTvPage() {
   const [fresh, setFresh] = useState<Set<string>>(new Set())
   const knownFeed = useRef<Set<string> | null>(null)
 
-  // números + pedidos ao vivo (30 s); o que mudou desde a última leitura fica em destaque
+  // números, gráficos e pedidos ao vivo (30 s); o que mudou desde a última leitura fica em destaque
   useEffect(() => {
     if (!hasGabinete) return
     let stop = false
@@ -138,7 +220,22 @@ export default function PainelTvPage() {
   }
 
   const kpis = data?.kpis
-  const ticketTotal = useMemo(() => Object.values((data?.demandas?.porSituacao || {}) as Record<string, number>).reduce((sum, value) => sum + value, 0), [data])
+  const situacao = useMemo(
+    () => (data?.graficos?.situacao || []).map((item: any) => ({ name: STATUS[item.status]?.label || item.status, value: item.total, color: STATUS[item.status]?.color || C.gray })),
+    [data]
+  )
+  const noPrazoPct = kpis && kpis.abertos ? Math.round((kpis.noPrazo / kpis.abertos) * 100) : 100
+  const demandas = useMemo(
+    () =>
+      Object.entries((data?.demandas?.porSituacao || {}) as Record<string, number>).map(([status, value]) => ({
+        name: TICKET[status]?.label || status,
+        value,
+        color: TICKET[status]?.color || C.gray,
+      })),
+    [data]
+  )
+  const demandasTotal = demandas.reduce((sum, item) => sum + item.value, 0)
+  const feedKey = (data?.feed || []).slice(0, 1).map((item: any) => `${item.id}:${item.status}`).join()
 
   if (user && !hasGabinete) {
     return (
@@ -155,17 +252,17 @@ export default function PainelTvPage() {
   }
 
   return (
-    <div className="lg-root relative flex h-screen flex-col gap-3 overflow-hidden p-3 xl:gap-4 xl:p-5">
+    <div className="lg-root relative flex h-screen flex-col gap-3 overflow-hidden p-3 xl:p-4">
       <LgAmbient />
 
       {/* topo: mesma faixa azul do Painel do Prefeito */}
-      <header className="relative flex items-center justify-between gap-4 rounded-lg bg-gradient-to-r from-blue-600 to-blue-800 px-4 py-3 text-white xl:px-6 xl:py-4">
+      <header className="relative flex items-center justify-between gap-4 rounded-lg bg-gradient-to-r from-blue-600 to-blue-800 px-4 py-2.5 text-white xl:px-6 xl:py-3">
         <div className="min-w-0">
-          <p className="truncate text-sm text-blue-100">{data?.municipality || 'Prefeitura'}</p>
+          <p className="truncate text-xs text-blue-100 xl:text-sm">{data?.municipality || 'Prefeitura'}</p>
           <h1 className="text-xl font-bold xl:text-3xl">Painel do Prefeito · ao vivo</h1>
         </div>
         <div className="flex items-center gap-2 xl:gap-3">
-          <span className={cn('inline-flex items-center gap-2 rounded-full px-3 py-1 text-xs xl:text-sm', offline ? 'bg-red-500/30' : 'bg-white/20')}>
+          <span className={cn('inline-flex items-center gap-2 rounded-full px-3 py-1 text-xs xl:text-sm', offline ? 'bg-red-500/40' : 'bg-white/20')}>
             <span className={cn('h-2 w-2 rounded-full bg-current', !offline && 'animate-pulse')} />
             {offline ? 'sem conexão — tentando de novo' : data ? `atualizado às ${hhmm(data.generatedAt)}` : 'conectando'}
           </span>
@@ -182,47 +279,179 @@ export default function PainelTvPage() {
       </header>
 
       {/* números do dia */}
-      <section className="relative grid grid-cols-3 gap-3 lg:grid-cols-6">
-        <Kpi label="Em aberto" value={kpis?.abertos ?? '–'} tone="text-blue-700" />
-        <Kpi label="Atrasados" value={kpis?.atrasados ?? '–'} tone={kpis?.atrasados ? 'text-red-600' : 'text-green-600'} />
-        <Kpi label="No prazo" value={kpis?.noPrazo ?? '–'} tone="text-green-700" />
-        <Kpi label="Chegaram hoje" value={kpis?.novosHoje ?? '–'} tone="text-gray-900" />
-        <Kpi label="Concluídos hoje" value={kpis?.concluidosHoje ?? '–'} tone="text-green-700" />
-        <Kpi label="Satisfação" value={kpis?.satisfacao != null ? kpis.satisfacao.toFixed(1) : '–'} tone="text-amber-600" />
+      <section className="relative grid grid-cols-3 gap-3 xl:grid-cols-6">
+        <Kpi label="Em aberto" value={kpis?.abertos ?? '–'} icon={FolderOpen} color="text-blue-600" bg="bg-blue-50" />
+        <Kpi label="Atrasados" value={kpis?.atrasados ?? '–'} icon={AlertTriangle} color="text-red-600" bg="bg-red-50" />
+        <Kpi label="No prazo" value={kpis?.noPrazo ?? '–'} hint={`${noPrazoPct}% dos em aberto`} icon={Clock} color="text-green-600" bg="bg-green-50" />
+        <Kpi label="Chegaram hoje" value={kpis?.novosHoje ?? '–'} icon={Inbox} color="text-purple-600" bg="bg-purple-50" />
+        <Kpi label="Concluídos hoje" value={kpis?.concluidosHoje ?? '–'} hint={kpis ? `${kpis.concluidosMes} no mês` : undefined} icon={CheckCircle2} color="text-emerald-600" bg="bg-emerald-50" />
+        <Kpi
+          label="Satisfação"
+          value={kpis?.satisfacao != null ? `${kpis.satisfacao.toFixed(1)}/5` : '–'}
+          hint={kpis ? `${kpis.avaliacoes} avaliações (90 dias)` : undefined}
+          icon={Star}
+          color="text-amber-600"
+          bg="bg-amber-50"
+        />
       </section>
 
-      {/* mapa + barra lateral */}
-      <section className="relative grid min-h-0 flex-1 gap-3 lg:grid-cols-[1fr_380px] xl:grid-cols-[1fr_460px] xl:gap-4">
-        <Card className="relative min-h-[300px] overflow-hidden p-0">
-          <TvMap points={points} highlight={fresh} />
-          <div className="pointer-events-none absolute bottom-3 left-3 z-[400] flex flex-wrap gap-3 rounded-lg border bg-white/90 px-3 py-2 text-xs text-gray-700 xl:text-sm">
-            <span className="flex items-center gap-1"><span className="h-3 w-3 rounded-full bg-red-500" />Atrasado</span>
-            <span className="flex items-center gap-1"><span className="h-3 w-3 rounded-full bg-blue-500" />Novo</span>
-            <span className="flex items-center gap-1"><span className="h-3 w-3 rounded-full bg-amber-500" />Em andamento</span>
-            <span className="text-gray-500">{points.length} no mapa</span>
+      {/* mapa + gráficos + lista ao vivo */}
+      <section className="relative grid min-h-0 flex-1 gap-3 xl:grid-cols-[1.55fr_1fr_0.85fr]">
+        {/* coluna 1: mapa e evolução */}
+        <div className="flex min-h-0 flex-col gap-3">
+          <Card className="relative min-h-[260px] flex-1 overflow-hidden p-0">
+            <TvMap points={points} highlight={fresh} />
+            <div className="pointer-events-none absolute bottom-3 left-3 z-[400] flex flex-wrap gap-3 rounded-lg border bg-white/90 px-3 py-2 text-xs text-gray-700 xl:text-sm">
+              <span className="flex items-center gap-1"><span className="h-3 w-3 rounded-full bg-red-500" />Atrasado</span>
+              <span className="flex items-center gap-1"><span className="h-3 w-3 rounded-full bg-blue-500" />Novo</span>
+              <span className="flex items-center gap-1"><span className="h-3 w-3 rounded-full bg-amber-500" />Em andamento</span>
+              <span className="flex items-center gap-1"><span className="h-3 w-3 rounded-full bg-purple-500" />Pendência</span>
+              <span className="text-gray-500">{points.length} no mapa</span>
+            </div>
+          </Card>
+          <div className="grid h-48 shrink-0 grid-cols-2 gap-3 xl:h-56">
+            <ChartCard title="Últimos 7 dias: chegaram × concluídos">
+              <ResponsiveContainer width="100%" height="100%">
+                <AreaChart data={data?.graficos?.semana || []} margin={{ top: 8, right: 8, left: -18, bottom: 0 }}>
+                  <defs>
+                    <linearGradient id="tvIn" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="0%" stopColor={C.blue} stopOpacity={0.45} />
+                      <stop offset="100%" stopColor={C.blue} stopOpacity={0.05} />
+                    </linearGradient>
+                    <linearGradient id="tvOut" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="0%" stopColor={C.green} stopOpacity={0.45} />
+                      <stop offset="100%" stopColor={C.green} stopOpacity={0.05} />
+                    </linearGradient>
+                  </defs>
+                  <XAxis dataKey="dia" tick={{ fontSize: 11 }} />
+                  <YAxis allowDecimals={false} tick={{ fontSize: 11 }} />
+                  <Tooltip />
+                  <Legend wrapperStyle={{ fontSize: 12 }} />
+                  <Area type="monotone" dataKey="chegaram" name="Chegaram" stroke={C.blue} fill="url(#tvIn)" strokeWidth={2} />
+                  <Area type="monotone" dataKey="concluidos" name="Concluídos" stroke={C.green} fill="url(#tvOut)" strokeWidth={2} />
+                </AreaChart>
+              </ResponsiveContainer>
+            </ChartCard>
+            <ChartCard title="Chegadas por hora — hoje">
+              <ResponsiveContainer width="100%" height="100%">
+                <BarChart data={(data?.graficos?.horas || []).slice(6, 22)} margin={{ top: 8, right: 8, left: -18, bottom: 0 }}>
+                  <XAxis dataKey="hora" tick={{ fontSize: 11 }} interval={1} />
+                  <YAxis allowDecimals={false} tick={{ fontSize: 11 }} />
+                  <Tooltip />
+                  <Bar dataKey="pedidos" name="Pedidos" radius={[4, 4, 0, 0]}>
+                    {(data?.graficos?.horas || []).slice(6, 22).map((item: any) => (
+                      <Cell key={item.hora} fill={Number(item.hora.slice(0, 2)) === now.getHours() ? C.indigo : C.cyan} />
+                    ))}
+                  </Bar>
+                </BarChart>
+              </ResponsiveContainer>
+            </ChartCard>
           </div>
-        </Card>
+        </div>
 
-        <aside className="flex min-h-0 flex-col gap-3">
-          <Card className="flex min-h-0 flex-1 flex-col">
-            <CardHeader className="pb-2">
-              <CardTitle className="flex items-center gap-2 text-base">
-                <span className="h-2 w-2 animate-pulse rounded-full bg-red-500" />Pedidos ao vivo
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="min-h-0 flex-1 overflow-hidden">
+        {/* coluna 2: indicadores */}
+        <div className="grid min-h-0 grid-rows-[1fr_1.2fr_1fr] gap-3">
+          <div className="grid min-h-0 grid-cols-2 gap-3">
+            <ChartCard title="Em aberto por situação">
+              <ResponsiveContainer width="100%" height="100%">
+                <PieChart>
+                  <Pie data={situacao} dataKey="value" nameKey="name" innerRadius="55%" outerRadius="85%" paddingAngle={2}>
+                    {situacao.map((item: any) => (
+                      <Cell key={item.name} fill={item.color} />
+                    ))}
+                  </Pie>
+                  <Tooltip />
+                </PieChart>
+              </ResponsiveContainer>
+            </ChartCard>
+            <ChartCard title="No prazo">
+              <div className="relative h-full">
+                <ResponsiveContainer width="100%" height="100%">
+                  <RadialBarChart innerRadius="70%" outerRadius="100%" data={[{ value: noPrazoPct }]} startAngle={90} endAngle={-270}>
+                    <PolarAngleAxis type="number" domain={[0, 100]} tick={false} />
+                    <RadialBar dataKey="value" cornerRadius={10} background fill={noPrazoPct >= 80 ? C.green : noPrazoPct >= 60 ? C.amber : C.red} />
+                  </RadialBarChart>
+                </ResponsiveContainer>
+                <span className={cn('absolute inset-0 flex items-center justify-center text-2xl font-bold xl:text-3xl', noPrazoPct >= 80 ? 'text-green-600' : noPrazoPct >= 60 ? 'text-amber-600' : 'text-red-600')}>
+                  {noPrazoPct}%
+                </span>
+              </div>
+            </ChartCard>
+          </div>
+
+          <ChartCard title="Atrasos por secretaria">
+            {(data?.secretariasAtrasadas || []).length === 0 ? (
+              <p className="flex h-full items-center justify-center text-sm text-green-700">Nenhuma secretaria com atraso.</p>
+            ) : (
+              <ResponsiveContainer width="100%" height="100%">
+                <BarChart data={data.secretariasAtrasadas} layout="vertical" margin={{ top: 4, right: 16, left: 4, bottom: 0 }}>
+                  <XAxis type="number" allowDecimals={false} tick={{ fontSize: 11 }} />
+                  <YAxis type="category" dataKey="name" width={130} tick={{ fontSize: 11 }} />
+                  <Tooltip />
+                  <Bar dataKey="count" name="Atrasados" radius={[0, 4, 4, 0]}>
+                    {data.secretariasAtrasadas.map((item: any, index: number) => (
+                      <Cell key={item.name} fill={[C.red, C.pink, C.amber, C.purple, C.indigo, C.cyan, C.blue, C.green][index % 8]} />
+                    ))}
+                  </Bar>
+                </BarChart>
+              </ResponsiveContainer>
+            )}
+          </ChartCard>
+
+          <ChartCard title={`Demandas do Gabinete · ${demandasTotal}`}>
+            {demandasTotal === 0 ? (
+              <p className="flex h-full items-center justify-center text-sm text-gray-500">Nenhuma demanda.</p>
+            ) : (
+              <div className="grid h-full grid-cols-[1fr_1.1fr] items-center gap-2">
+                <ResponsiveContainer width="100%" height="100%">
+                  <PieChart>
+                    <Pie data={demandas} dataKey="value" nameKey="name" innerRadius="50%" outerRadius="85%" paddingAngle={2}>
+                      {demandas.map((item) => (
+                        <Cell key={item.name} fill={item.color} />
+                      ))}
+                    </Pie>
+                    <Tooltip />
+                  </PieChart>
+                </ResponsiveContainer>
+                <ul className="space-y-1 text-xs xl:text-sm">
+                  {demandas.map((item) => (
+                    <li key={item.name} className="flex items-center justify-between gap-2">
+                      <span className="flex items-center gap-1.5 truncate"><span className="h-2.5 w-2.5 shrink-0 rounded-full" style={{ background: item.color }} />{item.name}</span>
+                      <strong className="tabular-nums">{item.value}</strong>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            )}
+          </ChartCard>
+        </div>
+
+        {/* coluna 3: pedidos ao vivo, rolando */}
+        <Card className="flex min-h-0 flex-col">
+          <CardHeader className="px-3 pb-2 pt-3">
+            <CardTitle className="flex items-center gap-2 text-sm xl:text-base">
+              <span className="h-2.5 w-2.5 animate-pulse rounded-full bg-red-500" />Pedidos ao vivo
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="min-h-0 flex-1 px-3 pb-3">
+            <AutoScrollList resetKey={feedKey}>
               <ul className="space-y-2">
                 {(data?.feed || []).map((item: any) => {
                   const status = STATUS[item.status] || STATUS.PROGRESSO
+                  const isFresh = fresh.has(item.id)
                   return (
                     <li
                       key={`${item.id}:${item.status}`}
-                      className={cn('rounded-md border px-3 py-2 transition-colors', fresh.has(item.id) ? 'border-blue-300 bg-blue-50' : 'bg-white/60')}
+                      className={cn(
+                        'rounded-md border-l-4 bg-white/70 px-3 py-2 shadow-sm transition-all',
+                        isFresh && 'animate-in fade-in slide-in-from-top-2 bg-blue-50 ring-1 ring-blue-300'
+                      )}
+                      style={{ borderLeftColor: item.overdue ? C.red : status.color }}
                     >
                       <div className="flex items-center justify-between gap-2 text-xs">
                         <span className="font-mono text-gray-500">#{item.number} · {hhmm(item.updatedAt)}</span>
                         <span className={cn('rounded-full px-2 py-0.5', item.overdue ? 'bg-red-100 text-red-700' : status.className)}>
-                          {item.overdue ? 'Atrasado' : status.label}
+                          {isFresh ? (item.isNew ? 'Acabou de chegar' : 'Atualizado agora') : item.overdue ? 'Atrasado' : status.label}
                         </span>
                       </div>
                       <p className="truncate text-sm font-medium text-gray-900 xl:text-base">{item.service?.name || item.title}</p>
@@ -231,58 +460,9 @@ export default function PainelTvPage() {
                   )
                 })}
               </ul>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardHeader className="pb-2">
-              <CardTitle className="text-base">Demandas do Gabinete · {ticketTotal}</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-2">
-              <div className="flex flex-wrap gap-2 text-xs">
-                {Object.entries((data?.demandas?.porSituacao || {}) as Record<string, number>).map(([status, count]) => (
-                  <span key={status} className={cn('rounded-full px-2.5 py-1', status === 'PENDING' ? 'bg-amber-100 text-amber-800' : 'bg-gray-100 text-gray-700')}>
-                    {TICKET[status] || status}: <strong>{count}</strong>
-                  </span>
-                ))}
-                {ticketTotal === 0 && <span className="text-gray-500">Nenhuma demanda.</span>}
-              </div>
-              <ul className="space-y-1 text-sm">
-                {(data?.demandas?.recentes || []).slice(0, 3).map((item: any) => (
-                  <li key={item.id} className="truncate text-gray-700">
-                    <span className="font-mono text-xs text-gray-500">{item.number}</span> {item.title}
-                    <span className="text-xs text-gray-500"> · {item.department?.name}</span>
-                  </li>
-                ))}
-              </ul>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardHeader className="pb-2">
-              <CardTitle className="text-base">Mais atrasos por secretaria</CardTitle>
-            </CardHeader>
-            <CardContent>
-              {(data?.secretariasAtrasadas || []).length === 0 && <p className="text-sm text-green-700">Nenhuma secretaria com atraso.</p>}
-              <ul className="space-y-1.5">
-                {(data?.secretariasAtrasadas || []).map((item: any) => {
-                  const max = data.secretariasAtrasadas[0]?.count || 1
-                  return (
-                    <li key={item.name} className="text-sm">
-                      <div className="flex justify-between gap-2">
-                        <span className="truncate text-gray-900">{item.name}</span>
-                        <span className="tabular-nums text-red-700">{item.count}</span>
-                      </div>
-                      <div className="mt-1 h-1.5 overflow-hidden rounded-full bg-gray-100">
-                        <div className="h-full rounded-full bg-red-500" style={{ width: `${(item.count / max) * 100}%` }} />
-                      </div>
-                    </li>
-                  )
-                })}
-              </ul>
-            </CardContent>
-          </Card>
-        </aside>
+            </AutoScrollList>
+          </CardContent>
+        </Card>
       </section>
     </div>
   )

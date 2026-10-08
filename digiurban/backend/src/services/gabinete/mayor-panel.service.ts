@@ -351,6 +351,31 @@ export async function mayorTvSnapshot() {
     })(),
   ]);
 
+  // gráficos: em aberto por situação, últimos 7 dias (chegaram × concluídos) e chegadas por hora hoje
+  const since7 = new Date(todayStart.getTime() - 6 * DAY);
+  const [openByStatus, created7, concluded7] = await Promise.all([
+    prisma.protocolSimplified.groupBy({ by: ['status'], where: open, _count: { _all: true } }),
+    prisma.protocolSimplified.findMany({ where: { createdAt: { gte: since7 } }, select: { createdAt: true }, take: 20000 }),
+    prisma.protocolSimplified.findMany({ where: { status: 'CONCLUIDO', concludedAt: { gte: since7 } }, select: { concludedAt: true }, take: 20000 }),
+  ]);
+  const dayKey = (date: Date) => date.toLocaleDateString('pt-BR', { timeZone: 'America/Sao_Paulo', day: '2-digit', month: '2-digit' });
+  const semana = Array.from({ length: 7 }, (_, index) => {
+    const day = new Date(since7.getTime() + index * DAY);
+    return { dia: dayKey(day), chegaram: 0, concluidos: 0 };
+  });
+  const byDay = new Map(semana.map((item) => [item.dia, item]));
+  for (const row of created7) {
+    const day = byDay.get(dayKey(row.createdAt));
+    if (day) day.chegaram++;
+  }
+  for (const row of concluded7) {
+    const day = row.concludedAt ? byDay.get(dayKey(row.concludedAt)) : undefined;
+    if (day) day.concluidos++;
+  }
+  const hourOf = (date: Date) => Number(date.toLocaleString('pt-BR', { timeZone: 'America/Sao_Paulo', hour: '2-digit', hour12: false }));
+  const horas = Array.from({ length: 24 }, (_, hora) => ({ hora: `${String(hora).padStart(2, '0')}h`, pedidos: 0 }));
+  for (const row of created7) if (row.createdAt >= todayStart) horas[hourOf(row.createdAt) % 24].pedidos++;
+
   const deptIds = overdueByDept.map((item) => item.departmentId).filter(Boolean) as string[];
   const departments = deptIds.length ? await prisma.department.findMany({ where: { id: { in: deptIds } }, select: { id: true, name: true } }) : [];
   const deptName = new Map(departments.map((item) => [item.id, item.name]));
@@ -373,10 +398,15 @@ export async function mayorTvSnapshot() {
       overdue: !!item.sla?.isOverdue && !CLOSED.includes(item.status as any),
       isNew: item.createdAt >= todayStart,
     })),
+    graficos: {
+      situacao: openByStatus.map((item) => ({ status: item.status, total: item._count._all })),
+      semana,
+      horas,
+    },
     secretariasAtrasadas: overdueByDept
       .map((item) => ({ name: deptName.get(item.departmentId as string) || 'Sem secretaria', count: item._count._all }))
       .sort((a, b) => b.count - a.count)
-      .slice(0, 6),
+      .slice(0, 8),
     demandas: {
       porSituacao: Object.fromEntries(ticketsByStatus.map((item) => [item.status, item._count._all])),
       recentes: tickets,
