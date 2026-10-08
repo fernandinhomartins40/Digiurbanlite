@@ -32,6 +32,8 @@ export interface CreateProtocolWithModuleInput {
   latitude?: number;
   longitude?: number;
   address?: string;
+  /** GPS do celular ou alfinete confirmado no mapa */
+  locationSource?: 'GPS' | 'PIN';
   attachments?: any[];
   /** Porta de entrada: portal do cidadão, bot ou balcão presencial */
   channel?: 'PORTAL' | 'BOT' | 'BALCAO';
@@ -131,7 +133,7 @@ export class ProtocolModuleService {
    * ou SEM_DADOS apenas com protocolo de acompanhamento
    */
   async createProtocolWithModule(input: CreateProtocolWithModuleInput) {
-    const { citizenId, serviceId, formData, description, createdById, latitude, longitude, address, attachments, channel } = input;
+    const { citizenId, serviceId, formData, description, createdById, latitude, longitude, address, locationSource, attachments, channel } = input;
 
     // 1. Buscar serviço
     const service = await prisma.serviceSimplified.findUnique({
@@ -178,7 +180,7 @@ export class ProtocolModuleService {
     }
 
     // 2.2 Resolver geolocalização inteligente
-    const locationData = latitude && longitude ? { latitude, longitude, address } : undefined;
+    const locationData = latitude && longitude ? { latitude, longitude, address, source: locationSource } : undefined;
     const geoResult = await GeolocationService.resolveProtocolLocation(
       serviceId,
       citizenId,
@@ -242,7 +244,9 @@ export class ProtocolModuleService {
           latitude: geoResult.latitude,
           longitude: geoResult.longitude,
           address: geoResult.address,
-          locationType: locationTypeMap[geoResult.source] || undefined
+          locationType: geoResult.locationType || locationTypeMap[geoResult.source] || undefined,
+          geocodingProvider: geoResult.provider || null,
+          geocodedAt: geoResult.provider && geoResult.provider !== 'manual' ? new Date() : null
         }
       });
 

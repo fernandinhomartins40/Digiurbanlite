@@ -20,7 +20,7 @@ import { DocumentUpload } from '@/components/common/DocumentUpload'
 import { normalizeDocumentConfig } from '@/lib/document-utils';
 import { ServiceFormRenderer } from '@/components/forms/ServiceFormRenderer';
 import { extractFieldsFromSchema, extractCitizenFields } from '@/lib/schema-field-extractor';
-import { LocationPicker } from '@/components/common/LocationPicker';
+import { LocationPicker, type LocationData } from '@/components/common/LocationPicker';
 import { getFullApiUrl } from '@/lib/api-config';
 
 interface Service {
@@ -81,7 +81,7 @@ export default function SolicitarServicoPage() {
   const [description, setDescription] = useState('');
   const [selectedProgram, setSelectedProgram] = useState<any>(null);
   const [uploadedFiles, setUploadedFiles] = useState<Record<string, File>>({});
-  const [locationData, setLocationData] = useState<{ latitude: number; longitude: number; address?: string } | null>(null);
+  const [locationData, setLocationData] = useState<LocationData | null>(null);
   const [showLocation, setShowLocation] = useState(false);
 
   // Determinar quais campos usar: do programa selecionado ou do serviço
@@ -212,6 +212,10 @@ export default function SolicitarServicoPage() {
       toast.error('Por favor, informe a localização do problema');
       return;
     }
+    if (locationData && !locationData.confirmed && !locationData.isGPS) {
+      toast.error('Toque no alfinete do mapa para confirmar o local');
+      return;
+    }
 
     // Validar campos obrigatórios do formulário customizado (usar campos ativos)
     if (activeFormFields && activeFormFields.length > 0) {
@@ -295,7 +299,9 @@ export default function SolicitarServicoPage() {
       }
 
       // ✅ NOVO: Adicionar locationData se existir
-      if (locationData) {
+      // só vai o ponto confirmado (GPS ou toque no alfinete); sugestão não confirmada
+      // fica de fora e o sistema usa o endereço do cadastro
+      if (locationData && (locationData.confirmed || locationData.isGPS)) {
         formData.append('locationData', JSON.stringify(locationData));
         console.log('[Solicitar] locationData enviado:', locationData);
       }

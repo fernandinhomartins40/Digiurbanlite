@@ -12,18 +12,25 @@
 
 import { PrismaClient } from '@prisma/client';
 import { GeocodingService } from './geocoding.service';
+import { homePointOf } from './citizen-home-location.service';
 
 interface LocationData {
   latitude?: number;
   longitude?: number;
   address?: string;
+  /** GPS do celular ou alfinete tocado/arrastado no mapa (dado próprio, sem prazo) */
+  source?: 'GPS' | 'PIN';
 }
 
 interface GeoResult {
   latitude: number | null;
   longitude: number | null;
   address: string | null;
-  source: 'user_location' | 'citizen_address' | 'none';
+  source: 'user_location' | 'citizen_home' | 'citizen_address' | 'none';
+  /** GPS | MANUAL_PIN | CITIZEN_ADDRESS (o mapa trata GPS/MANUAL_PIN como local exato) */
+  locationType?: string;
+  /** de onde veio a coordenada procurada pelo endereço (google tem prazo de guarda) */
+  provider?: string | null;
 }
 
 export class GeolocationService {
@@ -44,7 +51,9 @@ export class GeolocationService {
         latitude: providedLocation.latitude,
         longitude: providedLocation.longitude,
         address: providedLocation.address || null,
-        source: 'user_location'
+        source: 'user_location',
+        locationType: providedLocation.source === 'PIN' ? 'MANUAL_PIN' : 'GPS',
+        provider: null
       };
     }
 
@@ -158,7 +167,11 @@ export class GeolocationService {
         select: {
           id: true,
           name: true,
-          address: true
+          address: true,
+          homeLatitude: true,
+          homeLongitude: true,
+          homeLocationSource: true,
+          homeLocationKey: true
         }
       });
 
@@ -198,6 +211,19 @@ export class GeolocationService {
 
       const fullAddress = addressParts.join(', ');
 
+      // Casa já marcada no mapa (GPS ou alfinete) para este endereço: usa sem procurar
+      const home = homePointOf(citizen);
+      if (home) {
+        return {
+          latitude: home.latitude,
+          longitude: home.longitude,
+          address: fullAddress,
+          source: 'citizen_home',
+          locationType: home.source === 'GPS' ? 'GPS' : 'MANUAL_PIN',
+          provider: null
+        };
+      }
+
       console.log(`✅ [Geolocation] Usando endereço do cidadão "${citizen.name}": ${fullAddress}`);
 
       // Geocodificar endereço automaticamente usando JSON estruturado
@@ -214,7 +240,9 @@ export class GeolocationService {
             latitude: geoResult.latitude,
             longitude: geoResult.longitude,
             address: geoResult.formattedAddress || fullAddress,
-            source: 'citizen_address'
+            source: 'citizen_address',
+            locationType: geoResult.provider === 'confirmado' ? 'MANUAL_PIN' : 'CITIZEN_ADDRESS',
+            provider: geoResult.provider === 'confirmado' ? null : geoResult.provider
           };
         } else {
           console.log(`⚠️ [Geolocation] Não foi possível geocodificar o endereço, retornando apenas texto`);

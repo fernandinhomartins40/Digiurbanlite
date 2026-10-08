@@ -11,6 +11,7 @@ import { Badge } from '@/components/ui/badge'
 import { Flame, MapPin, Filter, Eye, EyeOff, TrendingUp, Shield } from 'lucide-react'
 import GoogleMarkersMap from '@/components/maps/GoogleMarkersMap'
 import { useMapsConfig } from '@/hooks/useMapsConfig'
+import { mapaDemandasService } from '@/lib/services/gabinete.service'
 
 // Fix para ícones do Leaflet no Next.js
 if (typeof window !== 'undefined') {
@@ -238,6 +239,15 @@ function getPrecisionLabel(protocol: Protocol): { label: string; color: string; 
   if (protocol.locationType === 'GEOCODED_ADDRESS') return { label: 'Geocodificado', color: '#f59e0b', icon: '📫' }
   if (protocol.locationType === 'CITIZEN_ADDRESS') return { label: 'End. cidadão', color: '#f59e0b', icon: '📫' }
   return { label: 'Coordenadas', color: '#6b7280', icon: '📍' }
+}
+
+// Tocar no alfinete de um pedido com local aproximado = o servidor confirma o
+// ponto; ele vira dado próprio (MANUAL_PIN), guardado sem prazo.
+const confirmedIds = new Set<string>()
+function confirmOnTap(protocol: Protocol) {
+  if (isExactLocation(protocol) || confirmedIds.has(protocol.id)) return
+  confirmedIds.add(protocol.id)
+  mapaDemandasService.confirmProtocolLocation(protocol.id).catch(() => confirmedIds.delete(protocol.id))
 }
 
 // Criar ícone customizado por categoria de serviço
@@ -729,6 +739,7 @@ export function ProtocolMapEnhanced({
                       key={protocol.id}
                       position={[protocol.latitude, protocol.longitude]}
                       icon={createServiceIcon(protocol.department?.name, protocol)}
+                      eventHandlers={{ click: () => confirmOnTap(protocol) }}
                     >
                       <Popup>
                         <div className="p-2 min-w-[240px] sm:min-w-[280px] max-w-[90vw]">
@@ -821,6 +832,7 @@ export function ProtocolMapEnhanced({
                       key={protocol.id}
                       position={[protocol.latitude, protocol.longitude]}
                       icon={createServiceIcon(protocol.department?.name, protocol)}
+                      eventHandlers={{ click: () => confirmOnTap(protocol) }}
                     >
                       <Popup>
                         <div className="p-2 min-w-[240px] sm:min-w-[280px] max-w-[90vw]">
@@ -1020,7 +1032,11 @@ export function ProtocolMapEnhanced({
 /** Detalhes do pedido no mapa do Google (mesmas informações do mapa padrão) */
 function ProtocolInfo({ protocol }: { protocol: Protocol }) {
   const config = getCategoryConfig(protocol.department?.name)
-  const precision = getPrecisionLabel(protocol)
+  const wasApproximate = !isExactLocation(protocol)
+  useEffect(() => {
+    confirmOnTap(protocol)
+  }, [protocol])
+  const precision = wasApproximate ? { label: 'Local confirmado e guardado', color: '#16a34a', icon: '📌' } : getPrecisionLabel(protocol)
   return (
     <div className="min-w-[220px] max-w-[280px] p-1 text-gray-900">
       <p className="font-bold text-blue-600">

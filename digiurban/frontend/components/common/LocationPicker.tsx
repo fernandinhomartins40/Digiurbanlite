@@ -1,15 +1,28 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import dynamic from 'next/dynamic';
 import { Button } from '@/components/ui/button';
-import { MapPin, Loader2, Check, AlertCircle, X } from 'lucide-react';
+import { MapPin, Loader2, Check, AlertCircle, X, Home } from 'lucide-react';
 import { toast } from 'sonner';
 
-interface LocationData {
+// alfinete para confirmar o local (Google Maps se ligado; senão OpenStreetMap)
+const PinConfirmMap = dynamic(() => import('@/components/maps/PinConfirmMap'), {
+  ssr: false,
+  loading: () => <div className="h-[260px] w-full rounded-lg bg-gray-100" />,
+});
+
+export interface LocationData {
   latitude: number;
   longitude: number;
   address?: string;
   isGPS?: boolean; // Indica se foi obtido via GPS (mais preciso)
+  /** GPS do celular ou alfinete tocado/arrastado: dado próprio, guardado sem prazo */
+  source?: 'GPS' | 'PIN';
+  /** a pessoa confirmou o ponto (GPS ou toque no alfinete) */
+  confirmed?: boolean;
+  /** veio do endereço do cadastro: ao confirmar, vira a casa marcada no mapa */
+  fromHome?: boolean;
 }
 
 interface LocationPickerProps {
@@ -139,7 +152,9 @@ export function LocationPicker({ value, onChange, required, serviceName, autoCap
           latitude: lat,
           longitude: lng,
           address,
-          isGPS: true // Marcar como GPS para indicar alta precisão
+          isGPS: true, // Marcar como GPS para indicar alta precisão
+          source: 'GPS',
+          confirmed: true
         };
 
         onChange(location);
@@ -168,7 +183,9 @@ export function LocationPicker({ value, onChange, required, serviceName, autoCap
                 latitude: lat,
                 longitude: lng,
                 address,
-                isGPS: true // Marcar como GPS mesmo em modo rápido
+                isGPS: true, // Marcar como GPS mesmo em modo rápido
+                source: 'GPS',
+                confirmed: true
               };
 
               onChange(location);
@@ -231,6 +248,56 @@ export function LocationPicker({ value, onChange, required, serviceName, autoCap
     );
   };
 
+  // Endereço do cadastro: casa já marcada ou sugestão para confirmar no alfinete
+  const [homeLoading, setHomeLoading] = useState(false);
+  const handleUseHome = async () => {
+    setHomeLoading(true);
+    setError(null);
+    try {
+      const res = await fetch('/api/citizen/location/home', { credentials: 'include' });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(data.error || 'Não foi possível usar o endereço do cadastro');
+      if (data.confirmed) {
+        onChange({ latitude: data.latitude, longitude: data.longitude, address: data.address, source: data.source === 'GPS' ? 'GPS' : 'PIN', confirmed: true, fromHome: true });
+      } else if (data.suggestion) {
+        onChange({ latitude: data.suggestion.latitude, longitude: data.suggestion.longitude, address: data.address, confirmed: false, fromHome: true });
+        toast.info('Confira no mapa e toque no alfinete para confirmar.');
+      } else {
+        throw new Error(data.address ? 'Não achamos seu endereço no mapa. Use sua localização atual.' : 'Seu cadastro não tem endereço.');
+      }
+      setHasLocation(true);
+    } catch (err: any) {
+      setError(err.message);
+      toast.error(err.message);
+    } finally {
+      setHomeLoading(false);
+    }
+  };
+
+  // Tocar no alfinete confirma; arrastar confirma o novo ponto
+  const handleConfirmPin = async (point: { latitude: number; longitude: number }, moved: boolean) => {
+    if (!value) return;
+    const next: LocationData = {
+      ...value,
+      latitude: point.latitude,
+      longitude: point.longitude,
+      source: moved || value.source !== 'GPS' ? 'PIN' : 'GPS',
+      isGPS: moved ? false : value.isGPS,
+      confirmed: true,
+    };
+    onChange(next);
+    if (!value.confirmed || moved) toast.success('Local confirmado');
+    // casa do cadastro confirmada fica guardada para os próximos pedidos
+    if (value.fromHome) {
+      fetch('/api/citizen/location/home', {
+        method: 'PUT',
+        credentials: 'include',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ latitude: point.latitude, longitude: point.longitude, source: next.source }),
+      }).catch(() => undefined);
+    }
+  };
+
   const handleRemoveLocation = () => {
     onChange(null);
     setHasLocation(false);
@@ -266,6 +333,11 @@ export function LocationPicker({ value, onChange, required, serviceName, autoCap
                 Usar Minha Localização Atual
               </>
             )}
+          </Button>
+
+          <Button type="button" variant="outline" onClick={handleUseHome} disabled={homeLoading || loading} className="w-full">
+            {homeLoading ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <Home className="h-4 w-4 mr-2" />}
+            Usar o endereço do meu cadastro
           </Button>
 
           {error && (
@@ -326,9 +398,19 @@ export function LocationPicker({ value, onChange, required, serviceName, autoCap
             </Button>
           </div>
 
-          <p className="text-xs text-gray-600">
-            💡 Localização GPS garante precisão exata no endereço e número
-          </p>
+          {value && (
+            <PinConfirmMap
+              point={{ latitude: value.latitude, longitude: value.longitude }}
+              confirmed={!!value.confirmed}
+              onConfirm={handleConfirmPin}
+            />
+          )}
+
+          {value && !value.confirmed ? (
+            <p className="text-xs font-medium text-amber-700">Toque no alfinete para confirmar o local (ou arraste até o lugar certo).</p>
+          ) : (
+            <p className="text-xs text-gray-600">💡 Local confirmado garante que a equipe chegue no endereço e número certos.</p>
+          )}
         </div>
       )}
 

@@ -584,6 +584,14 @@ model Citizen {
   phone               String?
   birthDate           DateTime?
   address             Json?
+  // Ponto da casa confirmado pelo cidadão/servidor (GPS do celular ou alfinete
+  // no mapa) — dado próprio, guardado sem prazo. Só vale enquanto o endereço
+  // for o mesmo de quando foi marcado (homeLocationKey = endereço normalizado).
+  homeLatitude        Float?
+  homeLongitude       Float?
+  homeLocationSource  String? // 'GPS' | 'PIN'
+  homeLocationAt      DateTime?
+  homeLocationKey     String?
   municipioId         String?
   isActive            Boolean            @default(true)
   password            String

@@ -764,6 +764,7 @@ router.post('/:id/request', (req, res, next) => {
       latitude: locationData?.latitude,
       longitude: locationData?.longitude,
       address: locationData?.address,
+      locationSource: locationData?.source === 'PIN' ? 'PIN' : locationData?.source === 'GPS' || locationData?.isGPS ? 'GPS' : undefined,
       attachments: attachments as any,
       // Servidor pedindo em nome do cidadão = balcão; senão, o próprio cidadão no portal
       channel: adminCitizenId && (req as any).user ? 'BALCAO' : 'PORTAL'

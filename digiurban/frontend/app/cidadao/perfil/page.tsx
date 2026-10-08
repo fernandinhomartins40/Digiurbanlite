@@ -22,6 +22,7 @@ import { useViaCEP, formatCEP, isValidCEP } from '@/hooks/useViaCEP';
 import { cn } from '@/lib/utils';
 import { citizenDocumentLabel } from '@/lib/citizen-document-types';
 import { tagColorClass } from '@/lib/citizen-tags';
+import { HomeLocationMark } from '@/components/citizen/HomeLocationMark';
 import type { CitizenAccessLevelSummary } from '@/types/citizen-access';
 
 const MARITAL = ['Solteiro(a)', 'Casado(a)', 'Divorciado(a)', 'Viúvo(a)', 'União Estável'];
@@ -498,6 +499,7 @@ export default function PerfilPage() {
                   <p>{addressLine}</p>
                   <p className="text-gray-600">{cityLine}</p>
                   {address?.pontoReferencia && <p className="mt-1 text-gray-500">Referência: {address.pontoReferencia}</p>}
+                  <HomeLocationMark key={`${addressLine}|${cityLine}`} />
                 </div>
               ) : (
                 <p className="text-sm text-gray-400">Não informado</p>

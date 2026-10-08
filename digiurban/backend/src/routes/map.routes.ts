@@ -3,6 +3,9 @@
  * atendente vê os pedidos com ele, gerente/coordenador os da(s) sua(s)
  * secretaria(s), administrador e Gabinete do Prefeito o município todo.
  *
+ * Confirmar o local (PUT /protocols/:id/location): o servidor toca no alfinete
+ * (ou arrasta) e o ponto vira dado próprio (MANUAL_PIN), guardado sem prazo.
+ *
  * Só lê coordenadas já gravadas: procurar endereço no mapa (geocodificação)
  * é feito por uma rotina em segundo plano (jobs/protocol-geocoding.job.ts),
  * não na hora em que alguém abre a tela.
@@ -13,7 +16,9 @@ import { ProtocolStatus } from '@prisma/client';
 import { prisma } from '../lib/prisma';
 import { adminAuthMiddleware } from '../middleware/admin-auth';
 import { hasGabineteAccess } from '../middleware/gabinete-auth';
-import { buildProtocolScopeWhere } from '../services/protocol-access.service';
+import { assertProtocolAccess, buildProtocolScopeWhere } from '../services/protocol-access.service';
+import { GeocodingService, rememberConfirmedLocation } from '../services/geocoding.service';
+import { setCitizenHomeLocation } from '../services/citizen-home-location.service';
 
 const router = Router();
 router.use(adminAuthMiddleware as any);
@@ -80,6 +85,45 @@ router.get('/protocols', async (req: Request, res: Response) => {
   } catch (error) {
     console.error('[mapa] pontos:', error);
     res.status(500).json({ success: false, error: 'Não foi possível carregar o mapa' });
+  }
+});
+
+/**
+ * PUT /api/map/protocols/:id/location — confirmar o local do pedido.
+ * Sem latitude/longitude = confirma o ponto atual (tocar no alfinete);
+ * com = o alfinete foi arrastado. Endereço do cadastro confirmado também vira
+ * a casa do cidadão e entra no arquivo de endereços.
+ */
+router.put('/protocols/:id/location', async (req: Request, res: Response) => {
+  const user = (req as any).user;
+  try {
+    await assertProtocolAccess({ id: user.id, role: user.role, departmentId: user.departmentId, departmentIds: user.departmentIds } as any, req.params.id);
+    const protocol = await prisma.protocolSimplified.findUnique({
+      where: { id: req.params.id },
+      select: { id: true, latitude: true, longitude: true, address: true, specificLocation: true, locationType: true, citizenId: true },
+    });
+    if (!protocol) return res.status(404).json({ error: 'Pedido não encontrado' });
+    const latitude = req.body?.latitude !== undefined ? Number(req.body.latitude) : protocol.latitude;
+    const longitude = req.body?.longitude !== undefined ? Number(req.body.longitude) : protocol.longitude;
+    if (latitude === null || longitude === null || !GeocodingService.isValidBrazilCoordinates(latitude, longitude)) {
+      return res.status(400).json({ error: 'Ponto inválido' });
+    }
+    const updated = await prisma.protocolSimplified.update({
+      where: { id: protocol.id },
+      data: { latitude, longitude, locationType: protocol.locationType === 'GPS' && req.body?.latitude === undefined ? 'GPS' : 'MANUAL_PIN', geocodingProvider: 'manual', geocodedAt: null },
+      select: { id: true, latitude: true, longitude: true, locationType: true },
+    });
+    const address = protocol.specificLocation || protocol.address;
+    if (address && protocol.locationType !== 'GPS') await rememberConfirmedLocation(address, latitude, longitude);
+    if (protocol.locationType === 'CITIZEN_ADDRESS' && protocol.citizenId) {
+      await setCitizenHomeLocation(protocol.citizenId, latitude, longitude, 'PIN').catch(() => undefined);
+    }
+    return res.json({ success: true, data: updated });
+  } catch (error: any) {
+    const status = error?.statusCode || (error?.name === 'ProtocolAccessDeniedError' ? 403 : 500);
+    if (status !== 500) return res.status(status).json({ error: error.message || 'Sem acesso a este pedido' });
+    console.error('[mapa] confirmar local:', error);
+    return res.status(500).json({ error: 'Não foi possível confirmar o local' });
   }
 });
 

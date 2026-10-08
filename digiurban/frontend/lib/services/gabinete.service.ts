@@ -48,6 +48,22 @@ export const mapaDemandasService = {
     return get(`/map/protocols?${query(filters)}`) as Promise<{ success: boolean; data: MapProtocol[]; meta: { shown: number; limit: number; withoutLocation: number } }>
   },
 
+  /**
+   * Confirmar o local do pedido (tocar no alfinete = ponto atual; com ponto =
+   * alfinete arrastado). Vira dado próprio, guardado sem prazo.
+   */
+  async confirmProtocolLocation(protocolId: string, point?: { latitude: number; longitude: number }) {
+    const response = await fetch(`/api/map/protocols/${protocolId}/location`, {
+      method: 'PUT',
+      credentials: 'include',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(point || {}),
+    })
+    const data = await response.json().catch(() => ({}))
+    if (!response.ok) throw new Error(data?.error || 'Não foi possível confirmar o local')
+    return data
+  },
+
   async getStats(filters?: MapFilters) {
     return get(`/map/stats?${query(filters)}`) as Promise<{
       success: boolean

@@ -373,6 +373,7 @@ loadRoute('/api/citizen/family', './routes/family-invites');
 loadRoute('/api/citizen/documents', './routes/citizen-documents');
 loadRoute('/api/citizen/personal-documents', './routes/citizen-personal-documents');
 loadRoute('/api/citizen/notifications', './routes/citizen-notifications');
+loadRoute('/api/citizen/location', './routes/citizen-location.routes');
 
 // Sistema unificado de abas
 loadRoute('/api/admin/secretarias', './routes/tab-modules');

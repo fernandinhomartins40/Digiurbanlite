@@ -7,7 +7,7 @@ interface GeocodingResult {
   latitude: number
   longitude: number
   formattedAddress?: string
-  provider: 'nominatim' | 'geoapify' | 'google' | 'manual'
+  provider: 'nominatim' | 'geoapify' | 'google' | 'manual' | 'confirmado'
   placeId?: string
   precision?: 'house' | 'street' | 'neighborhood' | 'city' | 'unknown'
   confidence?: number // 0-10 scale
@@ -454,13 +454,37 @@ function plainAddress(text: string): string {
 
 /** Mesma busca, mesma chave: minúsculas, sem acento, sem pontuação repetida */
 export function normalizeQuery(text: string): string {
-  return String(text || '')
+  return plainAddress(String(text || ''))
     .toLowerCase()
     .normalize('NFD')
     .replace(/[̀-ͯ]/g, '')
     .replace(/[^a-z0-9]+/g, ' ')
     .trim()
+    .replace(/ brasil$/, '')
     .slice(0, 400)
+}
+
+/**
+ * Ponto confirmado por uma pessoa (GPS do celular ou alfinete no mapa) para um
+ * endereço: dado próprio, guardado sem prazo e com prioridade sobre qualquer
+ * busca — a próxima consulta do mesmo endereço já sai daqui.
+ */
+export async function rememberConfirmedLocation(address: string, latitude: number, longitude: number) {
+  const text = String(address || '').trim()
+  if (!text || !GeocodingService.isValidBrazilCoordinates(latitude, longitude)) return
+  const queryKey = `geo:${normalizeQuery(text)}`
+  const data = {
+    query: plainAddress(text).slice(0, 500),
+    kind: 'GEOCODE',
+    provider: 'confirmado',
+    latitude,
+    longitude,
+    formattedAddress: plainAddress(text).slice(0, 500),
+    precision: 'house',
+    placeId: null,
+    expiresAt: null,
+  }
+  await runAsPlatform(async () => prisma.geoCache.upsert({ where: { queryKey }, create: { queryKey, ...data }, update: data })).catch(() => undefined)
 }
 
 /**

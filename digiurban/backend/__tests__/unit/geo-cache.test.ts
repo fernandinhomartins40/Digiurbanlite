@@ -22,7 +22,8 @@ jest.mock('../../src/services/maps/maps-settings.service', () => ({ getMapsSetti
 jest.mock('axios', () => ({ get: jest.fn() }));
 
 import axios from 'axios';
-import { GeocodingService, cacheExpiry, normalizeQuery } from '../../src/services/geocoding.service';
+import { GeocodingService, cacheExpiry, normalizeQuery, rememberConfirmedLocation } from '../../src/services/geocoding.service';
+import { homePointOf } from '../../src/services/citizen-home-location.service';
 
 const get = axios.get as jest.Mock;
 
@@ -67,5 +68,28 @@ describe('arquivo de endereços', () => {
     const row = store.get(`geo:${normalizeQuery('Rua Inexistente 1, Cidade, UF')}`);
     expect(row.provider).toBe('google');
     expect(row.expiresAt).toBeInstanceOf(Date);
+  });
+
+  it('endereço do cadastro (JSON) e em texto dão a mesma chave', () => {
+    const json = JSON.stringify({ logradouro: 'Rua São João', numero: '10', bairro: 'Centro', cidade: 'Pindamonhangaba', uf: 'SP', cep: '12400-000' });
+    expect(normalizeQuery(json)).toBe(normalizeQuery('Rua Sao Joao, 10, Centro, Pindamonhangaba, SP, 12400-000'));
+  });
+
+  it('ponto confirmado (GPS/alfinete) fica sem prazo e responde a próxima busca', async () => {
+    await rememberConfirmedLocation('Rua A, 5, Centro, Cidade, UF', -20.1, -45.2);
+    const row = store.get(`geo:${normalizeQuery('Rua A, 5, Centro, Cidade, UF')}`);
+    expect(row.provider).toBe('confirmado');
+    expect(row.expiresAt).toBeNull();
+    const calls = get.mock.calls.length;
+    const result = await GeocodingService.geocodeAddress('rua a 5 centro cidade uf');
+    expect(result?.latitude).toBeCloseTo(-20.1);
+    expect(get.mock.calls.length).toBe(calls);
+  });
+
+  it('casa marcada só vale para o mesmo endereço', () => {
+    const address = { logradouro: 'Rua A', numero: '5', cidade: 'Cidade', uf: 'UF' };
+    const base = { homeLatitude: -20, homeLongitude: -45, homeLocationSource: 'GPS', homeLocationKey: normalizeQuery('Rua A, 5, Cidade, UF') };
+    expect(homePointOf({ address, ...base })?.source).toBe('GPS');
+    expect(homePointOf({ address: { ...address, numero: '7' }, ...base })).toBeNull();
   });
 });
