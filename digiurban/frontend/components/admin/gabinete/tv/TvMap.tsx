@@ -1,9 +1,10 @@
 'use client'
 
 /**
- * Mapa do modo TV: fundo escuro, um ponto por pedido em aberto (vermelho =
- * atrasado, azul = novo, âmbar = em andamento). Pedidos que acabaram de
- * chegar ficam maiores e com contorno branco. Enquadra o município sozinho.
+ * Mapa do modo TV (mesmo mapa padrão da aplicação, OpenStreetMap): um ponto
+ * por pedido em aberto (vermelho = atrasado, azul = novo, âmbar = em
+ * andamento). Pedidos que acabaram de chegar ou mudar ficam maiores e com
+ * contorno escuro. Enquadra o município sozinho.
  */
 
 import { useEffect, useRef } from 'react'
@@ -24,7 +25,7 @@ export interface TvPoint {
 
 function colorOf(point: TvPoint) {
   if (point.overdue) return '#ef4444'
-  if (point.status === 'VINCULADO') return '#38bdf8'
+  if (point.status === 'VINCULADO') return '#3b82f6'
   if (point.status === 'PENDENCIA' || point.status === 'ATUALIZACAO') return '#a78bfa'
   return '#f59e0b'
 }
@@ -51,10 +52,10 @@ function FitOnce({ points }: { points: TvPoint[] }) {
 export default function TvMap({ points, highlight }: { points: TvPoint[]; highlight: Set<string> }) {
   const center: [number, number] = points.length ? [points[0].latitude, points[0].longitude] : [-15.78, -47.93]
   return (
-    <MapContainer center={center} zoom={points.length ? 13 : 4} className="h-full w-full rounded-2xl" zoomControl={false} attributionControl>
+    <MapContainer center={center} zoom={points.length ? 13 : 4} className="h-full w-full" zoomControl={false} attributionControl>
       <TileLayer
-        attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> &copy; <a href="https://carto.com/attributions">CARTO</a>'
-        url="https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png"
+        attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
+        url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
       />
       <FitOnce points={points} />
       {points.map((point) => {
@@ -64,7 +65,7 @@ export default function TvMap({ points, highlight }: { points: TvPoint[]; highli
             key={point.id}
             center={[point.latitude, point.longitude]}
             radius={isNew ? 13 : point.overdue ? 8 : 6}
-            pathOptions={{ color: isNew ? '#ffffff' : colorOf(point), weight: isNew ? 3 : 1, fillColor: colorOf(point), fillOpacity: 0.85 }}
+            pathOptions={{ color: isNew ? '#1d1d1f' : colorOf(point), weight: isNew ? 3 : 1, fillColor: colorOf(point), fillOpacity: 0.85 }}
           >
             <Tooltip direction="top">
               <strong>#{point.number}</strong> {point.title}
