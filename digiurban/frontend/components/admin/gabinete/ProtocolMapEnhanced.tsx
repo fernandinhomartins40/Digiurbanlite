@@ -649,6 +649,7 @@ export function ProtocolMapEnhanced({
       <div className={`rounded-lg overflow-hidden border border-gray-200 ${height === 'mobile-responsive' ? 'h-[400px] md:h-[600px]' : ''}`} style={height !== 'mobile-responsive' ? { height } : {}}>
         {mapsConfig.provider === 'google' && mapsConfig.browserKey ? (
           <GoogleMarkersMap
+            poolKey="pedidos"
             apiKey={mapsConfig.browserKey}
             mapId={mapsConfig.mapId}
             cluster={showClustering}

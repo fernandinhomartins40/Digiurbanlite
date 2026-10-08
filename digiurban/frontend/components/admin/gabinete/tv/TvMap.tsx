@@ -79,7 +79,7 @@ export default function TvMap(props: TvMapProps) {
         title: `#${point.number} ${point.service?.name || point.title}${point.department?.name ? ` · ${point.department.name}` : ''}`,
       }
     })
-    return <GoogleMarkersMap apiKey={config.browserKey} mapId={config.mapId} points={points} center={props.center} fit="once" showControls={false} />
+    return <GoogleMarkersMap poolKey="tv" apiKey={config.browserKey} mapId={config.mapId} points={points} center={props.center} fit="once" showControls={false} />
   }
   return <OsmTvMap {...props} />
 }

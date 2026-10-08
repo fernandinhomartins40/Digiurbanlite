@@ -74,6 +74,7 @@ export function OSMap({ pontos }: OSMapProps) {
     return (
       <div className="h-[600px] overflow-hidden rounded-lg">
         <GoogleMarkersMap
+          poolKey="os"
           apiKey={config.browserKey}
           mapId={config.mapId}
           points={pontos.map((p) => ({

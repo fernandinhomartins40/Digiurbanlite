@@ -1,6 +1,7 @@
 import { Router, Request, Response, NextFunction } from 'express';
 import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
+import { renewAdminSession } from '../services/admin-session.service';
 import { DEFAULT_TENANT_ID } from '../lib/tenant-context';
 import { z } from 'zod';
 import { prisma } from '../lib/prisma';
@@ -262,6 +263,9 @@ router.get('/me', handleAsyncRoute(async (req, res) => {
         });
       return;
     }
+
+    // em uso = a sessão se renova (ver admin-session.service)
+    renewAdminSession(req, res, decoded as any);
 
 
     // Operação Prisma com campos explicitamente definidos

@@ -58,6 +58,7 @@ export function MapWidget({ code, schema, sharedFilters }: WidgetProps) {
       <Card><CardContent className="p-0">
         <div style={{ height: 420 }} className="overflow-hidden rounded-lg">
           <GoogleMarkersMap
+            poolKey="widget"
             apiKey={config.browserKey}
             mapId={config.mapId}
             points={pins.map((p) => ({ id: p.id, lat: p.lat, lng: p.lng, color: '#2563eb', size: 8, title: p.label || 'Registro' }))}

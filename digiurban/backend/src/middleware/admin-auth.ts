@@ -10,6 +10,7 @@ import {
         } from '../types';
 import { logAuditEvent } from '../utils/audit-logger';
 import { DEFAULT_TENANT_ID, runAsPlatform } from '../lib/tenant-context';
+import { renewAdminSession } from '../services/admin-session.service';
 
 /**
  * Middleware de autenticação básica para administradores
@@ -108,6 +109,9 @@ export const adminAuthMiddleware = async (
     (req as AuthenticatedRequest).userId = user.id;
     (req as AuthenticatedRequest).user = user;
     (req as AuthenticatedRequest).userRole = user.role;
+
+    // em uso = a sessão se renova (não cai no meio do trabalho nem na TV)
+    renewAdminSession(req, res, decoded as any);
 
     next();
   } catch (error: unknown) {

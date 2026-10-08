@@ -9,7 +9,7 @@
  */
 
 import { useEffect, useRef } from 'react'
-import { APIProvider, Map as GoogleMap, useMap } from '@vis.gl/react-google-maps'
+import { PooledGoogleMap, usePooledMap as useMap } from './google-map-pool'
 import { MapContainer, Marker, TileLayer } from 'react-leaflet'
 import L from 'leaflet'
 import 'leaflet/dist/leaflet.css'
@@ -34,20 +34,23 @@ export default function PinConfirmMap({ point, confirmed = false, onConfirm, hei
   return (
     <div className="relative w-full overflow-hidden rounded-lg border" style={{ height }}>
       {config.provider === 'google' && config.browserKey ? (
-        <APIProvider apiKey={config.browserKey} language="pt-BR" region="BR">
-          <GoogleMap
-            defaultCenter={{ lat: point.latitude, lng: point.longitude }}
-            defaultZoom={18}
-            mapId={config.mapId || undefined}
-            gestureHandling="greedy"
-            clickableIcons={false}
-            streetViewControl={false}
-            mapTypeControl={false}
-            style={{ width: '100%', height: '100%' }}
-          >
-            <GooglePin point={point} confirmed={confirmed} onConfirm={onConfirm} />
-          </GoogleMap>
-        </APIProvider>
+        <PooledGoogleMap
+          apiKey={config.browserKey}
+          mapId={config.mapId}
+          poolKey="alfinete"
+          center={{ lat: point.latitude, lng: point.longitude }}
+          zoom={18}
+          options={{ gestureHandling: 'greedy', streetViewControl: false, mapTypeControl: false }}
+          onAttach={(map, reused) => {
+            // mapa reaproveitado: vai para o ponto desta tela
+            if (reused) {
+              map.setCenter({ lat: point.latitude, lng: point.longitude })
+              map.setZoom(18)
+            }
+          }}
+        >
+          <GooglePin point={point} confirmed={confirmed} onConfirm={onConfirm} />
+        </PooledGoogleMap>
       ) : (
         <OsmPin point={point} confirmed={confirmed} onConfirm={onConfirm} />
       )}

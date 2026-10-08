@@ -11,8 +11,9 @@
  */
 
 import { ReactNode, useEffect, useMemo, useRef, useState } from 'react'
-import { APIProvider, InfoWindow, Map, useMap } from '@vis.gl/react-google-maps'
+import { createPortal } from 'react-dom'
 import { MarkerClusterer } from '@googlemaps/markerclusterer'
+import { PooledGoogleMap, usePooledMap as useMap } from './google-map-pool'
 
 export interface GoogleMapPoint {
   id: string
@@ -41,37 +42,56 @@ interface Props {
   fit?: 'once' | 'always'
   renderInfo?: (id: string) => ReactNode
   showControls?: boolean
+  /** telas com a mesma chave reaproveitam o mesmo mapa (não conta nova abertura) */
+  poolKey?: string
 }
 
 const BRASIL = { lat: -15.78, lng: -47.93 }
 
-export default function GoogleMarkersMap({ apiKey, mapId, points, center, cluster = false, showCircles = false, fit = 'always', renderInfo, showControls = true }: Props) {
+export default function GoogleMarkersMap({ apiKey, mapId, points, center, cluster = false, showCircles = false, fit = 'always', renderInfo, showControls = true, poolKey = 'pontos' }: Props) {
   const [selected, setSelected] = useState<string | null>(null)
   const start = points.length ? { lat: points[0].lat, lng: points[0].lng } : center || BRASIL
   const selectedPoint = useMemo(() => points.find((point) => point.id === selected) || null, [points, selected])
 
   return (
-    <APIProvider apiKey={apiKey} language="pt-BR" region="BR">
-      <Map
-        defaultCenter={start}
-        defaultZoom={points.length || center ? 13 : 4}
-        mapId={mapId || undefined}
-        gestureHandling="greedy"
-        disableDefaultUI={!showControls}
-        clickableIcons={false}
-        style={{ width: '100%', height: '100%' }}
-      >
-        <Markers points={points} cluster={cluster} onSelect={renderInfo ? setSelected : undefined} />
-        {showCircles && <Circles points={points} />}
-        <Fit points={points} center={center} mode={fit} />
-        {selectedPoint && renderInfo && (
-          <InfoWindow position={{ lat: selectedPoint.lat, lng: selectedPoint.lng }} onCloseClick={() => setSelected(null)} pixelOffset={[0, -(selectedPoint.size || 7)]}>
-            {renderInfo(selectedPoint.id)}
-          </InfoWindow>
-        )}
-      </Map>
-    </APIProvider>
+    <PooledGoogleMap
+      apiKey={apiKey}
+      mapId={mapId}
+      poolKey={poolKey}
+      center={start}
+      zoom={points.length || center ? 13 : 4}
+      options={{ gestureHandling: 'greedy', disableDefaultUI: !showControls }}
+    >
+      <Markers points={points} cluster={cluster} onSelect={renderInfo ? setSelected : undefined} />
+      {showCircles && <Circles points={points} />}
+      <Fit points={points} center={center} mode={fit} />
+      {selectedPoint && renderInfo && (
+        <Info point={selectedPoint} onClose={() => setSelected(null)}>
+          {renderInfo(selectedPoint.id)}
+        </Info>
+      )}
+    </PooledGoogleMap>
   )
+}
+
+/** Janela de detalhes do Google com conteúdo React */
+function Info({ point, onClose, children }: { point: GoogleMapPoint; onClose: () => void; children: ReactNode }) {
+  const map = useMap()
+  const [content] = useState(() => document.createElement('div'))
+  const onCloseRef = useRef(onClose)
+  onCloseRef.current = onClose
+  useEffect(() => {
+    if (!map) return
+    const info = new google.maps.InfoWindow({
+      content,
+      position: { lat: point.lat, lng: point.lng },
+      pixelOffset: new google.maps.Size(0, -(point.size || 7)),
+    })
+    info.addListener('closeclick', () => onCloseRef.current())
+    info.open({ map })
+    return () => info.close()
+  }, [map, point.id, point.lat, point.lng, point.size, content])
+  return createPortal(children, content)
 }
 
 function Markers({ points, cluster, onSelect }: { points: GoogleMapPoint[]; cluster: boolean; onSelect?: (id: string) => void }) {

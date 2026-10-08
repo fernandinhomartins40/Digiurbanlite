@@ -338,6 +338,21 @@ export function AdminAuthProvider({ children }: AdminAuthProviderProps) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
+  // Tela aberta = sessão viva: a cada 10 min avisa o servidor, que renova o
+  // cookie (limite de 24 h desde o login). Só confere de novo se cair.
+  const loggedIn = Boolean(user)
+  useEffect(() => {
+    if (!loggedIn) return
+    const timer = window.setInterval(() => {
+      fetch(getFullApiUrl('/admin/auth/me'), { credentials: 'include', cache: 'no-store' })
+        .then((response) => {
+          if (response.status === 401) refreshUserData()
+        })
+        .catch(() => undefined)
+    }, 10 * 60 * 1000)
+    return () => window.clearInterval(timer)
+  }, [loggedIn, refreshUserData])
+
   const value: AdminAuthContextType = {
     user,
     stats,

@@ -67,6 +67,10 @@ function PainelPrefeito() {
   const pathname = usePathname()
   const searchParams = useSearchParams()
   const tab: Tab = (TABS as readonly string[]).includes(searchParams.get('aba') || '') ? (searchParams.get('aba') as Tab) : 'hoje'
+  const [territorioVisited, setTerritorioVisited] = useState(tab === 'territorio')
+  useEffect(() => {
+    if (tab === 'territorio') setTerritorioVisited(true)
+  }, [tab])
   const [data, setData] = useState<any>(null)
   const [loading, setLoading] = useState(true)
   const [updatedAt, setUpdatedAt] = useState<Date | null>(null)
@@ -329,9 +333,10 @@ function PainelPrefeito() {
         </TabsContent>
 
         {/* ------------------------------------------------ TERRITÓRIO */}
-        <TabsContent value="territorio" className="mt-4">
-          {tab === 'territorio' && <ProtocolsMapView defaultSituacao="abertos" />}
-        </TabsContent>
+        {/* depois de aberto, o mapa fica vivo (escondido) ao trocar de aba: voltar não conta nova abertura do Google */}
+        <div role="tabpanel" className={tab === 'territorio' ? 'mt-4' : 'hidden'}>
+          {territorioVisited && <ProtocolsMapView defaultSituacao="abertos" />}
+        </div>
 
         {/* ------------------------------------------------ DEMANDAS DO GABINETE */}
         <TabsContent value="demandas" className="mt-4">
