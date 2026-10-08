@@ -1,0 +1,1 @@
+ALTER TABLE "geo_cache" ADD COLUMN IF NOT EXISTS "googleTriedAt" TIMESTAMP(3);

@@ -11927,6 +11927,8 @@ model GeoCache {
   precision        String?
   placeId          String?
   hits             Int       @default(0)
+  /** já perguntado ao Google para melhorar um ponto aproximado dos grátis */
+  googleTriedAt    DateTime?
   expiresAt        DateTime?
   createdAt        DateTime  @default(now())
   updatedAt        DateTime  @updatedAt

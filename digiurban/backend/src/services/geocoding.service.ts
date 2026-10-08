@@ -9,6 +9,8 @@ interface GeocodingResult {
   formattedAddress?: string
   provider: 'nominatim' | 'geoapify' | 'google' | 'manual' | 'confirmado'
   placeId?: string
+  /** (arquivo) o Google já foi consultado para melhorar este ponto */
+  googleTried?: boolean
   precision?: 'house' | 'street' | 'neighborhood' | 'city' | 'unknown'
   confidence?: number // 0-10 scale
 }
@@ -292,11 +294,27 @@ export class GeocodingService {
     const key = `geo:${normalizeQuery(query)}`
 
     const cached = await readCache(key)
-    if (cached !== undefined) return cached
+    if (cached !== undefined) {
+      // ponto aproximado dos grátis (rua/bairro/cidade) guardado antes: tenta o
+      // Google uma vez para achar o número da casa
+      if (cached && isFreeProvider(cached.provider) && precisionRank(cached.precision) < HOUSE && !cached.googleTried && (await googleConfigured())) {
+        const google = await this.geocodeWithGoogle(query)
+        const best = pickBest(cached, google)
+        await writeCache(key, query, 'GEOCODE', best, { googleTried: true })
+        return best
+      }
+      return cached
+    }
 
     let result = await this.geocodeWithFreeProviders(query)
-    if (!result) result = await this.geocodeWithGoogle(query)
-    await writeCache(key, query, 'GEOCODE', result)
+    let googleTried = false
+    // grátis não achou, ou achou só a rua/bairro/cidade: pergunta ao Google
+    if (!result || precisionRank(result.precision) < HOUSE) {
+      const google = await this.geocodeWithGoogle(query)
+      googleTried = google !== null || (await googleConfigured())
+      result = pickBest(result, google)
+    }
+    await writeCache(key, query, 'GEOCODE', result, { googleTried })
     return result
   }
 
@@ -318,7 +336,8 @@ export class GeocodingService {
         formattedAddress: first.formatted_address,
         provider: 'google',
         placeId: first.place_id,
-        precision: locationType === 'ROOFTOP' ? 'house' : locationType === 'APPROXIMATE' ? 'city' : 'street',
+        // ROOFTOP = a casa; RANGE_INTERPOLATED = número estimado na quadra
+        precision: locationType === 'ROOFTOP' || locationType === 'RANGE_INTERPOLATED' ? 'house' : locationType === 'APPROXIMATE' ? 'city' : 'street',
       }
     } catch (error) {
       console.warn('Google Geocoding indisponível:', error instanceof Error ? error.message : error)
@@ -511,13 +530,38 @@ async function readCache(queryKey: string): Promise<GeocodingResult | null | und
       provider: row.provider as GeocodingResult['provider'],
       precision: (row.precision as GeocodingResult['precision']) || undefined,
       placeId: row.placeId || undefined,
+      googleTried: Boolean(row.googleTriedAt),
     }
   } catch {
     return undefined
   }
 }
 
-async function writeCache(queryKey: string, query: string, kind: 'GEOCODE' | 'REVERSE', result: GeocodingResult | null) {
+const HOUSE = 4
+const PRECISION_RANK: Record<string, number> = { house: 4, street: 3, neighborhood: 2, city: 1, unknown: 0 }
+
+/** house > street > neighborhood > city > desconhecida */
+export function precisionRank(precision?: string | null): number {
+  return PRECISION_RANK[precision || 'unknown'] ?? 0
+}
+
+function isFreeProvider(provider?: string | null) {
+  return provider === 'nominatim' || provider === 'geoapify'
+}
+
+/** Melhor ponto entre o grátis e o Google (empate: Google, que costuma acertar o número) */
+export function pickBest(free: GeocodingResult | null, google: GeocodingResult | null): GeocodingResult | null {
+  if (!google) return free
+  if (!free) return google
+  return precisionRank(google.precision) >= precisionRank(free.precision) ? google : free
+}
+
+async function googleConfigured() {
+  const settings = await getMapsSettings().catch(() => null)
+  return Boolean(settings?.enabled && settings?.serverKey)
+}
+
+async function writeCache(queryKey: string, query: string, kind: 'GEOCODE' | 'REVERSE', result: GeocodingResult | null, options: { googleTried?: boolean } = {}) {
   const googleDays = result?.provider === 'google' ? (await getMapsSettings().catch(() => null))?.googleRetentionDays ?? 30 : 30
   const data = {
     query: query.slice(0, 500),
@@ -529,6 +573,7 @@ async function writeCache(queryKey: string, query: string, kind: 'GEOCODE' | 'RE
     precision: result?.precision || null,
     placeId: result?.placeId || null,
     expiresAt: cacheExpiry(result?.provider || null, new Date(), googleDays),
+    ...(options.googleTried ? { googleTriedAt: new Date() } : {}),
   }
   await runAsPlatform(async () =>
     prisma.geoCache.upsert({ where: { queryKey }, create: { queryKey, ...data }, update: data })

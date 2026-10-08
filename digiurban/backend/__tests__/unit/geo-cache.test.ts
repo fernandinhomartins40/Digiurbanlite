@@ -22,7 +22,7 @@ jest.mock('../../src/services/maps/maps-settings.service', () => ({ getMapsSetti
 jest.mock('axios', () => ({ get: jest.fn() }));
 
 import axios from 'axios';
-import { GeocodingService, cacheExpiry, normalizeQuery, rememberConfirmedLocation } from '../../src/services/geocoding.service';
+import { GeocodingService, cacheExpiry, normalizeQuery, pickBest, rememberConfirmedLocation } from '../../src/services/geocoding.service';
 import { homePointOf } from '../../src/services/citizen-home-location.service';
 
 const get = axios.get as jest.Mock;
@@ -91,5 +91,25 @@ describe('arquivo de endereços', () => {
     const base = { homeLatitude: -20, homeLongitude: -45, homeLocationSource: 'GPS', homeLocationKey: normalizeQuery('Rua A, 5, Cidade, UF') };
     expect(homePointOf({ address, ...base })?.source).toBe('GPS');
     expect(homePointOf({ address: { ...address, numero: '7' }, ...base })).toBeNull();
+  });
+
+  it('grátis achou só a rua: pergunta ao Google e fica com o número da casa', async () => {
+    get.mockImplementation(async (url: string) => {
+      if (url.includes('googleapis')) {
+        return { data: { status: 'OK', results: [{ formatted_address: 'Rua B, 12', place_id: 'p2', geometry: { location: { lat: -11, lng: -51 }, location_type: 'ROOFTOP' } }] } };
+      }
+      return { data: [{ lat: '-11.1', lon: '-51.1', display_name: 'Rua B', importance: 0.5, place_rank: 26, addresstype: 'road', address: { road: 'Rua B' } }] };
+    });
+    const result = await GeocodingService.geocodeAddress('Rua B, 12, Cidade, UF');
+    expect(result?.provider).toBe('google');
+    expect(result?.precision).toBe('house');
+  });
+
+  it('pickBest: empate fica com o Google; grátis melhor fica com o grátis', () => {
+    const free = { latitude: 1, longitude: 1, provider: 'nominatim', precision: 'house' } as any;
+    const google = { latitude: 2, longitude: 2, provider: 'google', precision: 'street' } as any;
+    expect(pickBest(free, google)?.provider).toBe('nominatim');
+    expect(pickBest({ ...free, precision: 'street' }, google)?.provider).toBe('google');
+    expect(pickBest(null, google)?.provider).toBe('google');
   });
 });
