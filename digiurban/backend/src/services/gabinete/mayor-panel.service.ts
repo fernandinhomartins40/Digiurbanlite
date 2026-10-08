@@ -347,7 +347,7 @@ export async function mayorTvSnapshot() {
     }),
     (async () => {
       const tenantId = tryGetTenantId();
-      return tenantId ? prisma.tenant.findFirst({ where: { id: tenantId }, select: { nome: true } }).catch(() => null) : null;
+      return tenantId ? prisma.tenant.findFirst({ where: { id: tenantId }, select: { id: true, nome: true, nomeMunicipio: true, ufMunicipio: true } }).catch(() => null) : null;
     })(),
   ]);
 
@@ -382,6 +382,7 @@ export async function mayorTvSnapshot() {
 
   return {
     municipality: (tenant as any)?.nome || null,
+    center: await municipalityCenter(tenant as any),
     generatedAt: now,
     kpis: {
       abertos,
@@ -412,4 +413,20 @@ export async function mayorTvSnapshot() {
       recentes: tickets,
     },
   };
+}
+
+/** Centro do município no mapa (a TV abre nele mesmo sem pedidos). Guardado em memória. */
+const centerCache = new Map<string, { lat: number; lng: number } | null>();
+async function municipalityCenter(tenant: { id: string; nomeMunicipio: string; ufMunicipio: string } | null) {
+  if (!tenant?.nomeMunicipio) return null;
+  if (centerCache.has(tenant.id)) return centerCache.get(tenant.id) || null;
+  try {
+    const { GeocodingService } = await import('../geocoding.service');
+    const result = await GeocodingService.geocodeAddress(`${tenant.nomeMunicipio}, ${tenant.ufMunicipio}, Brasil`);
+    const center = result && GeocodingService.isValidBrazilCoordinates(result.latitude, result.longitude) ? { lat: result.latitude, lng: result.longitude } : null;
+    centerCache.set(tenant.id, center);
+    return center;
+  } catch {
+    return null;
+  }
 }

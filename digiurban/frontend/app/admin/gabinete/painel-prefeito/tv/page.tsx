@@ -4,8 +4,8 @@
  * Painel do Prefeito — modo TV (perfil Gabinete), no visual padrão da
  * aplicação (DigiUrban Glass, cartões padrão, faixa azul do Painel):
  *  - números do dia em cartões coloridos;
- *  - mapa dos pedidos em aberto;
- *  - gráficos: pedidos por situação, % no prazo, últimos 7 dias (chegaram ×
+ *  - mapa grande dos pedidos em aberto (abre no município mesmo sem pedidos);
+ *  - faixa de gráficos embaixo: pedidos por situação, % no prazo, últimos 7 dias (chegaram ×
  *    concluídos), chegadas por hora hoje, atrasos por secretaria, demandas do
  *    gabinete;
  *  - lista de pedidos ao vivo rolando sozinha; o que chega entra no topo em destaque.
@@ -77,13 +77,13 @@ async function get(path: string) {
 function Kpi({ label, value, hint, icon: Icon, color, bg }: { label: string; value: string | number; hint?: string; icon: any; color: string; bg: string }) {
   return (
     <Card>
-      <CardContent className="flex items-center gap-3 p-3 xl:p-4">
-        <span className={cn('flex h-11 w-11 shrink-0 items-center justify-center rounded-full xl:h-14 xl:w-14', bg)}>
+      <CardContent className="flex items-center gap-3 p-3">
+        <span className={cn('flex h-10 w-10 shrink-0 items-center justify-center rounded-full xl:h-12 xl:w-12', bg)}>
           <Icon className={cn('h-6 w-6 xl:h-7 xl:w-7', color)} />
         </span>
         <div className="min-w-0">
           <p className="truncate text-xs font-medium text-gray-600 xl:text-sm">{label}</p>
-          <p className={cn('text-2xl font-bold tabular-nums leading-tight xl:text-4xl', color)}>{value}</p>
+          <p className={cn('text-2xl font-bold tabular-nums leading-tight xl:text-3xl', color)}>{value}</p>
           {hint && <p className="truncate text-xs text-gray-500">{hint}</p>}
         </div>
       </CardContent>
@@ -225,6 +225,7 @@ export default function PainelTvPage() {
     [data]
   )
   const noPrazoPct = kpis && kpis.abertos ? Math.round((kpis.noPrazo / kpis.abertos) * 100) : 100
+  const prazoColor = noPrazoPct >= 80 ? C.green : noPrazoPct >= 60 ? C.amber : C.red
   const demandas = useMemo(
     () =>
       Object.entries((data?.demandas?.porSituacao || {}) as Record<string, number>).map(([status, value]) => ({
@@ -288,145 +289,26 @@ export default function PainelTvPage() {
         <Kpi
           label="Satisfação"
           value={kpis?.satisfacao != null ? `${kpis.satisfacao.toFixed(1)}/5` : '–'}
-          hint={kpis ? `${kpis.avaliacoes} avaliações (90 dias)` : undefined}
+          hint={kpis ? `${kpis.avaliacoes} avaliações` : undefined}
           icon={Star}
           color="text-amber-600"
           bg="bg-amber-50"
         />
       </section>
 
-      {/* mapa + gráficos + lista ao vivo */}
-      <section className="relative grid min-h-0 flex-1 gap-3 xl:grid-cols-[1.55fr_1fr_0.85fr]">
-        {/* coluna 1: mapa e evolução */}
-        <div className="flex min-h-0 flex-col gap-3">
-          <Card className="relative min-h-[260px] flex-1 overflow-hidden p-0">
-            <TvMap points={points} highlight={fresh} />
-            <div className="pointer-events-none absolute bottom-3 left-3 z-[400] flex flex-wrap gap-3 rounded-lg border bg-white/90 px-3 py-2 text-xs text-gray-700 xl:text-sm">
-              <span className="flex items-center gap-1"><span className="h-3 w-3 rounded-full bg-red-500" />Atrasado</span>
-              <span className="flex items-center gap-1"><span className="h-3 w-3 rounded-full bg-blue-500" />Novo</span>
-              <span className="flex items-center gap-1"><span className="h-3 w-3 rounded-full bg-amber-500" />Em andamento</span>
-              <span className="flex items-center gap-1"><span className="h-3 w-3 rounded-full bg-purple-500" />Pendência</span>
-              <span className="text-gray-500">{points.length} no mapa</span>
-            </div>
-          </Card>
-          <div className="grid h-48 shrink-0 grid-cols-2 gap-3 xl:h-56">
-            <ChartCard title="Últimos 7 dias: chegaram × concluídos">
-              <ResponsiveContainer width="100%" height="100%">
-                <AreaChart data={data?.graficos?.semana || []} margin={{ top: 8, right: 8, left: -18, bottom: 0 }}>
-                  <defs>
-                    <linearGradient id="tvIn" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="0%" stopColor={C.blue} stopOpacity={0.45} />
-                      <stop offset="100%" stopColor={C.blue} stopOpacity={0.05} />
-                    </linearGradient>
-                    <linearGradient id="tvOut" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="0%" stopColor={C.green} stopOpacity={0.45} />
-                      <stop offset="100%" stopColor={C.green} stopOpacity={0.05} />
-                    </linearGradient>
-                  </defs>
-                  <XAxis dataKey="dia" tick={{ fontSize: 11 }} />
-                  <YAxis allowDecimals={false} tick={{ fontSize: 11 }} />
-                  <Tooltip />
-                  <Legend wrapperStyle={{ fontSize: 12 }} />
-                  <Area type="monotone" dataKey="chegaram" name="Chegaram" stroke={C.blue} fill="url(#tvIn)" strokeWidth={2} />
-                  <Area type="monotone" dataKey="concluidos" name="Concluídos" stroke={C.green} fill="url(#tvOut)" strokeWidth={2} />
-                </AreaChart>
-              </ResponsiveContainer>
-            </ChartCard>
-            <ChartCard title="Chegadas por hora — hoje">
-              <ResponsiveContainer width="100%" height="100%">
-                <BarChart data={(data?.graficos?.horas || []).slice(6, 22)} margin={{ top: 8, right: 8, left: -18, bottom: 0 }}>
-                  <XAxis dataKey="hora" tick={{ fontSize: 11 }} interval={1} />
-                  <YAxis allowDecimals={false} tick={{ fontSize: 11 }} />
-                  <Tooltip />
-                  <Bar dataKey="pedidos" name="Pedidos" radius={[4, 4, 0, 0]}>
-                    {(data?.graficos?.horas || []).slice(6, 22).map((item: any) => (
-                      <Cell key={item.hora} fill={Number(item.hora.slice(0, 2)) === now.getHours() ? C.indigo : C.cyan} />
-                    ))}
-                  </Bar>
-                </BarChart>
-              </ResponsiveContainer>
-            </ChartCard>
+      {/* mapa grande + pedidos ao vivo */}
+      <section className="relative grid min-h-0 flex-1 gap-3 lg:grid-cols-[1fr_340px] xl:grid-cols-[1fr_420px]">
+        <Card className="relative min-h-[320px] overflow-hidden p-0">
+          <TvMap points={points} highlight={fresh} center={data?.center} />
+          <div className="pointer-events-none absolute bottom-3 left-3 z-[400] flex flex-wrap items-center gap-3 rounded-lg border bg-white/90 px-3 py-2 text-xs text-gray-700 shadow-sm xl:text-sm">
+            <span className="flex items-center gap-1"><span className="h-3 w-3 rounded-full bg-red-500" />Atrasado</span>
+            <span className="flex items-center gap-1"><span className="h-3 w-3 rounded-full bg-blue-500" />Novo</span>
+            <span className="flex items-center gap-1"><span className="h-3 w-3 rounded-full bg-amber-500" />Em andamento</span>
+            <span className="flex items-center gap-1"><span className="h-3 w-3 rounded-full bg-purple-500" />Pendência</span>
+            <span className="font-medium text-gray-900">{points.length} no mapa</span>
           </div>
-        </div>
+        </Card>
 
-        {/* coluna 2: indicadores */}
-        <div className="grid min-h-0 grid-rows-[1fr_1.2fr_1fr] gap-3">
-          <div className="grid min-h-0 grid-cols-2 gap-3">
-            <ChartCard title="Em aberto por situação">
-              <ResponsiveContainer width="100%" height="100%">
-                <PieChart>
-                  <Pie data={situacao} dataKey="value" nameKey="name" innerRadius="55%" outerRadius="85%" paddingAngle={2}>
-                    {situacao.map((item: any) => (
-                      <Cell key={item.name} fill={item.color} />
-                    ))}
-                  </Pie>
-                  <Tooltip />
-                </PieChart>
-              </ResponsiveContainer>
-            </ChartCard>
-            <ChartCard title="No prazo">
-              <div className="relative h-full">
-                <ResponsiveContainer width="100%" height="100%">
-                  <RadialBarChart innerRadius="70%" outerRadius="100%" data={[{ value: noPrazoPct }]} startAngle={90} endAngle={-270}>
-                    <PolarAngleAxis type="number" domain={[0, 100]} tick={false} />
-                    <RadialBar dataKey="value" cornerRadius={10} background fill={noPrazoPct >= 80 ? C.green : noPrazoPct >= 60 ? C.amber : C.red} />
-                  </RadialBarChart>
-                </ResponsiveContainer>
-                <span className={cn('absolute inset-0 flex items-center justify-center text-2xl font-bold xl:text-3xl', noPrazoPct >= 80 ? 'text-green-600' : noPrazoPct >= 60 ? 'text-amber-600' : 'text-red-600')}>
-                  {noPrazoPct}%
-                </span>
-              </div>
-            </ChartCard>
-          </div>
-
-          <ChartCard title="Atrasos por secretaria">
-            {(data?.secretariasAtrasadas || []).length === 0 ? (
-              <p className="flex h-full items-center justify-center text-sm text-green-700">Nenhuma secretaria com atraso.</p>
-            ) : (
-              <ResponsiveContainer width="100%" height="100%">
-                <BarChart data={data.secretariasAtrasadas} layout="vertical" margin={{ top: 4, right: 16, left: 4, bottom: 0 }}>
-                  <XAxis type="number" allowDecimals={false} tick={{ fontSize: 11 }} />
-                  <YAxis type="category" dataKey="name" width={130} tick={{ fontSize: 11 }} />
-                  <Tooltip />
-                  <Bar dataKey="count" name="Atrasados" radius={[0, 4, 4, 0]}>
-                    {data.secretariasAtrasadas.map((item: any, index: number) => (
-                      <Cell key={item.name} fill={[C.red, C.pink, C.amber, C.purple, C.indigo, C.cyan, C.blue, C.green][index % 8]} />
-                    ))}
-                  </Bar>
-                </BarChart>
-              </ResponsiveContainer>
-            )}
-          </ChartCard>
-
-          <ChartCard title={`Demandas do Gabinete · ${demandasTotal}`}>
-            {demandasTotal === 0 ? (
-              <p className="flex h-full items-center justify-center text-sm text-gray-500">Nenhuma demanda.</p>
-            ) : (
-              <div className="grid h-full grid-cols-[1fr_1.1fr] items-center gap-2">
-                <ResponsiveContainer width="100%" height="100%">
-                  <PieChart>
-                    <Pie data={demandas} dataKey="value" nameKey="name" innerRadius="50%" outerRadius="85%" paddingAngle={2}>
-                      {demandas.map((item) => (
-                        <Cell key={item.name} fill={item.color} />
-                      ))}
-                    </Pie>
-                    <Tooltip />
-                  </PieChart>
-                </ResponsiveContainer>
-                <ul className="space-y-1 text-xs xl:text-sm">
-                  {demandas.map((item) => (
-                    <li key={item.name} className="flex items-center justify-between gap-2">
-                      <span className="flex items-center gap-1.5 truncate"><span className="h-2.5 w-2.5 shrink-0 rounded-full" style={{ background: item.color }} />{item.name}</span>
-                      <strong className="tabular-nums">{item.value}</strong>
-                    </li>
-                  ))}
-                </ul>
-              </div>
-            )}
-          </ChartCard>
-        </div>
-
-        {/* coluna 3: pedidos ao vivo, rolando */}
         <Card className="flex min-h-0 flex-col">
           <CardHeader className="px-3 pb-2 pt-3">
             <CardTitle className="flex items-center gap-2 text-sm xl:text-base">
@@ -434,36 +316,176 @@ export default function PainelTvPage() {
             </CardTitle>
           </CardHeader>
           <CardContent className="min-h-0 flex-1 px-3 pb-3">
-            <AutoScrollList resetKey={feedKey}>
-              <ul className="space-y-2">
-                {(data?.feed || []).map((item: any) => {
-                  const status = STATUS[item.status] || STATUS.PROGRESSO
-                  const isFresh = fresh.has(item.id)
-                  return (
-                    <li
-                      key={`${item.id}:${item.status}`}
-                      className={cn(
-                        'rounded-md border-l-4 bg-white/70 px-3 py-2 shadow-sm transition-all',
-                        isFresh && 'animate-in fade-in slide-in-from-top-2 bg-blue-50 ring-1 ring-blue-300'
-                      )}
-                      style={{ borderLeftColor: item.overdue ? C.red : status.color }}
-                    >
-                      <div className="flex items-center justify-between gap-2 text-xs">
-                        <span className="font-mono text-gray-500">#{item.number} · {hhmm(item.updatedAt)}</span>
-                        <span className={cn('rounded-full px-2 py-0.5', item.overdue ? 'bg-red-100 text-red-700' : status.className)}>
-                          {isFresh ? (item.isNew ? 'Acabou de chegar' : 'Atualizado agora') : item.overdue ? 'Atrasado' : status.label}
-                        </span>
-                      </div>
-                      <p className="truncate text-sm font-medium text-gray-900 xl:text-base">{item.service?.name || item.title}</p>
-                      <p className="truncate text-xs text-gray-500">{item.department?.name}</p>
-                    </li>
-                  )
-                })}
-              </ul>
-            </AutoScrollList>
+            {(data?.feed || []).length === 0 ? (
+              <div className="flex h-full flex-col items-center justify-center gap-2 text-center text-sm text-gray-500">
+                <Inbox className="h-10 w-10 text-gray-300" />
+                Nenhum pedido ainda.
+                <span className="text-xs">Os novos aparecem aqui sozinhos.</span>
+              </div>
+            ) : (
+              <AutoScrollList resetKey={feedKey}>
+                <ul className="space-y-2">
+                  {(data?.feed || []).map((item: any) => {
+                    const status = STATUS[item.status] || STATUS.PROGRESSO
+                    const isFresh = fresh.has(item.id)
+                    return (
+                      <li
+                        key={`${item.id}:${item.status}`}
+                        className={cn(
+                          'rounded-md border-l-4 bg-white/80 px-3 py-2 shadow-sm transition-all',
+                          isFresh && 'animate-in fade-in slide-in-from-top-2 bg-blue-50 ring-1 ring-blue-300'
+                        )}
+                        style={{ borderLeftColor: item.overdue ? C.red : status.color }}
+                      >
+                        <div className="flex items-center justify-between gap-2 text-xs">
+                          <span className="font-mono text-gray-500">#{item.number} · {hhmm(item.updatedAt)}</span>
+                          <span className={cn('shrink-0 rounded-full px-2 py-0.5', item.overdue ? 'bg-red-100 text-red-700' : status.className)}>
+                            {isFresh ? (item.isNew ? 'Acabou de chegar' : 'Atualizado agora') : item.overdue ? 'Atrasado' : status.label}
+                          </span>
+                        </div>
+                        <p className="truncate text-sm font-medium text-gray-900 xl:text-base">{item.service?.name || item.title}</p>
+                        <p className="truncate text-xs text-gray-500">{item.department?.name}</p>
+                      </li>
+                    )
+                  })}
+                </ul>
+              </AutoScrollList>
+            )}
           </CardContent>
         </Card>
       </section>
+
+      {/* faixa de gráficos */}
+      <section className="relative grid h-44 shrink-0 grid-cols-3 gap-3 lg:grid-cols-6 xl:h-52">
+        <ChartCard title="Em aberto por situação">
+          {situacao.length === 0 ? (
+            <Empty text="Nenhum pedido em aberto" />
+          ) : (
+            <div className="grid h-full grid-cols-[1fr_auto] items-center gap-1">
+              <ResponsiveContainer width="100%" height="100%">
+                <PieChart>
+                  <Pie data={situacao} dataKey="value" nameKey="name" innerRadius="50%" outerRadius="90%" paddingAngle={2}>
+                    {situacao.map((item: any) => (
+                      <Cell key={item.name} fill={item.color} />
+                    ))}
+                  </Pie>
+                  <Tooltip />
+                </PieChart>
+              </ResponsiveContainer>
+              <Legendary items={situacao} />
+            </div>
+          )}
+        </ChartCard>
+
+        <ChartCard title="No prazo">
+          <div className="relative h-full">
+            <ResponsiveContainer width="100%" height="100%">
+              <RadialBarChart innerRadius="72%" outerRadius="100%" data={[{ value: noPrazoPct }]} startAngle={90} endAngle={-270}>
+                <PolarAngleAxis type="number" domain={[0, 100]} tick={false} />
+                <RadialBar dataKey="value" cornerRadius={10} background fill={prazoColor} />
+              </RadialBarChart>
+            </ResponsiveContainer>
+            <span className="absolute inset-0 flex items-center justify-center text-lg font-bold tabular-nums xl:text-2xl" style={{ color: prazoColor }}>
+              {noPrazoPct}%
+            </span>
+          </div>
+        </ChartCard>
+
+        <ChartCard title="7 dias: chegaram × concluídos">
+          <ResponsiveContainer width="100%" height="100%">
+            <AreaChart data={data?.graficos?.semana || []} margin={{ top: 6, right: 10, left: -22, bottom: 0 }}>
+              <defs>
+                <linearGradient id="tvIn" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="0%" stopColor={C.blue} stopOpacity={0.45} />
+                  <stop offset="100%" stopColor={C.blue} stopOpacity={0.05} />
+                </linearGradient>
+                <linearGradient id="tvOut" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="0%" stopColor={C.green} stopOpacity={0.45} />
+                  <stop offset="100%" stopColor={C.green} stopOpacity={0.05} />
+                </linearGradient>
+              </defs>
+              <XAxis dataKey="dia" tick={{ fontSize: 9 }} interval={0} tickFormatter={(value: string) => value.slice(0, 2)} />
+              <YAxis allowDecimals={false} tick={{ fontSize: 10 }} />
+              <Tooltip />
+              <Legend wrapperStyle={{ fontSize: 10 }} iconSize={8} />
+              <Area type="monotone" dataKey="chegaram" name="Chegaram" stroke={C.blue} fill="url(#tvIn)" strokeWidth={2} />
+              <Area type="monotone" dataKey="concluidos" name="Concluídos" stroke={C.green} fill="url(#tvOut)" strokeWidth={2} />
+            </AreaChart>
+          </ResponsiveContainer>
+        </ChartCard>
+
+        <ChartCard title="Chegadas por hora — hoje">
+          <ResponsiveContainer width="100%" height="100%">
+            <BarChart data={(data?.graficos?.horas || []).slice(6, 22)} margin={{ top: 6, right: 6, left: -24, bottom: 0 }}>
+              <XAxis dataKey="hora" tick={{ fontSize: 10 }} interval={2} />
+              <YAxis allowDecimals={false} tick={{ fontSize: 10 }} />
+              <Tooltip />
+              <Bar dataKey="pedidos" name="Pedidos" radius={[4, 4, 0, 0]}>
+                {(data?.graficos?.horas || []).slice(6, 22).map((item: any) => (
+                  <Cell key={item.hora} fill={Number(item.hora.slice(0, 2)) === now.getHours() ? C.indigo : C.cyan} />
+                ))}
+              </Bar>
+            </BarChart>
+          </ResponsiveContainer>
+        </ChartCard>
+
+        <ChartCard title="Atrasos por secretaria">
+          {(data?.secretariasAtrasadas || []).length === 0 ? (
+            <Empty text="Nenhuma secretaria com atraso" good />
+          ) : (
+            <ResponsiveContainer width="100%" height="100%">
+              <BarChart data={data.secretariasAtrasadas.slice(0, 5)} layout="vertical" margin={{ top: 2, right: 10, left: 2, bottom: 0 }}>
+                <XAxis type="number" allowDecimals={false} hide />
+                <YAxis type="category" dataKey="name" width={96} tick={{ fontSize: 10 }} />
+                <Tooltip />
+                <Bar dataKey="count" name="Atrasados" radius={[0, 4, 4, 0]}>
+                  {data.secretariasAtrasadas.slice(0, 5).map((item: any, index: number) => (
+                    <Cell key={item.name} fill={[C.red, C.pink, C.amber, C.purple, C.indigo][index % 5]} />
+                  ))}
+                </Bar>
+              </BarChart>
+            </ResponsiveContainer>
+          )}
+        </ChartCard>
+
+        <ChartCard title={`Demandas do Gabinete · ${demandasTotal}`}>
+          {demandasTotal === 0 ? (
+            <Empty text="Nenhuma demanda" />
+          ) : (
+            <div className="grid h-full grid-cols-[1fr_auto] items-center gap-1">
+              <ResponsiveContainer width="100%" height="100%">
+                <PieChart>
+                  <Pie data={demandas} dataKey="value" nameKey="name" innerRadius="50%" outerRadius="90%" paddingAngle={2}>
+                    {demandas.map((item) => (
+                      <Cell key={item.name} fill={item.color} />
+                    ))}
+                  </Pie>
+                  <Tooltip />
+                </PieChart>
+              </ResponsiveContainer>
+              <Legendary items={demandas} />
+            </div>
+          )}
+        </ChartCard>
+      </section>
     </div>
+  )
+}
+
+function Empty({ text, good = false }: { text: string; good?: boolean }) {
+  return <p className={cn('flex h-full items-center justify-center text-center text-xs xl:text-sm', good ? 'text-green-700' : 'text-gray-500')}>{text}</p>
+}
+
+/** Legenda compacta ao lado da rosca */
+function Legendary({ items }: { items: Array<{ name: string; value: number; color: string }> }) {
+  return (
+    <ul className="space-y-0.5 text-[11px] xl:text-xs">
+      {items.map((item) => (
+        <li key={item.name} className="flex items-center gap-1.5 whitespace-nowrap">
+          <span className="h-2 w-2 shrink-0 rounded-full" style={{ background: item.color }} />
+          {item.name} <strong className="tabular-nums">{item.value}</strong>
+        </li>
+      ))}
+    </ul>
   )
 }

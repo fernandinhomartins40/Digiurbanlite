@@ -30,11 +30,20 @@ function colorOf(point: TvPoint) {
   return '#f59e0b'
 }
 
-function FitOnce({ points }: { points: TvPoint[] }) {
+function FitOnce({ points, center }: { points: TvPoint[]; center?: { lat: number; lng: number } | null }) {
   const map = useMap()
   const done = useRef(false)
+  const centered = useRef(false)
   useEffect(() => {
-    if (done.current || points.length === 0) return
+    // sem pedidos no mapa: abre no município
+    if (points.length === 0) {
+      if (center && !centered.current) {
+        map.setView([center.lat, center.lng], 13)
+        centered.current = true
+      }
+      return
+    }
+    if (done.current) return
     const lats = points.map((point) => point.latitude)
     const lngs = points.map((point) => point.longitude)
     map.fitBounds(
@@ -45,19 +54,19 @@ function FitOnce({ points }: { points: TvPoint[] }) {
       { padding: [40, 40], maxZoom: 15 }
     )
     done.current = true
-  }, [map, points])
+  }, [map, points, center])
   return null
 }
 
-export default function TvMap({ points, highlight }: { points: TvPoint[]; highlight: Set<string> }) {
-  const center: [number, number] = points.length ? [points[0].latitude, points[0].longitude] : [-15.78, -47.93]
+export default function TvMap({ points, highlight, center }: { points: TvPoint[]; highlight: Set<string>; center?: { lat: number; lng: number } | null }) {
+  const start: [number, number] = points.length ? [points[0].latitude, points[0].longitude] : center ? [center.lat, center.lng] : [-15.78, -47.93]
   return (
-    <MapContainer center={center} zoom={points.length ? 13 : 4} className="h-full w-full" zoomControl={false} attributionControl>
+    <MapContainer center={start} zoom={points.length || center ? 13 : 4} className="h-full w-full" zoomControl={false} attributionControl>
       <TileLayer
         attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
         url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
       />
-      <FitOnce points={points} />
+      <FitOnce points={points} center={center} />
       {points.map((point) => {
         const isNew = highlight.has(point.id)
         return (
