@@ -25,6 +25,11 @@ const withPWA = require('@ducanh2912/next-pwa').default({
     navigateFallbackDenylist: [/^\/admin/, /^\/_next\/data/], // Não cachear rotas admin
     runtimeCaching: [
       {
+        // Google Maps: a regra do Google proíbe guardar o mapa — sempre da rede
+        urlPattern: /^https:\/\/(maps\.googleapis\.com|maps\.gstatic\.com|[a-z0-9-]+\.ggpht\.com|khms?\d*\.google(apis)?\.com)\/.*/,
+        handler: 'NetworkOnly',
+      },
+      {
         // ✅ CORRIGIDO: NÃO cachear rotas administrativas autenticadas
         urlPattern: /^https?:\/\/.*\/api\/(?!admin|auth|protocols|chamados).*/,
         handler: 'NetworkFirst',

@@ -1,10 +1,14 @@
 import axios from 'axios'
+import { prisma } from '../lib/prisma'
+import { runAsPlatform } from '../lib/tenant-context'
+import { getMapsSettings } from './maps/maps-settings.service'
 
 interface GeocodingResult {
   latitude: number
   longitude: number
   formattedAddress?: string
-  provider: 'nominatim' | 'geoapify' | 'manual'
+  provider: 'nominatim' | 'geoapify' | 'google' | 'manual'
+  placeId?: string
   precision?: 'house' | 'street' | 'neighborhood' | 'city' | 'unknown'
   confidence?: number // 0-10 scale
 }
@@ -38,9 +42,13 @@ interface GeoapifyResponse {
  * Serviço de Geocodificação
  * Converte endereços em coordenadas geográficas (latitude/longitude)
  *
- * Estratégia de fallback:
- * 1. Nominatim (OpenStreetMap) - Grátis ilimitado
- * 2. Geoapify - 3.000 requisições/dia grátis
+ * Ordem (economiza o serviço pago):
+ * 0. Arquivo de endereços já procurados (GeoCache) — não consulta ninguém
+ * 1. Nominatim (OpenStreetMap) - grátis; guardado sem prazo
+ * 2. Geoapify - grátis até 3.000/dia (se houver chave)
+ * 3. Google Geocoding - só se configurado no painel (chave do servidor) e os
+ *    grátis não acharem; guardado no máximo 30 dias (regra do Google)
+ * "Não achou" fica guardado 7 dias.
  */
 export class GeocodingService {
   private static readonly NOMINATIM_URL = 'https://nominatim.openstreetmap.org/search'
@@ -279,7 +287,46 @@ export class GeocodingService {
     if (!address || address.trim().length === 0) {
       return null
     }
+    const query = address.trim().slice(0, 500)
+    const key = `geo:${normalizeQuery(query)}`
 
+    const cached = await readCache(key)
+    if (cached !== undefined) return cached
+
+    let result = await this.geocodeWithFreeProviders(query)
+    if (!result) result = await this.geocodeWithGoogle(query)
+    await writeCache(key, query, 'GEOCODE', result)
+    return result
+  }
+
+  /** Google Geocoding (chave do servidor, do painel). Só quando os grátis não acham. */
+  private static async geocodeWithGoogle(address: string): Promise<GeocodingResult | null> {
+    try {
+      const settings = await getMapsSettings()
+      if (!settings.enabled || !settings.serverKey) return null
+      const response = await axios.get<any>('https://maps.googleapis.com/maps/api/geocode/json', {
+        params: { address: plainAddress(address), key: settings.serverKey, region: 'br', language: 'pt-BR' },
+        timeout: 10000,
+      })
+      const first = response.data?.results?.[0]
+      if (response.data?.status !== 'OK' || !first) return null
+      const locationType = first.geometry?.location_type
+      return {
+        latitude: first.geometry.location.lat,
+        longitude: first.geometry.location.lng,
+        formattedAddress: first.formatted_address,
+        provider: 'google',
+        placeId: first.place_id,
+        precision: locationType === 'ROOFTOP' ? 'house' : locationType === 'APPROXIMATE' ? 'city' : 'street',
+      }
+    } catch (error) {
+      console.warn('Google Geocoding indisponível:', error instanceof Error ? error.message : error)
+      return null
+    }
+  }
+
+  /** Nominatim e Geoapify (grátis) */
+  private static async geocodeWithFreeProviders(address: string): Promise<GeocodingResult | null> {
     // Limpar e normalizar endereço
     const cleanAddress = address.trim()
 
@@ -338,6 +385,16 @@ export class GeocodingService {
    * Geocodificação reversa: coordenadas -> endereço
    */
   static async reverseGeocode(latitude: number, longitude: number): Promise<string | null> {
+    // o mesmo ponto (≈ 1 m) não consulta de novo
+    const key = `rev:${latitude.toFixed(5)},${longitude.toFixed(5)}`
+    const cached = await readCache(key)
+    if (cached !== undefined) return cached?.formattedAddress || null
+    const address = await this.reverseGeocodeUncached(latitude, longitude)
+    await writeCache(key, `${latitude},${longitude}`, 'REVERSE', address ? { latitude, longitude, formattedAddress: address, provider: 'nominatim' } : null)
+    return address
+  }
+
+  private static async reverseGeocodeUncached(latitude: number, longitude: number): Promise<string | null> {
     try {
       // Rate limiting
       const now = Date.now()
@@ -373,4 +430,94 @@ export class GeocodingService {
       return null
     }
   }
+}
+
+// ---------------------------------------------------------------------------
+// Arquivo de endereços já procurados (GeoCache)
+// ---------------------------------------------------------------------------
+
+const DAY = 24 * 60 * 60 * 1000
+
+/** Endereço guardado como JSON ({logradouro, numero, ...}) vira texto */
+function plainAddress(text: string): string {
+  if (!text.trim().startsWith('{')) return text
+  try {
+    const value = JSON.parse(text)
+    return [value.logradouro || value.street, value.numero || value.number, value.bairro || value.neighborhood, value.cidade || value.city, value.uf || value.state, value.cep || value.zipcode, 'Brasil']
+      .filter(Boolean)
+      .join(', ')
+  } catch {
+    return text
+  }
+}
+
+/** Mesma busca, mesma chave: minúsculas, sem acento, sem pontuação repetida */
+export function normalizeQuery(text: string): string {
+  return String(text || '')
+    .toLowerCase()
+    .normalize('NFD')
+    .replace(/[̀-ͯ]/g, '')
+    .replace(/[^a-z0-9]+/g, ' ')
+    .trim()
+    .slice(0, 400)
+}
+
+/** Validade: grátis = sem prazo; Google = 30 dias (regra do Google); "não achou" = 7 dias */
+export function cacheExpiry(provider: string | null, now = new Date()): Date | null {
+  if (!provider) return new Date(now.getTime() + 7 * DAY)
+  if (provider === 'google') return new Date(now.getTime() + 30 * DAY)
+  return null
+}
+
+/** undefined = não está no arquivo (ou venceu); null = já procurado e não achou */
+async function readCache(queryKey: string): Promise<GeocodingResult | null | undefined> {
+  try {
+    const row = await runAsPlatform(async () => prisma.geoCache.findUnique({ where: { queryKey } }))
+    if (!row || (row.expiresAt && row.expiresAt < new Date())) return undefined
+    await runAsPlatform(async () => prisma.geoCache.update({ where: { id: row.id }, data: { hits: { increment: 1 } } })).catch(() => undefined)
+    if (row.latitude === null || row.longitude === null) return null
+    return {
+      latitude: row.latitude,
+      longitude: row.longitude,
+      formattedAddress: row.formattedAddress || undefined,
+      provider: row.provider as GeocodingResult['provider'],
+      precision: (row.precision as GeocodingResult['precision']) || undefined,
+      placeId: row.placeId || undefined,
+    }
+  } catch {
+    return undefined
+  }
+}
+
+async function writeCache(queryKey: string, query: string, kind: 'GEOCODE' | 'REVERSE', result: GeocodingResult | null) {
+  const data = {
+    query: query.slice(0, 500),
+    kind,
+    provider: result?.provider || 'none',
+    latitude: result?.latitude ?? null,
+    longitude: result?.longitude ?? null,
+    formattedAddress: result?.formattedAddress?.slice(0, 500) || null,
+    precision: result?.precision || null,
+    placeId: result?.placeId || null,
+    expiresAt: cacheExpiry(result?.provider || null),
+  }
+  await runAsPlatform(async () =>
+    prisma.geoCache.upsert({ where: { queryKey }, create: { queryKey, ...data }, update: data })
+  ).catch(() => undefined)
+}
+
+/** Números do arquivo (painel do Super-admin) */
+export async function geoCacheStats() {
+  return runAsPlatform(async () => {
+    const [byProvider, hits, total] = await Promise.all([
+      prisma.geoCache.groupBy({ by: ['provider'], _count: { _all: true } }),
+      prisma.geoCache.aggregate({ _sum: { hits: true } }),
+      prisma.geoCache.count(),
+    ])
+    return {
+      total,
+      reaproveitadas: hits._sum.hits || 0,
+      porFonte: Object.fromEntries(byProvider.map((item) => [item.provider, item._count._all])),
+    }
+  })
 }

@@ -1056,7 +1056,9 @@ model ProtocolSimplified {
   longitude         Float?
   address           String?
   locationType      String? // 'CITIZEN_ADDRESS', 'SPECIFIC_LOCATION', 'MANUAL_PIN', 'GPS'
-  geocodingProvider String? // 'nominatim', 'geoapify', 'manual'
+  geocodingProvider String? // 'nominatim', 'geoapify', 'google', 'manual', 'SEM_RESULTADO'
+  // quando as coordenadas foram procuradas (as do Google são renovadas em até 30 dias — regra do Google)
+  geocodedAt        DateTime?
   specificLocation  String? // Endereço específico informado (diferente do endereço do cidadão)
 
   // Gestão
@@ -11898,4 +11900,30 @@ model InternalProcessRoleUnit {
   @@unique([tenantId, role])
   @@index([tenantId])
   @@map("internal_process_role_units")
+}
+
+/// Arquivo de endereços já procurados (geocodificação), de toda a plataforma:
+/// a mesma busca (endereço, cidade, estado) não consulta o serviço de mapas de
+/// novo. OpenStreetMap/Geoapify: guardado sem prazo. Google: no máximo 30 dias
+/// (regra do Google), depois procura de novo. "Não achou" também fica guardado
+/// por 7 dias, para não repetir a consulta.
+model GeoCache {
+  id               String    @id @default(cuid())
+  queryKey         String    @unique // "geo:<endereço normalizado>" ou "rev:<lat>,<lng>"
+  query            String
+  kind             String // GEOCODE | REVERSE
+  provider         String // nominatim | geoapify | google | none
+  latitude         Float?
+  longitude        Float?
+  formattedAddress String?
+  precision        String?
+  placeId          String?
+  hits             Int       @default(0)
+  expiresAt        DateTime?
+  createdAt        DateTime  @default(now())
+  updatedAt        DateTime  @updatedAt
+
+  @@index([provider])
+  @@index([expiresAt])
+  @@map("geo_cache")
 }

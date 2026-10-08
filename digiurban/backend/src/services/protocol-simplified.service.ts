@@ -212,6 +212,7 @@ export class ProtocolServiceSimplified {
         specificLocation: geocodingData.specificLocation,
         locationType: geocodingData.locationType,
         geocodingProvider: geocodingData.geocodingProvider,
+        geocodedAt: geocodingData.geocodingProvider && geocodingData.geocodingProvider !== 'manual' ? new Date() : null,
 
         // Se serviço COM_DADOS, adicionar dados e moduleType
         ...(service.serviceType === 'COM_DADOS' && {

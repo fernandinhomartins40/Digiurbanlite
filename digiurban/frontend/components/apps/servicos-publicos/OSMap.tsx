@@ -4,6 +4,8 @@ import { useEffect, useState } from 'react';
 import { MapContainer, TileLayer, CircleMarker, Popup, useMap } from 'react-leaflet';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
+import GoogleMarkersMap from '@/components/maps/GoogleMarkersMap';
+import { useMapsConfig } from '@/hooks/useMapsConfig';
 
 interface OSPoint {
   id: string;
@@ -53,6 +55,7 @@ function MapBounds({ pontos }: { pontos: OSPoint[] }) {
 
 export function OSMap({ pontos }: OSMapProps) {
   const [isMounted, setIsMounted] = useState(false);
+  const { config } = useMapsConfig();
 
   // Evitar SSR do Leaflet
   useEffect(() => {
@@ -63,6 +66,42 @@ export function OSMap({ pontos }: OSMapProps) {
     return (
       <div className="bg-gray-100 h-[600px] rounded-lg flex items-center justify-center">
         <p className="text-gray-500">Carregando mapa...</p>
+      </div>
+    );
+  }
+
+  if (config.provider === 'google' && config.browserKey) {
+    return (
+      <div className="h-[600px] overflow-hidden rounded-lg">
+        <GoogleMarkersMap
+          apiKey={config.browserKey}
+          mapId={config.mapId}
+          points={pontos.map((p) => ({
+            id: p.id,
+            lat: p.latitude,
+            lng: p.longitude,
+            color: STATUS_COLOR[p.status] || '#6b7280',
+            size: PRIORIDADE_RAIO[p.prioridade] || 9,
+            strokeColor: STATUS_COLOR[p.status] || '#6b7280',
+            strokeWeight: 2,
+            title: `${p.numero} — ${p.tipo}`,
+          }))}
+          renderInfo={(id) => {
+            const p = pontos.find((item) => item.id === id);
+            if (!p) return null;
+            return (
+              <div className="text-sm text-gray-900">
+                <div className="font-semibold">
+                  {p.numero} — {p.tipo}
+                </div>
+                <div>Status: {p.status}</div>
+                <div>Prioridade: {p.prioridade}</div>
+                {p.bairro && <div>Bairro: {p.bairro}</div>}
+                <div className="text-gray-500">Aberta em {new Date(p.createdAt).toLocaleDateString('pt-BR')}</div>
+              </div>
+            );
+          }}
+        />
       </div>
     );
   }

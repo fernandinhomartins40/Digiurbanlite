@@ -9,6 +9,8 @@ import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Flame, MapPin, Filter, Eye, EyeOff, TrendingUp, Shield } from 'lucide-react'
+import GoogleMarkersMap from '@/components/maps/GoogleMarkersMap'
+import { useMapsConfig } from '@/hooks/useMapsConfig'
 
 // Fix para ícones do Leaflet no Next.js
 if (typeof window !== 'undefined') {
@@ -303,6 +305,7 @@ export function ProtocolMapEnhanced({
     ? 'h-[400px] md:h-[600px]'
     : `h-[${height}]`
   const [isMounted, setIsMounted] = useState(false)
+  const { config: mapsConfig } = useMapsConfig()
   const [showClustering, setShowClustering] = useState(initialClustering)
   const [showServiceCircles, setShowServiceCircles] = useState(true) // Novo: círculos de serviço
   const [selectedStatus, setSelectedStatus] = useState<string | null>(null)
@@ -634,231 +637,259 @@ export function ProtocolMapEnhanced({
 
       {/* Mapa */}
       <div className={`rounded-lg overflow-hidden border border-gray-200 ${height === 'mobile-responsive' ? 'h-[400px] md:h-[600px]' : ''}`} style={height !== 'mobile-responsive' ? { height } : {}}>
-        <MapContainer
-          center={center}
-          zoom={13}
-          style={{ height: '100%', width: '100%' }}
-          scrollWheelZoom={true}
-        >
-          <TileLayer
-            attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
-            url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+        {mapsConfig.provider === 'google' && mapsConfig.browserKey ? (
+          <GoogleMarkersMap
+            apiKey={mapsConfig.browserKey}
+            mapId={mapsConfig.mapId}
+            cluster={showClustering}
+            showCircles={showServiceCircles}
+            points={protocolsWithJitter.map((protocol) => {
+              const config = getCategoryConfig(protocol.department?.name)
+              return {
+                id: protocol.id,
+                lat: protocol.latitude,
+                lng: protocol.longitude,
+                color: config.color,
+                size: config.isAlert ? 10 : 8,
+                strokeColor: isExactLocation(protocol) ? '#ffffff' : '#f59e0b',
+                strokeWeight: 2,
+                title: `#${protocol.number} ${protocol.title}`,
+                circleRadius: config.circleRadius,
+                circleOpacity: config.isAlert ? 0.3 : 0.15,
+              }
+            })}
+            renderInfo={(id) => {
+              const protocol = protocolsWithJitter.find((item) => item.id === id)
+              return protocol ? <ProtocolInfo protocol={protocol} /> : null
+            }}
           />
+        ) : (
+          <MapContainer
+            center={center}
+            zoom={13}
+            style={{ height: '100%', width: '100%' }}
+            scrollWheelZoom={true}
+          >
+            <TileLayer
+              attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
+              url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+            />
 
-          <MapBounds protocols={protocolsWithJitter} />
+            <MapBounds protocols={protocolsWithJitter} />
 
-          {/* Círculos de Abrangência de Serviço */}
-          {showServiceCircles && protocolsWithJitter.map((protocol) => {
-            // CORREÇÃO: Usar department.name para categorização por secretaria
-            const config = getCategoryConfig(protocol.department?.name)
-            return (
-              <Circle
-                key={`circle-${protocol.id}`}
-                center={[protocol.latitude, protocol.longitude]}
-                radius={config.circleRadius}
-                pathOptions={{
-                  fillColor: config.color,
-                  fillOpacity: config.isAlert ? 0.3 : 0.15,
-                  color: config.color,
-                  weight: config.isAlert ? 3 : 1,
-                  opacity: config.isAlert ? 0.8 : 0.5
+            {/* Círculos de Abrangência de Serviço */}
+            {showServiceCircles && protocolsWithJitter.map((protocol) => {
+              // CORREÇÃO: Usar department.name para categorização por secretaria
+              const config = getCategoryConfig(protocol.department?.name)
+              return (
+                <Circle
+                  key={`circle-${protocol.id}`}
+                  center={[protocol.latitude, protocol.longitude]}
+                  radius={config.circleRadius}
+                  pathOptions={{
+                    fillColor: config.color,
+                    fillOpacity: config.isAlert ? 0.3 : 0.15,
+                    color: config.color,
+                    weight: config.isAlert ? 3 : 1,
+                    opacity: config.isAlert ? 0.8 : 0.5
+                  }}
+                />
+              )
+            })}
+
+            {/* Marcadores */}
+            {showClustering ? (
+              <MarkerClusterGroup
+                chunkedLoading
+                iconCreateFunction={(cluster: any) => {
+                  const count = cluster.getChildCount()
+                  let color = 'bg-blue-500'
+
+                  if (count > 50) {
+                    color = 'bg-red-500'
+                  } else if (count > 20) {
+                    color = 'bg-orange-500'
+                  }
+
+                  return L.divIcon({
+                    html: `<div class="flex items-center justify-center w-10 h-10 rounded-full ${color} text-white font-bold shadow-lg">
+                      ${count}
+                    </div>`,
+                    className: 'custom-cluster-icon',
+                    iconSize: L.point(40, 40, true)
+                  })
                 }}
-              />
-            )
-          })}
+              >
+                {protocolsWithJitter.map((protocol) => {
+                  const config = getCategoryConfig(protocol.department?.name)
+                  const precision = getPrecisionLabel(protocol)
 
-          {/* Marcadores */}
-          {showClustering ? (
-            <MarkerClusterGroup
-              chunkedLoading
-              iconCreateFunction={(cluster: any) => {
-                const count = cluster.getChildCount()
-                let color = 'bg-blue-500'
+                  return (
+                    <Marker
+                      key={protocol.id}
+                      position={[protocol.latitude, protocol.longitude]}
+                      icon={createServiceIcon(protocol.department?.name, protocol)}
+                    >
+                      <Popup>
+                        <div className="p-2 min-w-[240px] sm:min-w-[280px] max-w-[90vw]">
+                          <div className="flex items-center gap-2 mb-2">
+                            <span className="text-2xl">{config.icon}</span>
+                            <div>
+                              <p className="font-bold text-blue-600">#{protocol.number}</p>
+                              {config.isAlert && (
+                                <Badge variant="destructive" className="text-xs">
+                                  🚨 ALERTA DE SEGURANÇA
+                                </Badge>
+                              )}
+                            </div>
+                          </div>
 
-                if (count > 50) {
-                  color = 'bg-red-500'
-                } else if (count > 20) {
-                  color = 'bg-orange-500'
-                }
+                          <p className="font-medium text-sm mt-1">{protocol.title}</p>
 
-                return L.divIcon({
-                  html: `<div class="flex items-center justify-center w-10 h-10 rounded-full ${color} text-white font-bold shadow-lg">
-                    ${count}
-                  </div>`,
-                  className: 'custom-cluster-icon',
-                  iconSize: L.point(40, 40, true)
-                })
-              }}
-            >
-              {protocolsWithJitter.map((protocol) => {
-                const config = getCategoryConfig(protocol.department?.name)
-                const precision = getPrecisionLabel(protocol)
-
-                return (
-                  <Marker
-                    key={protocol.id}
-                    position={[protocol.latitude, protocol.longitude]}
-                    icon={createServiceIcon(protocol.department?.name, protocol)}
-                  >
-                    <Popup>
-                      <div className="p-2 min-w-[240px] sm:min-w-[280px] max-w-[90vw]">
-                        <div className="flex items-center gap-2 mb-2">
-                          <span className="text-2xl">{config.icon}</span>
-                          <div>
-                            <p className="font-bold text-blue-600">#{protocol.number}</p>
-                            {config.isAlert && (
-                              <Badge variant="destructive" className="text-xs">
-                                🚨 ALERTA DE SEGURANÇA
+                          <div className="mt-2 space-y-1 text-xs">
+                            <p>
+                              <strong>Categoria:</strong>{' '}
+                              <Badge
+                                variant="secondary"
+                                style={{ backgroundColor: config.color + '20', color: config.color }}
+                              >
+                                {config.icon} {config.label}
                               </Badge>
+                            </p>
+
+                            {protocol.service && (
+                              <p>
+                                <strong>Serviço:</strong> {protocol.service.name}
+                              </p>
+                            )}
+
+                            {protocol.department && (
+                              <p>
+                                <strong>Secretaria:</strong> {protocol.department.name}
+                              </p>
+                            )}
+
+                            {protocol.citizen && (
+                              <p>
+                                <strong>Cidadão:</strong> {protocol.citizen.name}
+                              </p>
+                            )}
+
+                            <p>
+                              <strong>Localização:</strong>{' '}
+                              <span style={{ color: precision.color }} className="font-medium">
+                                {precision.icon} {precision.label}
+                              </span>
+                              <br />
+                              <span className="font-mono text-xs">
+                                {protocol.latitude.toFixed(6)}, {protocol.longitude.toFixed(6)}
+                              </span>
+                            </p>
+
+                            {protocol.address && (
+                              <p className="text-gray-600">
+                                <strong>Referência:</strong> {protocol.address}
+                              </p>
+                            )}
+
+                            <p className="text-gray-500">
+                              <strong>Criado em:</strong>{' '}
+                              {new Date(protocol.createdAt).toLocaleDateString('pt-BR')}
+                            </p>
+                          </div>
+
+                          <a
+                            href={`/admin/protocolos/${protocol.id}`}
+                            className="inline-block mt-2 text-blue-600 hover:underline text-xs font-medium"
+                          >
+                            Ver detalhes →
+                          </a>
+                        </div>
+                      </Popup>
+                    </Marker>
+                  )
+                })}
+              </MarkerClusterGroup>
+            ) : (
+              <>
+                {protocolsWithJitter.map((protocol) => {
+                  const config = getCategoryConfig(protocol.department?.name)
+                  const precision = getPrecisionLabel(protocol)
+
+                  return (
+                    <Marker
+                      key={protocol.id}
+                      position={[protocol.latitude, protocol.longitude]}
+                      icon={createServiceIcon(protocol.department?.name, protocol)}
+                    >
+                      <Popup>
+                        <div className="p-2 min-w-[240px] sm:min-w-[280px] max-w-[90vw]">
+                          <div className="flex items-center gap-2 mb-2">
+                            <span className="text-2xl">{config.icon}</span>
+                            <div>
+                              <p className="font-bold text-blue-600">#{protocol.number}</p>
+                              {config.isAlert && (
+                                <Badge variant="destructive" className="text-xs">
+                                  🚨 ALERTA
+                                </Badge>
+                              )}
+                            </div>
+                          </div>
+
+                          <p className="font-medium text-sm">{protocol.title}</p>
+
+                          <div className="mt-2 space-y-1 text-xs">
+                            <p>
+                              <strong>Categoria:</strong>{' '}
+                              <Badge
+                                variant="secondary"
+                                style={{ backgroundColor: config.color + '20', color: config.color }}
+                              >
+                                {config.icon} {config.label}
+                              </Badge>
+                            </p>
+
+                            {protocol.service && (
+                              <p><strong>Serviço:</strong> {protocol.service.name}</p>
+                            )}
+
+                            {protocol.department && (
+                              <p><strong>Secretaria:</strong> {protocol.department.name}</p>
+                            )}
+
+                            <p>
+                              <strong>Localização:</strong>{' '}
+                              <span style={{ color: precision.color }} className="font-medium">
+                                {precision.icon} {precision.label}
+                              </span>
+                              <br />
+                              <span className="font-mono text-xs">
+                                {protocol.latitude.toFixed(6)}, {protocol.longitude.toFixed(6)}
+                              </span>
+                            </p>
+
+                            {protocol.address && (
+                              <p className="text-gray-600">
+                                <strong>Referência:</strong> {protocol.address}
+                              </p>
                             )}
                           </div>
+
+                          <a
+                            href={`/admin/protocolos/${protocol.id}`}
+                            className="inline-block mt-2 text-blue-600 hover:underline text-xs"
+                          >
+                            Ver detalhes →
+                          </a>
                         </div>
-
-                        <p className="font-medium text-sm mt-1">{protocol.title}</p>
-
-                        <div className="mt-2 space-y-1 text-xs">
-                          <p>
-                            <strong>Categoria:</strong>{' '}
-                            <Badge
-                              variant="secondary"
-                              style={{ backgroundColor: config.color + '20', color: config.color }}
-                            >
-                              {config.icon} {config.label}
-                            </Badge>
-                          </p>
-
-                          {protocol.service && (
-                            <p>
-                              <strong>Serviço:</strong> {protocol.service.name}
-                            </p>
-                          )}
-
-                          {protocol.department && (
-                            <p>
-                              <strong>Secretaria:</strong> {protocol.department.name}
-                            </p>
-                          )}
-
-                          {protocol.citizen && (
-                            <p>
-                              <strong>Cidadão:</strong> {protocol.citizen.name}
-                            </p>
-                          )}
-
-                          <p>
-                            <strong>Localização:</strong>{' '}
-                            <span style={{ color: precision.color }} className="font-medium">
-                              {precision.icon} {precision.label}
-                            </span>
-                            <br />
-                            <span className="font-mono text-xs">
-                              {protocol.latitude.toFixed(6)}, {protocol.longitude.toFixed(6)}
-                            </span>
-                          </p>
-
-                          {protocol.address && (
-                            <p className="text-gray-600">
-                              <strong>Referência:</strong> {protocol.address}
-                            </p>
-                          )}
-
-                          <p className="text-gray-500">
-                            <strong>Criado em:</strong>{' '}
-                            {new Date(protocol.createdAt).toLocaleDateString('pt-BR')}
-                          </p>
-                        </div>
-
-                        <a
-                          href={`/admin/protocolos/${protocol.id}`}
-                          className="inline-block mt-2 text-blue-600 hover:underline text-xs font-medium"
-                        >
-                          Ver detalhes →
-                        </a>
-                      </div>
-                    </Popup>
-                  </Marker>
-                )
-              })}
-            </MarkerClusterGroup>
-          ) : (
-            <>
-              {protocolsWithJitter.map((protocol) => {
-                const config = getCategoryConfig(protocol.department?.name)
-                const precision = getPrecisionLabel(protocol)
-
-                return (
-                  <Marker
-                    key={protocol.id}
-                    position={[protocol.latitude, protocol.longitude]}
-                    icon={createServiceIcon(protocol.department?.name, protocol)}
-                  >
-                    <Popup>
-                      <div className="p-2 min-w-[240px] sm:min-w-[280px] max-w-[90vw]">
-                        <div className="flex items-center gap-2 mb-2">
-                          <span className="text-2xl">{config.icon}</span>
-                          <div>
-                            <p className="font-bold text-blue-600">#{protocol.number}</p>
-                            {config.isAlert && (
-                              <Badge variant="destructive" className="text-xs">
-                                🚨 ALERTA
-                              </Badge>
-                            )}
-                          </div>
-                        </div>
-
-                        <p className="font-medium text-sm">{protocol.title}</p>
-
-                        <div className="mt-2 space-y-1 text-xs">
-                          <p>
-                            <strong>Categoria:</strong>{' '}
-                            <Badge
-                              variant="secondary"
-                              style={{ backgroundColor: config.color + '20', color: config.color }}
-                            >
-                              {config.icon} {config.label}
-                            </Badge>
-                          </p>
-
-                          {protocol.service && (
-                            <p><strong>Serviço:</strong> {protocol.service.name}</p>
-                          )}
-
-                          {protocol.department && (
-                            <p><strong>Secretaria:</strong> {protocol.department.name}</p>
-                          )}
-
-                          <p>
-                            <strong>Localização:</strong>{' '}
-                            <span style={{ color: precision.color }} className="font-medium">
-                              {precision.icon} {precision.label}
-                            </span>
-                            <br />
-                            <span className="font-mono text-xs">
-                              {protocol.latitude.toFixed(6)}, {protocol.longitude.toFixed(6)}
-                            </span>
-                          </p>
-
-                          {protocol.address && (
-                            <p className="text-gray-600">
-                              <strong>Referência:</strong> {protocol.address}
-                            </p>
-                          )}
-                        </div>
-
-                        <a
-                          href={`/admin/protocolos/${protocol.id}`}
-                          className="inline-block mt-2 text-blue-600 hover:underline text-xs"
-                        >
-                          Ver detalhes →
-                        </a>
-                      </div>
-                    </Popup>
-                  </Marker>
-                )
-              })}
-            </>
-          )}
-        </MapContainer>
+                      </Popup>
+                    </Marker>
+                  )
+                })}
+              </>
+            )}
+          </MapContainer>
+        )}
       </div>
 
       {/* Análise Estatística */}
@@ -982,6 +1013,34 @@ export function ProtocolMapEnhanced({
           }
         }
       `}</style>
+    </div>
+  )
+}
+
+/** Detalhes do pedido no mapa do Google (mesmas informações do mapa padrão) */
+function ProtocolInfo({ protocol }: { protocol: Protocol }) {
+  const config = getCategoryConfig(protocol.department?.name)
+  const precision = getPrecisionLabel(protocol)
+  return (
+    <div className="min-w-[220px] max-w-[280px] p-1 text-gray-900">
+      <p className="font-bold text-blue-600">
+        {config.icon} #{protocol.number}
+      </p>
+      <p className="mt-1 text-sm font-medium">{protocol.title}</p>
+      <div className="mt-2 space-y-1 text-xs">
+        {protocol.service && <p><strong>Serviço:</strong> {protocol.service.name}</p>}
+        {protocol.department && <p><strong>Secretaria:</strong> {protocol.department.name}</p>}
+        {protocol.citizen && <p><strong>Cidadão:</strong> {protocol.citizen.name}</p>}
+        <p>
+          <strong>Localização:</strong>{' '}
+          <span style={{ color: precision.color }} className="font-medium">{precision.icon} {precision.label}</span>
+        </p>
+        {protocol.address && <p className="text-gray-600"><strong>Referência:</strong> {protocol.address}</p>}
+        <p className="text-gray-500"><strong>Criado em:</strong> {new Date(protocol.createdAt).toLocaleDateString('pt-BR')}</p>
+      </div>
+      <a href={`/admin/protocolos/${protocol.id}`} className="mt-2 inline-block text-xs font-medium text-blue-600 hover:underline">
+        Ver detalhes →
+      </a>
     </div>
   )
 }

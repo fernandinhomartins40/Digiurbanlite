@@ -6,10 +6,16 @@
  *
  * Endereço que não foi achado fica marcado (geocodingProvider = 'SEM_RESULTADO')
  * para não ser procurado de novo toda vez.
+ *
+ * Toda busca passa pelo arquivo de endereços (GeoCache): o mesmo endereço não
+ * é consultado duas vezes. Coordenada vinda do Google vale 30 dias (regra do
+ * Google): depois disso o pedido volta para a fila e é procurado de novo
+ * (primeiro nos serviços grátis). A rotina diária limpa o que venceu no arquivo.
  */
 
 import cron from 'node-cron';
 import { prisma } from '../lib/prisma';
+import { runAsPlatform } from '../lib/tenant-context';
 import { forEachActiveTenant } from '../lib/tenant-iterator';
 import { GeocodingService } from '../services/geocoding.service';
 
@@ -47,7 +53,7 @@ export async function geocodePendingProtocols(): Promise<number> {
       if (result && GeocodingService.isValidBrazilCoordinates(result.latitude, result.longitude)) {
         await prisma.protocolSimplified.update({
           where: { id: protocol.id },
-          data: { latitude: result.latitude, longitude: result.longitude, locationType: 'GEOCODED_ADDRESS', geocodingProvider: result.provider },
+          data: { latitude: result.latitude, longitude: result.longitude, locationType: 'GEOCODED_ADDRESS', geocodingProvider: result.provider, geocodedAt: new Date() },
         });
         found++;
       } else {
@@ -60,10 +66,32 @@ export async function geocodePendingProtocols(): Promise<number> {
   return found;
 }
 
+/** Coordenadas do Google com mais de 30 dias saem do pedido (voltam para a fila) */
+export async function expireGoogleCoordinates(now = new Date()): Promise<number> {
+  const limit = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
+  const result = await prisma.protocolSimplified.updateMany({
+    where: { geocodingProvider: 'google', OR: [{ geocodedAt: null }, { geocodedAt: { lt: limit } }] },
+    data: { latitude: null, longitude: null, geocodingProvider: null, geocodedAt: null },
+  });
+  return result.count;
+}
+
+/** Apaga do arquivo de endereços o que venceu */
+export async function cleanupGeoCache(now = new Date()): Promise<number> {
+  const result = await runAsPlatform(async () => prisma.geoCache.deleteMany({ where: { expiresAt: { lt: now } } }));
+  return result.count;
+}
+
 export function initProtocolGeocodingJob(): void {
   cron.schedule('*/15 * * * *', () => {
     forEachActiveTenant('protocol-geocoding', async () => {
       await geocodePendingProtocols();
     }).catch((error) => console.error('[mapa] endereços não procurados:', error));
+  });
+  cron.schedule('20 4 * * *', () => {
+    cleanupGeoCache().catch((error) => console.error('[mapa] limpeza do arquivo de endereços:', error));
+    forEachActiveTenant('protocol-geocoding-expire', async () => {
+      await expireGoogleCoordinates();
+    }).catch((error) => console.error('[mapa] renovação de coordenadas:', error));
   });
 }

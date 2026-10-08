@@ -7,6 +7,8 @@ import { queryRecords } from '@/services/registry.service';
 import { Card, CardContent } from '@/components/ui/card';
 import type { WidgetProps } from './WidgetRegistry';
 import { buildQuery } from './useRecords';
+import GoogleMarkersMap from '@/components/maps/GoogleMarkersMap';
+import { useMapsConfig } from '@/hooks/useMapsConfig';
 
 const icon = L.icon({
   iconUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-icon.png',
@@ -29,6 +31,7 @@ export function MapWidget({ code, schema, sharedFilters }: WidgetProps) {
   const labelKey = useMemo(() => (schema.fields ?? []).find((f) => f.displayInTable)?.key || (schema.fields ?? [])[0]?.key, [schema]);
   const [pins, setPins] = useState<Array<{ id: string; lat: number; lng: number; label: string }>>([]);
   const [loading, setLoading] = useState(true);
+  const { config } = useMapsConfig();
 
   useEffect(() => {
     if (!geoField) { setLoading(false); return; }
@@ -49,6 +52,21 @@ export function MapWidget({ code, schema, sharedFilters }: WidgetProps) {
   if (!geoField) return <Card><CardContent className="p-8 text-center text-muted-foreground">Sem campo de localização.</CardContent></Card>;
   if (loading) return <div className="p-8 text-center text-muted-foreground">Carregando mapa…</div>;
   if (pins.length === 0) return <Card><CardContent className="p-8 text-center text-muted-foreground">Nenhum registro com localização.</CardContent></Card>;
+
+  if (config.provider === 'google' && config.browserKey) {
+    return (
+      <Card><CardContent className="p-0">
+        <div style={{ height: 420 }} className="overflow-hidden rounded-lg">
+          <GoogleMarkersMap
+            apiKey={config.browserKey}
+            mapId={config.mapId}
+            points={pins.map((p) => ({ id: p.id, lat: p.lat, lng: p.lng, color: '#2563eb', size: 8, title: p.label || 'Registro' }))}
+            renderInfo={(id) => <span className="text-sm text-gray-900">{pins.find((p) => p.id === id)?.label || 'Registro'}</span>}
+          />
+        </div>
+      </CardContent></Card>
+    );
+  }
 
   return (
     <Card><CardContent className="p-0">
