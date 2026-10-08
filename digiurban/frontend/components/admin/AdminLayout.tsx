@@ -92,6 +92,8 @@ export function AdminLayout({ children }: AdminLayoutProps) {
 
   if (isPublicPath) return <>{children}</>
   if (!user) return null
+  // Painel do Prefeito na TV: tela cheia, sem barra de cima nem menu inferior
+  if (pathname.startsWith('/admin/gabinete/painel-prefeito/tv')) return <>{children}</>
 
   const pending = stats?.pendingProtocols || 0
   const roleLabel = ROLE_DISPLAY_NAMES[user.role as keyof typeof ROLE_DISPLAY_NAMES] ?? user.role

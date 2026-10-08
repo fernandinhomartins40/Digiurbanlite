@@ -22,6 +22,7 @@ import {
   LogOut,
   Mail,
   Map,
+  Monitor,
   MapPin,
   MessageCircle,
   Network,
@@ -262,9 +263,10 @@ export const mayorPortalNavigation: AdminNavSection = {
   title: 'Gabinete do Prefeito',
   color: 'indigo',
   items: [
-    // painel com abas: Hoje, Secretarias, Território, Gestão interna, Cidadão
+    // painel com abas: Hoje, Secretarias, Território, Demandas do Gabinete, Gestão interna
     { title: 'Painel do Prefeito', href: '/admin/gabinete/painel-prefeito', icon: Building2, gabinete: true },
-    { title: 'Demandas do Gabinete', href: '/admin/chamados', icon: AlertCircle, gabinete: true },
+    // tela cheia para TV: mapa ao vivo + pedidos chegando + números do dia
+    { title: 'Painel na TV', href: '/admin/gabinete/painel-prefeito/tv', icon: Monitor, gabinete: true },
   ],
 };
 

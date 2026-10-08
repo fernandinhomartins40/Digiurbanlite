@@ -137,7 +137,7 @@ export function ChamadosRecentesList() {
               <Button variant="outline" size="sm" onClick={loadChamados} disabled={isLoading}>
                 <RefreshCw className={`h-4 w-4 ${isLoading ? 'animate-spin' : ''}`} />
               </Button>
-              <Link href="/admin/chamados?aba=acompanhar">
+              <Link href="/admin/gabinete/painel-prefeito?aba=demandas">
                 <Button variant="outline" size="sm">
                   <span className="hidden sm:inline">Ver Todos</span>
                   <span className="sm:hidden">Todos</span>

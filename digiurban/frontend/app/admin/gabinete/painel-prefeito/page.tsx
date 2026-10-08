@@ -7,14 +7,16 @@
  *    Agenda do Prefeito, assinaturas esperando, demandas do gabinete;
  *  - Secretarias: como cada uma está, com "ver atrasados" e "cobrar";
  *  - Território: o mapa dos pedidos do município;
- *  - Gestão interna: processos internos, contratações por etapa, ordens do gabinete;
- *  - Cidadão: busca e histórico completo.
+ *  - Demandas do Gabinete: cidadão atendido no gabinete, acompanhar, ordens;
+ *  - Gestão interna: processos internos, contratações por etapa, ordens do gabinete.
+ * A busca do cidadão fica sempre em destaque, na faixa azul. "Abrir na TV"
+ * abre o modo tela cheia (mapa ao vivo + pedidos chegando + números do dia).
  */
 
 import { Suspense, useEffect, useState } from 'react'
 import Link from 'next/link'
 import { usePathname, useRouter, useSearchParams } from 'next/navigation'
-import { AlertTriangle, Bell, Building2, Calendar, ChevronDown, ChevronUp, Circle, Loader2, PenLine, Plus, RefreshCw, Star } from 'lucide-react'
+import { AlertTriangle, Bell, Building2, Calendar, ChevronDown, Monitor, ChevronUp, Circle, Loader2, PenLine, Plus, RefreshCw, Star } from 'lucide-react'
 import { useAdminAuth } from '@/contexts/AdminAuthContext'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
@@ -23,9 +25,10 @@ import { useToast } from '@/hooks/use-toast'
 import { CitizenSearchBar } from '@/components/admin/gabinete/CitizenSearchBar'
 import { ChamadosRecentesList } from '@/components/admin/gabinete/ChamadosRecentesList'
 import { ProtocolsMapView } from '@/components/admin/map/ProtocolsMapView'
+import { GabineteDemandas } from '@/components/admin/gabinete/GabineteDemandas'
 import { cn } from '@/lib/utils'
 
-const TABS = ['hoje', 'secretarias', 'territorio', 'gestao', 'cidadao'] as const
+const TABS = ['hoje', 'secretarias', 'territorio', 'demandas', 'gestao'] as const
 type Tab = (typeof TABS)[number]
 
 const time = (value: string) => new Date(value).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })
@@ -164,7 +167,16 @@ function PainelPrefeito() {
             <Button variant="secondary" size="sm" onClick={load} disabled={loading}>
               <RefreshCw className={cn('mr-2 h-4 w-4', loading && 'animate-spin')} />Atualizar
             </Button>
+            <Button variant="secondary" size="sm" asChild>
+              <a href="/admin/gabinete/painel-prefeito/tv" target="_blank" rel="noreferrer">
+                <Monitor className="mr-2 h-4 w-4" />Abrir na TV
+              </a>
+            </Button>
           </div>
+        </div>
+        {/* busca do cidadão: sempre à mão, em destaque */}
+        <div className="mt-4 w-full max-w-3xl">
+          <CitizenSearchBar />
         </div>
       </div>
 
@@ -173,8 +185,8 @@ function PainelPrefeito() {
           <TabsTrigger value="hoje">Hoje</TabsTrigger>
           <TabsTrigger value="secretarias">Secretarias</TabsTrigger>
           <TabsTrigger value="territorio">Território</TabsTrigger>
+          <TabsTrigger value="demandas">Demandas do Gabinete</TabsTrigger>
           <TabsTrigger value="gestao">Gestão interna</TabsTrigger>
-          <TabsTrigger value="cidadao">Cidadão</TabsTrigger>
         </TabsList>
 
         {/* ------------------------------------------------ HOJE */}
@@ -321,6 +333,11 @@ function PainelPrefeito() {
           {tab === 'territorio' && <ProtocolsMapView defaultSituacao="abertos" />}
         </TabsContent>
 
+        {/* ------------------------------------------------ DEMANDAS DO GABINETE */}
+        <TabsContent value="demandas" className="mt-4">
+          {tab === 'demandas' && <GabineteDemandas onOpenGestao={() => changeTab('gestao')} />}
+        </TabsContent>
+
         {/* ------------------------------------------------ GESTÃO INTERNA */}
         <TabsContent value="gestao" className="mt-4 space-y-4">
           {!data ? (
@@ -388,18 +405,6 @@ function PainelPrefeito() {
           )}
         </TabsContent>
 
-        {/* ------------------------------------------------ CIDADÃO */}
-        <TabsContent value="cidadao" className="mt-4 space-y-3">
-          <Card>
-            <CardHeader>
-              <CardTitle className="text-base">Buscar cidadão</CardTitle>
-              <CardDescription>Nome ou CPF — abre o histórico completo: pedidos, avaliações e demandas.</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <CitizenSearchBar />
-            </CardContent>
-          </Card>
-        </TabsContent>
       </Tabs>
     </div>
   )

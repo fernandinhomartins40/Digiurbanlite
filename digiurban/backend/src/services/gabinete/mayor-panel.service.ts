@@ -8,6 +8,7 @@
  */
 
 import { prisma } from '../../lib/prisma';
+import { tryGetTenantId } from '../../lib/tenant-context';
 import notificationService from '../notification.service';
 import { requestUrl } from '../signing/signature.service';
 import { resolveFlow } from '../internal-process/flows/flows';
@@ -299,3 +300,86 @@ export async function chargeDepartment(actor: { id: string; name: string }, depa
 }
 
 export { MAYOR_CALENDAR_KEY };
+
+/**
+ * Modo TV do Painel do Prefeito (tela cheia, atualiza sozinho): números do
+ * dia, pedidos chegando/andando ao vivo, demandas do gabinete e secretarias
+ * com mais atraso. Os pontos do mapa vêm de /api/map/protocols.
+ */
+export async function mayorTvSnapshot() {
+  const now = new Date();
+  const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+  const open = { status: { notIn: [...CLOSED] as any } };
+  const overdue = { ...open, sla: { is: { isOverdue: true, isPaused: false } } };
+  const since90 = new Date(now.getTime() - 90 * DAY);
+
+  const [abertos, atrasados, novosHoje, concluidosHoje, concluidosMes, evaluations, feed, overdueByDept, ticketsByStatus, tickets, tenant] = await Promise.all([
+    prisma.protocolSimplified.count({ where: open }),
+    prisma.protocolSimplified.count({ where: overdue }),
+    prisma.protocolSimplified.count({ where: { createdAt: { gte: todayStart } } }),
+    prisma.protocolSimplified.count({ where: { status: 'CONCLUIDO', concludedAt: { gte: todayStart } } }),
+    prisma.protocolSimplified.count({ where: { status: 'CONCLUIDO', concludedAt: { gte: startOfMonth(now) } } }),
+    prisma.protocolEvaluationSimplified.aggregate({ where: { createdAt: { gte: since90 } }, _avg: { rating: true }, _count: { _all: true } }),
+    prisma.protocolSimplified.findMany({
+      orderBy: { updatedAt: 'desc' },
+      take: 30,
+      select: {
+        id: true,
+        number: true,
+        title: true,
+        status: true,
+        createdAt: true,
+        updatedAt: true,
+        concludedAt: true,
+        latitude: true,
+        longitude: true,
+        service: { select: { name: true } },
+        department: { select: { name: true } },
+        sla: { select: { isOverdue: true } },
+      },
+    }),
+    prisma.protocolSimplified.groupBy({ by: ['departmentId'], where: overdue, _count: { _all: true } }),
+    prisma.adminTicket.groupBy({ by: ['status'], _count: { _all: true } }),
+    prisma.adminTicket.findMany({
+      orderBy: { updatedAt: 'desc' },
+      take: 8,
+      select: { id: true, number: true, title: true, status: true, createdAt: true, department: { select: { name: true } } },
+    }),
+    (async () => {
+      const tenantId = tryGetTenantId();
+      return tenantId ? prisma.tenant.findFirst({ where: { id: tenantId }, select: { nome: true } }).catch(() => null) : null;
+    })(),
+  ]);
+
+  const deptIds = overdueByDept.map((item) => item.departmentId).filter(Boolean) as string[];
+  const departments = deptIds.length ? await prisma.department.findMany({ where: { id: { in: deptIds } }, select: { id: true, name: true } }) : [];
+  const deptName = new Map(departments.map((item) => [item.id, item.name]));
+
+  return {
+    municipality: (tenant as any)?.nome || null,
+    generatedAt: now,
+    kpis: {
+      abertos,
+      atrasados,
+      noPrazo: Math.max(0, abertos - atrasados),
+      novosHoje,
+      concluidosHoje,
+      concluidosMes,
+      satisfacao: evaluations._avg.rating === null ? null : Math.round(evaluations._avg.rating * 10) / 10,
+      avaliacoes: evaluations._count._all,
+    },
+    feed: feed.map((item) => ({
+      ...item,
+      overdue: !!item.sla?.isOverdue && !CLOSED.includes(item.status as any),
+      isNew: item.createdAt >= todayStart,
+    })),
+    secretariasAtrasadas: overdueByDept
+      .map((item) => ({ name: deptName.get(item.departmentId as string) || 'Sem secretaria', count: item._count._all }))
+      .sort((a, b) => b.count - a.count)
+      .slice(0, 6),
+    demandas: {
+      porSituacao: Object.fromEntries(ticketsByStatus.map((item) => [item.status, item._count._all])),
+      recentes: tickets,
+    },
+  };
+}

@@ -157,7 +157,7 @@ const getSearchItems = () => [
   { title: 'Templates de Documentos', description: 'Modelos oficiais', href: '/admin/templates-documentos', category: 'Documentos', keywords: ['template', 'modelo'] },
   { title: 'Assinaturas Digitais', description: 'Assinatura eletronica de documentos', href: '/admin/assinaturas-digitais', category: 'Documentos', keywords: ['assinatura', 'digital'] },
   { title: 'Painel do Prefeito', description: 'Visao executiva municipal', href: '/admin/gabinete/painel-prefeito', category: 'Gabinete', keywords: ['prefeito', 'executivo'] },
-  { title: 'Demandas do Gabinete', description: 'Enviar e acompanhar demandas às secretarias', href: '/admin/chamados', category: 'Gabinete', keywords: ['chamado', 'demanda', 'gabinete'] },
+  { title: 'Demandas do Gabinete', description: 'Enviar e acompanhar demandas às secretarias', href: '/admin/gabinete/painel-prefeito?aba=demandas', category: 'Gabinete', keywords: ['chamado', 'demanda', 'gabinete'] },
   { title: 'Agenda', description: 'Minha agenda, da unidade e da secretaria', href: '/admin/agenda', category: 'Atendimento', keywords: ['agenda', 'calendario', 'compromisso'] },
   { title: 'Mapa dos pedidos', description: 'Pedidos no mapa', href: '/admin/mapa', category: 'Atendimento', keywords: ['mapa', 'demandas', 'territorio', 'bairro'] },
   { title: 'Equipe', description: 'Equipe e permissoes', href: '/admin/servidores/equipe', category: 'Sistema', keywords: ['equipe', 'servidores'] },
@@ -352,7 +352,7 @@ export default function AdminPage() {
       hasGabinete && {
         title: 'Demandas do Gabinete',
         description: 'Enviar e acompanhar',
-        href: '/admin/chamados',
+        href: '/admin/gabinete/painel-prefeito?aba=demandas',
         icon: AlertCircle,
         color: 'text-red-600',
         bg: 'bg-red-50',

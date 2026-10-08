@@ -9,7 +9,7 @@ import { Router, Request, Response } from 'express'
 import { prisma } from '../lib/prisma'
 import { adminAuthMiddleware } from '../middleware/admin-auth'
 import { requireGabinete } from '../middleware/gabinete-auth'
-import { chargeDepartment, chargeProtocol, departmentOverdue, mayorOverview } from '../services/gabinete/mayor-panel.service'
+import { chargeDepartment, chargeProtocol, departmentOverdue, mayorOverview, mayorTvSnapshot } from '../services/gabinete/mayor-panel.service'
 
 const router = Router()
 
@@ -20,6 +20,16 @@ router.get('/overview', adminAuthMiddleware, requireGabinete, async (req: Reques
   } catch (error) {
     console.error('[painel do prefeito]', error)
     res.status(500).json({ success: false, error: 'Não foi possível carregar o painel' })
+  }
+})
+
+// GET /api/admin/gabinete/painel-prefeito/tv — modo TV (atualiza a cada 30 s)
+router.get('/tv', adminAuthMiddleware, requireGabinete, async (_req: Request, res: Response) => {
+  try {
+    res.json({ success: true, data: await mayorTvSnapshot() })
+  } catch (error) {
+    console.error('[painel do prefeito] tv', error)
+    res.status(500).json({ success: false, error: 'Não foi possível atualizar' })
   }
 })
 
