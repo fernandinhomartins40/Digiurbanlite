@@ -93,12 +93,88 @@ function Kpi({ label, value, hint, icon: Icon, color, bg }: { label: string; val
 
 function ChartCard({ title, children, className }: { title: string; children: React.ReactNode; className?: string }) {
   return (
-    <Card className={cn('flex min-h-0 flex-col', className)}>
+    <Card className={cn('flex h-full w-[260px] shrink-0 flex-col xl:w-[300px]', className)}>
       <CardHeader className="px-3 pb-0 pt-3">
         <CardTitle className="text-sm xl:text-base">{title}</CardTitle>
       </CardHeader>
       <CardContent className="min-h-0 flex-1 p-2">{children}</CardContent>
     </Card>
+  )
+}
+
+/**
+ * Faixa que passa sozinha para o lado em loop sem fim (os cartões vêm duas
+ * vezes: ao chegar no fim da 1ª volta, salta para o começo sem a pessoa
+ * perceber). Mouse em cima, toque ou rolagem manual pausam por alguns segundos.
+ * Se tudo cabe na tela, fica parada e sem repetir.
+ */
+function AutoMarquee({ children, className }: { children: React.ReactNode; className?: string }) {
+  const box = useRef<HTMLDivElement>(null)
+  const firstSet = useRef<HTMLDivElement>(null)
+  const pausedUntil = useRef(0)
+  const hovering = useRef(false)
+  const [overflowing, setOverflowing] = useState(false)
+
+  useEffect(() => {
+    const measure = () => {
+      if (box.current && firstSet.current) setOverflowing(firstSet.current.scrollWidth > box.current.clientWidth + 4)
+    }
+    measure()
+    const observer = new ResizeObserver(measure)
+    if (box.current) observer.observe(box.current)
+    if (firstSet.current) observer.observe(firstSet.current)
+    return () => observer.disconnect()
+  }, [])
+
+  useEffect(() => {
+    if (!overflowing) return
+    let frame = 0
+    let last = performance.now()
+    const step = (time: number) => {
+      const element = box.current
+      const set = firstSet.current
+      const elapsed = time - last
+      last = time
+      if (element && set && !hovering.current && time > pausedUntil.current) {
+        element.scrollLeft += elapsed * 0.04 // ~40 px por segundo
+      }
+      // loop: passou a 1ª volta (largura dos cartões + espaço), volta o mesmo tanto
+      if (element && set) {
+        const lap = set.offsetWidth + 12
+        if (element.scrollLeft >= lap) element.scrollLeft -= lap
+        else if (element.scrollLeft <= 0 && time <= pausedUntil.current) element.scrollLeft += lap
+      }
+      frame = requestAnimationFrame(step)
+    }
+    frame = requestAnimationFrame(step)
+    return () => cancelAnimationFrame(frame)
+  }, [overflowing])
+
+  const pause = () => (pausedUntil.current = performance.now() + 5000)
+
+  return (
+    <div
+      ref={box}
+      className={cn('flex gap-3 overflow-x-auto overflow-y-hidden [scrollbar-width:none] [&::-webkit-scrollbar]:hidden', className)}
+      onMouseEnter={() => (hovering.current = true)}
+      onMouseLeave={() => (hovering.current = false)}
+      onWheel={(event) => {
+        pause()
+        // roda do mouse (para cima/baixo) também passa os cartões para o lado
+        if (box.current && Math.abs(event.deltaY) > Math.abs(event.deltaX)) box.current.scrollLeft += event.deltaY
+      }}
+      onTouchStart={pause}
+      onPointerDown={pause}
+    >
+      <div ref={firstSet} className="flex h-full shrink-0 gap-3">
+        {children}
+      </div>
+      {overflowing && (
+        <div className="flex h-full shrink-0 gap-3" aria-hidden>
+          {children}
+        </div>
+      )}
+    </div>
   )
 }
 
@@ -238,6 +314,121 @@ export default function PainelTvPage() {
   const demandasTotal = demandas.reduce((sum, item) => sum + item.value, 0)
   const feedKey = (data?.feed || []).slice(0, 1).map((item: any) => `${item.id}:${item.status}`).join()
 
+  const charts = (
+    <>
+      <ChartCard title="Em aberto por situação">
+        {situacao.length === 0 ? (
+          <Empty text="Nenhum pedido em aberto" />
+        ) : (
+          <div className="grid h-full grid-cols-[1fr_auto] items-center gap-1">
+            <ResponsiveContainer width="100%" height="100%">
+              <PieChart>
+                <Pie data={situacao} dataKey="value" nameKey="name" innerRadius="50%" outerRadius="90%" paddingAngle={2}>
+                  {situacao.map((item: any) => (
+                    <Cell key={item.name} fill={item.color} />
+                  ))}
+                </Pie>
+                <Tooltip />
+              </PieChart>
+            </ResponsiveContainer>
+            <Legendary items={situacao} />
+          </div>
+        )}
+      </ChartCard>
+
+      <ChartCard title="No prazo">
+        <div className="relative h-full">
+          <ResponsiveContainer width="100%" height="100%">
+            <RadialBarChart innerRadius="72%" outerRadius="100%" data={[{ value: noPrazoPct }]} startAngle={90} endAngle={-270}>
+              <PolarAngleAxis type="number" domain={[0, 100]} tick={false} />
+              <RadialBar dataKey="value" cornerRadius={10} background fill={prazoColor} />
+            </RadialBarChart>
+          </ResponsiveContainer>
+          <span className="absolute inset-0 flex items-center justify-center text-lg font-bold tabular-nums xl:text-2xl" style={{ color: prazoColor }}>
+            {noPrazoPct}%
+          </span>
+        </div>
+      </ChartCard>
+
+      <ChartCard title="7 dias: chegaram × concluídos">
+        <ResponsiveContainer width="100%" height="100%">
+          <AreaChart data={data?.graficos?.semana || []} margin={{ top: 6, right: 10, left: -22, bottom: 0 }}>
+            <defs>
+              <linearGradient id="tvIn" x1="0" y1="0" x2="0" y2="1">
+                <stop offset="0%" stopColor={C.blue} stopOpacity={0.45} />
+                <stop offset="100%" stopColor={C.blue} stopOpacity={0.05} />
+              </linearGradient>
+              <linearGradient id="tvOut" x1="0" y1="0" x2="0" y2="1">
+                <stop offset="0%" stopColor={C.green} stopOpacity={0.45} />
+                <stop offset="100%" stopColor={C.green} stopOpacity={0.05} />
+              </linearGradient>
+            </defs>
+            <XAxis dataKey="dia" tick={{ fontSize: 9 }} interval={0} tickFormatter={(value: string) => value.slice(0, 2)} />
+            <YAxis allowDecimals={false} tick={{ fontSize: 10 }} />
+            <Tooltip />
+            <Legend wrapperStyle={{ fontSize: 10 }} iconSize={8} />
+            <Area type="monotone" dataKey="chegaram" name="Chegaram" stroke={C.blue} fill="url(#tvIn)" strokeWidth={2} />
+            <Area type="monotone" dataKey="concluidos" name="Concluídos" stroke={C.green} fill="url(#tvOut)" strokeWidth={2} />
+          </AreaChart>
+        </ResponsiveContainer>
+      </ChartCard>
+
+      <ChartCard title="Chegadas por hora — hoje">
+        <ResponsiveContainer width="100%" height="100%">
+          <BarChart data={(data?.graficos?.horas || []).slice(6, 22)} margin={{ top: 6, right: 6, left: -24, bottom: 0 }}>
+            <XAxis dataKey="hora" tick={{ fontSize: 10 }} interval={2} />
+            <YAxis allowDecimals={false} tick={{ fontSize: 10 }} />
+            <Tooltip />
+            <Bar dataKey="pedidos" name="Pedidos" radius={[4, 4, 0, 0]}>
+              {(data?.graficos?.horas || []).slice(6, 22).map((item: any) => (
+                <Cell key={item.hora} fill={Number(item.hora.slice(0, 2)) === now.getHours() ? C.indigo : C.cyan} />
+              ))}
+            </Bar>
+          </BarChart>
+        </ResponsiveContainer>
+      </ChartCard>
+
+      <ChartCard title="Atrasos por secretaria">
+        {(data?.secretariasAtrasadas || []).length === 0 ? (
+          <Empty text="Nenhuma secretaria com atraso" good />
+        ) : (
+          <ResponsiveContainer width="100%" height="100%">
+            <BarChart data={data.secretariasAtrasadas.slice(0, 5)} layout="vertical" margin={{ top: 2, right: 10, left: 2, bottom: 0 }}>
+              <XAxis type="number" allowDecimals={false} hide />
+              <YAxis type="category" dataKey="name" width={96} tick={{ fontSize: 10 }} />
+              <Tooltip />
+              <Bar dataKey="count" name="Atrasados" radius={[0, 4, 4, 0]}>
+                {data.secretariasAtrasadas.slice(0, 5).map((item: any, index: number) => (
+                  <Cell key={item.name} fill={[C.red, C.pink, C.amber, C.purple, C.indigo][index % 5]} />
+                ))}
+              </Bar>
+            </BarChart>
+          </ResponsiveContainer>
+        )}
+      </ChartCard>
+
+      <ChartCard title={`Demandas do Gabinete · ${demandasTotal}`}>
+        {demandasTotal === 0 ? (
+          <Empty text="Nenhuma demanda" />
+        ) : (
+          <div className="grid h-full grid-cols-[1fr_auto] items-center gap-1">
+            <ResponsiveContainer width="100%" height="100%">
+              <PieChart>
+                <Pie data={demandas} dataKey="value" nameKey="name" innerRadius="50%" outerRadius="90%" paddingAngle={2}>
+                  {demandas.map((item) => (
+                    <Cell key={item.name} fill={item.color} />
+                  ))}
+                </Pie>
+                <Tooltip />
+              </PieChart>
+            </ResponsiveContainer>
+            <Legendary items={demandas} />
+          </div>
+        )}
+      </ChartCard>
+    </>
+  )
+
   if (user && !hasGabinete) {
     return (
       <div className="lg-root flex min-h-screen items-center justify-center">
@@ -296,9 +487,12 @@ export default function PainelTvPage() {
         />
       </section>
 
+      {/* gráficos em cima do mapa: passam sozinhos em loop; dá para arrastar para o lado */}
+      <AutoMarquee className="relative h-40 shrink-0 xl:h-48">{charts}</AutoMarquee>
+
       {/* mapa grande + pedidos ao vivo */}
       <section className="relative grid min-h-0 flex-1 gap-3 lg:grid-cols-[1fr_340px] xl:grid-cols-[1fr_420px]">
-        <Card className="relative min-h-[320px] overflow-hidden p-0">
+        <Card className="relative min-h-[240px] overflow-hidden p-0">
           <TvMap points={points} highlight={fresh} center={data?.center} />
           <div className="pointer-events-none absolute bottom-3 left-3 z-[400] flex flex-wrap items-center gap-3 rounded-lg border bg-white/90 px-3 py-2 text-xs text-gray-700 shadow-sm xl:text-sm">
             <span className="flex items-center gap-1"><span className="h-3 w-3 rounded-full bg-red-500" />Atrasado</span>
@@ -355,119 +549,6 @@ export default function PainelTvPage() {
         </Card>
       </section>
 
-      {/* faixa de gráficos */}
-      <section className="relative grid h-44 shrink-0 grid-cols-3 gap-3 lg:grid-cols-6 xl:h-52">
-        <ChartCard title="Em aberto por situação">
-          {situacao.length === 0 ? (
-            <Empty text="Nenhum pedido em aberto" />
-          ) : (
-            <div className="grid h-full grid-cols-[1fr_auto] items-center gap-1">
-              <ResponsiveContainer width="100%" height="100%">
-                <PieChart>
-                  <Pie data={situacao} dataKey="value" nameKey="name" innerRadius="50%" outerRadius="90%" paddingAngle={2}>
-                    {situacao.map((item: any) => (
-                      <Cell key={item.name} fill={item.color} />
-                    ))}
-                  </Pie>
-                  <Tooltip />
-                </PieChart>
-              </ResponsiveContainer>
-              <Legendary items={situacao} />
-            </div>
-          )}
-        </ChartCard>
-
-        <ChartCard title="No prazo">
-          <div className="relative h-full">
-            <ResponsiveContainer width="100%" height="100%">
-              <RadialBarChart innerRadius="72%" outerRadius="100%" data={[{ value: noPrazoPct }]} startAngle={90} endAngle={-270}>
-                <PolarAngleAxis type="number" domain={[0, 100]} tick={false} />
-                <RadialBar dataKey="value" cornerRadius={10} background fill={prazoColor} />
-              </RadialBarChart>
-            </ResponsiveContainer>
-            <span className="absolute inset-0 flex items-center justify-center text-lg font-bold tabular-nums xl:text-2xl" style={{ color: prazoColor }}>
-              {noPrazoPct}%
-            </span>
-          </div>
-        </ChartCard>
-
-        <ChartCard title="7 dias: chegaram × concluídos">
-          <ResponsiveContainer width="100%" height="100%">
-            <AreaChart data={data?.graficos?.semana || []} margin={{ top: 6, right: 10, left: -22, bottom: 0 }}>
-              <defs>
-                <linearGradient id="tvIn" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="0%" stopColor={C.blue} stopOpacity={0.45} />
-                  <stop offset="100%" stopColor={C.blue} stopOpacity={0.05} />
-                </linearGradient>
-                <linearGradient id="tvOut" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="0%" stopColor={C.green} stopOpacity={0.45} />
-                  <stop offset="100%" stopColor={C.green} stopOpacity={0.05} />
-                </linearGradient>
-              </defs>
-              <XAxis dataKey="dia" tick={{ fontSize: 9 }} interval={0} tickFormatter={(value: string) => value.slice(0, 2)} />
-              <YAxis allowDecimals={false} tick={{ fontSize: 10 }} />
-              <Tooltip />
-              <Legend wrapperStyle={{ fontSize: 10 }} iconSize={8} />
-              <Area type="monotone" dataKey="chegaram" name="Chegaram" stroke={C.blue} fill="url(#tvIn)" strokeWidth={2} />
-              <Area type="monotone" dataKey="concluidos" name="Concluídos" stroke={C.green} fill="url(#tvOut)" strokeWidth={2} />
-            </AreaChart>
-          </ResponsiveContainer>
-        </ChartCard>
-
-        <ChartCard title="Chegadas por hora — hoje">
-          <ResponsiveContainer width="100%" height="100%">
-            <BarChart data={(data?.graficos?.horas || []).slice(6, 22)} margin={{ top: 6, right: 6, left: -24, bottom: 0 }}>
-              <XAxis dataKey="hora" tick={{ fontSize: 10 }} interval={2} />
-              <YAxis allowDecimals={false} tick={{ fontSize: 10 }} />
-              <Tooltip />
-              <Bar dataKey="pedidos" name="Pedidos" radius={[4, 4, 0, 0]}>
-                {(data?.graficos?.horas || []).slice(6, 22).map((item: any) => (
-                  <Cell key={item.hora} fill={Number(item.hora.slice(0, 2)) === now.getHours() ? C.indigo : C.cyan} />
-                ))}
-              </Bar>
-            </BarChart>
-          </ResponsiveContainer>
-        </ChartCard>
-
-        <ChartCard title="Atrasos por secretaria">
-          {(data?.secretariasAtrasadas || []).length === 0 ? (
-            <Empty text="Nenhuma secretaria com atraso" good />
-          ) : (
-            <ResponsiveContainer width="100%" height="100%">
-              <BarChart data={data.secretariasAtrasadas.slice(0, 5)} layout="vertical" margin={{ top: 2, right: 10, left: 2, bottom: 0 }}>
-                <XAxis type="number" allowDecimals={false} hide />
-                <YAxis type="category" dataKey="name" width={96} tick={{ fontSize: 10 }} />
-                <Tooltip />
-                <Bar dataKey="count" name="Atrasados" radius={[0, 4, 4, 0]}>
-                  {data.secretariasAtrasadas.slice(0, 5).map((item: any, index: number) => (
-                    <Cell key={item.name} fill={[C.red, C.pink, C.amber, C.purple, C.indigo][index % 5]} />
-                  ))}
-                </Bar>
-              </BarChart>
-            </ResponsiveContainer>
-          )}
-        </ChartCard>
-
-        <ChartCard title={`Demandas do Gabinete · ${demandasTotal}`}>
-          {demandasTotal === 0 ? (
-            <Empty text="Nenhuma demanda" />
-          ) : (
-            <div className="grid h-full grid-cols-[1fr_auto] items-center gap-1">
-              <ResponsiveContainer width="100%" height="100%">
-                <PieChart>
-                  <Pie data={demandas} dataKey="value" nameKey="name" innerRadius="50%" outerRadius="90%" paddingAngle={2}>
-                    {demandas.map((item) => (
-                      <Cell key={item.name} fill={item.color} />
-                    ))}
-                  </Pie>
-                  <Tooltip />
-                </PieChart>
-              </ResponsiveContainer>
-              <Legendary items={demandas} />
-            </div>
-          )}
-        </ChartCard>
-      </section>
     </div>
   )
 }
