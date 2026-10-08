@@ -47,7 +47,8 @@ interface GeoapifyResponse {
  * 1. Nominatim (OpenStreetMap) - grátis; guardado sem prazo
  * 2. Geoapify - grátis até 3.000/dia (se houver chave)
  * 3. Google Geocoding - só se configurado no painel (chave do servidor) e os
- *    grátis não acharem; guardado no máximo 30 dias (regra do Google)
+ *    grátis não acharem; guardado pelo prazo do painel (padrão 30 dias, regra
+ *    do Google; o operador pode escolher mais ou "para sempre")
  * "Não achou" fica guardado 7 dias.
  */
 export class GeocodingService {
@@ -462,10 +463,13 @@ export function normalizeQuery(text: string): string {
     .slice(0, 400)
 }
 
-/** Validade: grátis = sem prazo; Google = 30 dias (regra do Google); "não achou" = 7 dias */
-export function cacheExpiry(provider: string | null, now = new Date()): Date | null {
+/**
+ * Validade: grátis = sem prazo; Google = prazo do painel (padrão 30 dias, a regra
+ * do Google; 0 = para sempre); "não achou" = 7 dias
+ */
+export function cacheExpiry(provider: string | null, now = new Date(), googleDays = 30): Date | null {
   if (!provider) return new Date(now.getTime() + 7 * DAY)
-  if (provider === 'google') return new Date(now.getTime() + 30 * DAY)
+  if (provider === 'google') return googleDays > 0 ? new Date(now.getTime() + googleDays * DAY) : null
   return null
 }
 
@@ -490,6 +494,7 @@ async function readCache(queryKey: string): Promise<GeocodingResult | null | und
 }
 
 async function writeCache(queryKey: string, query: string, kind: 'GEOCODE' | 'REVERSE', result: GeocodingResult | null) {
+  const googleDays = result?.provider === 'google' ? (await getMapsSettings().catch(() => null))?.googleRetentionDays ?? 30 : 30
   const data = {
     query: query.slice(0, 500),
     kind,
@@ -499,7 +504,7 @@ async function writeCache(queryKey: string, query: string, kind: 'GEOCODE' | 'RE
     formattedAddress: result?.formattedAddress?.slice(0, 500) || null,
     precision: result?.precision || null,
     placeId: result?.placeId || null,
-    expiresAt: cacheExpiry(result?.provider || null),
+    expiresAt: cacheExpiry(result?.provider || null, new Date(), googleDays),
   }
   await runAsPlatform(async () =>
     prisma.geoCache.upsert({ where: { queryKey }, create: { queryKey, ...data }, update: data })

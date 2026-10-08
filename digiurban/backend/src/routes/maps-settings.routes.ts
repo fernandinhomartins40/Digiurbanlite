@@ -29,6 +29,7 @@ async function status() {
     hasServerKey: Boolean(settings.serverKey),
     serverKeyPreview: keyPreview(settings.serverKey),
     mapId: settings.mapId,
+    googleRetentionDays: settings.googleRetentionDays,
     provider: settings.enabled && settings.browserKey ? 'google' : 'osm',
     cache: await geoCacheStats().catch(() => null),
   };
@@ -48,6 +49,7 @@ const saveSchema = z.object({
   serverKey: z.string().max(100).optional(),
   mapId: z.string().max(100).regex(/^[0-9A-Za-z_-]*$/, 'ID do mapa inválido').optional(),
   enabled: z.boolean().optional(),
+  googleRetentionDays: z.number().int().min(0).max(3650).optional(),
 });
 
 platformMapsRouter.put('/', PLATFORM_ADMIN, async (req: Request, res: Response) => {

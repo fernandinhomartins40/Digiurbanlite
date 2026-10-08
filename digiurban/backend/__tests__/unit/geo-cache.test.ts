@@ -17,7 +17,7 @@ jest.mock('../../src/lib/prisma', () => ({
   },
 }));
 jest.mock('../../src/lib/tenant-context', () => ({ runAsPlatform: (fn: any) => fn() }));
-const settings = { enabled: true, browserKey: 'b', serverKey: 'AIzaServer', mapId: null };
+const settings = { enabled: true, browserKey: 'b', serverKey: 'AIzaServer', mapId: null, googleRetentionDays: 30 };
 jest.mock('../../src/services/maps/maps-settings.service', () => ({ getMapsSettings: async () => settings }));
 jest.mock('axios', () => ({ get: jest.fn() }));
 
@@ -41,6 +41,8 @@ describe('arquivo de endereços', () => {
     expect(cacheExpiry('nominatim', now)).toBeNull();
     expect(cacheExpiry('google', now)?.toISOString()).toBe('2026-11-07T00:00:00.000Z');
     expect(cacheExpiry(null, now)?.toISOString()).toBe('2026-10-15T00:00:00.000Z');
+    expect(cacheExpiry('google', now, 0)).toBeNull();
+    expect(cacheExpiry('google', now, 365)?.toISOString()).toBe('2027-10-08T00:00:00.000Z');
   });
 
   it('a segunda busca do mesmo endereço não consulta ninguém', async () => {

@@ -28,6 +28,7 @@ interface Status {
   hasServerKey: boolean;
   serverKeyPreview: string | null;
   mapId: string | null;
+  googleRetentionDays: number;
   provider: 'google' | 'osm';
   cache: { total: number; reaproveitadas: number; porFonte: Record<string, number> } | null;
 }
@@ -35,7 +36,7 @@ interface Status {
 const SOURCES: Array<[string, string]> = [
   ['nominatim', 'OpenStreetMap (grátis, fica guardado)'],
   ['geoapify', 'Geoapify (grátis, fica guardado)'],
-  ['google', 'Google (guardado por 30 dias)'],
+  ['google', 'Google (guardado pelo prazo escolhido)'],
   ['none', 'Não encontrados (tenta de novo em 7 dias)'],
 ];
 
@@ -56,6 +57,7 @@ export default function MapsSettingsPage() {
   const [serverKey, setServerKey] = useState('');
   const [mapId, setMapId] = useState('');
   const [enabled, setEnabled] = useState(false);
+  const [retention, setRetention] = useState('30');
   const [busy, setBusy] = useState<'' | 'save' | 'test' | 'remove-browser' | 'remove-server'>('');
   const [testResult, setTestResult] = useState<{ ok: boolean; message: string; detail?: string | null } | null>(null);
   const [previewError, setPreviewError] = useState(false);
@@ -64,6 +66,7 @@ export default function MapsSettingsPage() {
     setStatus(data);
     setEnabled(data.enabled);
     setMapId(data.mapId || '');
+    setRetention(String(data.googleRetentionDays ?? 30));
   };
 
   const load = useCallback(async () => {
@@ -90,7 +93,7 @@ export default function MapsSettingsPage() {
   const save = async (extra: Record<string, unknown> = {}) => {
     setBusy(extra.browserKey === '' ? 'remove-browser' : extra.serverKey === '' ? 'remove-server' : 'save');
     try {
-      const body: Record<string, unknown> = { enabled, mapId: mapId.trim() };
+      const body: Record<string, unknown> = { enabled, mapId: mapId.trim(), googleRetentionDays: Number(retention) };
       if (browserKey.trim()) body.browserKey = browserKey.trim();
       if (serverKey.trim()) body.serverKey = serverKey.trim();
       Object.assign(body, extra);
@@ -235,6 +238,29 @@ export default function MapsSettingsPage() {
             )}
           </div>
 
+          <div className="space-y-1.5">
+            <Label htmlFor="retention">Guardar o que vem do Google por</Label>
+            <select
+              id="retention"
+              value={retention}
+              onChange={(e) => setRetention(e.target.value)}
+              disabled={!isAdmin}
+              className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
+            >
+              <option value="30">30 dias (regra do Google)</option>
+              <option value="90">90 dias</option>
+              <option value="180">6 meses</option>
+              <option value="365">1 ano</option>
+              <option value="0">Para sempre</option>
+            </select>
+            {retention !== '30' && (
+              <p className="rounded-md bg-amber-50 p-2 text-xs text-amber-800">
+                A regra do Google permite guardar só por 30 dias. Guardar por mais tempo pode levar o Google a bloquear a chave ou a conta.
+              </p>
+            )}
+            <p className="text-xs text-muted-foreground">Vale também para o que já está guardado. O que vem dos serviços grátis fica guardado para sempre.</p>
+          </div>
+
           {isAdmin ? (
             <Button onClick={() => save()} disabled={busy !== ''}>
               {busy === 'save' ? <Loader2 className="h-4 w-4 mr-1 animate-spin" /> : <Save className="h-4 w-4 mr-1" />} Salvar
@@ -308,8 +334,8 @@ export default function MapsSettingsPage() {
             <p className="text-sm text-muted-foreground">Ainda sem números.</p>
           )}
           <p className="text-xs text-muted-foreground">
-            Regra do Google: a imagem do mapa não pode ser guardada (cada abertura de tela conta) e as coordenadas vindas do Google valem no máximo 30 dias. Depois
-            disso o endereço é procurado de novo, primeiro nos serviços grátis.
+            A imagem do mapa do Google não é guardada (cada abertura de tela conta). Endereços vindos do Google ficam guardados pelo prazo escolhido acima; quando
+            vencem, são procurados de novo, primeiro nos serviços grátis.
           </p>
           <Button variant="ghost" size="sm" onClick={load}><RefreshCw className="h-4 w-4 mr-1" /> Atualizar</Button>
         </CardContent>
