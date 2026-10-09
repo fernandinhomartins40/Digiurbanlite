@@ -380,6 +380,26 @@ export default function ListaAtendimentosPage() {
         }
       />
 
+      {/* Linhas de cuidado (Fase 2 da auditoria de 2026-10-08) */}
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
+        {[
+          ['Odontologia', 'Atendimento do dentista', '/admin/apps/saude/atendimento/odonto'],
+          ['Pré-natal', 'Acompanhamento das gestantes', '/admin/apps/saude/atendimento/pre-natal'],
+          ['Visitas domiciliares', 'Agentes de saúde', '/admin/apps/saude/atendimento/visitas'],
+          ['Atividades coletivas', 'Grupos e palestras', '/admin/apps/saude/atendimento/atividades-coletivas'],
+        ].map(([titulo, descricao, href]) => (
+          <button
+            key={href}
+            type="button"
+            onClick={() => router.push(href)}
+            className="text-left p-4 border rounded-lg bg-white hover:bg-gray-50 transition"
+          >
+            <div className="font-medium">{titulo}</div>
+            <div className="text-sm text-gray-500">{descricao}</div>
+          </button>
+        ))}
+      </div>
+
       {/* Estatísticas Rápidas */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
         <Card>

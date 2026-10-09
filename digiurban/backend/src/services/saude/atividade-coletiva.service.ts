@@ -15,11 +15,14 @@ export class AtividadeColetivaService {
         publicoAlvo: data.publicoAlvo,
         faixaEtariaInicio: data.faixaEtariaInicio,
         faixaEtariaFim: data.faixaEtariaFim,
-        numeroParticipantes: data.numeroParticipantes,
-        praticasSaude: data.praticasSaude,
+        numeroParticipantes: Number(data.numeroParticipantes) || 0,
+        praticasSaude: Array.isArray(data.praticasSaude) ? data.praticasSaude : [],
         status: 'PLANEJADA',
         avaliacoesRealizadas: data.avaliacoesRealizadas || false,
         observacoes: data.observacoes,
+        createdBy: data.createdBy || null,
+        // quem cria a atividade já entra como responsável
+        ...(data.createdBy ? { profissionais: { create: [{ profissionalId: data.createdBy, funcao: 'Coordenador' }] } } : {}),
       },
     });
   }
@@ -35,6 +38,14 @@ export class AtividadeColetivaService {
   }
 
   async adicionarParticipante(atividadeId: string, participanteData: any) {
+    if (!participanteData?.citizenId) throw new Error('Escolha a pessoa');
+    const jaEsta = await prisma.participanteAtividade.findFirst({
+      where: { atividadeId, citizenId: participanteData.citizenId },
+      select: { id: true },
+    });
+    if (jaEsta) throw new Error('Esta pessoa já está na lista da atividade');
+    // a contagem acompanha a lista de presença
+    await prisma.atividadeColetiva.update({ where: { id: atividadeId }, data: { numeroParticipantes: { increment: 1 } } });
     return await prisma.participanteAtividade.create({
       data: {
         atividadeId,
@@ -65,12 +76,12 @@ export class AtividadeColetivaService {
       include: {
         profissionais: {
           include: {
-            profissional: true,
+            profissional: { select: { id: true, name: true } },
           },
         },
         participantes: {
           include: {
-            citizen: true,
+            citizen: { select: { id: true, name: true, cpf: true, birthDate: true } },
           },
         },
       },
@@ -84,12 +95,12 @@ export class AtividadeColetivaService {
       include: {
         profissionais: {
           include: {
-            profissional: true,
+            profissional: { select: { id: true, name: true } },
           },
         },
         participantes: {
           include: {
-            citizen: true,
+            citizen: { select: { id: true, name: true, cpf: true, birthDate: true } },
           },
         },
       },

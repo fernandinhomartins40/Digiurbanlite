@@ -9,6 +9,7 @@ import consultaMedicaRoutes from './consulta-medica.routes';
 import painelRoutes from './painel.routes';
 import imunizacaoRoutes from './imunizacao.routes';
 import agendamentoRoutes from './agendamento.routes';
+import cuidadoRoutes from './cuidado.routes';
 import { requireDepartmentAccess } from '../../middleware/department-access';
 
 const router = Router();
@@ -28,5 +29,7 @@ router.use('/consulta-medica', consultaMedicaRoutes);
 router.use('/painel', painelRoutes);
 router.use('/imunizacao', imunizacaoRoutes);
 router.use('/agendamento', agendamentoRoutes);
+// Odontologia, pré-natal e visitas domiciliares (Fase 2 da auditoria de 2026-10-08)
+router.use('/', cuidadoRoutes);
 
 export default router;

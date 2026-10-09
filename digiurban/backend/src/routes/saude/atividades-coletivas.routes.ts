@@ -6,7 +6,10 @@ const router = Router();
 // POST /api/saude/atividades-coletivas - Criar atividade
 router.post('/', async (req, res) => {
   try {
-    const atividade = await atividadeService.criar(req.body);
+    if (!req.body?.tema || !req.body?.dataHora || !req.body?.local || !req.body?.unidadeId || !req.body?.tipo) {
+      return res.status(400).json({ error: 'Informe tipo, tema, data, local e unidade' });
+    }
+    const atividade = await atividadeService.criar({ ...req.body, createdBy: (req as any).userId });
     res.status(201).json(atividade);
   } catch (error) {
     console.error('Erro ao criar atividade:', error);
@@ -63,9 +66,9 @@ router.post('/:id/participantes', async (req, res) => {
     const { id } = req.params;
     const participante = await atividadeService.adicionarParticipante(id, req.body);
     res.status(201).json(participante);
-  } catch (error) {
+  } catch (error: any) {
     console.error('Erro ao adicionar participante:', error);
-    res.status(500).json({ error: 'Erro ao adicionar participante' });
+    res.status(400).json({ error: error?.message || 'Erro ao adicionar participante' });
   }
 });
 

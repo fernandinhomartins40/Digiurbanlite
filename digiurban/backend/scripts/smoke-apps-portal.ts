@@ -19,6 +19,8 @@ import {
 } from '../src/services/apps/portal-queues.service';
 import matriculaService from '../src/services/matricula/matricula.service';
 import programaSocialService from '../src/services/programa-social/programa-social.service';
+import { odontoService, preNatalService, visitaDomiciliarService } from '../src/services/saude/cuidado.service';
+import atividadeColetivaService from '../src/services/saude/atividade-coletiva.service';
 
 const STAMP = Date.now();
 let failures = 0;
@@ -51,6 +53,8 @@ async function main() {
     await runAsPlatform(async () => {
       const where = { tenantId: tenant.id };
       const tables = [
+        'participanteAtividade', 'atividadeColetiva', 'visitaDomiciliar', 'examePreNatal', 'consultaPreNatal', 'acompanhamentoPreNatal',
+        'procedimentoOdonto', 'atendimentoOdontologico', 'atendimentoMedico', 'filaAtendimento', 'unidadeSaude',
         'solicitacaoAssistenciaTecnica', 'produtorRural', 'matricula', 'inscricaoMatricula', 'solicitacaoTransporteEscolar', 'alunoRota', 'rotaEscolar', 'veiculoEscolar',
         'inscricaoProgramaSocial', 'programaSocial', 'alteracaoCredencial', 'credencialTransporte',
         'solicitacaoConsulta', 'solicitacaoMedicamento', 'turma', 'unidadeEducacao', 'workflowInstance', 'workflowDefinition',
@@ -237,6 +241,57 @@ async function scenario() {
   const { default: agriculturaService } = await import('../src/services/agricultura/agricultura.service');
   await agriculturaService.createProdutor({ citizenId: citizen.id, cpf: citizen.cpf, nome: citizen.name });
   check('cadastro de produtor destrava o pedido de assistência', !!(await prisma.solicitacaoAssistenciaTecnica.findFirst({ where: { protocolId: pAt.id } })));
+
+  // ------------------------------------------- Saúde: linhas de cuidado (Fase 2)
+  console.log('\nSaúde — dentista, pré-natal, visita e atividade coletiva');
+  const ubs = await prisma.unidadeSaude.create({ data: { nome: 'UBS Smoke', tipo: 'UBS' } as any });
+  const entrada = await prisma.filaAtendimento.create({
+    data: { citizenId: citizen.id, profissionalId: user.id, tipoAtendimento: 'AGENDADO', motivoBusca: 'Dor de dente', unidadeId: ubs.id } as any,
+  });
+  check('paciente aparece na fila do dentista', (await odontoService.minhaFila(user.id)).some((f) => f.id === entrada.id));
+  const odonto = await odontoService.salvar(user.id, {
+    filaAtendimentoId: entrada.id,
+    odontograma: { '16': { condicao: 'CARIADO' }, '36': { condicao: 'OBTURADO' }, '46': { condicao: 'PERDIDO' } },
+    diagnostico: 'Cárie no 16',
+    procedimentos: [{ descricao: 'Restauração com resina', dente: '16' }],
+  });
+  check('atendimento odontológico gravado com CPO-D e procedimento', (odonto?.indicesCPOD as any)?.cpod === 3 && odonto?.procedimentos.length === 1, odonto);
+  await odontoService.salvar(user.id, { filaAtendimentoId: entrada.id, odontograma: { '16': { condicao: 'OBTURADO' } }, finalizar: true });
+  const odonto2 = await odontoService.porFila(entrada.id);
+  check('salvar de novo atualiza (não duplica) e mantém o procedimento', odonto2?.procedimentos.length === 1 && (odonto2?.indicesCPOD as any)?.obturados === 1);
+  check('finalizar encerra a entrada da fila', (await prisma.filaAtendimento.findFirst({ where: { id: entrada.id } }))?.status === 'FINALIZADO');
+  check('histórico odontológico do cidadão', (await odontoService.historico(citizen.id)).length === 1);
+
+  const dum = new Date(Date.now() - 84 * 86400000);
+  const pn = await preNatalService.iniciar({ citizenId: citizen.id, dum: dum.toISOString(), pesoInicial: 60, alturaInicial: 1.6 });
+  check('pré-natal iniciado com semanas e data do parto', pn?.semanas === 12 && pn?.trimestre === 1 && Math.round((pn.dpp.getTime() - dum.getTime()) / 86400000) === 280 && pn.imcInicial === 23.4, pn && { semanas: pn.semanas, imc: pn.imcInicial });
+  let repetido = '';
+  await preNatalService.iniciar({ citizenId: citizen.id, dum: dum.toISOString() }).catch((e) => (repetido = e.message));
+  check('não abre dois pré-natais para a mesma gestante', repetido.includes('em andamento'), repetido);
+  const pn2 = await preNatalService.registrarConsulta(pn!.id, user.id, { peso: 61.5, pressaoArterial: '110/70', bcf: 150 });
+  check('consulta de pré-natal com idade gestacional', pn2?.consultas.length === 1 && pn2.consultas[0].idadeGestacional === '12s 0d', pn2?.consultas[0]);
+  const pn3 = await preNatalService.solicitarExame(pn!.id, { tipoExame: 'VDRL' });
+  const pn4 = await preNatalService.registrarResultado(pn3!.exames[0].id, { resultado: 'Não reagente' });
+  check('exame pedido e resultado registrado', pn4?.exames[0].resultado === 'Não reagente');
+  check('resumo conta a gestante', (await preNatalService.resumo()).emAcompanhamento === 1);
+  const pn5 = await preNatalService.encerrar(pn!.id, { tipoDesfecho: 'PARTO_NORMAL' });
+  check('encerrar com parto', pn5?.status === 'FINALIZADO');
+
+  const visita = await visitaDomiciliarService.registrar(user.id, { citizenId: citizen.id, tipoVisita: 'ACOMPANHAMENTO', motivoVisita: 'Acompanhar pressão', encaminhamentoUBS: true, motivoEncaminhamento: 'Pressão alta' });
+  check('visita domiciliar registrada', !!visita.id && visita.encaminhamentoUBS);
+  let semMotivo = '';
+  await visitaDomiciliarService.registrar(user.id, { tipoVisita: 'ACOMPANHAMENTO', motivoVisita: 'x', encaminhamentoUBS: true }).catch((e) => (semMotivo = e.message));
+  check('encaminhamento exige o motivo', semMotivo.includes('encaminhada'), semMotivo);
+  const prod = await visitaDomiciliarService.resumo(new Date(Date.now() - 86400000), new Date(Date.now() + 86400000));
+  check('produção do agente no período', prod.total === 1 && prod.encaminhamentos === 1 && prod.porAgente[0]?.visitas === 1, prod);
+
+  const atividade = await atividadeColetivaService.criar({ tipo: 'GRUPO_HIPERTENSOS', tema: 'Sal e pressão', dataHora: new Date().toISOString(), local: 'UBS', unidadeId: ubs.id, createdBy: user.id });
+  await atividadeColetivaService.adicionarParticipante(atividade.id, { citizenId: citizen.id, pressaoArterial: '130/80' });
+  let duplicado = '';
+  await atividadeColetivaService.adicionarParticipante(atividade.id, { citizenId: citizen.id }).catch((e) => (duplicado = e.message));
+  const [listada] = await atividadeColetivaService.listar({});
+  check('atividade coletiva com responsável, presença e contagem', listada?.profissionais.length === 1 && listada.participantes.length === 1 && listada.numeroParticipantes === 1 && duplicado.includes('já está'));
+  check('lista de atividades não expõe senha de ninguém', !JSON.stringify(listada).includes('password'));
 
   // ---------------------------------------------------------------- idempotência
   await convertProtocolToAppOnCreate({ ...pMed, moduleType: 'CONTROLE_MEDICAMENTOS' } as any);
