@@ -53,6 +53,7 @@ async function main() {
     await runAsPlatform(async () => {
       const where = { tenantId: tenant.id };
       const tables = [
+        'encaminhamentoEmprego', 'vagaEmprego', 'curriculoTrabalhador', 'servicoMecanizacao', 'maquinaAgricola', 'ocorrenciaSeguranca', 'prestadorTuristico', 'eventoTuristico',
         'participanteAtividade', 'atividadeColetiva', 'visitaDomiciliar', 'examePreNatal', 'consultaPreNatal', 'acompanhamentoPreNatal',
         'procedimentoOdonto', 'atendimentoOdontologico', 'atendimentoMedico', 'filaAtendimento', 'unidadeSaude',
         'solicitacaoAssistenciaTecnica', 'produtorRural', 'matricula', 'inscricaoMatricula', 'solicitacaoTransporteEscolar', 'alunoRota', 'rotaEscolar', 'veiculoEscolar',
@@ -292,6 +293,76 @@ async function scenario() {
   const [listada] = await atividadeColetivaService.listar({});
   check('atividade coletiva com responsável, presença e contagem', listada?.profissionais.length === 1 && listada.participantes.length === 1 && listada.numeroParticipantes === 1 && duplicado.includes('já está'));
   check('lista de atividades não expõe senha de ninguém', !JSON.stringify(listada).includes('password'));
+
+  // ------------------------------------------------- Apps novos (Fase 3)
+  console.log('Fase 3 — mecanização, empregos, segurança e turismo');
+  const { default: mecanizacaoService } = await import('../src/services/agricultura/mecanizacao.service');
+  const { default: empregoService } = await import('../src/services/emprego/emprego.service');
+  const { default: segurancaService } = await import('../src/services/seguranca/seguranca.service');
+  const { default: turismoService } = await import('../src/services/turismo/turismo.service');
+
+  // Mecanização
+  const pMaq = await open('SOLICITACAO_MAQUINAS', { tipoMaquina: 'Trator', dataDesejada: '2026-11-10', areaTrabalho: 3.5 });
+  const servico = await prisma.servicoMecanizacao.findFirst({ where: { protocolId: pMaq.id } });
+  check('pedido de máquina entrou na mecanização', servico?.tipoMaquina === 'Trator' && servico?.areaHectares === 3.5 && servico?.solicitanteNome === citizen.name, servico);
+  const trator = await mecanizacaoService.saveMaquina(null, { tipo: 'Trator', identificacao: `Trator ${STAMP}`, valorHoraUso: 100 });
+  await mecanizacaoService.agendar(servico!.id, user.id, { maquinaId: trator.id, dataAgendada: '2026-11-10', operador: 'Zé' });
+  check('agendar avisa o produtor e põe o pedido em andamento', (await statusOf(pMaq.id)) === 'PROGRESSO');
+  const outro = await mecanizacaoService.create({ tipoMaquina: 'Trator', solicitanteNome: 'Outro produtor' });
+  let conflito = '';
+  await mecanizacaoService.agendar(outro.id, user.id, { maquinaId: trator.id, dataAgendada: '2026-11-10' }).catch((e) => (conflito = e.message));
+  check('a mesma máquina não é reservada duas vezes no mesmo dia', conflito.includes('já está reservada'), conflito);
+  await mecanizacaoService.iniciar(servico!.id);
+  const feito = await mecanizacaoService.concluir(servico!.id, user.id, { horasRealizadas: 4 });
+  const tratorDepois = await prisma.maquinaAgricola.findFirst({ where: { id: trator.id } });
+  check('concluir calcula o valor, soma as horas e libera a máquina', feito.valorCobrado === 400 && tratorDepois?.horasUso === 4 && tratorDepois?.status === 'Disponível', { valor: feito.valorCobrado, horas: tratorDepois?.horasUso });
+  check('concluir encerra o pedido de máquina', (await statusOf(pMaq.id)) === 'CONCLUIDO');
+
+  // Balcão de empregos
+  const pCur = await open('CADASTRO_BALCAO_EMPREGOS', { escolaridade: 'Médio Completo', areaInteresse: 'cozinha', experiencia: 'Dois anos em restaurante', disponibilidadeImediata: true });
+  const cv = await prisma.curriculoTrabalhador.findFirst({ where: { protocolId: pCur.id } });
+  check('currículo cadastrado e pedido concluído na hora', cv?.areaInteresse === 'cozinha' && (await statusOf(pCur.id)) === 'CONCLUIDO', cv);
+  const denovo = await empregoService.saveCurriculo(null, { citizenId: citizen.id, nome: citizen.name, areaInteresse: 'cozinha industrial' });
+  check('novo cadastro da mesma pessoa atualiza o currículo (não duplica)', denovo.id === cv!.id && (await prisma.curriculoTrabalhador.count({ where: { citizenId: citizen.id } })) === 1);
+  const vaga = await empregoService.saveVaga(null, { empresa: 'Restaurante Bom Sabor', titulo: 'Auxiliar de cozinha', area: 'Alimentação', descricao: 'Preparo de refeições em restaurante', escolaridadeMinima: 'Fundamental Completo', contato: 'Falar com Ana, 9999-0000' });
+  const comCandidatos = await empregoService.vagaComCandidatos(vaga.id);
+  check('a vaga sugere o trabalhador com os motivos', comCandidatos.sugestoes[0]?.curriculo.id === cv!.id && comCandidatos.sugestoes[0].nota >= 45 && comCandidatos.sugestoes[0].motivos.length > 0, comCandidatos.sugestoes[0]);
+  const enc = await empregoService.encaminhar(vaga.id, cv!.id, user.id);
+  let repetidoEnc = '';
+  await empregoService.encaminhar(vaga.id, cv!.id, user.id).catch((e) => (repetidoEnc = e.message));
+  check('não encaminha a mesma pessoa duas vezes para a mesma vaga', repetidoEnc.includes('já foi encaminhada'));
+  await empregoService.resultado(enc.id, 'CONTRATADO');
+  check('contratado: currículo vira empregado e a vaga fecha', (await prisma.curriculoTrabalhador.findFirst({ where: { id: cv!.id } }))?.status === 'EMPREGADO' && (await prisma.vagaEmprego.findFirst({ where: { id: vaga.id } }))?.status === 'PREENCHIDA');
+
+  // Segurança
+  const pOco = await open('REGISTRO_OCORRENCIA', { tipoOcorrencia: 'Perturbação do Sossego', localOcorrencia: 'Rua das Flores, 10', relatoDetalhado: 'Som alto todas as noites depois das 23 horas na casa ao lado' });
+  const oco = await prisma.ocorrenciaSeguranca.findFirst({ where: { protocolId: pOco.id } });
+  check('ocorrência registrada com número', !!oco?.numero?.startsWith('OCS-') && oco?.natureza === 'Perturbação do Sossego' && oco?.citizenId === citizen.id, oco);
+  const pDen = await open('DENUNCIA_ANONIMA', { descricao: 'Venda de produto roubado em frente à praça todo sábado' });
+  const den = await prisma.ocorrenciaSeguranca.findFirst({ where: { protocolId: pDen.id } });
+  check('denúncia anônima não guarda quem fez', den?.anonima === true && den?.citizenId === null && den?.solicitanteNome === null && den?.prioridade === 'ALTA', den);
+  const fila = await segurancaService.list({ abertas: true });
+  check('fila: a denúncia (alta) vem antes da ocorrência (média) e não mostra o denunciante', fila[0]?.id === den!.id && fila[0].citizen === null && fila.find((f: any) => f.id === oco!.id)?.citizen?.name === citizen.name);
+  await segurancaService.assumir(oco!.id, user.id, 'Viatura 02');
+  check('assumir põe o pedido em andamento', (await statusOf(pOco.id)) === 'PROGRESSO');
+  await segurancaService.registrarProvidencia(oco!.id, user.id, 'Guarda foi ao local');
+  await segurancaService.encerrar(oco!.id, user.id, { resultado: 'RESOLVIDA', mensagem: 'A Guarda orientou os moradores e o som foi desligado.' });
+  check('resolver encerra o pedido com a resposta', (await statusOf(pOco.id)) === 'CONCLUIDO');
+  let jaEncerrada = '';
+  await segurancaService.assumir(oco!.id, user.id).catch((e) => (jaEncerrada = e.message));
+  check('ocorrência encerrada não pode ser assumida de novo', jaEncerrada.includes('já foi encerrada'));
+
+  // Turismo
+  const pTur = await open('CADASTRO_ESTABELECIMENTO_TURISTICO', { tipoEstabelecimento: 'Pousada', nomeEstabelecimento: 'Pousada do Vale', cnpj: '12345678000199', enderecoEstabelecimento: 'Estrada do Vale, km 2', descricaoServicos: 'Hospedagem com café da manhã' });
+  const pousada = await prisma.prestadorTuristico.findFirst({ where: { protocolId: pTur.id } });
+  check('pedido virou cadastro turístico', pousada?.tipo === 'ESTABELECIMENTO' && pousada?.nome === 'Pousada do Vale' && pousada?.categoria === 'Pousada', pousada);
+  const aprovada = await turismoService.aprovar(pousada!.id, user.id);
+  check('aprovar emite número, validade e conclui o pedido', !!aprovada.numero?.startsWith('TUR-') && !!aprovada.validade && aprovada.publicado && (await statusOf(pTur.id)) === 'CONCLUIDO');
+  const pEv = await open('REGISTRO_EVENTO_TURISTICO', { nomeEvento: 'Festa do Milho', tipoEvento: 'Festa', dataEvento: '2026-12-05', localEvento: 'Praça Central', descricaoEvento: 'Festa tradicional', publicoEstimado: 2000 });
+  const festa = await prisma.eventoTuristico.findFirst({ where: { protocolId: pEv.id } });
+  check('pedido virou evento com data', festa?.nome === 'Festa do Milho' && festa?.publicoEstimado === 2000 && !!festa?.dataInicio, festa);
+  await turismoService.indeferirEvento(festa!.id, user.id, 'Praça em reforma na data');
+  check('não aprovar o evento encerra o pedido', (await statusOf(pEv.id)) === 'CONCLUIDO');
 
   // ---------------------------------------------------------------- idempotência
   await convertProtocolToAppOnCreate({ ...pMed, moduleType: 'CONTROLE_MEDICAMENTOS' } as any);

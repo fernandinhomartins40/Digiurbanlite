@@ -440,6 +440,11 @@ loadRoute('/api/secretarias/assistencia-social', './routes/secretarias-assistenc
 // Apps de secretaria (Fase 1 do plano de apps)
 loadRoute('/api/apps/educacao', './routes/educacao', requireFeature('educacao'));
 loadRoute('/api/apps/assistencia-social', './routes/assistencia-social', requireFeature('assistencia-social'));
+// Apps da Fase 3 da auditoria de 2026-10-08 (mecanização vem ANTES de /api/agricultura)
+loadRoute('/api/agricultura/mecanizacao', './routes/fase3/mecanizacao.routes', requireFeature('agricultura'));
+loadRoute('/api/apps/desenvolvimento-economico', './routes/fase3/emprego.routes', requireFeature('desenvolvimento-economico'));
+loadRoute('/api/apps/seguranca-publica', './routes/fase3/seguranca.routes', requireFeature('seguranca-publica'));
+loadRoute('/api/apps/turismo', './routes/fase3/turismo.routes', requireFeature('turismo'));
 loadRoute('/api/agricultura', './routes/agricultura.routes', requireFeature('agricultura')); // contrato da UI (use-agricultura-api.ts)
 loadRoute('/api/apps/servicos-publicos', './routes/servicos-publicos', requireFeature('servicos-publicos'));
 // Fase 2: Licenciamento Urbano é UM app para DUAS secretarias

@@ -17,7 +17,16 @@ type PortalProtocol = {
   number?: string | null;
   citizenId?: string | null;
   customData?: any;
+  latitude?: number | null;
+  longitude?: number | null;
+  address?: string | null;
 };
+
+async function citizenOf(protocol: PortalProtocol) {
+  return protocol.citizenId
+    ? prisma.citizen.findFirst({ where: { id: protocol.citizenId }, select: { id: true, name: true, cpf: true, phone: true, email: true } })
+    : null;
+}
 
 /** Primeiro texto preenchido entre as chaves informadas (na ordem). */
 function field(data: any, ...keys: string[]): string | undefined {
@@ -356,6 +365,163 @@ async function pedidoMedicamento(protocol: PortalProtocol, action: string) {
   logger.info(`[portal→app] ${protocol.number || protocol.id} → pedido de remédio`);
 }
 
+// ============================================================================
+// APPS DA FASE 3: mecanização, balcão de empregos, segurança e turismo
+// ============================================================================
+
+async function mecanizacao(protocol: PortalProtocol) {
+  if (await prisma.servicoMecanizacao.findFirst({ where: { protocolId: protocol.id }, select: { id: true } })) return;
+  const data = protocol.customData || {};
+  const pessoa = await citizenOf(protocol);
+  const produtor = protocol.citizenId
+    ? await prisma.produtorRural.findFirst({ where: { citizenId: protocol.citizenId }, select: { id: true } })
+    : null;
+  const { default: mecanizacaoService } = await import('../agricultura/mecanizacao.service');
+  await mecanizacaoService.create({
+    protocolId: protocol.id,
+    citizenId: protocol.citizenId,
+    produtorId: produtor?.id,
+    solicitanteNome: pessoa?.name,
+    telefone: pessoa?.phone,
+    tipoMaquina: field(data, 'tipoMaquina') || 'Trator',
+    areaHectares: numberField(data, 'areaTrabalho', 'areaHectares'),
+    descricao: field(data, 'descricaoNecessidade', 'descricao'),
+    dataDesejada: field(data, 'dataDesejada'),
+    local: field(data, 'localPropriedade', 'local') || protocol.address || undefined,
+  });
+  logger.info(`[portal→app] ${protocol.number || protocol.id} → serviço de mecanização`);
+}
+
+async function curriculo(protocol: PortalProtocol) {
+  if (!protocol.citizenId) return;
+  if (await prisma.curriculoTrabalhador.findFirst({ where: { protocolId: protocol.id }, select: { id: true } })) return;
+  const data = protocol.customData || {};
+  const pessoa = await citizenOf(protocol);
+  const { default: empregoService } = await import('../emprego/emprego.service');
+  await empregoService.saveCurriculo(null, {
+    protocolId: protocol.id,
+    citizenId: protocol.citizenId,
+    nome: pessoa?.name || 'Trabalhador',
+    cpf: pessoa?.cpf,
+    telefone: pessoa?.phone,
+    email: pessoa?.email,
+    escolaridade: field(data, 'escolaridade'),
+    areaInteresse: field(data, 'areaInteresse'),
+    experiencia: field(data, 'experiencia'),
+    habilidades: field(data, 'habilidades', 'cursos'),
+    disponibilidade: data.disponibilidadeImediata !== false,
+    pcd: data.pcd === true || data.pessoaComDeficiencia === true,
+  });
+  // O cadastro É o serviço: o pedido já pode ser concluído
+  const { concludeProtocolFromApp } = await import('./app-protocol-bridge.service');
+  await concludeProtocolFromApp({
+    protocolId: protocol.id,
+    app: 'Balcão de Empregos',
+    message: 'Currículo cadastrado no Balcão de Empregos. Quando surgir uma vaga parecida com o seu perfil, você recebe um aviso aqui no portal.',
+    outcome: 'DEFERIDO',
+  });
+  logger.info(`[portal→app] ${protocol.number || protocol.id} → currículo no balcão de empregos`);
+}
+
+const TIPO_SEGURANCA: Record<string, { tipo: string; prioridade: string }> = {
+  REGISTRO_OCORRENCIA: { tipo: 'OCORRENCIA', prioridade: 'MEDIA' },
+  SOLICITACAO_PATRULHAMENTO: { tipo: 'PATRULHAMENTO', prioridade: 'MEDIA' },
+  DENUNCIA_ANONIMA: { tipo: 'DENUNCIA', prioridade: 'ALTA' },
+  CADASTRO_PONTO_CRITICO: { tipo: 'PONTO_CRITICO', prioridade: 'MEDIA' },
+  ALERTA_SEGURANCA: { tipo: 'ALERTA', prioridade: 'ALTA' },
+  PATRULHA_ESCOLAR: { tipo: 'PATRULHA_ESCOLAR', prioridade: 'MEDIA' },
+  GUARDA_PATRIMONIAL: { tipo: 'GUARDA_PATRIMONIAL', prioridade: 'BAIXA' },
+  SOS_MULHER: { tipo: 'ALERTA', prioridade: 'URGENTE' },
+};
+
+/** Maior texto livre do formulário (o relato), quando não há um campo com nome conhecido. */
+function longestText(data: any): string | undefined {
+  const textos = Object.entries(data || {})
+    .filter(([key, value]) => key !== '_meta' && typeof value === 'string' && (value as string).trim().length >= 10)
+    .map(([, value]) => (value as string).trim());
+  return textos.sort((a, b) => b.length - a.length)[0];
+}
+
+async function ocorrenciaSeguranca(protocol: PortalProtocol, action: string) {
+  if (await prisma.ocorrenciaSeguranca.findFirst({ where: { protocolId: protocol.id }, select: { id: true } })) return;
+  const data = protocol.customData || {};
+  const cfg = TIPO_SEGURANCA[action] || TIPO_SEGURANCA.REGISTRO_OCORRENCIA;
+  const anonima = action === 'DENUNCIA_ANONIMA';
+  const pessoa = anonima ? null : await citizenOf(protocol);
+  const { default: segurancaService } = await import('../seguranca/seguranca.service');
+  await segurancaService.create({
+    protocolId: protocol.id,
+    tipo: cfg.tipo,
+    prioridade: data.urgente === true ? 'URGENTE' : cfg.prioridade,
+    anonima,
+    citizenId: protocol.citizenId,
+    solicitanteNome: pessoa?.name,
+    telefone: pessoa?.phone,
+    natureza: field(data, 'tipoOcorrencia', 'tipoDenuncia', 'tipoProblema', 'tipoAlerta', 'motivo'),
+    descricao: field(data, 'relatoDetalhado', 'descricao', 'relato', 'descricaoProblema', 'justificativa') || longestText(data) || 'Sem relato',
+    local: field(data, 'localOcorrencia', 'local', 'endereco', 'localizacao', 'enderecoPatrulhamento') || protocol.address || undefined,
+    bairro: field(data, 'bairro'),
+    latitude: protocol.latitude ?? undefined,
+    longitude: protocol.longitude ?? undefined,
+    dataOcorrencia: field(data, 'dataHoraOcorrencia', 'dataOcorrencia'),
+  });
+  logger.info(`[portal→app] ${protocol.number || protocol.id} → ocorrência de segurança (${cfg.tipo})`);
+}
+
+const TIPO_PRESTADOR: Record<string, string> = {
+  CADASTRO_ESTABELECIMENTO_TURISTICO: 'ESTABELECIMENTO',
+  CADASTRO_GUIA_TURISTICO: 'GUIA',
+  CREDENCIAMENTO_AGENCIA_TURISMO: 'AGENCIA',
+  AUTORIZACAO_TRANSPORTE_TURISTICO: 'TRANSPORTE',
+  CADASTRO_ATRACAO_TURISTICA: 'ATRACAO',
+};
+
+async function prestadorTuristico(protocol: PortalProtocol, action: string) {
+  if (await prisma.prestadorTuristico.findFirst({ where: { protocolId: protocol.id }, select: { id: true } })) return;
+  const data = protocol.customData || {};
+  const pessoa = await citizenOf(protocol);
+  const { default: turismoService } = await import('../turismo/turismo.service');
+  await turismoService.savePrestador(null, {
+    protocolId: protocol.id,
+    tipo: TIPO_PRESTADOR[action],
+    citizenId: protocol.citizenId,
+    nome: field(data, 'nomeEstabelecimento', 'nomeAgencia', 'nomeAtracao', 'nomeEmpresa', 'nomeFantasia', 'razaoSocial', 'nome') || pessoa?.name || 'Sem nome',
+    categoria: field(data, 'tipoEstabelecimento', 'tipoAtracao', 'tipoVeiculo', 'especialidade', 'idiomas', 'categoria'),
+    responsavel: pessoa?.name,
+    cpfCnpj: field(data, 'cnpj', 'cpf') || pessoa?.cpf,
+    telefone: pessoa?.phone,
+    email: pessoa?.email,
+    endereco: field(data, 'enderecoEstabelecimento', 'endereco', 'localizacao', 'enderecoAtracao'),
+    descricao: field(data, 'descricaoServicos', 'descricao', 'descricaoAtracao', 'experiencia'),
+    cadastur: field(data, 'cadastur', 'numeroCadastur'),
+    dados: data,
+  });
+  logger.info(`[portal→app] ${protocol.number || protocol.id} → cadastro turístico (${TIPO_PRESTADOR[action]})`);
+}
+
+async function eventoTuristico(protocol: PortalProtocol, action: string) {
+  if (await prisma.eventoTuristico.findFirst({ where: { protocolId: protocol.id }, select: { id: true } })) return;
+  const data = protocol.customData || {};
+  const pessoa = await citizenOf(protocol);
+  const { default: turismoService } = await import('../turismo/turismo.service');
+  await turismoService.saveEvento(null, {
+    protocolId: protocol.id,
+    citizenId: protocol.citizenId,
+    nome: field(data, 'nomeEvento', 'nomeFeira', 'nome') || 'Evento',
+    tipo: field(data, 'tipoEvento', 'tipo'),
+    descricao: field(data, 'descricaoEvento', 'descricao'),
+    local: field(data, 'localEvento', 'local'),
+    dataInicio: field(data, 'dataInicio', 'dataEvento'),
+    dataFim: field(data, 'dataFim', 'dataTermino'),
+    organizador: field(data, 'organizador', 'nomeOrganizador') || pessoa?.name,
+    contato: pessoa?.phone || pessoa?.email,
+    publicoEstimado: numberField(data, 'publicoEstimado'),
+    apoioSolicitado: action === 'APOIO_FEIRA_EXPOSICAO' ? field(data, 'tipoApoio', 'apoioSolicitado', 'necessidades') || 'Apoio da prefeitura' : field(data, 'apoioSolicitado'),
+    dados: data,
+  });
+  logger.info(`[portal→app] ${protocol.number || protocol.id} → evento turístico`);
+}
+
 /** Ações tratadas aqui (as mesmas do catálogo de apps) */
 export const PORTAL_REQUEST_ACTIONS = [
   'MATRICULA_ESCOLAR',
@@ -368,6 +534,24 @@ export const PORTAL_REQUEST_ACTIONS = [
   'AGENDAMENTO_CONSULTA',
   'CONTROLE_MEDICAMENTOS',
   'MEDICAMENTOS_ALTO_CUSTO',
+  // Apps da Fase 3
+  'SOLICITACAO_MAQUINAS',
+  'CADASTRO_BALCAO_EMPREGOS',
+  'REGISTRO_OCORRENCIA',
+  'SOLICITACAO_PATRULHAMENTO',
+  'DENUNCIA_ANONIMA',
+  'CADASTRO_PONTO_CRITICO',
+  'ALERTA_SEGURANCA',
+  'PATRULHA_ESCOLAR',
+  'GUARDA_PATRIMONIAL',
+  'SOS_MULHER',
+  'CADASTRO_ESTABELECIMENTO_TURISTICO',
+  'CADASTRO_GUIA_TURISTICO',
+  'CREDENCIAMENTO_AGENCIA_TURISMO',
+  'AUTORIZACAO_TRANSPORTE_TURISTICO',
+  'CADASTRO_ATRACAO_TURISTICA',
+  'REGISTRO_EVENTO_TURISTICO',
+  'APOIO_FEIRA_EXPOSICAO',
 ] as const;
 
 export async function convertPortalRequest(action: string, protocol: PortalProtocol): Promise<boolean> {
@@ -393,6 +577,33 @@ export async function convertPortalRequest(action: string, protocol: PortalProto
     case 'CONTROLE_MEDICAMENTOS':
     case 'MEDICAMENTOS_ALTO_CUSTO':
       await pedidoMedicamento(protocol, action);
+      return true;
+    case 'SOLICITACAO_MAQUINAS':
+      await mecanizacao(protocol);
+      return true;
+    case 'CADASTRO_BALCAO_EMPREGOS':
+      await curriculo(protocol);
+      return true;
+    case 'REGISTRO_OCORRENCIA':
+    case 'SOLICITACAO_PATRULHAMENTO':
+    case 'DENUNCIA_ANONIMA':
+    case 'CADASTRO_PONTO_CRITICO':
+    case 'ALERTA_SEGURANCA':
+    case 'PATRULHA_ESCOLAR':
+    case 'GUARDA_PATRIMONIAL':
+    case 'SOS_MULHER':
+      await ocorrenciaSeguranca(protocol, action);
+      return true;
+    case 'CADASTRO_ESTABELECIMENTO_TURISTICO':
+    case 'CADASTRO_GUIA_TURISTICO':
+    case 'CREDENCIAMENTO_AGENCIA_TURISMO':
+    case 'AUTORIZACAO_TRANSPORTE_TURISTICO':
+    case 'CADASTRO_ATRACAO_TURISTICA':
+      await prestadorTuristico(protocol, action);
+      return true;
+    case 'REGISTRO_EVENTO_TURISTICO':
+    case 'APOIO_FEIRA_EXPOSICAO':
+      await eventoTuristico(protocol, action);
       return true;
     default:
       return false;

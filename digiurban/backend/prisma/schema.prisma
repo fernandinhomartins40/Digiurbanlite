@@ -12060,3 +12060,211 @@ model SolicitacaoMedicamento {
   @@index([citizenId])
   @@map("solicitacoes_medicamento")
 }
+
+// ============================================================================
+// APPS NOVOS (Fase 3 da auditoria de 2026-10-08)
+// ============================================================================
+
+/// Serviço de máquina agrícola pedido por produtor (Agricultura › Mecanização)
+model ServicoMecanizacao {
+  id              String    @id @default(cuid())
+  tenantId        String?
+  protocolId      String?   @unique
+  citizenId       String?
+  produtorId      String?
+  solicitanteNome String?
+  telefone        String?
+  tipoMaquina     String
+  maquinaId       String?
+  operador        String?
+  local           String?
+  areaHectares    Float?
+  descricao       String?
+  dataDesejada    DateTime?
+  dataAgendada    DateTime?
+  horasPrevistas  Float?
+  horasRealizadas Float?
+  valorCobrado    Float?
+  status          String    @default("SOLICITADO") // SOLICITADO | AGENDADO | EM_EXECUCAO | CONCLUIDO | RECUSADO | CANCELADO
+  motivo          String?
+  observacoes     String?
+  iniciadoEm      DateTime?
+  concluidoEm     DateTime?
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+
+  @@index([tenantId])
+  @@index([status])
+  @@index([maquinaId, dataAgendada])
+  @@map("servicos_mecanizacao")
+}
+
+/// Currículo no Balcão de Empregos (Desenvolvimento Econômico)
+model CurriculoTrabalhador {
+  id              String   @id @default(cuid())
+  tenantId        String?
+  protocolId      String?  @unique
+  citizenId       String?
+  nome            String
+  cpf             String?
+  telefone        String?
+  email           String?
+  escolaridade    String?
+  areaInteresse   String?
+  experiencia     String?
+  habilidades     String?
+  disponibilidade Boolean  @default(true)
+  pcd             Boolean  @default(false)
+  status          String   @default("ATIVO") // ATIVO | EMPREGADO | INATIVO
+  observacoes     String?
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  encaminhamentos EncaminhamentoEmprego[]
+
+  @@index([tenantId])
+  @@index([status])
+  @@index([citizenId])
+  @@map("curriculos_trabalhadores")
+}
+
+/// Vaga de emprego divulgada pelo Balcão de Empregos
+model VagaEmprego {
+  id                 String   @id @default(cuid())
+  tenantId           String?
+  empresa            String
+  titulo             String
+  descricao          String?
+  area               String?
+  escolaridadeMinima String?
+  salario            String?
+  quantidade         Int      @default(1)
+  tipoContrato       String?
+  local              String?
+  contato            String?
+  pcd                Boolean  @default(false)
+  status             String   @default("ABERTA") // ABERTA | PREENCHIDA | ENCERRADA
+  createdAt          DateTime @default(now())
+  updatedAt          DateTime @updatedAt
+
+  encaminhamentos EncaminhamentoEmprego[]
+
+  @@index([tenantId])
+  @@index([status])
+  @@map("vagas_emprego")
+}
+
+/// Trabalhador encaminhado a uma vaga
+model EncaminhamentoEmprego {
+  id          String               @id @default(cuid())
+  tenantId    String?
+  vagaId      String
+  vaga        VagaEmprego          @relation(fields: [vagaId], references: [id], onDelete: Cascade)
+  curriculoId String
+  curriculo   CurriculoTrabalhador @relation(fields: [curriculoId], references: [id], onDelete: Cascade)
+  status      String               @default("ENCAMINHADO") // ENCAMINHADO | CONTRATADO | NAO_SELECIONADO | NAO_COMPARECEU
+  observacao  String?
+  criadoPor   String?
+  createdAt   DateTime             @default(now())
+  updatedAt   DateTime             @updatedAt
+
+  @@unique([vagaId, curriculoId])
+  @@index([tenantId])
+  @@index([curriculoId])
+  @@map("encaminhamentos_emprego")
+}
+
+/// Ocorrência, denúncia ou pedido de patrulhamento (Segurança Pública)
+model OcorrenciaSeguranca {
+  id              String    @id @default(cuid())
+  tenantId        String?
+  protocolId      String?   @unique
+  numero          String?
+  tipo            String // OCORRENCIA | PATRULHAMENTO | DENUNCIA | PONTO_CRITICO | ALERTA | PATRULHA_ESCOLAR | GUARDA_PATRIMONIAL
+  natureza        String?
+  anonima         Boolean   @default(false)
+  citizenId       String?
+  solicitanteNome String?
+  telefone        String?
+  descricao       String
+  local           String?
+  bairro          String?
+  latitude        Float?
+  longitude       Float?
+  dataOcorrencia  DateTime?
+  prioridade      String    @default("MEDIA") // BAIXA | MEDIA | ALTA | URGENTE
+  status          String    @default("ABERTA") // ABERTA | EM_ATENDIMENTO | RESOLVIDA | ARQUIVADA
+  equipe          String?
+  responsavelId   String?
+  providencias    String?
+  historico       Json?
+  resolvidaEm     DateTime?
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+
+  @@index([tenantId])
+  @@index([status, prioridade])
+  @@index([tipo])
+  @@map("ocorrencias_seguranca")
+}
+
+/// Prestador de serviço turístico cadastrado no município (Turismo)
+model PrestadorTuristico {
+  id          String    @id @default(cuid())
+  tenantId    String?
+  protocolId  String?   @unique
+  numero      String?
+  tipo        String // ESTABELECIMENTO | GUIA | AGENCIA | TRANSPORTE | ATRACAO
+  categoria   String?
+  nome        String
+  responsavel String?
+  cpfCnpj     String?
+  citizenId   String?
+  telefone    String?
+  email       String?
+  endereco    String?
+  descricao   String?
+  cadastur    String?
+  status      String    @default("SOLICITADO") // SOLICITADO | EM_ANALISE | ATIVO | INDEFERIDO | SUSPENSO
+  motivo      String?
+  emitidoEm   DateTime?
+  validade    DateTime?
+  publicado   Boolean   @default(false)
+  dados       Json?
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  @@index([tenantId])
+  @@index([tipo, status])
+  @@map("prestadores_turisticos")
+}
+
+/// Evento turístico registrado ou com pedido de apoio (Turismo)
+model EventoTuristico {
+  id              String    @id @default(cuid())
+  tenantId        String?
+  protocolId      String?   @unique
+  citizenId       String?
+  nome            String
+  tipo            String?
+  descricao       String?
+  local           String?
+  dataInicio      DateTime?
+  dataFim         DateTime?
+  organizador     String?
+  contato         String?
+  publicoEstimado Int?
+  apoioSolicitado String?
+  apoioConcedido  String?
+  status          String    @default("SOLICITADO") // SOLICITADO | APROVADO | REALIZADO | CANCELADO | INDEFERIDO
+  motivo          String?
+  publicado       Boolean   @default(false)
+  dados           Json?
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+
+  @@index([tenantId])
+  @@index([status])
+  @@index([dataInicio])
+  @@map("eventos_turisticos")
+}

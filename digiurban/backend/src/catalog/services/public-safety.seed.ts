@@ -626,6 +626,7 @@ export const publicSafetyServices: ServiceDefinition[] = [
     serviceType: 'COM_DADOS',
     serviceSubtype: ServiceSubtype.CAPTURA_COMPLETA,
     moduleType: 'DENUNCIA_VIOLENCIA_DOMESTICA',
+    appAction: 'SOS_MULHER',
     requiresDocuments: false,
     estimatedDays: 1,
     priority: 5,
