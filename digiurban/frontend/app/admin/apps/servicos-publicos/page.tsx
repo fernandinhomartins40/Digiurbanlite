@@ -59,9 +59,22 @@ const TIPOS_OS = [
   'Coleta de entulho',
   'Drenagem/Boca de lobo',
   'Sinalização',
+  'Semáforo',
+  'Calçada / meio-fio',
+  'Ponto de ônibus / mobiliário urbano',
+  'Acessibilidade (rampa, piso tátil)',
+  'Capina / terreno',
   'Praças e jardins',
   'Outros',
 ];
+
+const SECRETARIAS: Record<string, string> = {
+  SERVICOS_PUBLICOS: 'Serviços Públicos',
+  OBRAS_PUBLICAS: 'Obras Públicas',
+  TRANSPORTES_TRANSITO: 'Transportes e Trânsito',
+  MOBILIDADE_URBANA: 'Mobilidade Urbana',
+  MEIO_AMBIENTE: 'Meio Ambiente',
+};
 
 async function api(path: string, init?: RequestInit) {
   const res = await fetch(path, {
@@ -86,6 +99,9 @@ export default function OrdensServicoPage() {
 
   const [filtroStatus, setFiltroStatus] = useState('ATIVAS');
   const [busca, setBusca] = useState('');
+  // O app atende várias secretarias: as de quem está usando
+  const [secretarias, setSecretarias] = useState<string[]>([]);
+  const [filtroSecretaria, setFiltroSecretaria] = useState('TODAS');
 
   // Nova OS
   const [novaAberta, setNovaAberta] = useState(false);
@@ -95,6 +111,7 @@ export default function OrdensServicoPage() {
     prioridade: 'NORMAL',
     endereco: '',
     bairro: '',
+    departmentCode: '',
   });
 
   // Despacho
@@ -125,6 +142,9 @@ export default function OrdensServicoPage() {
         api('/api/apps/servicos-publicos/os/stats').catch(() => null),
         api('/api/apps/servicos-publicos/equipes').catch(() => []),
       ]);
+      api('/api/apps/servicos-publicos/secretarias')
+        .then((data) => setSecretarias(Array.isArray(data) ? data : []))
+        .catch(() => undefined);
       setOrdens(Array.isArray(ordensData) ? ordensData : []);
       setStats(statsData);
       setEquipes(Array.isArray(equipesData) ? equipesData : []);
@@ -137,6 +157,7 @@ export default function OrdensServicoPage() {
 
   const filtradas = useMemo(() => {
     let lista = ordens;
+    if (filtroSecretaria !== 'TODAS') lista = lista.filter((o) => (o.departmentCode || 'SERVICOS_PUBLICOS') === filtroSecretaria);
     if (filtroStatus === 'ATIVAS') {
       lista = lista.filter((o) => !['CONCLUIDA', 'CANCELADA'].includes(o.status));
     } else if (filtroStatus !== 'TODAS') {
@@ -153,7 +174,7 @@ export default function OrdensServicoPage() {
       );
     }
     return lista;
-  }, [ordens, filtroStatus, busca]);
+  }, [ordens, filtroStatus, busca, filtroSecretaria]);
 
   const totalPorStatus = (status: string) =>
     stats?.porStatus?.find((s: any) => s.status === status)?.total || 0;
@@ -167,11 +188,11 @@ export default function OrdensServicoPage() {
     try {
       await api('/api/apps/servicos-publicos/os', {
         method: 'POST',
-        body: JSON.stringify(novaOS),
+        body: JSON.stringify({ ...novaOS, departmentCode: novaOS.departmentCode || secretarias[0] }),
       });
       toast({ title: 'Ordem de serviço criada' });
       setNovaAberta(false);
-      setNovaOS({ tipo: '', descricao: '', prioridade: 'NORMAL', endereco: '', bairro: '' });
+      setNovaOS({ tipo: '', descricao: '', prioridade: 'NORMAL', endereco: '', bairro: '', departmentCode: '' });
       await loadData();
     } catch (error: any) {
       toast({ title: 'Erro', description: String(error?.message || error), variant: 'destructive' });
@@ -401,6 +422,21 @@ export default function OrdensServicoPage() {
               onChange={(e) => setBusca(e.target.value)}
               className="flex-1"
             />
+            {secretarias.length > 1 && (
+              <Select value={filtroSecretaria} onValueChange={setFiltroSecretaria}>
+                <SelectTrigger className="w-full md:w-56">
+                  <SelectValue placeholder="Secretaria" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="TODAS">Todas as secretarias</SelectItem>
+                  {secretarias.map((code) => (
+                    <SelectItem key={code} value={code}>
+                      {SECRETARIAS[code] || code}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            )}
             <Select value={filtroStatus} onValueChange={setFiltroStatus}>
               <SelectTrigger className="w-full md:w-56">
                 <SelectValue placeholder="Status" />
@@ -486,6 +522,26 @@ export default function OrdensServicoPage() {
             <DialogTitle>Nova ordem de serviço</DialogTitle>
           </DialogHeader>
           <div className="space-y-4">
+            {secretarias.length > 1 && (
+              <div>
+                <Label>Secretaria</Label>
+                <Select
+                  value={novaOS.departmentCode || secretarias[0]}
+                  onValueChange={(v) => setNovaOS({ ...novaOS, departmentCode: v })}
+                >
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {secretarias.map((code) => (
+                      <SelectItem key={code} value={code}>
+                        {SECRETARIAS[code] || code}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            )}
             <div className="grid grid-cols-2 gap-4">
               <div>
                 <Label>Tipo de serviço</Label>

@@ -8,7 +8,26 @@ import { concludeProtocolFromApp, markProtocolInProgressFromApp } from '../apps/
  * despacho para equipe → execução com evidências → conclusão
  * (retroalimenta o protocolo, NÃO-FATAL).
  */
+/**
+ * Secretarias que usam o app de Ordens de Serviço (equipes de campo).
+ * Cada OS pertence a uma; quem trabalha vê só as das suas secretarias
+ * (`scope`); ADMIN/SUPER_ADMIN veem todas (`scope` = null).
+ */
+export const OS_DEPARTMENTS = ['SERVICOS_PUBLICOS', 'OBRAS_PUBLICAS', 'TRANSPORTES_TRANSITO', 'MOBILIDADE_URBANA', 'MEIO_AMBIENTE'];
+
+export type OsScope = string[] | null;
+
+function scopeWhere(scope?: OsScope) {
+  return scope ? { departmentCode: { in: scope } } : {};
+}
+
 class OrdemServicoService {
+  /** A OS existe e é de uma secretaria de quem pede? */
+  async assertScope(id: string, scope?: OsScope) {
+    const ordem = await prisma.ordemServico.findFirst({ where: { id, ...scopeWhere(scope) }, select: { id: true } });
+    if (!ordem) throw new Error('Ordem de serviço não encontrada');
+  }
+
   private async gerarNumero() {
     const ano = new Date().getFullYear();
     const emitidas = await prisma.ordemServico.count({
@@ -44,9 +63,12 @@ class OrdemServicoService {
     bairro?: string;
     prioridade?: string;
     equipeId?: string;
-  }) {
+    departmentCode?: string;
+  }, scope?: OsScope) {
     const ordens = await prisma.ordemServico.findMany({
       where: {
+        ...scopeWhere(scope),
+        ...(filters?.departmentCode ? { departmentCode: filters.departmentCode } : {}),
         ...(filters?.status ? { status: filters.status } : {}),
         ...(filters?.tipo ? { tipo: filters.tipo } : {}),
         ...(filters?.bairro ? { bairro: { contains: filters.bairro, mode: 'insensitive' as const } } : {}),
@@ -59,9 +81,9 @@ class OrdemServicoService {
     return this.comVinculos(ordens);
   }
 
-  async findById(id: string) {
+  async findById(id: string, scope?: OsScope) {
     const ordem = await prisma.ordemServico.findFirst({
-      where: { id },
+      where: { id, ...scopeWhere(scope) },
       include: { apontamentos: { orderBy: { createdAt: 'asc' } } },
     });
     if (!ordem) return null;
@@ -75,6 +97,9 @@ class OrdemServicoService {
       data: {
         numero: await this.gerarNumero(),
         protocolId: data.protocolId,
+        departmentCode: OS_DEPARTMENTS.includes(String(data.departmentCode || '').toUpperCase())
+          ? String(data.departmentCode).toUpperCase()
+          : 'SERVICOS_PUBLICOS',
         tipo: data.tipo,
         descricao: data.descricao,
         prioridade: data.prioridade || 'NORMAL',
@@ -224,9 +249,10 @@ class OrdemServicoService {
   }
 
   /** Equipes de campo: Teams ativos da secretaria de Serviços Públicos. */
-  async listEquipes() {
+  /** Equipes das secretarias de quem pede (todas as do app, para ADMIN) */
+  async listEquipes(scope?: OsScope) {
     return prisma.team.findMany({
-      where: { ativo: true, department: { code: 'SERVICOS_PUBLICOS' } },
+      where: { ativo: true, department: { code: { in: scope || OS_DEPARTMENTS } } },
       select: {
         id: true,
         nome: true,
@@ -238,21 +264,22 @@ class OrdemServicoService {
     });
   }
 
-  async getStatistics() {
+  async getStatistics(scope?: OsScope) {
+    const escopo = scopeWhere(scope);
     const [porStatus, porTipo, porBairro, concluidas] = await Promise.all([
-      prisma.ordemServico.groupBy({ by: ['status'], _count: true }),
+      prisma.ordemServico.groupBy({ by: ['status'], where: escopo, _count: true }),
       prisma.ordemServico.groupBy({
         by: ['tipo'],
-        where: { status: { notIn: ['CONCLUIDA', 'CANCELADA'] } },
+        where: { ...escopo, status: { notIn: ['CONCLUIDA', 'CANCELADA'] } },
         _count: true,
       }),
       prisma.ordemServico.groupBy({
         by: ['bairro'],
-        where: { status: { notIn: ['CONCLUIDA', 'CANCELADA'] }, bairro: { not: null } },
+        where: { ...escopo, status: { notIn: ['CONCLUIDA', 'CANCELADA'] }, bairro: { not: null } },
         _count: true,
       }),
       prisma.ordemServico.findMany({
-        where: { status: 'CONCLUIDA', dataConclusao: { not: null } },
+        where: { ...escopo, status: 'CONCLUIDA', dataConclusao: { not: null } },
         select: { tipo: true, createdAt: true, dataConclusao: true },
         take: 1000,
         orderBy: { dataConclusao: 'desc' },
@@ -271,7 +298,7 @@ class OrdemServicoService {
 
     const agora = new Date();
     const atrasadas = await prisma.ordemServico.count({
-      where: { status: { notIn: ['CONCLUIDA', 'CANCELADA'] }, slaPrazo: { lt: agora } },
+      where: { ...escopo, status: { notIn: ['CONCLUIDA', 'CANCELADA'] }, slaPrazo: { lt: agora } },
     });
 
     return {
@@ -291,9 +318,10 @@ class OrdemServicoService {
   }
 
   /** Pontos para o mapa (OS abertas com coordenadas). */
-  async getMapa() {
+  async getMapa(scope?: OsScope) {
     return prisma.ordemServico.findMany({
       where: {
+        ...scopeWhere(scope),
         latitude: { not: null },
         longitude: { not: null },
       },

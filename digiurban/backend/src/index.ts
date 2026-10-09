@@ -446,7 +446,7 @@ loadRoute('/api/apps/desenvolvimento-economico', './routes/fase3/emprego.routes'
 loadRoute('/api/apps/seguranca-publica', './routes/fase3/seguranca.routes', requireFeature('seguranca-publica'));
 loadRoute('/api/apps/turismo', './routes/fase3/turismo.routes', requireFeature('turismo'));
 loadRoute('/api/agricultura', './routes/agricultura.routes', requireFeature('agricultura')); // contrato da UI (use-agricultura-api.ts)
-loadRoute('/api/apps/servicos-publicos', './routes/servicos-publicos', requireFeature('servicos-publicos'));
+loadRoute('/api/apps/servicos-publicos', './routes/servicos-publicos', requireAnyFeature(['servicos-publicos', 'obras-publicas', 'transportes-transito', 'mobilidade-urbana', 'meio-ambiente']));
 // Fase 2: Licenciamento Urbano é UM app para DUAS secretarias
 loadRoute('/api/apps/licenciamento', './routes/licenciamento', requireAnyFeature(['obras-publicas', 'planejamento-urbano', 'desenvolvimento-economico']));
 loadRoute('/api/apps/meio-ambiente', './routes/meio-ambiente', requireFeature('meio-ambiente'));

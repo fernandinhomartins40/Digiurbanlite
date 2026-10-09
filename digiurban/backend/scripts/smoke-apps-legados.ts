@@ -115,6 +115,23 @@ async function scenario() {
     const ordem2 = await prisma.ordemServico.findFirst({ where: { protocolId: p2.id } });
     if (ordem2) await os.cancelar(ordem2.id, { userId: user.id, motivo: 'Terreno particular' });
     check('cancelar a OS encerra o pedido', !!ordem2 && (await concluded(p2.id)), await statusOf(p2.id));
+
+    // pedido de outra secretaria com equipe de campo vira OS DAQUELA secretaria
+    const obras = await prisma.department.create({ data: { name: 'Obras Públicas', code: 'OBRAS_PUBLICAS' } as any });
+    const p3 = await prisma.protocolSimplified.create({
+      data: {
+        number: `SMKLEG-${STAMP}-${++seq}`, title: 'Tapa-buraco', citizenId: citizen.id, serviceId: service.id, departmentId: obras.id,
+        status: 'VINCULADO', customData: { descricao: 'Buraco grande na rua' }, latitude: -23.5, longitude: -51.9, address: 'Rua das Flores, 50',
+      } as any,
+    });
+    await convertProtocolToAppOnCreate({ ...p3, moduleType: 'MANUTENCAO_VIARIA' } as any);
+    const ordem3 = await prisma.ordemServico.findFirst({ where: { protocolId: p3.id } });
+    check('pedido de Obras vira OS de Obras com o endereço', ordem3?.departmentCode === 'OBRAS_PUBLICAS' && !!ordem3?.endereco && ordem3?.latitude != null, ordem3);
+    const soServicos = await os.listOrdens({}, ['SERVICOS_PUBLICOS']);
+    const lista = Array.isArray(soServicos) ? soServicos : (soServicos as any)?.data || (soServicos as any)?.ordens || [];
+    check('quem é só de Serviços Públicos não vê a OS de Obras', !lista.some((o: any) => o.id === ordem3?.id), lista.length);
+    const escondida = await os.assertScope(ordem3!.id, ['SERVICOS_PUBLICOS']).then(() => false, () => true);
+    check('abrir a OS de Obras por outra secretaria é recusado', escondida);
   });
 
   // ---------------------------------------------------------------- Licenciamento

@@ -1,6 +1,6 @@
 import { Router } from 'express';
-import ordemServicoService from '../../services/servicos-publicos/ordem-servico.service';
-import { requireDepartmentAccess } from '../../middleware/department-access';
+import ordemServicoService, { OS_DEPARTMENTS } from '../../services/servicos-publicos/ordem-servico.service';
+import { getUserDepartmentCodes, requireDepartmentAccess } from '../../middleware/department-access';
 
 /**
  * App Ordens de Serviço — Serviços Públicos (Fase 1D)
@@ -8,7 +8,33 @@ import { requireDepartmentAccess } from '../../middleware/department-access';
  */
 const router = Router();
 // Equipe da secretaria + ADMIN (antes: só ADMIN)
-router.use(...requireDepartmentAccess('SERVICOS_PUBLICOS'));
+// O app atende várias secretarias com equipe de campo; cada pessoa vê só as OS
+// das suas secretarias (ADMIN/SUPER_ADMIN veem todas)
+router.use(...requireDepartmentAccess(...OS_DEPARTMENTS));
+router.use(async (req: any, _res, next) => {
+  try {
+    const user = req.user;
+    if (['ADMIN', 'SUPER_ADMIN'].includes(String(user?.role))) req.osScope = null;
+    else req.osScope = (await getUserDepartmentCodes(user)).filter((code) => OS_DEPARTMENTS.includes(code));
+    next();
+  } catch (error) {
+    next(error);
+  }
+});
+
+// GET /api/apps/servicos-publicos/secretarias — secretarias de quem usa (para o filtro e a criação)
+router.get('/secretarias', (req: any, res) => res.json(req.osScope || OS_DEPARTMENTS));
+
+/** Toda ação sobre uma OS confere se ela é de uma secretaria de quem pede */
+router.use('/os/:id', async (req: any, res, next) => {
+  if (['mapa', 'stats'].includes(req.params.id)) return next();
+  try {
+    await ordemServicoService.assertScope(req.params.id, req.osScope);
+    next();
+  } catch (error: any) {
+    res.status(404).json({ error: error.message });
+  }
+});
 
 const handle = (fn: (req: any, res: any) => Promise<any>) => async (req: any, res: any) => {
   try {
@@ -23,7 +49,7 @@ const handle = (fn: (req: any, res: any) => Promise<any>) => async (req: any, re
 // GET /api/apps/servicos-publicos/equipes — Teams ativos da secretaria
 router.get(
   '/equipes',
-  handle(async (_req, res) => res.json(await ordemServicoService.listEquipes()))
+  handle(async (req, res) => res.json(await ordemServicoService.listEquipes(req.osScope)))
 );
 
 // ==================== ORDENS DE SERVIÇO ====================
@@ -31,12 +57,12 @@ router.get(
 // Rotas fixas ANTES de /os/:id
 router.get(
   '/os/stats',
-  handle(async (_req, res) => res.json(await ordemServicoService.getStatistics()))
+  handle(async (req, res) => res.json(await ordemServicoService.getStatistics(req.osScope)))
 );
 
 router.get(
   '/os/mapa',
-  handle(async (_req, res) => res.json(await ordemServicoService.getMapa()))
+  handle(async (req, res) => res.json(await ordemServicoService.getMapa(req.osScope)))
 );
 
 // GET /api/apps/servicos-publicos/os?status=&tipo=&bairro=&prioridade=&equipeId=
@@ -51,20 +77,27 @@ router.get(
         bairro: (bairro as string) || undefined,
         prioridade: (prioridade as string) || undefined,
         equipeId: (equipeId as string) || undefined,
-      })
+        departmentCode: (req.query.departmentCode as string) || undefined,
+      }, req.osScope)
     );
   })
 );
 
 router.post(
   '/os',
-  handle(async (req, res) => res.status(201).json(await ordemServicoService.createOrdem(req.body)))
+  handle(async (req, res) => {
+    // nova OS só numa secretaria de quem cria
+    const permitidas: string[] = req.osScope || OS_DEPARTMENTS;
+    const pedida = String(req.body?.departmentCode || permitidas[0] || '').toUpperCase();
+    if (!permitidas.includes(pedida)) return res.status(403).json({ error: 'Escolha uma secretaria sua' });
+    res.status(201).json(await ordemServicoService.createOrdem({ ...req.body, departmentCode: pedida }));
+  })
 );
 
 router.get(
   '/os/:id',
   handle(async (req, res) => {
-    const ordem = await ordemServicoService.findById(req.params.id);
+    const ordem = await ordemServicoService.findById(req.params.id, req.osScope);
     if (!ordem) return res.status(404).json({ error: 'Ordem de serviço não encontrada' });
     res.json(ordem);
   })

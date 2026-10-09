@@ -10316,28 +10316,30 @@ model DistribuicaoSemente {
 // ============================================================================
 
 model OrdemServico {
-  id            String    @id @default(cuid())
-  tenantId      String?
-  protocolId    String?   @unique // quando nasce de protocolo aprovado
-  numero        String // OS-<ano>-<seq> por tenant
-  tipo          String // 'Iluminação', 'Buraco na via', 'Poda', 'Limpeza'...
-  descricao     String?
-  prioridade    String    @default("NORMAL") // BAIXA | NORMAL | ALTA | URGENTE
-  status        String    @default("ABERTA") // ABERTA | DESPACHADA | EM_EXECUCAO | CONCLUIDA | CANCELADA
-  endereco      String?
-  bairro        String?
-  latitude      Float?
-  longitude     Float?
-  fotos         Json? // fotos da solicitação/cidadão
-  equipeId      String? // Team (join manual, sem FK)
-  responsavelId String? // User responsável (join manual)
-  slaPrazo      DateTime?
-  dataDespacho  DateTime?
-  dataInicio    DateTime?
-  dataConclusao DateTime?
-  observacoes   String?
-  createdAt     DateTime  @default(now())
-  updatedAt     DateTime  @updatedAt
+  id             String    @id @default(cuid())
+  tenantId       String?
+  protocolId     String?   @unique // quando nasce de protocolo aprovado
+  numero         String // OS-<ano>-<seq> por tenant
+  /// Secretaria dona da OS (o app de Ordens de Serviço atende várias secretarias)
+  departmentCode String?   @default("SERVICOS_PUBLICOS")
+  tipo           String // 'Iluminação', 'Buraco na via', 'Poda', 'Limpeza'...
+  descricao      String?
+  prioridade     String    @default("NORMAL") // BAIXA | NORMAL | ALTA | URGENTE
+  status         String    @default("ABERTA") // ABERTA | DESPACHADA | EM_EXECUCAO | CONCLUIDA | CANCELADA
+  endereco       String?
+  bairro         String?
+  latitude       Float?
+  longitude      Float?
+  fotos          Json? // fotos da solicitação/cidadão
+  equipeId       String? // Team (join manual, sem FK)
+  responsavelId  String? // User responsável (join manual)
+  slaPrazo       DateTime?
+  dataDespacho   DateTime?
+  dataInicio     DateTime?
+  dataConclusao  DateTime?
+  observacoes    String?
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
 
   apontamentos ApontamentoOS[]
 
@@ -10346,6 +10348,7 @@ model OrdemServico {
   @@index([tipo])
   @@index([bairro])
   @@index([equipeId])
+  @@index([departmentCode])
   @@index([tenantId])
   @@map("ordens_servico")
 }

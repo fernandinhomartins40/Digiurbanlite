@@ -354,6 +354,21 @@ export const APP_FIELD_CONTRACTS: Record<string, AppActionContract> = {
   SOLICITACAO_DESOBSTRUCAO: OS(['bueiro', 'boca de lobo', 'desobstrucao', 'galeria pluvial', 'drenagem', 'esgoto entupido']),
   SOLICITACAO_PODA: OS(['poda', 'galho', 'arvore caida']),
   ATENDIMENTOS_SERVICOS_PUBLICOS: OS(['registro de problema', 'problema com foto', 'vazamento', 'hidrometro', 'religacao de agua', 'ligacao de agua', 'caminhao pipa', 'caixa d agua', 'buraco', 'tapa buraco', 'calcamento', 'meio fio', 'praca', 'jardim', 'dedetizacao', 'animal morto', 'reparo', 'manutencao']),
+  MANUTENCAO_VIARIA: {
+    ...OS(['tapa buraco', 'buraco', 'pavimentacao', 'recapeamento', 'asfalto', 'calcamento', 'calcada', 'meio fio', 'reparo de via', 'manutencao de via',
+      'manutencao de ponte', 'viaduto', 'muro de contencao', 'escadaria', 'canaleta', 'erosao']),
+    notKeywords: ['aprovacao', 'autorizacao', 'licenca', 'sugestao', 'implantacao', 'denuncia de calcada', 'programa'],
+  },
+  SINALIZACAO_VIARIA: {
+    ...OS(['sinalizacao', 'semaforo', 'lombada', 'redutor de velocidade', 'faixa de pedestre', 'faixa de pedestres', 'placa de rua', 'pintura de faixa']),
+    notKeywords: ['aprovacao', 'autorizacao', 'licenca', 'sugestao', 'turistica'],
+  },
+  MOBILIARIO_URBANO: {
+    ...OS(['ponto de onibus', 'cobertura para ponto', 'manutencao de ponto', 'bancos', 'lixeira', 'rampa', 'piso tatil', 'acessibilidade', 'bicicletario',
+      'bebedouro', 'parque infantil', 'academia ao ar livre', 'iluminacao em ponto']),
+    notKeywords: ['aprovacao', 'autorizacao', 'licenca', 'sugestao', 'residencial', 'construcao de rampa', 'projeto'],
+  },
+
   // Licenciamento urbano
   APROVACAO_PROJETO: LICENCIAMENTO(['aprovacao de projeto', 'projeto arquitetonico', 'projeto de construcao', 'regularizacao de obra', 'loteamento', 'desmembramento',
     'remembramento', 'unificacao de lotes', 'aprovacao de condominio', 'ampliacao de area construida', 'modificacao de projeto', 'aprovacao de edificio',

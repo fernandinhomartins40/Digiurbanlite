@@ -103,6 +103,9 @@ const OS_MODULE_TYPES: Record<string, string> = {
   SOLICITACAO_DESOBSTRUCAO: 'Drenagem/Boca de lobo',
   SOLICITACAO_PODA: 'Poda de árvore',
   ATENDIMENTOS_SERVICOS_PUBLICOS: 'Outros',
+  MANUTENCAO_VIARIA: 'Buraco / pavimentação / calçada',
+  SINALIZACAO_VIARIA: 'Sinalização viária',
+  MOBILIARIO_URBANO: 'Mobiliário urbano / acessibilidade',
 };
 
 /**
@@ -225,14 +228,22 @@ export async function convertProtocolToAppOnCreate(protocol: ProtocolLike): Prom
     const existente = await prisma.ordemServico.findFirst({ where: { protocolId: protocol.id } });
     if (existente) return;
     const ordemServicoService = (await import('../servicos-publicos/ordem-servico.service')).default;
+    // secretaria do pedido (o app atende várias) e o local marcado pelo cidadão
+    const origem = await prisma.protocolSimplified.findFirst({
+      where: { id: protocol.id },
+      select: { address: true, latitude: true, longitude: true, department: { select: { code: true } } },
+    });
     const os = await ordemServicoService.createOrdem({
       protocolId: protocol.id,
+      departmentCode: origem?.department?.code,
       tipo: OS_MODULE_TYPES[moduleType],
       descricao:
         pickField(customData, /descri|observa|relato|problema|detalhe/i) ||
         `Aberta a partir do protocolo ${protocol.number || protocol.id}`,
-      endereco: pickField(customData, /endere|rua|logradouro|local/i),
+      endereco: pickField(customData, /endere|rua|logradouro|local/i) || (origem as any)?.address || undefined,
       bairro: pickField(customData, /bairro|comunidade/i),
+      latitude: (origem as any)?.latitude ?? undefined,
+      longitude: (origem as any)?.longitude ?? undefined,
     });
     logger.info(`[protocol-to-app] Protocolo ${protocol.number || protocol.id} → OS ${os.numero}`);
     return;

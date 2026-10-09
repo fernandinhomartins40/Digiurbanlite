@@ -96,8 +96,8 @@ export const APP_CATALOG: AppDefinition[] = [
   {
     code: 'servicos-publicos',
     name: 'Ordens de Serviço',
-    description: 'Despacho de equipes, execução e mapa das ordens de serviço',
-    departments: ['SERVICOS_PUBLICOS'],
+    description: 'Despacho de equipes de campo, execução e mapa (cada secretaria com as suas equipes)',
+    departments: ['SERVICOS_PUBLICOS', 'OBRAS_PUBLICAS', 'TRANSPORTES_TRANSITO', 'MOBILIDADE_URBANA', 'MEIO_AMBIENTE'],
     route: '/admin/apps/servicos-publicos',
     actions: [
       criacao('ILUMINACAO_PUBLICA', 'Ordem de serviço — iluminação pública'),
@@ -107,6 +107,9 @@ export const APP_CATALOG: AppDefinition[] = [
       criacao('SOLICITACAO_DESOBSTRUCAO', 'Ordem de serviço — drenagem/boca de lobo'),
       criacao('SOLICITACAO_PODA', 'Ordem de serviço — poda de árvore'),
       criacao('ATENDIMENTOS_SERVICOS_PUBLICOS', 'Ordem de serviço — outros'),
+      criacao('MANUTENCAO_VIARIA', 'Ordem de serviço — buraco, pavimentação, calçada'),
+      criacao('SINALIZACAO_VIARIA', 'Ordem de serviço — sinalização, semáforo, faixa, lombada'),
+      criacao('MOBILIARIO_URBANO', 'Ordem de serviço — ponto de ônibus, bancos, lixeiras, acessibilidade'),
     ],
   },
   {
