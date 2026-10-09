@@ -111,6 +111,7 @@ export const educationServices: ServiceDefinition[] = [
     serviceType: 'COM_DADOS',
     serviceSubtype: ServiceSubtype.SOLICITACAO_SIMPLES,
     moduleType: 'INSCRICAO_CURSO_LIVRE',
+    appAction: 'INSCRICAO_CURSO',
     requiresDocuments: true,
     requiredDocuments: ['RG', 'CPF', 'Comprovante de Residência'],
     estimatedDays: 3,

@@ -82,6 +82,7 @@ export const technologyInnovationServices: ServiceDefinition[] = [
     serviceType: 'COM_DADOS',
     serviceSubtype: ServiceSubtype.CAPTURA_COMPLETA,
     moduleType: 'CURSO_INCLUSAO_DIGITAL',
+    appAction: 'INSCRICAO_CURSO',
     requiresDocuments: true,
     requiredDocuments: ['RG ou CPF', 'Comprovante de Residência'],
     estimatedDays: 10,

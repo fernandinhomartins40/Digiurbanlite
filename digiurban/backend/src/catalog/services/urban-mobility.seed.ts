@@ -303,6 +303,7 @@ export const urbanMobilityServices: ServiceDefinition[] = [
     serviceType: 'COM_DADOS',
     serviceSubtype: ServiceSubtype.SOLICITACAO_SIMPLES,
     moduleType: 'SOLICITACAO_PONTO_ONIBUS',
+    appAction: 'MOBILIARIO_URBANO',
     requiresDocuments: false,
     estimatedDays: 20,
     priority: 3,

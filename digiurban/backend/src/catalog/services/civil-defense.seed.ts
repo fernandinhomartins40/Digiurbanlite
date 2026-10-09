@@ -114,6 +114,7 @@ export const civilDefenseServices: ServiceDefinition[] = [
     serviceType: 'COM_DADOS',
     serviceSubtype: ServiceSubtype.CAPTURA_COMPLETA,
     moduleType: 'TREINAMENTO_DEFESA_CIVIL',
+    appAction: 'INSCRICAO_CURSO',
     requiresDocuments: true,
     requiredDocuments: ['RG ou CPF', 'Comprovante de Residência'],
     estimatedDays: 15,

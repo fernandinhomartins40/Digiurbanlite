@@ -12271,3 +12271,239 @@ model EventoTuristico {
   @@index([dataInicio])
   @@map("eventos_turisticos")
 }
+
+// ============================================================================
+// APPS GERAIS (2026-10-09): serviços de várias secretarias que não tinham app
+// ============================================================================
+
+/// Agenda de Atendimentos — pedido de atendimento/orientação/visita em que a equipe marca dia, hora e local
+model AgendamentoAtendimento {
+  id               String    @id @default(cuid())
+  tenantId         String?
+  protocolId       String?   @unique
+  numero           String?
+  departmentCode   String
+  servico          String
+  assunto          String?
+  modalidade       String    @default("PRESENCIAL") // PRESENCIAL | DOMICILIAR | ONLINE | TELEFONE
+  citizenId        String?
+  solicitanteNome  String?
+  telefone         String?
+  preferencia      String?
+  endereco         String?
+  status           String    @default("AGUARDANDO") // AGUARDANDO | AGENDADO | REALIZADO | FALTOU | CANCELADO
+  dataHora         DateTime?
+  duracaoMin       Int       @default(30)
+  local            String?
+  profissionalId   String?
+  profissionalNome String?
+  observacoes      String?
+  historico        Json?
+  encerradoEm      DateTime?
+  createdAt        DateTime  @default(now())
+  updatedAt        DateTime  @updatedAt
+
+  @@index([tenantId])
+  @@index([departmentCode, status])
+  @@index([dataHora])
+  @@map("agendamentos_atendimento")
+}
+
+/// Cursos e Capacitações — curso/turma oferecido por qualquer secretaria
+model CursoMunicipal {
+  id               String    @id @default(cuid())
+  tenantId         String?
+  departmentCode   String
+  nome             String
+  descricao        String?
+  publicoAlvo      String?
+  local            String?
+  horario          String?
+  dataInicio       DateTime?
+  dataFim          DateTime?
+  vagas            Int       @default(20)
+  totalAulas       Int       @default(0)
+  frequenciaMinima Int       @default(75)
+  instrutor        String?
+  status           String    @default("INSCRICOES") // INSCRICOES | EM_ANDAMENTO | CONCLUIDO | CANCELADO
+  createdAt        DateTime  @default(now())
+  updatedAt        DateTime  @updatedAt
+
+  inscricoes InscricaoCurso[]
+
+  @@index([tenantId])
+  @@index([departmentCode, status])
+  @@map("cursos_municipais")
+}
+
+model InscricaoCurso {
+  id             String          @id @default(cuid())
+  tenantId       String?
+  protocolId     String?         @unique
+  departmentCode String
+  cursoId        String?
+  curso          CursoMunicipal? @relation(fields: [cursoId], references: [id], onDelete: SetNull)
+  interesse      String
+  citizenId      String?
+  nome           String
+  telefone       String?
+  escolaridade   String?
+  observacoes    String?
+  status         String          @default("AGUARDANDO") // AGUARDANDO | INSCRITO | LISTA_ESPERA | CONCLUIU | NAO_CONCLUIU | DESISTIU | RECUSADA
+  presencas      Int             @default(0)
+  historico      Json?
+  encerradoEm    DateTime?
+  createdAt      DateTime        @default(now())
+  updatedAt      DateTime        @updatedAt
+
+  @@index([tenantId])
+  @@index([departmentCode, status])
+  @@index([cursoId])
+  @@map("inscricoes_cursos")
+}
+
+/// Feiras e Mercados — boxes, bancas e pontos de feira ou mercado municipal
+model EspacoComercial {
+  id               String    @id @default(cuid())
+  tenantId         String?
+  departmentCode   String    @default("SERVICOS_PUBLICOS")
+  local            String
+  identificacao    String
+  tipo             String    @default("BOX") // BOX | BANCA | QUIOSQUE | PONTO
+  diaFuncionamento String?
+  status           String    @default("LIVRE") // LIVRE | OCUPADO | INATIVO
+  observacoes      String?
+  createdAt        DateTime  @default(now())
+  updatedAt        DateTime  @updatedAt
+
+  permissoes PermissaoUsoEspaco[]
+
+  @@index([tenantId])
+  @@index([local, status])
+  @@map("espacos_comerciais")
+}
+
+model PermissaoUsoEspaco {
+  id             String           @id @default(cuid())
+  tenantId       String?
+  protocolId     String?          @unique
+  numero         String?
+  departmentCode String           @default("SERVICOS_PUBLICOS")
+  tipoPedido     String           @default("PERMISSAO") // PERMISSAO | INSCRICAO_FEIRA | RELOCACAO | RENOVACAO
+  espacoId       String?
+  espaco         EspacoComercial? @relation(fields: [espacoId], references: [id], onDelete: SetNull)
+  localDesejado  String?
+  citizenId      String?
+  titularNome    String
+  documento      String?
+  telefone       String?
+  atividade      String?
+  status         String           @default("AGUARDANDO") // AGUARDANDO | ATIVA | RECUSADA | REVOGADA | ENCERRADA
+  validade       DateTime?
+  historico      Json?
+  createdAt      DateTime         @default(now())
+  updatedAt      DateTime         @updatedAt
+
+  @@index([tenantId])
+  @@index([departmentCode, status])
+  @@index([espacoId])
+  @@map("permissoes_uso_espaco")
+}
+
+/// Cemitérios — sepulturas/jazigos, concessões, sepultamentos e exumações
+model JazigoCemiterio {
+  id               String    @id @default(cuid())
+  tenantId         String?
+  cemiterio        String
+  quadra           String?
+  numero           String
+  tipo             String    @default("SEPULTURA") // SEPULTURA | JAZIGO | GAVETA | OSSUARIO
+  status           String    @default("LIVRE") // LIVRE | CONCEDIDO | OCUPADO | INATIVO
+  titularNome      String?
+  titularCitizenId String?
+  titularDocumento String?
+  concessaoAte     DateTime?
+  observacoes      String?
+  createdAt        DateTime  @default(now())
+  updatedAt        DateTime  @updatedAt
+
+  sepultamentos SepultamentoRegistro[]
+  pedidos       PedidoCemiterio[]
+
+  @@index([tenantId])
+  @@index([cemiterio, status])
+  @@map("jazigos_cemiterio")
+}
+
+model SepultamentoRegistro {
+  id               String          @id @default(cuid())
+  tenantId         String?
+  jazigoId         String
+  jazigo           JazigoCemiterio @relation(fields: [jazigoId], references: [id], onDelete: Cascade)
+  falecidoNome     String
+  dataObito        DateTime?
+  dataSepultamento DateTime
+  certidaoObito    String?
+  exumadoEm        DateTime?
+  destinoRestos    String?
+  createdAt        DateTime        @default(now())
+
+  @@index([tenantId])
+  @@index([jazigoId])
+  @@map("sepultamentos_registro")
+}
+
+model PedidoCemiterio {
+  id                   String           @id @default(cuid())
+  tenantId             String?
+  protocolId           String?          @unique
+  numero               String?
+  tipo                 String // CONCESSAO | RENOVACAO | TRANSFERENCIA | EXUMACAO | SEPULTAMENTO
+  jazigoId             String?
+  jazigo               JazigoCemiterio? @relation(fields: [jazigoId], references: [id], onDelete: SetNull)
+  cemiterioDesejado    String?
+  localizacaoInformada String?
+  citizenId            String?
+  solicitanteNome      String
+  telefone             String?
+  falecidoNome         String?
+  dataObito            DateTime?
+  novoTitularNome      String?
+  novoTitularDocumento String?
+  status               String           @default("AGUARDANDO") // AGUARDANDO | AGENDADO | ATENDIDO | RECUSADO
+  dataAgendada         DateTime?
+  historico            Json?
+  encerradoEm          DateTime?
+  createdAt            DateTime         @default(now())
+  updatedAt            DateTime         @updatedAt
+
+  @@index([tenantId])
+  @@index([tipo, status])
+  @@index([jazigoId])
+  @@map("pedidos_cemiterio")
+}
+
+/// Pedido de sementes, mudas, adubo ou calcário feito no portal (Agricultura) — entregue pelo estoque de sementes
+model PedidoInsumoAgricola {
+  id             String   @id @default(cuid())
+  tenantId       String?
+  protocolId     String?  @unique
+  citizenId      String?
+  produtorId     String?
+  nome           String
+  telefone       String?
+  tipo           String   @default("SEMENTE") // SEMENTE | MUDA | ADUBO | CALCARIO | OUTRO
+  item           String?
+  quantidade     String?
+  areaHectares   Float?
+  finalidade     String?
+  status         String   @default("AGUARDANDO") // AGUARDANDO | ENTREGUE | RECUSADO
+  distribuicaoId String?
+  resposta       String?
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  @@index([tenantId])
+  @@index([status])
+  @@map("pedidos_insumos_agricolas")
+}

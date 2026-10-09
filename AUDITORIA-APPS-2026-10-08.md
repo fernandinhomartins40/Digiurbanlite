@@ -190,3 +190,44 @@ Primeira medição só olhou o total. Revisando uma a uma as que ficavam SEM app
 responsável), Habite-se do catálogo (não tem formulário nem endereço), e as secretarias sem app (Administração,
 Finanças, Tecnologia). **Decisão pendente:** Obras Públicas tem ~20 sugestões de manutenção (tapa-buraco, drenagem,
 bueiro, iluminação) e não tem app de Ordens de Serviço — o app hoje é só de Serviços Públicos.
+
+## Apps novos para os serviços que não tinham app (2026-10-09)
+
+Dos ~690 serviços (catálogo + sugestões) que não iam para app nenhum, foram separados os que precisam de uma mesa de
+trabalho de verdade. Resultado: **~160** passaram a ir para app.
+
+- **Ordens de Serviço em 5 secretarias** — além de Serviços Públicos, agora Obras Públicas, Transportes e Trânsito,
+  Mobilidade Urbana e Meio Ambiente. Cada OS tem a secretaria dona (`departmentCode`); cada servidor vê só as das suas
+  secretarias (ADMIN vê todas, com filtro). Portas novas: tapa-buraco/pavimentação (`MANUTENCAO_VIARIA`),
+  sinalização/semáforo/lombada (`SINALIZACAO_VIARIA`), ponto de ônibus/mobiliário (`MOBILIARIO_URBANO`). A OS já nasce
+  com o endereço e o ponto do pedido. Isso fecha a "decisão pendente" de Obras.
+- **Agenda de Atendimentos** (`/admin/apps/agenda-atendimentos`, 20 secretarias; a Saúde tem a sua) — orientação,
+  consultoria, mentoria, CRAS/CREAS, Sala do Empreendedor, Defensoria, perícia psicossocial, visita técnica/monitorada e
+  visita em casa. O pedido chega "aguardando horário"; a equipe marca dia, hora, local e quem atende (o mesmo servidor
+  não fica com dois atendimentos no mesmo horário); o cidadão recebe no pedido. "Atendido" ou "Não veio" encerram o
+  pedido. Horário de Brasília. Atendimento de balcão também pode ser registrado.
+- **Cursos e Capacitações** (`/admin/apps/cursos`, 14 secretarias; Cultura e Esportes mantêm oficinas/escolinhas) —
+  cadastro do curso (vagas, aulas, frequência mínima), "pôr na turma" (sem vaga = lista de espera, com posição),
+  frequência por aluno, desistência chama sozinho o primeiro da espera, concluir o curso dá o resultado a cada um pela
+  frequência e encerra o pedido; turma cancelada devolve os inscritos para a fila (o pedido continua).
+- **Feiras e Mercados** (`/admin/apps/feiras-mercados`; Serviços Públicos, Desenvolvimento Econômico e Agricultura) —
+  boxes/bancas cadastrados por feira/mercado (livre/ocupado), permissão com validade e número, inscrição em feira (sem
+  lugar fixo), troca de ponto (libera o antigo), renovação, revogação e lista de vencidas.
+- **Cemitérios** (`/admin/apps/cemiterios`, Serviços Públicos) — sepulturas/jazigos (cemitério, quadra, número, titular,
+  prazo da concessão), sepultamentos, e os pedidos: concessão, renovação (soma do fim atual), transferência de
+  titularidade, sepultamento e exumação (marcada antes; só depois de 3 anos ou com ordem judicial).
+- **Agricultura — pedidos de sementes, mudas, adubo e calcário** (aba "Pedidos do portal" em Sementes e Mudas):
+  "Entregar" baixa do estoque (não entrega mais do que tem), cria o cadastro básico do produtor se faltar e encerra o
+  pedido. O estoque passou a aceitar adubo, calcário e outros insumos.
+- Catálogo: 25 serviços prontos ligados aos apps novos (ex.: Sala do Empreendedor, CRAS, Visita Domiciliar, cursos de
+  qualificação, Feira do Produtor, distribuição de sementes/mudas, sinalização, semáforo, lombada, ponto de ônibus).
+- Testes: `__tests__/unit/apps-gerais.test.ts` (para onde vai cada serviço + regras) e
+  `npm run smoke:apps:gerais` (29 conferências ponta a ponta, banco + Redis).
+
+**Continuam sem app, de propósito:** cadastros e inscrições simples (~100: artistas, voluntários, MEI, fornecedor…
+— é um registro, cabe no motor de dados/Registry), autorizações de evento/filmagem/via pública (~26), empréstimo de
+equipamento (cadeira de rodas, muletas — 4), kits e uniformes da Educação (5), "Atendimento Geral" de Agricultura e
+Cultura (pedido genérico), AEE da Educação (acompanhamento contínuo, não horário) e o que é documento/consulta.
+
+**Depois do deploy:** rodar "Atualizar catálogo de serviços" em cada município (Super-admin › município) para os
+serviços não editados irem para os apps novos, e abrir as 5 telas no navegador.

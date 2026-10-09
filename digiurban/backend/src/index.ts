@@ -442,6 +442,12 @@ loadRoute('/api/apps/educacao', './routes/educacao', requireFeature('educacao'))
 loadRoute('/api/apps/assistencia-social', './routes/assistencia-social', requireFeature('assistencia-social'));
 // Apps da Fase 3 da auditoria de 2026-10-08 (mecanização vem ANTES de /api/agricultura)
 loadRoute('/api/agricultura/mecanizacao', './routes/fase3/mecanizacao.routes', requireFeature('agricultura'));
+loadRoute('/api/agricultura/pedidos-insumos', './routes/apps-gerais/insumos.routes', requireFeature('agricultura'));
+// Apps gerais (2026-10-09): atendem várias secretarias; cada pessoa vê só as das suas
+loadRoute('/api/apps/agenda-atendimentos', './routes/apps-gerais/agenda.routes');
+loadRoute('/api/apps/cursos', './routes/apps-gerais/cursos.routes');
+loadRoute('/api/apps/feiras-mercados', './routes/apps-gerais/feiras.routes');
+loadRoute('/api/apps/cemiterios', './routes/apps-gerais/cemiterio.routes', requireFeature('servicos-publicos'));
 loadRoute('/api/apps/desenvolvimento-economico', './routes/fase3/emprego.routes', requireFeature('desenvolvimento-economico'));
 loadRoute('/api/apps/seguranca-publica', './routes/fase3/seguranca.routes', requireFeature('seguranca-publica'));
 loadRoute('/api/apps/turismo', './routes/fase3/turismo.routes', requireFeature('turismo'));

@@ -256,6 +256,7 @@ export const APP_CATALOG: AppDefinition[] = [
     actions: [
       criacao('ASSISTENCIA_TECNICA', 'Solicitação de assistência técnica'),
       criacao('SOLICITACAO_MAQUINAS', 'Pedido de máquina agrícola (mecanização)'),
+      criacao('DISTRIBUICAO_INSUMOS', 'Pedido de sementes, mudas, adubo ou calcário (entregue pelo estoque)'),
       aprovacao('CADASTRO_PRODUTOR', 'Cadastro do produtor (ao aprovar o pedido)'),
       aprovacao('CADASTRO_PROPRIEDADE_RURAL', 'Cadastro da propriedade (ao aprovar o pedido)'),
     ],
@@ -299,6 +300,59 @@ export const APP_CATALOG: AppDefinition[] = [
       criacao('CADASTRO_ATRACAO_TURISTICA', 'Cadastro — atração turística'),
       criacao('REGISTRO_EVENTO_TURISTICO', 'Evento turístico'),
       criacao('APOIO_FEIRA_EXPOSICAO', 'Evento — pedido de apoio a feira/exposição'),
+    ],
+  },
+  // ---------------------------------------------- apps gerais (2026-10-09)
+  {
+    code: 'agenda-atendimentos',
+    name: 'Agenda de Atendimentos',
+    description: 'Marca dia, hora e local de orientações, consultorias, atendimentos e visitas em casa',
+    departments: [
+      'ADMINISTRACAO', 'AGRICULTURA', 'ASSISTENCIA_SOCIAL', 'CULTURA', 'DEFESA_CIVIL', 'DESENVOLVIMENTO_ECONOMICO', 'EDUCACAO', 'ESPORTES',
+      'FINANCAS', 'HABITACAO', 'MEIO_AMBIENTE', 'MOBILIDADE_URBANA', 'OBRAS_PUBLICAS', 'PLANEJAMENTO_URBANO', 'POLITICAS_MULHERES',
+      'SEGURANCA_PUBLICA', 'SERVICOS_PUBLICOS', 'TECNOLOGIA_INOVACAO', 'TRANSPORTES_TRANSITO', 'TURISMO',
+    ],
+    route: '/admin/apps/agenda-atendimentos',
+    actions: [
+      criacao('AGENDAMENTO_ATENDIMENTO', 'Agendamento de atendimento ou orientação (a equipe marca o horário)'),
+      criacao('AGENDA_VISITA_DOMICILIAR', 'Visita ou atendimento na casa da pessoa'),
+    ],
+  },
+  {
+    code: 'cursos',
+    name: 'Cursos e Capacitações',
+    description: 'Cursos e turmas com vagas, lista de espera, frequência e conclusão',
+    departments: [
+      'ADMINISTRACAO', 'AGRICULTURA', 'ASSISTENCIA_SOCIAL', 'DEFESA_CIVIL', 'DESENVOLVIMENTO_ECONOMICO', 'EDUCACAO', 'HABITACAO',
+      'MEIO_AMBIENTE', 'MOBILIDADE_URBANA', 'POLITICAS_MULHERES', 'SEGURANCA_PUBLICA', 'TECNOLOGIA_INOVACAO', 'TRANSPORTES_TRANSITO', 'TURISMO',
+    ],
+    route: '/admin/apps/cursos',
+    actions: [criacao('INSCRICAO_CURSO', 'Inscrição em curso ou capacitação')],
+  },
+  {
+    code: 'feiras-mercados',
+    name: 'Feiras e Mercados',
+    description: 'Boxes, bancas e pontos de feira e mercado municipal, com permissão e validade',
+    departments: ['SERVICOS_PUBLICOS', 'DESENVOLVIMENTO_ECONOMICO', 'AGRICULTURA'],
+    route: '/admin/apps/feiras-mercados',
+    actions: [
+      criacao('PERMISSAO_ESPACO_FEIRA', 'Permissão de box, banca ou ponto'),
+      criacao('INSCRICAO_FEIRA', 'Inscrição em feira (produtor, artesanato, empreendedores)'),
+      criacao('RELOCACAO_PONTO_FEIRA', 'Troca de box, banca ou ponto'),
+    ],
+  },
+  {
+    code: 'cemiterios',
+    name: 'Cemitérios',
+    description: 'Sepulturas e jazigos, concessões, sepultamentos e exumações',
+    departments: ['SERVICOS_PUBLICOS'],
+    route: '/admin/apps/cemiterios',
+    actions: [
+      criacao('CONCESSAO_SEPULTURA', 'Concessão de sepultura/jazigo'),
+      criacao('RENOVACAO_CONCESSAO_SEPULTURA', 'Renovação da concessão'),
+      criacao('TRANSFERENCIA_JAZIGO', 'Transferência de titularidade'),
+      criacao('EXUMACAO', 'Exumação'),
+      criacao('SEPULTAMENTO', 'Sepultamento'),
     ],
   },
 ];

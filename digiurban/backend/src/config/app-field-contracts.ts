@@ -560,4 +560,132 @@ export const APP_FIELD_CONTRACTS: Record<string, AppActionContract> = {
   CADASTRO_ATRACAO_TURISTICA: PRESTADOR(['atracao turistica', 'atrativo turistico', 'ponto turistico', 'trilha', 'museu', 'turismo rural']),
   REGISTRO_EVENTO_TURISTICO: { ...EVENTO_TURISTICO(['evento turistico', 'calendario de eventos', 'calendario oficial', 'festa tradicional', 'festival']), notKeywords: ['inscricao para', 'participacao'] },
   APOIO_FEIRA_EXPOSICAO: { ...EVENTO_TURISTICO(['feira', 'exposicao', 'apoio a evento', 'apoio municipal a eventos']), notKeywords: ['participacao', 'inscricao para', 'barraca'] },
+
+  // ------------------------------------------------ apps gerais (2026-10-09)
+  // Agenda de Atendimentos (várias secretarias; a Saúde tem agenda própria)
+  AGENDAMENTO_ATENDIMENTO: {
+    keywords: ['agendamento', 'agendar', 'atendimento', 'atendimento geral', 'orientacao', 'orientacao juridica', 'mediacao', 'mediacao de conflitos', 'assessoria',
+      'consultoria', 'mentoria', 'acompanhamento', 'sala do empreendedor', 'cras', 'creas', 'centro de referencia', 'defensoria', 'pericia psicossocial',
+      'assistente social', 'atendimento social', 'aee', 'atendimento educacional especializado', 'plantao de duvidas', 'visita monitorada', 'visita tecnica',
+      'visita ao museu', 'visita pedagogica', 'makerspace', 'laboratorio maker', 'lab de fabricacao'],
+    notKeywords: ['ferias', 'veiculo oficial', 'manifestacao', 'ouvidoria', 'curso', 'capacitacao', 'oficina', 'emergencia', 'emergencial', 'denuncia', 'ocorrencia',
+      'relatorio', 'vistoria', 'domiciliar', 'em domicilio', 'home care', 'autorizacao', 'coleta', 'entulho'],
+    roles: [
+      { role: r('assunto', 'Assunto do atendimento', 'textarea', ['assunto', 'motivo', 'o que precisa', 'necessidade', 'tipo de atendimento', 'descricao', 'duvida', 'demanda']), required: true, fallback: 'serviceName' },
+      { role: r('dataPreferencial', 'Dia que prefere', 'date', ['data preferencial', 'data desejada', 'melhor dia', 'dia preferido', 'data']) },
+      { role: r('turnoPreferencial', 'Turno ou horário que prefere', 'text', ['turno', 'periodo', 'horario preferencial', 'melhor horario', 'horario']) },
+      { role: TELEFONE },
+    ],
+  },
+  AGENDA_VISITA_DOMICILIAR: {
+    keywords: ['visita domiciliar', 'atendimento domiciliar', 'em domicilio', 'home care', 'visita em casa', 'atendimento em casa'],
+    notKeywords: ['relatorio', 'declaracao'],
+    roles: [
+      { role: ENDERECO, required: true, fallback: 'profile' },
+      { role: BAIRRO, fallback: 'profile' },
+      { role: r('assunto', 'Motivo da visita', 'textarea', ['assunto', 'motivo', 'necessidade', 'situacao', 'descricao']), required: true, fallback: 'serviceName' },
+      { role: r('dataPreferencial', 'Dia que prefere', 'date', ['data preferencial', 'data desejada', 'melhor dia', 'data']) },
+      { role: TELEFONE },
+    ],
+  },
+  // Cursos e Capacitações (Cultura e Esportes têm oficinas/escolinhas próprias)
+  INSCRICAO_CURSO: {
+    keywords: ['curso', 'cursos', 'capacitacao', 'qualificacao', 'qualificacao profissional', 'treinamento', 'workshop', 'workshops', 'profissionalizante',
+      'inclusao digital', 'oficina social', 'grupo ou oficina', 'oficinas e workshops', 'oficina de artesanato', 'oficinas de artesanato', 'oficina de beleza',
+      'oficina de autoestima', 'oficina de reciclagem', 'oficina de manutencao', 'aula de informatica', 'letramento digital'],
+    notKeywords: ['certificado', 'atestado', 'calendario', 'credenciamento', 'instrutor', 'bolsa', 'transporte', 'auxilio', 'escolar', 'escola'],
+    roles: [
+      { role: r('curso', 'Curso desejado', 'text', ['curso', 'oficina', 'capacitacao', 'qualificacao', 'treinamento', 'area de interesse', 'turma', 'modulo']), required: true, fallback: 'serviceName' },
+      { role: r('escolaridade', 'Escolaridade', 'text', ['escolaridade', 'formacao', 'grau de instrucao']) },
+      { role: TELEFONE },
+      { role: OBSERVACOES },
+    ],
+  },
+  // Feiras e Mercados
+  PERMISSAO_ESPACO_FEIRA: {
+    keywords: ['box', 'box em mercado', 'mercado municipal', 'banca', 'banca de feira', 'feira livre', 'permissao de uso de box', 'permissao de box', 'quiosque', 'ponto de venda na feira'],
+    notKeywords: ['limpeza', 'relocacao', 'troca de', 'mudanca de', 'pesquisa de mercado', 'denuncia', 'evento', 'ocupacao temporaria'],
+    roles: [
+      { role: r('localDesejado', 'Feira ou mercado', 'text', ['feira', 'mercado', 'local desejado', 'local', 'ponto']), required: true, fallback: 'serviceName' },
+      { role: r('atividade', 'O que vai vender', 'text', ['produto', 'o que vende', 'atividade', 'mercadoria', 'ramo', 'tipo de produto']) },
+      { role: TELEFONE },
+    ],
+  },
+  INSCRICAO_FEIRA: {
+    keywords: ['inscricao na feira', 'inscricao em feira', 'inscricao para feira', 'feira do produtor', 'feira de artesanato', 'feira de empreendedores',
+      'feira de empreendedoras', 'participacao em feiras', 'participacao em feira', 'feira da agricultura familiar', 'feira de economia solidaria', 'feira'],
+    notKeywords: ['limpeza', 'box', 'relocacao', 'feira de ciencias', 'apoio', 'turismo', 'evento em feira', 'carrinheiro', 'calcada'],
+    roles: [
+      { role: r('localDesejado', 'Qual feira', 'text', ['feira', 'nome da feira', 'evento', 'local']), required: true, fallback: 'serviceName' },
+      { role: r('atividade', 'O que vai vender ou expor', 'text', ['produto', 'o que vende', 'atividade', 'mercadoria', 'ramo', 'tipo de produto', 'producao']) },
+      { role: TELEFONE },
+    ],
+  },
+  RELOCACAO_PONTO_FEIRA: {
+    keywords: ['relocacao de ponto', 'relocacao', 'troca de box', 'mudanca de box', 'transferencia de box', 'troca de banca'],
+    roles: [
+      { role: r('localDesejado', 'Para onde quer mudar', 'text', ['novo local', 'local desejado', 'para onde', 'feira', 'mercado', 'local']), required: true, fallback: 'serviceName' },
+      { role: MOTIVO },
+      { role: TELEFONE },
+    ],
+  },
+  // Cemitérios (Serviços Públicos)
+  CONCESSAO_SEPULTURA: {
+    keywords: ['concessao de sepultura', 'concessao de jazigo', 'compra de jazigo', 'aquisicao de jazigo', 'sepultura', 'jazigo', 'gaveta no cemiterio', 'ossuario'],
+    notKeywords: ['renovacao', 'transferencia', 'titularidade', 'exumacao', 'limpeza', 'manutencao', 'sepultamento'],
+    roles: [
+      { role: r('cemiterio', 'Cemitério', 'text', ['cemiterio']) },
+      { role: r('nomeFalecido', 'Nome do falecido (se houver)', 'text', ['falecido', 'nome do falecido']) },
+      { role: TELEFONE },
+    ],
+  },
+  RENOVACAO_CONCESSAO_SEPULTURA: {
+    keywords: ['renovacao de concessao', 'renovacao de sepultura', 'renovacao de jazigo', 'renovacao da concessao'],
+    roles: [
+      { role: r('cemiterio', 'Cemitério', 'text', ['cemiterio']) },
+      { role: r('numeroJazigo', 'Quadra e número da sepultura', 'text', ['numero da sepultura', 'numero do jazigo', 'quadra', 'sepultura', 'jazigo', 'localizacao']), required: true },
+      { role: TELEFONE },
+    ],
+  },
+  TRANSFERENCIA_JAZIGO: {
+    keywords: ['transferencia de titularidade de jazigo', 'transferencia de jazigo', 'titularidade de jazigo', 'titularidade de sepultura', 'transferencia de sepultura'],
+    roles: [
+      { role: r('numeroJazigo', 'Quadra e número da sepultura', 'text', ['numero da sepultura', 'numero do jazigo', 'quadra', 'sepultura', 'jazigo', 'localizacao']), required: true },
+      { role: r('novoTitular', 'Novo titular', 'text', ['novo titular', 'nome do novo titular', 'herdeiro']) },
+      { role: r('cpfNovoTitular', 'CPF do novo titular', 'text', ['cpf do novo titular', 'documento do novo titular']) },
+      { role: TELEFONE },
+    ],
+  },
+  EXUMACAO: {
+    keywords: ['exumacao', 'translado de restos', 'traslado de restos', 'transferencia de restos mortais'],
+    roles: [
+      { role: r('nomeFalecido', 'Nome do falecido', 'text', ['falecido', 'nome do falecido', 'sepultado']), required: true },
+      { role: r('numeroJazigo', 'Quadra e número da sepultura', 'text', ['numero da sepultura', 'numero do jazigo', 'quadra', 'sepultura', 'jazigo', 'localizacao']), required: true },
+      { role: MOTIVO },
+      { role: TELEFONE },
+    ],
+  },
+  SEPULTAMENTO: {
+    keywords: ['sepultamento', 'autorizacao de sepultamento', 'enterro', 'inumacao'],
+    notKeywords: ['exumacao'],
+    roles: [
+      { role: r('nomeFalecido', 'Nome do falecido', 'text', ['falecido', 'nome do falecido']), required: true },
+      { role: r('dataObito', 'Data do óbito', 'date', ['data do obito', 'data de falecimento', 'obito']) },
+      { role: r('cemiterio', 'Cemitério', 'text', ['cemiterio']) },
+      { role: TELEFONE },
+    ],
+  },
+  // Agricultura: sementes, mudas, adubo e calcário pelo estoque de sementes
+  DISTRIBUICAO_INSUMOS: {
+    keywords: ['semente', 'sementes', 'muda', 'mudas', 'mudas frutiferas', 'adubo', 'adubo organico', 'calcario', 'insumo', 'insumos', 'esterco', 'distribuicao de sementes',
+      'distribuicao de mudas'],
+    notKeywords: ['viveiro', 'curso', 'enxame', 'cadastro'],
+    roles: [
+      { role: r('item', 'O que precisa', 'text', ['tipo de semente', 'tipo de muda', 'semente', 'muda', 'especie', 'cultura', 'insumo', 'item', 'produto']), required: true, fallback: 'serviceName' },
+      { role: r('quantidade', 'Quantidade', 'text', ['quantidade', 'qtd']) },
+      { role: r('areaPlantio', 'Área de plantio (hectares)', 'number', ['area', 'hectare', 'alqueire']) },
+      { role: r('finalidade', 'Para que vai usar', 'text', ['finalidade', 'uso', 'epoca de plantio']) },
+      { role: TELEFONE },
+    ],
+  },
 };

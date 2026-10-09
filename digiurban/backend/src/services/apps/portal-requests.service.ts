@@ -595,6 +595,19 @@ export const PORTAL_REQUEST_ACTIONS = [
   'CADASTRO_ATRACAO_TURISTICA',
   'REGISTRO_EVENTO_TURISTICO',
   'APOIO_FEIRA_EXPOSICAO',
+  // Apps gerais (2026-10-09)
+  'AGENDAMENTO_ATENDIMENTO',
+  'AGENDA_VISITA_DOMICILIAR',
+  'INSCRICAO_CURSO',
+  'PERMISSAO_ESPACO_FEIRA',
+  'INSCRICAO_FEIRA',
+  'RELOCACAO_PONTO_FEIRA',
+  'CONCESSAO_SEPULTURA',
+  'RENOVACAO_CONCESSAO_SEPULTURA',
+  'TRANSFERENCIA_JAZIGO',
+  'EXUMACAO',
+  'SEPULTAMENTO',
+  'DISTRIBUICAO_INSUMOS',
 ] as const;
 
 export async function convertPortalRequest(action: string, protocol: PortalProtocol): Promise<boolean> {
@@ -651,6 +664,44 @@ export async function convertPortalRequest(action: string, protocol: PortalProto
     case 'APOIO_FEIRA_EXPOSICAO':
       await eventoTuristico(protocol, action);
       return true;
+    // Apps gerais (2026-10-09)
+    case 'AGENDAMENTO_ATENDIMENTO':
+    case 'AGENDA_VISITA_DOMICILIAR': {
+      const { default: agenda } = await import('../apps-gerais/agenda-atendimentos.service');
+      await agenda.fromPortal(protocol, action);
+      logger.info(`[portal→app] ${protocol.number || protocol.id} → agenda de atendimentos`);
+      return true;
+    }
+    case 'INSCRICAO_CURSO': {
+      const { default: cursos } = await import('../apps-gerais/cursos.service');
+      await cursos.fromPortal(protocol);
+      logger.info(`[portal→app] ${protocol.number || protocol.id} → inscrição em curso`);
+      return true;
+    }
+    case 'PERMISSAO_ESPACO_FEIRA':
+    case 'INSCRICAO_FEIRA':
+    case 'RELOCACAO_PONTO_FEIRA': {
+      const { default: feiras } = await import('../apps-gerais/feiras.service');
+      await feiras.fromPortal(protocol, action);
+      logger.info(`[portal→app] ${protocol.number || protocol.id} → feiras e mercados`);
+      return true;
+    }
+    case 'CONCESSAO_SEPULTURA':
+    case 'RENOVACAO_CONCESSAO_SEPULTURA':
+    case 'TRANSFERENCIA_JAZIGO':
+    case 'EXUMACAO':
+    case 'SEPULTAMENTO': {
+      const { default: cemiterio } = await import('../apps-gerais/cemiterio.service');
+      await cemiterio.fromPortal(protocol, action);
+      logger.info(`[portal→app] ${protocol.number || protocol.id} → cemitérios`);
+      return true;
+    }
+    case 'DISTRIBUICAO_INSUMOS': {
+      const { default: insumos } = await import('../agricultura/pedido-insumo.service');
+      await insumos.fromPortal(protocol);
+      logger.info(`[portal→app] ${protocol.number || protocol.id} → pedido de insumos agrícolas`);
+      return true;
+    }
     default:
       return false;
   }

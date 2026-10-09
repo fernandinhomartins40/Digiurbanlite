@@ -15,6 +15,7 @@
     "smoke:pendings": "tsx scripts/smoke-pendings.ts",
     "smoke:apps": "tsx scripts/smoke-apps-portal.ts",
     "smoke:apps:antigos": "tsx scripts/smoke-apps-legados.ts",
+    "smoke:apps:gerais": "tsx scripts/smoke-apps-gerais.ts",
     "type-check": "tsc --noEmit",
     "type-check:watch": "tsc --noEmit --watch",
     "migrate:ts": "ts-migrate migrate src",

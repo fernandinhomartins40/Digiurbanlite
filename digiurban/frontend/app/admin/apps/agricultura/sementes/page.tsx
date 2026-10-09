@@ -27,6 +27,7 @@ import { MetricCard } from '@/components/agricultura/metric-card';
 import { DataTable } from '@/components/agricultura/data-table';
 import { useSementes, useProdutores } from '@/lib/hooks/use-agricultura-api';
 import { useToast } from '@/components/ui/use-toast';
+import { PedidosInsumos, TIPO_INSUMO } from '@/components/apps/portal-requests/PedidosInsumos';
 
 export default function DistribuicaoSementesPage() {
   const router = useRouter();
@@ -173,7 +174,7 @@ export default function DistribuicaoSementesPage() {
     {
       key: 'tipo',
       label: 'Tipo',
-      render: (item: any) => <Badge variant="outline">{item.tipo === 'MUDA' ? 'Muda' : 'Semente'}</Badge>,
+      render: (item: any) => <Badge variant="outline">{TIPO_INSUMO[item.tipo] || item.tipo}</Badge>,
     },
     {
       key: 'quantidade',
@@ -313,7 +314,12 @@ export default function DistribuicaoSementesPage() {
         <TabsList>
           <TabsTrigger value="estoque">Estoque</TabsTrigger>
           <TabsTrigger value="distribuicoes">Distribuições</TabsTrigger>
+          <TabsTrigger value="pedidos">Pedidos do portal</TabsTrigger>
         </TabsList>
+
+        <TabsContent value="pedidos" className="space-y-4">
+          <PedidosInsumos estoque={estoque} onMudou={loadData} />
+        </TabsContent>
 
         <TabsContent value="estoque" className="space-y-4">
           <div className="flex justify-end">
@@ -389,6 +395,9 @@ export default function DistribuicaoSementesPage() {
                   <SelectContent>
                     <SelectItem value="SEMENTE">Semente</SelectItem>
                     <SelectItem value="MUDA">Muda</SelectItem>
+                    <SelectItem value="ADUBO">Adubo</SelectItem>
+                    <SelectItem value="CALCARIO">Calcário</SelectItem>
+                    <SelectItem value="OUTRO">Outro insumo</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
