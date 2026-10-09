@@ -148,3 +148,22 @@ biométrico de criança) antes de ser trabalho de tela.
 ## Depois do deploy
 Rodar **"Atualizar catálogo de serviços"** em cada município (Super-admin › município) para os serviços existentes
 passarem a mandar o pedido para o app certo (inclusive os apps novos) e receberem os formulários novos de TFD e matrícula.
+
+## Serviços novos e os apps (2026-10-09)
+
+**Problema:** serviço criado por sugestão nunca ia para app (as ~940 sugestões não dizem destino) e, mesmo apontado
+para o app, chegava VAZIO: o app lia os campos pelo nome interno (`tipoMaquina`), mas o serviço manual tem `campo_1728…`
+e a sugestão tem `tipo_maquina`.
+
+**Feito:**
+- Contrato de campos de cada uma das ~85 portas de app (`config/app-field-contracts.ts`): o app acha o dado pelo
+  título do campo ("Nome da criança" → aluno), pelo perfil do cidadão (telefone, nascimento, endereço quando o caso é a
+  casa) ou pelo nome do serviço ("Oficina de Violão"). O que não reconhece chega em "Outros dados" — nada se perde.
+- Sugestão de app pelo nome do serviço, sem IA. Medido contra o catálogo: 107 serviços que vão para app → 104 no app e
+  porta certos, 3 no app certo com outra porta, 0 em app errado; documentos/declarações/2ª via ficam na fila.
+  Das 946 sugestões, ~120 passam a ir para o app certo.
+- Assistente de serviço (criar e editar), passo "Depois do pedido": num serviço novo já escolhe o app sugerido e diz
+  por quê; mostra o que o app vai receber, deixa trocar o campo e acrescenta com um clique os campos que faltam.
+- Aba Configurar da secretaria: avisa serviço que já existe e "pode ir para o app X" ou "o app não recebe: …".
+- Catálogo: as 4 licenças ambientais não perguntavam o endereço do local — agora perguntam. Os 104 serviços do catálogo
+  que vão para app mandam todos os dados obrigatórios (trava em teste).

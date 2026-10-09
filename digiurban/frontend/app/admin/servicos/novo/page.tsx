@@ -81,6 +81,8 @@ export default function NewServicePage() {
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [errors, setErrors] = useState<Record<string, string>>({})
 
+  // Destino escolhido (pela pessoa ou pela sugestão automática): a sugestão não age de novo
+  const [destinationTouched, setDestinationTouched] = useState(false)
   const [formData, setFormData] = useState<ServiceFormData>({
     name: '',
     description: '',
@@ -499,6 +501,12 @@ export default function NewServicePage() {
           destination={formData.destination}
           appAction={formData.appAction}
           onChange={handleFieldChange}
+          serviceName={formData.name}
+          description={formData.description}
+          serviceSubtype={formData.serviceSubtype}
+          formSchema={formData.formSchema}
+          autoSuggest={!destinationTouched}
+          onTouched={() => setDestinationTouched(true)}
         />
 
         {/* Step 6: Configuração de Unicidade */}

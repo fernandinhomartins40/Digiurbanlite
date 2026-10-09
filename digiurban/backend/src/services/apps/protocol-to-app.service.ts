@@ -157,6 +157,33 @@ function pickField(customData: any, pattern: RegExp): string | undefined {
   return undefined;
 }
 
+/**
+ * Dados do pedido no formato que o app lê, para QUALQUER serviço — inclusive o
+ * criado à mão ou por sugestão (campos `campo_123`, `tipo_maquina`...): cada
+ * dado é achado pelo título do campo no formulário do serviço, completado pelo
+ * nome do serviço/perfil quando o contrato permite, e o resto vai em
+ * "Outros dados". Ver `app-intelligence.service.ts`.
+ */
+export async function appReadyData(protocolId: string, action: string, customData: any): Promise<any> {
+  try {
+    const protocol = await prisma.protocolSimplified.findFirst({
+      where: { id: protocolId },
+      select: {
+        service: { select: { name: true, formSchema: true } },
+        citizen: { select: { name: true, phone: true, birthDate: true, address: true } },
+      },
+    });
+    const { withAppFields } = await import('./app-intelligence.service');
+    return withAppFields(action, protocol?.service?.formSchema, customData, {
+      serviceName: protocol?.service?.name,
+      citizen: protocol?.citizen as any,
+    });
+  } catch (error) {
+    logger.warn(`[protocol-to-app] não foi possível preparar os dados do pedido ${protocolId} para o app (segue com os originais)`, error);
+    return customData || {};
+  }
+}
+
 async function findProdutorDoCidadao(citizenId?: string | null, cpfForm?: string) {
   const cpfLimpo = cpfForm ? cpfForm.replace(/\D/g, '') : undefined;
   if (citizenId) {
@@ -182,7 +209,8 @@ async function findProdutorDoCidadao(citizenId?: string | null, cpfForm?: string
  */
 export async function convertProtocolToAppOnCreate(protocol: ProtocolLike): Promise<void> {
   const moduleType = protocol.moduleType || '';
-  const customData = protocol.customData || {};
+  const customData = await appReadyData(protocol.id, moduleType, protocol.customData);
+  protocol = { ...protocol, customData };
 
   if (PORTAL_QUEUE_MODULE_TYPES.has(moduleType)) {
     const { convertPortalRequest } = await import('./portal-requests.service');
@@ -741,7 +769,7 @@ export async function convertProtocolToAppOnApproval(protocolId: string): Promis
   // Destino declarado no serviço (legado: moduleType do protocolo)
   const moduleType =
     (protocol.service ? resolveAppRoutingKey(protocol.service) : protocol.moduleType) || '';
-  const customData: any = protocol.customData || {};
+  const customData: any = await appReadyData(protocol.id, moduleType, protocol.customData);
 
   // ---- Agricultura: Cadastro de Produtor → ProdutorRural ----
   if (moduleType === 'CADASTRO_PRODUTOR') {

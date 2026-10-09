@@ -24,6 +24,18 @@ export function SecretariaConfigurarTab({ slug, code }: { slug: string; code: st
   const { services, loading } = useSecretariaServices(slug)
   const { displayedSuggestions, totalAvailable, isLoading: suggestionsLoading } = useServiceSuggestions(slug)
   const [apps, setApps] = useState<CatalogApp[]>([])
+  // Avisos dos serviços que já existem: podem ir para um app / faltam dados para o app
+  const [hints, setHints] = useState<Record<string, any>>({})
+  useEffect(() => {
+    apiRequest(`/api/app-catalog/service-hints?departmentCode=${code}`)
+      .then((res: any) => {
+        const map: Record<string, any> = {}
+        for (const hint of res?.data?.hints || []) map[hint.serviceId] = hint
+        setHints(map)
+      })
+      .catch(() => undefined)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [code])
 
   useEffect(() => {
     apiRequest(`/api/app-catalog?departmentCode=${code}&withActions=true`)
@@ -79,6 +91,16 @@ export function SecretariaConfigurarTab({ slug, code }: { slug: string; code: st
                         </Badge>
                       ) : (
                         <Badge variant="outline">Analisado no protocolo</Badge>
+                      )}
+                      {hints[service.id]?.kind === 'COULD_GO_TO_APP' && (
+                        <Badge className="ml-2 bg-amber-100 text-amber-900 hover:bg-amber-100">
+                          Pode ir para o app {hints[service.id].appName} — revise em Editar
+                        </Badge>
+                      )}
+                      {hints[service.id]?.kind === 'MISSING_FIELDS' && (
+                        <Badge className="ml-2 bg-amber-100 text-amber-900 hover:bg-amber-100">
+                          O app não recebe: {hints[service.id].missing.join(', ')} — revise em Editar
+                        </Badge>
                       )}
                     </div>
                   </div>

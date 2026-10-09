@@ -56,7 +56,9 @@ export class ProtocolToTFDService {
     // 4. Extrair dados do customData do protocolo. Aceita também os nomes do
     // formulário antigo do catálogo ("destino", "finalidade", "dataIda") para
     // pedidos feitos antes do formulário ser alinhado ao app.
-    const customData = (protocol.customData || {}) as any;
+    // Campos achados pelo título do formulário (serviço criado à mão ou por sugestão)
+    const { appReadyData } = await import('../apps/protocol-to-app.service');
+    const customData = (await appReadyData(protocol.id, 'ENCAMINHAMENTOS_TFD', protocol.customData)) as any;
     const text = (...values: unknown[]) => {
       for (const value of values) if (typeof value === 'string' && value.trim()) return value.trim();
       return undefined;

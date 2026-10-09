@@ -27,6 +27,7 @@ export const environmentServices: ServiceDefinition[] = [
       type: 'object',
       citizenFields: ['citizen_name', 'citizen_cpf', 'citizen_rg', 'citizen_birthdate', 'citizen_email', 'citizen_phone', 'citizen_phonesecondary', 'citizen_zipcode', 'citizen_address', 'citizen_addressnumber', 'citizen_addresscomplement', 'citizen_neighborhood'],
       properties: {
+        enderecoEmpreendimento: { type: 'string', title: 'Endereço do local', maxLength: 300 },
         tipoAtividade: {
           type: 'string',
           title: 'Tipo de Atividade',
@@ -45,7 +46,7 @@ export const environmentServices: ServiceDefinition[] = [
           widget: 'textarea'
         }
       },
-      required: ['tipoAtividade', 'areaImpacto', 'medidasMitigacao']
+      required: ['enderecoEmpreendimento', 'tipoAtividade', 'areaImpacto', 'medidasMitigacao']
     }
   },
 
@@ -237,6 +238,7 @@ export const environmentServices: ServiceDefinition[] = [
       type: 'object',
       citizenFields: ['citizen_name', 'citizen_cpf', 'citizen_rg', 'citizen_birthdate', 'citizen_email', 'citizen_phone', 'citizen_phonesecondary', 'citizen_zipcode', 'citizen_address', 'citizen_addressnumber', 'citizen_addresscomplement', 'citizen_neighborhood'],
       properties: {
+        enderecoEmpreendimento: { type: 'string', title: 'Endereço do local', maxLength: 300 },
         tipoAtividade: {
           type: 'string',
           title: 'Tipo de Atividade',
@@ -255,7 +257,7 @@ export const environmentServices: ServiceDefinition[] = [
           widget: 'textarea'
         }
       },
-      required: ['tipoAtividade', 'areaTotal', 'descricaoAtividade']
+      required: ['enderecoEmpreendimento', 'tipoAtividade', 'areaTotal', 'descricaoAtividade']
     }
   },
 
@@ -278,6 +280,7 @@ export const environmentServices: ServiceDefinition[] = [
       type: 'object',
       citizenFields: ['citizen_name', 'citizen_cpf', 'citizen_rg', 'citizen_birthdate', 'citizen_email', 'citizen_phone', 'citizen_phonesecondary', 'citizen_zipcode', 'citizen_address', 'citizen_addressnumber', 'citizen_addresscomplement', 'citizen_neighborhood'],
       properties: {
+        enderecoEmpreendimento: { type: 'string', title: 'Endereço do local', maxLength: 300 },
         areaSupressao: {
           type: 'number',
           title: 'Área de Supressão (hectares)',
@@ -301,7 +304,7 @@ export const environmentServices: ServiceDefinition[] = [
           widget: 'textarea'
         }
       },
-      required: ['areaSupressao', 'tipoVegetacao', 'finalidade']
+      required: ['enderecoEmpreendimento', 'areaSupressao', 'tipoVegetacao', 'finalidade']
     }
   },
 
@@ -552,6 +555,7 @@ export const environmentServices: ServiceDefinition[] = [
       type: 'object',
       citizenFields: ['citizen_name', 'citizen_cpf', 'citizen_rg', 'citizen_birthdate', 'citizen_email', 'citizen_phone', 'citizen_phonesecondary', 'citizen_zipcode', 'citizen_address', 'citizen_addressnumber', 'citizen_addresscomplement', 'citizen_neighborhood'],
       properties: {
+        enderecoEmpreendimento: { type: 'string', title: 'Endereço do local', maxLength: 300 },
         nomeEmpreendimento: {
           type: 'string',
           title: 'Nome do Empreendimento',
@@ -575,7 +579,7 @@ export const environmentServices: ServiceDefinition[] = [
           widget: 'textarea'
         }
       },
-      required: ['nomeEmpreendimento', 'tipoAtividade', 'potencialPoluidor', 'descricaoProcesso']
+      required: ['enderecoEmpreendimento', 'nomeEmpreendimento', 'tipoAtividade', 'potencialPoluidor', 'descricaoProcesso']
     }
   },
 

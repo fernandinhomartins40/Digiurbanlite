@@ -466,6 +466,10 @@ export default function EditServicePage() {
                 destination={formData.destination}
                 appAction={formData.appAction}
                 onChange={handleFieldChange}
+                serviceName={formData.name}
+                description={formData.description}
+                serviceSubtype={(formData as any).serviceSubtype}
+                formSchema={formData.formSchema}
               />
             </CardContent>
           </Card>

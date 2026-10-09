@@ -53,7 +53,7 @@ async function main() {
     await runAsPlatform(async () => {
       const where = { tenantId: tenant.id };
       const tables = [
-        'encaminhamentoEmprego', 'vagaEmprego', 'curriculoTrabalhador', 'servicoMecanizacao', 'maquinaAgricola', 'ocorrenciaSeguranca', 'prestadorTuristico', 'eventoTuristico',
+        'matriculaOficina', 'encaminhamentoEmprego', 'vagaEmprego', 'curriculoTrabalhador', 'servicoMecanizacao', 'maquinaAgricola', 'ocorrenciaSeguranca', 'prestadorTuristico', 'eventoTuristico',
         'participanteAtividade', 'atividadeColetiva', 'visitaDomiciliar', 'examePreNatal', 'consultaPreNatal', 'acompanhamentoPreNatal',
         'procedimentoOdonto', 'atendimentoOdontologico', 'atendimentoMedico', 'filaAtendimento', 'unidadeSaude',
         'solicitacaoAssistenciaTecnica', 'produtorRural', 'matricula', 'inscricaoMatricula', 'solicitacaoTransporteEscolar', 'alunoRota', 'rotaEscolar', 'veiculoEscolar',
@@ -176,7 +176,7 @@ async function scenario() {
   const programa = await prisma.programaSocial.create({ data: { nome: 'Cesta Básica', isActive: true } as any });
   const pBen = await open('CESTA_BASICA', { quantidadePessoasFamilia: 4, motivoSolicitacao: 'Desemprego', situacaoEmergencial: 'Desemprego' });
   const ben = await prisma.inscricaoProgramaSocial.findFirst({ where: { protocolId: pBen.id } });
-  check('pedido virou inscrição no programa', !!ben && ben.programaId === programa.id && ben.tipoSolicitado === 'Cesta Básica', ben);
+  check('pedido virou inscrição no programa certo', !!ben && ben.programaId === programa.id && !!ben.tipoSolicitado, ben);
   check('sem família no CadÚnico a inscrição entra mesmo assim', !!ben && ben.familiaId === null);
   if (ben) {
     await programaSocialService.analisarInscricao({ inscricaoId: ben.id, analistaId: user.id, aprovado: true });
@@ -363,6 +363,56 @@ async function scenario() {
   check('pedido virou evento com data', festa?.nome === 'Festa do Milho' && festa?.publicoEstimado === 2000 && !!festa?.dataInicio, festa);
   await turismoService.indeferirEvento(festa!.id, user.id, 'Praça em reforma na data');
   check('não aprovar o evento encerra o pedido', (await statusOf(pEv.id)) === 'CONCLUIDO');
+
+  // --------------------------------- serviço novo: criado à mão e por sugestão
+  console.log('\nServiço novo (à mão / por sugestão) — o app reconhece os dados pelo título');
+  const manual = await prisma.serviceSimplified.create({
+    data: {
+      name: 'Vaga na creche do bairro', departmentId: dept.id, serviceType: 'COM_DADOS', estimatedDays: 10, destination: 'APP', appAction: 'MATRICULA_ESCOLAR',
+      formSchema: { type: 'object', properties: {
+        campo_1: { title: 'Nome da criança', type: 'string' },
+        campo_2: { title: 'Data de nascimento', type: 'string', format: 'date' },
+        campo_3: { title: 'Turma (ano)', type: 'string' },
+        campo_4: { title: 'Precisa de fralda?', type: 'boolean' },
+      } },
+    } as any,
+  });
+  const pManual = await prisma.protocolSimplified.create({
+    data: { number: `SMKAPP-${STAMP}-MAN`, title: 'manual', citizenId: citizen.id, serviceId: manual.id, departmentId: dept.id, status: 'VINCULADO',
+      customData: { campo_1: 'João Aluno da Silva', campo_2: '2018-03-10', campo_3: 'Maternal II', campo_4: true } } as any,
+  });
+  await convertProtocolToAppOnCreate({ ...pManual, moduleType: 'MATRICULA_ESCOLAR' } as any);
+  const inscManual = await prisma.inscricaoMatricula.findFirst({ where: { protocolId: pManual.id } });
+  check('formulário feito à mão: nome, nascimento e série chegam à matrícula', inscManual?.nomeAluno === 'João Aluno da Silva' && inscManual?.serie === 'Maternal II' && inscManual?.alunoId === filho.id, inscManual);
+  check('campo não reconhecido chega em "Outros dados"', !!inscManual?.observacoes?.includes('Precisa de fralda?: Sim'), inscManual?.observacoes);
+
+  const sugerido = await prisma.serviceSimplified.create({
+    data: {
+      name: 'Empréstimo de Máquinas Agrícolas', departmentId: dept.id, serviceType: 'COM_DADOS', estimatedDays: 7, destination: 'APP', appAction: 'SOLICITACAO_MAQUINAS',
+      formSchema: { type: 'object', properties: {
+        tipo_maquina: { title: 'Tipo de Máquina/Implemento', type: 'string' },
+        area_trabalhar: { title: 'Área a Trabalhar (hectares)', type: 'number' },
+        data_preferencial: { title: 'Data Preferencial de Uso', type: 'string', format: 'date' },
+      } },
+    } as any,
+  });
+  const pSug = await prisma.protocolSimplified.create({
+    data: { number: `SMKAPP-${STAMP}-SUG`, title: 'sugestao', citizenId: citizen.id, serviceId: sugerido.id, departmentId: dept.id, status: 'VINCULADO',
+      customData: { tipo_maquina: 'Grade', area_trabalhar: 2.5, data_preferencial: '2026-11-20' } } as any,
+  });
+  await convertProtocolToAppOnCreate({ ...pSug, moduleType: 'SOLICITACAO_MAQUINAS' } as any);
+  const servSug = await prisma.servicoMecanizacao.findFirst({ where: { protocolId: pSug.id } });
+  check('formulário da sugestão (snake_case): máquina, área e data chegam à mecanização', servSug?.tipoMaquina === 'Grade' && servSug?.areaHectares === 2.5 && !!servSug?.dataDesejada, servSug);
+
+  const semCampo = await prisma.serviceSimplified.create({
+    data: { name: 'Oficina de Violão', departmentId: dept.id, serviceType: 'COM_DADOS', estimatedDays: 10, destination: 'APP', appAction: 'INSCRICAO_OFICINA', formSchema: { type: 'object', properties: {} } } as any,
+  });
+  const pSemCampo = await prisma.protocolSimplified.create({
+    data: { number: `SMKAPP-${STAMP}-OFI`, title: 'oficina', citizenId: citizen.id, serviceId: semCampo.id, departmentId: dept.id, status: 'VINCULADO', customData: {} } as any,
+  });
+  await convertProtocolToAppOnCreate({ ...pSemCampo, moduleType: 'INSCRICAO_OFICINA' } as any);
+  const matOficina = await prisma.matriculaOficina.findFirst({ where: { protocolId: pSemCampo.id } });
+  check('sem campo de oficina: o nome do serviço diz a oficina', !!matOficina && JSON.stringify(matOficina).includes('Oficina de Violão'), matOficina);
 
   // ---------------------------------------------------------------- idempotência
   await convertProtocolToAppOnCreate({ ...pMed, moduleType: 'CONTROLE_MEDICAMENTOS' } as any);

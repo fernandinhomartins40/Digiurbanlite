@@ -254,11 +254,15 @@ async function beneficioSocial(protocol: PortalProtocol, action: string) {
     where: { OR: [{ responsavelFamiliarId: protocol.citizenId }, { membros: { some: { citizenId: protocol.citizenId } } }] },
     select: { id: true },
   });
-  const chave = normalizeName(tipo).replace(/\(.*\)/, '').trim();
+  // Programa pelo que foi pedido; se não achar (ex.: o "tipo" veio do nome do
+  // serviço), tenta o tipo padrão desta porta
   const programas = await prisma.programaSocial.findMany({ where: { isActive: true }, select: { id: true, nome: true } });
-  const programa = chave
-    ? programas.find((p) => normalizeName(p.nome) === chave) || programas.find((p) => normalizeName(p.nome).includes(chave) || chave.includes(normalizeName(p.nome)))
-    : undefined;
+  const acharPrograma = (texto?: string) => {
+    const chave = normalizeName(texto).replace(/\(.*\)/, '').trim();
+    if (!chave) return undefined;
+    return programas.find((p) => normalizeName(p.nome) === chave) || programas.find((p) => normalizeName(p.nome).includes(chave) || chave.includes(normalizeName(p.nome)));
+  };
+  const programa = acharPrograma(tipo) || acharPrograma(TIPO_PADRAO[action]);
 
   const resumo = [
     field(data, 'motivoSolicitacao', 'descricaoSituacao') && `Motivo: ${field(data, 'motivoSolicitacao', 'descricaoSituacao')}`,
