@@ -1,4 +1,5 @@
 import { ConsultaStatus } from '@prisma/client';
+import { brasiliaAt, brasiliaDayBounds, brasiliaDayKey, weekDayOf } from './brasilia-time';
 import { prisma } from '../../lib/prisma';
 
 
@@ -168,14 +169,16 @@ export class AgendaMedicaService {
    * Verificar disponibilidade de horários
    */
   async getHorariosDisponiveis(agendaId: string, data: Date) {
+    const dia = brasiliaDayKey(data);
+    const { start, end } = brasiliaDayBounds(dia);
     const agenda = await prisma.agendaMedica.findUnique({
       where: { id: agendaId },
       include: {
         consultas: {
           where: {
             dataHora: {
-              gte: new Date(data.setHours(0, 0, 0, 0)),
-              lt: new Date(data.setHours(23, 59, 59, 999)),
+              gte: start,
+              lt: end,
             },
             status: {
               in: ['AGENDADA', 'CONFIRMADA'],
@@ -190,7 +193,7 @@ export class AgendaMedicaService {
     }
 
     // Verificar se o dia da semana corresponde
-    if (data.getDay() !== agenda.diaSemana) {
+    if (weekDayOf(dia) !== agenda.diaSemana) {
       throw new Error('Data não corresponde ao dia da semana da agenda');
     }
 
@@ -215,8 +218,7 @@ export class AgendaMedicaService {
         .toString()
         .padStart(2, '0')}`;
 
-      const dataHora = new Date(data);
-      dataHora.setHours(hora, minuto, 0, 0);
+      const dataHora = brasiliaAt(dia, horarioStr);
 
       const disponivel = !consultasAgendadas.includes(dataHora.toISOString());
 
@@ -258,17 +260,21 @@ export class AgendaMedicaService {
     }
 
     // Verificar se o dia da semana corresponde
-    if (data.dataHora.getDay() !== agenda.diaSemana) {
+    const dia = brasiliaDayKey(data.dataHora);
+    if (weekDayOf(dia) !== agenda.diaSemana) {
       throw new Error('Data não corresponde ao dia da semana da agenda');
     }
 
-    // Verificar se o cidadão já tem consulta no mesmo dia
+    // Verificar se o cidadão já tem consulta no mesmo dia. Cópias da data: o
+    // setHours direto em data.dataHora mudava o horário e toda consulta era
+    // gravada às 23:59.
+    const { start: inicioDia, end: fimDia } = brasiliaDayBounds(dia);
     const consultaMesmoDia = await prisma.consultaAgendada.findFirst({
       where: {
         citizenId: data.citizenId,
         dataHora: {
-          gte: new Date(data.dataHora.setHours(0, 0, 0, 0)),
-          lt: new Date(data.dataHora.setHours(23, 59, 59, 999)),
+          gte: inicioDia,
+          lt: fimDia,
         },
         status: {
           in: ['AGENDADA', 'CONFIRMADA'],
@@ -418,12 +424,13 @@ export class AgendaMedicaService {
    * Buscar consultas do dia
    */
   async getConsultasDoDia(agendaId: string, data: Date) {
+    const { start, end } = brasiliaDayBounds(brasiliaDayKey(data));
     return await prisma.consultaAgendada.findMany({
       where: {
         agendaId,
         dataHora: {
-          gte: new Date(data.setHours(0, 0, 0, 0)),
-          lt: new Date(data.setHours(23, 59, 59, 999)),
+          gte: start,
+          lt: end,
         },
       },
       orderBy: { dataHora: 'asc' },

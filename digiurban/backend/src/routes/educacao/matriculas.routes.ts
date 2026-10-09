@@ -11,16 +11,23 @@ async function comPessoas(itens: any[]) {
       itens.flatMap((i) => [i.alunoId, i.responsavelId]).filter(Boolean)
     )
   );
-  if (ids.length === 0) return itens;
+  if (ids.length === 0 && !itens.some((i) => i.protocolId)) return itens;
   const pessoas = await prisma.citizen.findMany({
     where: { id: { in: ids } },
     select: { id: true, name: true, cpf: true },
   });
   const porId = new Map(pessoas.map((p) => [p.id, p]));
+  // Número do pedido do portal que originou a inscrição (quando houver)
+  const protocolIds = itens.map((i) => i.protocolId).filter(Boolean);
+  const protocolos = protocolIds.length
+    ? await prisma.protocolSimplified.findMany({ where: { id: { in: protocolIds } }, select: { id: true, number: true } })
+    : [];
+  const numeroPorId = new Map(protocolos.map((p) => [p.id, p.number]));
   return itens.map((i) => ({
     ...i,
     aluno: porId.get(i.alunoId) || null,
     responsavel: porId.get(i.responsavelId) || null,
+    protocolNumber: i.protocolId ? numeroPorId.get(i.protocolId) || null : null,
   }));
 }
 
@@ -114,11 +121,40 @@ router.post('/inscricoes/:id/confirmar', async (req, res) => {
     const matricula = await matriculaService.confirmarMatricula({
       inscricaoId: req.params.id,
       responsavelId: req.body.responsavelId || (req as any).userId,
+      alunoId: req.body.alunoId || undefined,
       dataInicio: req.body.dataInicio ? new Date(req.body.dataInicio) : new Date(),
     });
     res.status(201).json(matricula);
   } catch (error: any) {
     res.status(400).json({ error: error.message || 'Erro ao confirmar matrícula' });
+  }
+});
+
+// POST /api/apps/educacao/matriculas/inscricoes/:id/lista-espera  { motivo? }
+router.post('/inscricoes/:id/lista-espera', async (req, res) => {
+  try {
+    res.json(await matriculaService.colocarEmEspera(req.params.id, (req as any).userId, req.body?.motivo));
+  } catch (error: any) {
+    res.status(400).json({ error: error.message || 'Erro ao colocar na lista de espera' });
+  }
+});
+
+// POST /api/apps/educacao/matriculas/inscricoes/:id/indeferir  { motivo }
+router.post('/inscricoes/:id/indeferir', async (req, res) => {
+  try {
+    res.json(await matriculaService.indeferir(req.params.id, (req as any).userId, String(req.body?.motivo || '')));
+  } catch (error: any) {
+    res.status(400).json({ error: error.message || 'Erro ao recusar a inscrição' });
+  }
+});
+
+// PUT /api/apps/educacao/matriculas/inscricoes/:id/aluno  { alunoId }
+router.put('/inscricoes/:id/aluno', async (req, res) => {
+  try {
+    if (!req.body?.alunoId) return res.status(400).json({ error: 'Escolha o cadastro do aluno' });
+    res.json(await matriculaService.vincularAluno(req.params.id, req.body.alunoId));
+  } catch (error: any) {
+    res.status(400).json({ error: error.message || 'Erro ao ligar o aluno' });
   }
 });
 

@@ -24,6 +24,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useToast } from '@/components/ui/use-toast';
 import { CidadaoSelector } from '@/components/apps/saude/CidadaoSelector';
 import { Bus, Route, Plus, UserPlus, UserMinus } from 'lucide-react';
+import { TransporteEscolarPedidos } from '@/components/apps/portal-requests/TransporteEscolarPedidos';
 
 const STATUS_VEICULO: Record<string, { label: string; className?: string; variant?: any }> = {
   DISPONIVEL: { label: 'Disponível', className: 'bg-green-600' },
@@ -52,6 +53,14 @@ export default function TransporteEscolarPage() {
   const [motoristas, setMotoristas] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [salvando, setSalvando] = useState(false);
+  const [pedidosPendentes, setPedidosPendentes] = useState(0);
+
+  // Contagem da aba "Pedidos do portal" (a lista carrega ao abrir a aba)
+  useEffect(() => {
+    api('/api/apps/educacao/transporte/solicitacoes?status=PENDENTE')
+      .then((data) => setPedidosPendentes(Array.isArray(data) ? data.length : 0))
+      .catch(() => undefined);
+  }, []);
 
   // Novo veículo
   const [novoVeiculoAberto, setNovoVeiculoAberto] = useState(false);
@@ -218,7 +227,12 @@ export default function TransporteEscolarPage() {
         <TabsList>
           <TabsTrigger value="rotas">Rotas ({rotas.length})</TabsTrigger>
           <TabsTrigger value="veiculos">Veículos ({veiculos.length})</TabsTrigger>
+          <TabsTrigger value="pedidos">Pedidos do portal ({pedidosPendentes})</TabsTrigger>
         </TabsList>
+
+        <TabsContent value="pedidos">
+          <TransporteEscolarPedidos rotas={rotas} onChanged={loadData} onCount={setPedidosPendentes} />
+        </TabsContent>
 
         <TabsContent value="rotas" className="space-y-4">
           <div className="flex justify-end">

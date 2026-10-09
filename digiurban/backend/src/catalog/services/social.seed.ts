@@ -110,6 +110,7 @@ export const socialServices: ServiceDefinition[] = [
     serviceType: 'COM_DADOS',
     serviceSubtype: ServiceSubtype.CAPTURA_COMPLETA,
     moduleType: 'AUXILIO_EMERGENCIAL',
+    appAction: 'CESTA_BASICA',
     requiresDocuments: true,
     requiredDocuments: ['CPF', 'Comprovante de Endereço', 'Declaração de Vulnerabilidade (se aplicável)'],
     estimatedDays: 3,

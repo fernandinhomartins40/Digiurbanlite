@@ -62,15 +62,32 @@ Complementa `AUDITORIA-APPS-SECRETARIAS.md` (2026-07-16) e `PLANO-IMPLEMENTACAO-
 
 ## O que falta para "todos funcionarem de verdade" (próximas fases)
 
-### Fase 1 — Pedido do portal entrando nos apps que hoje só funcionam no balcão (maior ganho)
-- **Educação**: "Matrícula Escolar" → inscrição de matrícula no app (a estrutura `InscricaoMatricula` existe, falta
-  ligar ao pedido: coluna `protocolId`, aluno como dependente da família, conversor, e devolver "vaga atribuída /
-  matrícula confirmada / lista de espera" ao pedido). Idem "Transporte Escolar" → aluno transportado.
-- **Assistência Social**: "Solicitação de Benefício", "Cesta Básica", "Benefício Eventual" → inscrição em programa
-  (`InscricaoProgramaSocial`, exige família no CadÚnico; criar a família pelo pedido quando não houver) + devolver ao pedido.
-- **Saúde**: "Agendamento de Consulta" → agenda da unidade (o app de agendamento existe); "Solicitação de
-  Medicamentos/Alto Custo" → fila da Farmácia.
-- **Trânsito**: "Renovação de credenciamento" e "Transferência de ponto de táxi" → achar a credencial pelo CPF/placa.
+### Fase 1 — FEITA (2026-10-08): pedido do portal entrando nos apps que só funcionavam no balcão
+
+| Pedido do catálogo | Vira no app | A equipe decide em | O que volta ao pedido |
+|---|---|---|---|
+| Matrícula Escolar | inscrição de matrícula (aluno achado na família do responsável; sem cadastro entra com o nome) | Educação › Matrículas | documentos conferidos/pendentes, vaga reservada, lista de espera, matrícula confirmada (conclui), recusada (conclui) |
+| Transporte Escolar | pedido de vaga (fila nova) | Educação › Transporte › aba "Pedidos do portal" | rota, horário e ponto (conclui) ou motivo da recusa |
+| Benefício Social, Cesta Básica, Auxílio Emergencial, Benefício Eventual | inscrição em programa (programa achado pelo nome; família do CadÚnico se houver) | Assistência Social › Benefícios | parecer favorável, benefício liberado (conclui), indeferido (conclui) |
+| Renovação de Credenciamento, Transferência de Ponto de Táxi | renovação/troca de ponto (fila nova, credencial achada por número, placa ou titular) | Trânsito › aba "Renovações e pontos" | nova validade / novo ponto (conclui) ou motivo |
+| Agendamento de Consulta Médica e Odontológica | pedido de consulta (fila nova) | Saúde › Agendamentos | dia, hora, profissional e unidade (conclui) ou motivo |
+| Solicitação de Medicamentos e de Alto Custo | pedido de remédio (fila nova) | Farmácia (painel) → "Entregar" abre a dispensação pronta | em falta (avisa), entregue com baixa no estoque (conclui), não atendido |
+
+Peças: `services/apps/portal-requests.service.ts` (pedido → fila), `portal-queues.service.ts` (decisões),
+`noteProtocolFromApp()` (recado ao cidadão no pedido + aviso no portal, sem e-mail), telas em
+`frontend/components/apps/portal-requests/`. Migração `20261011090000_apps_portal_requests`.
+Prova: `npm run smoke:apps` (25 conferências num município de teste; requer banco e Redis).
+
+Defeitos antigos achados e corrigidos no caminho:
+- **Agenda da Saúde**: toda consulta era gravada às 23:59 (a conferência do dia alterava a data) e, com o servidor em UTC,
+  o horário ocupado continuava "livre" e apareceria 3 h adiantado. Agora a agenda trabalha no horário de Brasília
+  (`agenda-medica/brasilia-time.ts`, com testes).
+- **Assistência Social**: depois do "Parecer favorável" a tela tratava o benefício como ativo e o passo "Conceder
+  benefício" nunca aparecia. Agora: parecer favorável → aguardando concessão → conceder → ativo.
+- **Matrícula**: a criação mandava ao banco campos que a tabela não tem (podia falhar com observações/anexos).
+
+Ainda fora (caso raro, tratar no balcão): pedido de matrícula feito em nome do próprio dependente; assistência técnica
+rural de quem ainda não é produtor cadastrado (a conversão é adiada e não é refeita sozinha).
 
 ### Fase 2 — Completar o Atendimento de Saúde
 Modelos já no banco, sem tela nem rota: atendimento **odontológico**, **pré-natal**, **visita domiciliar** (ACS),

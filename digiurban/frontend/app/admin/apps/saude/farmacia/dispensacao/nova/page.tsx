@@ -38,9 +38,23 @@ export default function NovaDispensacaoPage() {
     prescricaoId: '',
     observacoes: '',
   });
+  // Entrega de um pedido de remédio feito no portal (?solicitacao=ID)
+  const [pedidoPortal, setPedidoPortal] = useState<any>(null);
 
   useEffect(() => {
     loadEstoque();
+    const solicitacaoId = new URLSearchParams(window.location.search).get('solicitacao');
+    if (!solicitacaoId) return;
+    fetch(`/api/saude/farmacia/solicitacoes/${solicitacaoId}`, { credentials: 'include' })
+      .then((res) => (res.ok ? res.json() : null))
+      .then((pedido) => {
+        if (!pedido) return;
+        setPedidoPortal(pedido);
+        if (pedido.citizen) setSelectedCidadao(pedido.citizen);
+        // já procura o remédio pedido no estoque (primeira palavra do nome)
+        setSearchMedicamento(String(pedido.medicamento || '').split(' ')[0]);
+      })
+      .catch(() => undefined);
   }, []);
 
   useEffect(() => {
@@ -192,6 +206,9 @@ export default function NovaDispensacaoPage() {
         credentials: 'include',
         body: JSON.stringify({
           cidadaoId: selectedCidadao.id,
+          // conclui o pedido do portal quando a entrega é para quem pediu
+          solicitacaoMedicamentoId:
+            pedidoPortal && pedidoPortal.citizenId === selectedCidadao.id ? pedidoPortal.id : undefined,
           prescricaoId: formData.prescricaoId || undefined,
           observacoes: formData.observacoes || undefined,
           itens: itens.map((item) => ({
@@ -237,6 +254,15 @@ export default function NovaDispensacaoPage() {
           Voltar
         </Button>
       </div>
+
+      {pedidoPortal && (
+        <div className="rounded-lg border border-blue-300 bg-blue-50 p-4 text-sm text-blue-900">
+          Entrega do pedido feito no portal: <strong>{pedidoPortal.medicamento}</strong>
+          {pedidoPortal.dosagem ? ` ${pedidoPortal.dosagem}` : ''} para{' '}
+          <strong>{pedidoPortal.citizen?.name || 'o cidadão'}</strong>. Ao registrar, o estoque baixa e o cidadão é
+          avisado de que o pedido foi concluído.
+        </div>
+      )}
 
       <form onSubmit={handleSubmit} className="space-y-6">
         {/* Dados do Paciente */}

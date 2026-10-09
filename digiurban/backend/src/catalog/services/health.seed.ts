@@ -42,6 +42,7 @@ export const healthServices: ServiceDefinition[] = [
     serviceType: 'COM_DADOS',
     serviceSubtype: ServiceSubtype.CAPTURA_COMPLETA,
     moduleType: 'AGENDAMENTO_ODONTOLOGIA',
+    appAction: 'AGENDAMENTO_CONSULTA',
     requiresDocuments: true,
     requiredDocuments: ['Cartão SUS', 'RG ou CPF'],
     estimatedDays: 10,

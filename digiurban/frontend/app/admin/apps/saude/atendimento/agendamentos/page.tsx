@@ -23,6 +23,7 @@ import {
 import { useToast } from '@/components/ui/use-toast';
 import { CidadaoSelector } from '@/components/apps/saude/CidadaoSelector';
 import { CalendarDays, Check, X, UserX, CalendarPlus, Plus } from 'lucide-react';
+import { PedidosConsulta } from '@/components/apps/portal-requests/PedidosConsulta';
 
 const DIAS_SEMANA = [
   'Domingo',
@@ -71,6 +72,22 @@ export default function AgendamentosPage() {
   const [cidadao, setCidadao] = useState<any>(null);
   const [motivo, setMotivo] = useState('');
   const [salvando, setSalvando] = useState(false);
+
+  // Pedido de consulta do portal que está sendo marcado agora
+  const [pedidoAtivo, setPedidoAtivo] = useState<any>(null);
+  const [pedidosVersao, setPedidosVersao] = useState(0);
+
+  const iniciarPedido = (pedido: any) => {
+    setPedidoAtivo(pedido);
+    setCidadao(pedido.citizen ? { ...pedido.citizen } : null);
+    setMotivo(pedido.especialidade || '');
+  };
+
+  const largarPedido = () => {
+    setPedidoAtivo(null);
+    setCidadao(null);
+    setMotivo('');
+  };
 
   // Dialog nova agenda
   const [novaAgendaAberta, setNovaAgendaAberta] = useState(false);
@@ -153,12 +170,18 @@ export default function AgendamentosPage() {
           citizenId: cidadao.id,
           dataHora: `${data}T${slotSelecionado}:00`,
           motivoConsulta: motivo || undefined,
+          // consulta marcada a partir de um pedido do portal: conclui o pedido
+          solicitacaoId: pedidoAtivo && pedidoAtivo.citizen?.id === cidadao.id ? pedidoAtivo.id : undefined,
         }),
       });
-      toast({ title: 'Consulta agendada!' });
+      toast({ title: pedidoAtivo ? 'Consulta agendada! O cidadão foi avisado no pedido.' : 'Consulta agendada!' });
       setSlotSelecionado(null);
       setCidadao(null);
       setMotivo('');
+      if (pedidoAtivo) {
+        setPedidoAtivo(null);
+        setPedidosVersao((v) => v + 1);
+      }
       await carregarDia();
     } catch (error: any) {
       toast({
@@ -233,6 +256,21 @@ export default function AgendamentosPage() {
           Nova grade de agenda
         </Button>
       </div>
+
+      <PedidosConsulta onMarcar={iniciarPedido} ativoId={pedidoAtivo?.id} refreshKey={pedidosVersao} />
+
+      {pedidoAtivo && (
+        <div className="flex flex-col gap-2 rounded-lg border border-blue-300 bg-blue-50 p-4 text-sm text-blue-900 md:flex-row md:items-center md:justify-between">
+          <div>
+            Marcando a consulta de <strong>{pedidoAtivo.citizen?.name}</strong> ({pedidoAtivo.especialidade}
+            {pedidoAtivo.unidadePreferida ? `, prefere ${pedidoAtivo.unidadePreferida}` : ''}). Escolha o
+            profissional, o dia e clique num horário livre.
+          </div>
+          <Button size="sm" variant="outline" onClick={largarPedido}>
+            Deixar para depois
+          </Button>
+        </div>
+      )}
 
       {/* Seleção */}
       <Card>

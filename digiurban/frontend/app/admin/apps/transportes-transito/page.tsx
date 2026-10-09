@@ -37,6 +37,7 @@ import {
   Gavel,
   Wrench,
 } from 'lucide-react';
+import { AlteracoesCredencialPedidos } from '@/components/apps/portal-requests/AlteracoesCredencialPedidos';
 
 const STATUS_CREDENCIAL: Record<string, { label: string; className?: string }> = {
   SOLICITADA: { label: 'Solicitada', className: 'bg-yellow-600' },
@@ -95,6 +96,14 @@ export default function TransitoAppPage() {
   const [credenciais, setCredenciais] = useState<any[]>([]);
   const [vistorias, setVistorias] = useState<any[]>([]);
   const [defesas, setDefesas] = useState<any[]>([]);
+  const [alteracoesPendentes, setAlteracoesPendentes] = useState(0);
+
+  // Contagem da aba "Renovações e pontos" (a lista carrega ao abrir a aba)
+  useEffect(() => {
+    api('/api/apps/transportes-transito/alteracoes?status=PENDENTE')
+      .then((data) => setAlteracoesPendentes(Array.isArray(data) ? data.length : 0))
+      .catch(() => undefined);
+  }, []);
   const [loading, setLoading] = useState(true);
   const [salvando, setSalvando] = useState(false);
 
@@ -483,7 +492,12 @@ export default function TransitoAppPage() {
           <TabsTrigger value="credenciais">Credenciais</TabsTrigger>
           <TabsTrigger value="vistorias">Vistorias</TabsTrigger>
           <TabsTrigger value="defesas">Defesas (JARI)</TabsTrigger>
+          <TabsTrigger value="alteracoes">Renovações e pontos ({alteracoesPendentes})</TabsTrigger>
         </TabsList>
+
+        <TabsContent value="alteracoes" className="mt-4">
+          <AlteracoesCredencialPedidos credenciais={credenciais} onChanged={loadData} onCount={setAlteracoesPendentes} />
+        </TabsContent>
 
         {/* ----------------------------------------------------- credenciais */}
         <TabsContent value="credenciais" className="space-y-4 mt-4">

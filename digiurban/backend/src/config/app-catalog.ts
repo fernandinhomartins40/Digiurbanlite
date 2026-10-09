@@ -54,7 +54,7 @@ export const APP_CATALOG: AppDefinition[] = [
     description: 'Fila, triagem, consulta e prontuário',
     departments: ['SAUDE'],
     route: '/admin/apps/saude/atendimento',
-    actions: [],
+    actions: [criacao('AGENDAMENTO_CONSULTA', 'Pedido de consulta (a equipe marca na agenda)')],
   },
   {
     code: 'farmacia',
@@ -62,7 +62,10 @@ export const APP_CATALOG: AppDefinition[] = [
     description: 'Estoque, lotes e dispensação de medicamentos',
     departments: ['SAUDE'],
     route: '/admin/apps/saude/farmacia',
-    actions: [],
+    actions: [
+      criacao('CONTROLE_MEDICAMENTOS', 'Pedido de remédio'),
+      criacao('MEDICAMENTOS_ALTO_CUSTO', 'Pedido de remédio de alto custo'),
+    ],
   },
   {
     code: 'educacao',
@@ -70,7 +73,10 @@ export const APP_CATALOG: AppDefinition[] = [
     description: 'Unidades, turmas e matrículas',
     departments: ['EDUCACAO'],
     route: '/admin/apps/educacao',
-    actions: [],
+    actions: [
+      criacao('MATRICULA_ESCOLAR', 'Inscrição de matrícula escolar'),
+      criacao('TRANSPORTE_ESCOLAR', 'Pedido de vaga no transporte escolar'),
+    ],
   },
   {
     code: 'assistencia-social',
@@ -78,7 +84,11 @@ export const APP_CATALOG: AppDefinition[] = [
     description: 'Unidades CRAS/CREAS, famílias e programas sociais',
     departments: ['ASSISTENCIA_SOCIAL'],
     route: '/admin/apps/assistencia-social',
-    actions: [],
+    actions: [
+      criacao('SOLICITACAO_BENEFICIO', 'Pedido de benefício social'),
+      criacao('CESTA_BASICA', 'Pedido de cesta básica'),
+      criacao('BENEFICIO_EVENTUAL', 'Pedido de benefício eventual'),
+    ],
   },
   {
     code: 'servicos-publicos',
@@ -212,6 +222,8 @@ export const APP_CATALOG: AppDefinition[] = [
       criacao('CREDENCIAMENTO_TRANSPORTE_ESCOLAR', 'Credencial — transporte escolar'),
       criacao('VISTORIA_VEICULO', 'Vistoria de veículo'),
       criacao('DEFESA_AUTUACAO', 'Defesa de autuação'),
+      criacao('RENOVACAO_CREDENCIAMENTO', 'Renovação de credencial'),
+      criacao('TRANSFERENCIA_PONTO_TAXI', 'Troca de ponto de táxi'),
     ],
   },
   {

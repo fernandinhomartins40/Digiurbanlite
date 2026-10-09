@@ -1,6 +1,7 @@
 import { Router } from 'express';
 import agendaMedicaService from '../../services/agenda-medica/agenda-medica.service';
 import { prisma } from '../../lib/prisma';
+import { parseBrasiliaDateTime } from '../../services/agenda-medica/brasilia-time';
 
 const router = Router();
 
@@ -92,7 +93,7 @@ router.get('/agendas/:id/horarios', async (req, res) => {
     if (!req.query.data) {
       return res.status(400).json({ error: 'Parâmetro data é obrigatório (YYYY-MM-DD)' });
     }
-    const data = new Date(`${req.query.data}T12:00:00`);
+    const data = parseBrasiliaDateTime(String(req.query.data));
     const horarios = await agendaMedicaService.getHorariosDisponiveis(req.params.id, data);
     res.json(horarios);
   } catch (error: any) {
@@ -103,7 +104,7 @@ router.get('/agendas/:id/horarios', async (req, res) => {
 // GET /api/saude/agendamento/agendas/:id/consultas?data=YYYY-MM-DD - Consultas do dia
 router.get('/agendas/:id/consultas', async (req, res) => {
   try {
-    const data = req.query.data ? new Date(`${req.query.data}T12:00:00`) : new Date();
+    const data = req.query.data ? parseBrasiliaDateTime(String(req.query.data)) : new Date();
     const consultas = await agendaMedicaService.getConsultasDoDia(req.params.id, data);
     res.json(await comCidadaos(consultas));
   } catch (error: any) {
@@ -118,17 +119,29 @@ router.get('/agendas/:id/consultas', async (req, res) => {
 // POST /api/saude/agendamento/consultas - Marcar consulta
 router.post('/consultas', async (req, res) => {
   try {
-    const { agendaId, citizenId, dataHora, motivoConsulta, observacoes } = req.body;
+    const { agendaId, citizenId, dataHora, motivoConsulta, observacoes, solicitacaoId } = req.body;
     if (!agendaId || !citizenId || !dataHora) {
       return res.status(400).json({ error: 'agendaId, citizenId e dataHora são obrigatórios' });
+    }
+    if (solicitacaoId) {
+      const pedido = await prisma.solicitacaoConsulta.findFirst({ where: { id: solicitacaoId }, select: { status: true, citizenId: true } });
+      if (!pedido) return res.status(404).json({ error: 'Pedido de consulta não encontrado' });
+      if (pedido.status !== 'PENDENTE') return res.status(409).json({ error: 'Este pedido já foi decidido' });
+      if (pedido.citizenId !== citizenId) return res.status(400).json({ error: 'A consulta precisa ser de quem fez o pedido' });
     }
     const consulta = await agendaMedicaService.agendarConsulta({
       agendaId,
       citizenId,
-      dataHora: new Date(dataHora),
+      dataHora: parseBrasiliaDateTime(dataHora),
       motivoConsulta,
       observacoes,
     });
+    // Consulta marcada a partir de um pedido do portal: o pedido é concluído
+    // com dia, hora, profissional e unidade
+    if (solicitacaoId) {
+      const { pedidoConsultaQueue } = await import('../../services/apps/portal-queues.service');
+      await pedidoConsultaQueue.marcarAgendada(solicitacaoId, (req as any).userId, consulta);
+    }
     res.status(201).json(consulta);
   } catch (error: any) {
     res.status(400).json({ error: error.message || 'Erro ao agendar consulta' });
@@ -207,6 +220,27 @@ router.get('/relatorio-ocupacao', async (req, res) => {
     res.json(relatorio);
   } catch (error: any) {
     res.status(400).json({ error: error.message || 'Erro ao gerar relatório' });
+  }
+});
+
+// ---------------------------------------------- pedidos de consulta do portal
+// GET /api/saude/agendamento/solicitacoes?status=PENDENTE
+router.get('/solicitacoes', async (req, res) => {
+  try {
+    const { pedidoConsultaQueue } = await import('../../services/apps/portal-queues.service');
+    res.json(await pedidoConsultaQueue.list(req.query.status as string | undefined));
+  } catch (error: any) {
+    res.status(400).json({ error: error.message || 'Erro ao listar pedidos de consulta' });
+  }
+});
+
+// POST /api/saude/agendamento/solicitacoes/:id/recusar  { motivo }
+router.post('/solicitacoes/:id/recusar', async (req, res) => {
+  try {
+    const { pedidoConsultaQueue } = await import('../../services/apps/portal-queues.service');
+    res.json(await pedidoConsultaQueue.recusar(req.params.id, (req as any).userId, req.body?.motivo));
+  } catch (error: any) {
+    res.status(400).json({ error: error.message || 'Erro ao recusar pedido' });
   }
 });
 

@@ -89,6 +89,11 @@ export default function BeneficiosPage() {
   const [acaoMotivo, setAcaoMotivo] = useState<{ inscricao: any; rota: string; titulo: string } | null>(null);
   const [motivo, setMotivo] = useState('');
 
+  // Pedido do portal sem programa/família: a equipe completa
+  const [completar, setCompletar] = useState<any>(null);
+  const [completarPrograma, setCompletarPrograma] = useState('');
+  const [completarFamilia, setCompletarFamilia] = useState('');
+
   // Pagamento
   const [inscricaoPagamento, setInscricaoPagamento] = useState<any>(null);
   const [pagamento, setPagamento] = useState({ mesReferencia: '', valor: '', mecanismoPagamento: 'PIX' });
@@ -191,6 +196,41 @@ export default function BeneficiosPage() {
     }
   };
 
+  const abrirCompletar = (inscricao: any) => {
+    setCompletar(inscricao);
+    setCompletarPrograma(inscricao.programaId || '');
+    setCompletarFamilia(inscricao.familiaId || '');
+  };
+
+  const salvarCompletar = async () => {
+    if (!completar) return;
+    if (!completarPrograma && !completarFamilia) {
+      toast({ title: 'Escolha o programa ou a família', variant: 'destructive' });
+      return;
+    }
+    setSalvando(true);
+    try {
+      await api(`/api/apps/assistencia-social/programas/inscricoes/${completar.id}/completar`, {
+        method: 'PUT',
+        body: JSON.stringify({ programaId: completarPrograma || undefined, familiaId: completarFamilia || undefined }),
+      });
+      toast({ title: 'Inscrição atualizada' });
+      setCompletar(null);
+      await loadData();
+    } catch (error: any) {
+      toast({ title: 'Erro', description: String(error?.message || error), variant: 'destructive' });
+    } finally {
+      setSalvando(false);
+    }
+  };
+
+  const botaoCompletar = (i: any) =>
+    !i.programaId || !i.familiaId ? (
+      <Button size="sm" variant="outline" onClick={() => abrirCompletar(i)}>
+        {!i.programaId ? 'Escolher programa' : 'Ligar família'}
+      </Button>
+    ) : null;
+
   const confirmarAcaoMotivo = async () => {
     if (!acaoMotivo) return;
     setSalvando(true);
@@ -250,15 +290,21 @@ export default function BeneficiosPage() {
             >
               <X className="h-4 w-4 mr-1" /> Indeferir
             </Button>
+            {botaoCompletar(i)}
           </div>
         );
       case 'PARECER_FAVORAVEL':
       case 'PARECER_PSICOLOGICO_CONCLUIDO':
       case 'AGUARDANDO_APROVACAO':
         return (
-          <Button size="sm" className="bg-green-600 hover:bg-green-700" onClick={() => acao(i, 'aprovar')}>
-            <Check className="h-4 w-4 mr-1" /> Conceder benefício
-          </Button>
+          <div className="flex gap-1">
+            {i.programaId ? (
+              <Button size="sm" className="bg-green-600 hover:bg-green-700" onClick={() => acao(i, 'aprovar')}>
+                <Check className="h-4 w-4 mr-1" /> Conceder benefício
+              </Button>
+            ) : null}
+            {botaoCompletar(i)}
+          </div>
         );
       case 'APROVADO':
       case 'CONCEDIDO':
@@ -370,9 +416,20 @@ export default function BeneficiosPage() {
                           <div className="font-medium">
                             {i.beneficiario?.name || 'Beneficiário'}
                             <span className="text-sm text-gray-500 font-normal ml-2">
-                              {i.programa?.nome}
+                              {i.programa?.nome || (i.tipoSolicitado ? `Pediu: ${i.tipoSolicitado}` : 'Programa a definir')}
                             </span>
+                            {i.protocolNumber && (
+                              <Badge variant="outline" className="ml-2 font-normal">
+                                Pedido do portal {i.protocolNumber}
+                              </Badge>
+                            )}
+                            {!i.familiaId && (
+                              <Badge variant="secondary" className="ml-2 font-normal">
+                                Sem família no CadÚnico
+                              </Badge>
+                            )}
                           </div>
+                          {i.observacoes && <div className="text-xs text-gray-500 mt-1">{i.observacoes}</div>}
                           <div className="text-sm text-gray-500 mt-1">
                             {i.programa?.valorBeneficio
                               ? `R$ ${Number(i.programa.valorBeneficio).toLocaleString('pt-BR', {
@@ -635,6 +692,63 @@ export default function BeneficiosPage() {
             </Button>
             <Button onClick={registrarPagamento} disabled={salvando}>
               {salvando ? 'Registrando...' : 'Registrar'}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Dialog completar inscrição do portal */}
+      <Dialog open={!!completar} onOpenChange={(open) => !open && setCompletar(null)}>
+        <DialogContent className="max-w-lg">
+          <DialogHeader>
+            <DialogTitle>Completar inscrição — {completar?.beneficiario?.name}</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4">
+            {completar?.tipoSolicitado && (
+              <p className="text-sm text-gray-600">
+                O cidadão pediu: <strong>{completar.tipoSolicitado}</strong>
+              </p>
+            )}
+            <div>
+              <Label>Programa / benefício</Label>
+              <Select value={completarPrograma} onValueChange={setCompletarPrograma}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Selecione o programa" />
+                </SelectTrigger>
+                <SelectContent>
+                  {programas.map((p: any) => (
+                    <SelectItem key={p.id} value={p.id}>
+                      {p.nome}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              {programas.length === 0 && (
+                <p className="text-xs text-orange-600 mt-1">Cadastre o programa na aba Catálogo primeiro.</p>
+              )}
+            </div>
+            <div>
+              <Label>Família no CadÚnico (opcional)</Label>
+              <Select value={completarFamilia} onValueChange={setCompletarFamilia}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Selecione a família" />
+                </SelectTrigger>
+                <SelectContent>
+                  {familias.map((f: any) => (
+                    <SelectItem key={f.id} value={f.id}>
+                      {f.responsavel?.name || f.numeroCadUnico || f.id}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setCompletar(null)} disabled={salvando}>
+              Cancelar
+            </Button>
+            <Button onClick={salvarCompletar} disabled={salvando}>
+              {salvando ? 'Salvando...' : 'Salvar'}
             </Button>
           </DialogFooter>
         </DialogContent>

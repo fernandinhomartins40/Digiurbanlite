@@ -104,6 +104,23 @@ const OS_MODULE_TYPES: Record<string, string> = {
   ATENDIMENTOS_SERVICOS_PUBLICOS: 'Outros',
 };
 
+/**
+ * Pedidos do portal que entram numa fila própria do app (Fase 1 da auditoria
+ * de 2026-10-08) — conversão em `portal-requests.service.ts`.
+ */
+const PORTAL_QUEUE_MODULE_TYPES = new Set([
+  'MATRICULA_ESCOLAR',
+  'TRANSPORTE_ESCOLAR',
+  'SOLICITACAO_BENEFICIO',
+  'CESTA_BASICA',
+  'BENEFICIO_EVENTUAL',
+  'RENOVACAO_CREDENCIAMENTO',
+  'TRANSFERENCIA_PONTO_TAXI',
+  'AGENDAMENTO_CONSULTA',
+  'CONTROLE_MEDICAMENTOS',
+  'MEDICAMENTOS_ALTO_CUSTO',
+]);
+
 type ProtocolLike = {
   id: string;
   number?: string | null;
@@ -148,6 +165,12 @@ async function findProdutorDoCidadao(citizenId?: string | null, cpfForm?: string
 export async function convertProtocolToAppOnCreate(protocol: ProtocolLike): Promise<void> {
   const moduleType = protocol.moduleType || '';
   const customData = protocol.customData || {};
+
+  if (PORTAL_QUEUE_MODULE_TYPES.has(moduleType)) {
+    const { convertPortalRequest } = await import('./portal-requests.service');
+    await convertPortalRequest(moduleType, protocol);
+    return;
+  }
 
   // ---- Serviços Públicos → OrdemServico ----
   if (OS_MODULE_TYPES[moduleType]) {

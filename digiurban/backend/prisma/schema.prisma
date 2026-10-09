@@ -696,8 +696,8 @@ model Person {
   createdAt DateTime  @default(now())
   updatedAt DateTime  @updatedAt
 
-  user         User?
-  citizens     Citizen[]
+  user           User?
+  citizens       Citizen[]
   // uma identidade facial por município (a pessoa pode ser cidadã em mais de um)
   faceIdentities FaceRecognitionIdentity[]
 
@@ -959,16 +959,16 @@ model ProtocolCitizenLink {
 // ========================================
 
 model ServiceSimplified {
-  id           String  @id @default(cuid())
+  id                      String  @id @default(cuid())
   // documento entregue ao cidadão quando o pedido é concluído (modelo do
   // protocolo): gerado sozinho, assinado por quem concluiu e publicado
   finalDocumentTemplateId String?
   // Fase 2 Multi-Tenant (onda piloto) — ver nota em User.tenantId
-  tenantId     String?
-  tenant       Tenant? @relation("TenantServices", fields: [tenantId], references: [id])
-  name         String
-  description  String?
-  departmentId String
+  tenantId                String?
+  tenant                  Tenant? @relation("TenantServices", fields: [tenantId], references: [id])
+  name                    String
+  description             String?
+  departmentId            String
 
   // SIMPLIFICAÇÃO: 1 enum ao invés de 8 flags
   serviceType ServiceType
@@ -1010,8 +1010,8 @@ model ServiceSimplified {
 
   // Item do catálogo da plataforma de onde o serviço veio e a impressão do que
   // foi aplicado (melhoria do catálogo só chega se o município não editou)
-  catalogKey  String?
-  catalogHash String?
+  catalogKey    String?
+  catalogHash   String?
   // Só quem tem esta etiqueta (CitizenCategory.id) pode pedir pelo portal/assistente
   requiredTagId String?
 
@@ -1327,7 +1327,7 @@ model ProtocolDocument {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  protocol ProtocolSimplified @relation(fields: [protocolId], references: [id], onDelete: Cascade)
+  protocol ProtocolSimplified        @relation(fields: [protocolId], references: [id], onDelete: Cascade)
   versions ProtocolDocumentVersion[]
 
   @@index([protocolId, documentType])
@@ -5340,16 +5340,22 @@ model DestinoTFD {
 
 // MS-08: Sistema de Matrículas
 model InscricaoMatricula {
-  id            String           @id @default(cuid())
+  id                  String           @id @default(cuid())
   // Fase 2 Multi-Tenant (onda 5) — ver nota em User.tenantId
-  tenantId      String?
-  tenant        Tenant?          @relation("TenantInscricaoMatricula", fields: [tenantId], references: [id])
-  workflowId    String           @unique
-  alunoId       String
-  responsavelId String
-  anoLetivo     Int
-  serie         String
-  turno         TurnoPreferencia
+  tenantId            String?
+  tenant              Tenant?          @relation("TenantInscricaoMatricula", fields: [tenantId], references: [id])
+  workflowId          String           @unique
+  /// Pedido do portal que originou a inscrição (null = feita no balcão do app)
+  protocolId          String?          @unique
+  /// Cadastro do aluno; pode faltar no pedido do portal até a equipe ligar o dependente
+  alunoId             String?
+  nomeAluno           String?
+  dataNascimentoAluno DateTime?
+  responsavelId       String
+  anoLetivo           Int
+  serie               String
+  turno               TurnoPreferencia
+  observacoes         String?
 
   endereco Json
 
@@ -5773,10 +5779,15 @@ model InscricaoProgramaSocial {
   tenantId         String?
   tenant           Tenant? @relation("TenantInscricaoProgramaSocial", fields: [tenantId], references: [id])
   workflowId       String  @unique
-  programaId       String
+  /// Pedido do portal que originou a inscrição (null = feita no balcão do app)
+  protocolId       String? @unique
+  /// Programa e família podem faltar no pedido do portal até a análise da equipe
+  programaId       String?
   programaSocialId String?
-  familiaId        String
+  familiaId        String?
   beneficiarioId   String
+  /// O que o cidadão pediu (ex.: "Cesta Básica", "Auxílio Natalidade")
+  tipoSolicitado   String?
 
   cadUnicoValidado       Boolean @default(false)
   rendaPerCapita         Float?
@@ -6702,8 +6713,8 @@ model GeneratedDocument {
   sentTo  String? // Email do destinatário
 
   // Assinatura Digital
-  isSigned Boolean @default(false) // Se o documento foi assinado digitalmente
-  status   String  @default("PENDING_SIGNATURE") // PENDING_SIGNATURE, SIGNED, PUBLISHED, SUPERSEDED
+  isSigned       Boolean @default(false) // Se o documento foi assinado digitalmente
+  status         String  @default("PENDING_SIGNATURE") // PENDING_SIGNATURE, SIGNED, PUBLISHED, SUPERSEDED
   // Versão assinada: o original (intacto) + folha de assinaturas com QR + selo do município
   signedFilePath String?
   finalHash      String? // SHA-256 do arquivo assinado (conferência do arquivo baixado)
@@ -6772,7 +6783,7 @@ model CitizenCategory {
   // ═══════════════════════════════════════════════════════════════════
   // Array de moduleTypes que ativam esta categoria quando protocolo aprovado
   // Ex: ["CADASTRO_PRODUTOR", "RENOVACAO_PRODUTOR"]
-  triggerServices String[] @default([])
+  triggerServices   String[] @default([])
   // Serviços (por id) que dão a etiqueta ao concluir o pedido — escolhidos na tela
   triggerServiceIds String[] @default([])
 
@@ -7545,7 +7556,7 @@ model ExternalDocument {
   isActive    Boolean  @default(true)
 
   // Assinatura Digital
-  isSigned Boolean @default(false) // Se o documento foi assinado digitalmente
+  isSigned       Boolean @default(false) // Se o documento foi assinado digitalmente
   // Versão assinada: o original (intacto) + folha de assinaturas com QR + selo do município
   signedFilePath String?
   finalHash      String?
@@ -9236,7 +9247,7 @@ enum SituacaoVinculo {
 // ============================================
 
 model EmployeeHierarchy {
-  id String @id @default(cuid())
+  id       String  @id @default(cuid())
   tenantId String? // município (antes faltava)
 
   subordinadoId String
@@ -9265,8 +9276,8 @@ model EmployeeHierarchy {
   @@index([subordinadoId, ativo])
   @@index([supervisorId, ativo])
   @@index([organizationalUnitId])
-  @@map("employee_hierarchies")
   @@index([tenantId])
+  @@map("employee_hierarchies")
 }
 
 enum TipoHierarquia {
@@ -9281,7 +9292,7 @@ enum TipoHierarquia {
 // ============================================
 
 model HealthProfessionalData {
-  id String @id @default(cuid())
+  id       String  @id @default(cuid())
   tenantId String? // município (antes faltava)
 
   userId String @unique
@@ -9313,17 +9324,17 @@ model HealthProfessionalData {
   updatedAt DateTime @updatedAt
   createdBy String?
 
+  @@unique([tenantId, registroProfissional])
+  @@unique([tenantId, cns])
   @@index([userId])
   @@index([categoria, status])
   @@index([status])
-  @@map("health_professional_data")
   @@index([tenantId])
-  @@unique([tenantId, registroProfissional])
-  @@unique([tenantId, cns])
+  @@map("health_professional_data")
 }
 
 model EducationProfessionalData {
-  id String @id @default(cuid())
+  id       String  @id @default(cuid())
   tenantId String? // município (antes faltava)
 
   userId String @unique
@@ -9349,12 +9360,12 @@ model EducationProfessionalData {
 
   @@index([userId])
   @@index([categoria, ativo])
-  @@map("education_professional_data")
   @@index([tenantId])
+  @@map("education_professional_data")
 }
 
 model EngineeringProfessionalData {
-  id String @id @default(cuid())
+  id       String  @id @default(cuid())
   tenantId String? // município (antes faltava)
 
   userId String @unique
@@ -9377,15 +9388,15 @@ model EngineeringProfessionalData {
   updatedAt DateTime @updatedAt
   createdBy String?
 
+  @@unique([tenantId, registroProfissional])
   @@index([userId])
   @@index([categoria, ativo])
-  @@map("engineering_professional_data")
   @@index([tenantId])
-  @@unique([tenantId, registroProfissional])
+  @@map("engineering_professional_data")
 }
 
 model SocialAssistanceProfessionalData {
-  id String @id @default(cuid())
+  id       String  @id @default(cuid())
   tenantId String? // município (antes faltava)
 
   userId String @unique
@@ -9408,11 +9419,11 @@ model SocialAssistanceProfessionalData {
   updatedAt DateTime @updatedAt
   createdBy String?
 
+  @@unique([tenantId, registroProfissional])
   @@index([userId])
   @@index([categoria, ativo])
-  @@map("social_assistance_professional_data")
   @@index([tenantId])
-  @@unique([tenantId, registroProfissional])
+  @@map("social_assistance_professional_data")
 }
 
 // ============================================
@@ -11343,20 +11354,20 @@ model AiTenantWallet {
 /// Prazo de guarda das conversas (LGPD) — configurado no Super-admin, vale para a plataforma.
 /// Conversas ligadas a protocolo seguem o protocolo (registro administrativo) e não entram aqui.
 model PrivacyRetentionSettings {
-  id             String    @id @default("singleton")
-  enabled        Boolean   @default(false)
-  botChatDays    Int       @default(365) // conversas com o DigiBot
-  humanChatDays  Int       @default(730) // conversas cidadão × servidor sem protocolo
-  assistantDays  Int       @default(180) // Assistente de IA dos servidores
+  id                     String    @id @default("singleton")
+  enabled                Boolean   @default(false)
+  botChatDays            Int       @default(365) // conversas com o DigiBot
+  humanChatDays          Int       @default(730) // conversas cidadão × servidor sem protocolo
+  assistantDays          Int       @default(180) // Assistente de IA dos servidores
   // Biometria facial (sempre ativo: minimização de dado sensível, LGPD art. 6º III)
-  faceUnmatchedImageDays Int @default(7) // foto de quem a câmera NÃO reconheceu
-  faceEventImageDays     Int @default(90) // foto dos registros de entrada/saída reconhecidos
-  faceEventDays          Int @default(365) // o registro de passagem em si
+  faceUnmatchedImageDays Int       @default(7) // foto de quem a câmera NÃO reconheceu
+  faceEventImageDays     Int       @default(90) // foto dos registros de entrada/saída reconhecidos
+  faceEventDays          Int       @default(365) // o registro de passagem em si
   faceLastRunAt          DateTime?
   faceLastRunSummary     Json?
-  lastRunAt      DateTime?
-  lastRunSummary Json?
-  updatedAt      DateTime  @updatedAt
+  lastRunAt              DateTime?
+  lastRunSummary         Json?
+  updatedAt              DateTime  @updatedAt
 
   @@map("privacy_retention_settings")
 }
@@ -11517,15 +11528,15 @@ model DocumentReading {
 /// E-mail transacional da plataforma (envio pelo VeloMail). Chave da API e
 /// segredo do webhook ficam cifrados em platform_secrets (velomail_*).
 model TransactionalMailSettings {
-  id        String   @id @default("singleton")
-  enabled   Boolean  @default(false)
-  fromEmail String   @default("nao-responda@notificacoes.digiurban.com.br")
-  fromName  String   @default("DigiUrban")
-  apiBaseUrl String  @default("https://www.velomail.com.br/api")
+  id         String   @id @default("singleton")
+  enabled    Boolean  @default(false)
+  fromEmail  String   @default("nao-responda@notificacoes.digiurban.com.br")
+  fromName   String   @default("DigiUrban")
+  apiBaseUrl String   @default("https://www.velomail.com.br/api")
   /// caixa da equipe DigiUrban que recebe avisos de leads/contato da landing
-  teamEmail String?
-  updatedBy String?
-  updatedAt DateTime @updatedAt
+  teamEmail  String?
+  updatedBy  String?
+  updatedAt  DateTime @updatedAt
 
   @@map("transactional_mail_settings")
 }
@@ -11683,20 +11694,20 @@ model BotUnanswered {
 // ============================================================================
 
 model InternalProcessType {
-  id          String   @id @default(cuid())
-  tenantId    String?
-  name        String // "Memorando", "Ofício interno", "Pedido de parecer"...
-  prefix      String // MEM, OFI, REQ, PAR, PAD
-  description String?
-  defaultDays Int      @default(5) // prazo padrão (dias úteis)
-  isActive    Boolean  @default(true)
-  sortOrder   Int      @default(0)
+  id             String   @id @default(cuid())
+  tenantId       String?
+  name           String // "Memorando", "Ofício interno", "Pedido de parecer"...
+  prefix         String // MEM, OFI, REQ, PAR, PAD
+  description    String?
+  defaultDays    Int      @default(5) // prazo padrão (dias úteis)
+  isActive       Boolean  @default(true)
+  sortOrder      Int      @default(0)
   // fluxo com etapas (LICITACAO | REGISTRO_PRECOS | DISPENSA | INEXIGIBILIDADE | ADESAO_ATA | CUSTOM) — services/internal-process/flows
-  flowKey     String?
+  flowKey        String?
   // fluxo próprio do município (flowKey CUSTOM): etapas, papéis, prazos e documentos
   flowDefinition Json?
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
 
   processes InternalProcess[]
 
@@ -11771,23 +11782,23 @@ model InternalProcess {
 }
 
 model InternalProcessMovement {
-  id           String    @id @default(cuid())
-  tenantId     String?
-  processId    String
-  action       String // CRIADO | ENCAMINHADO | DEVOLVIDO | ATRIBUIDO | DESPACHO | PARECER_PEDIDO | PARECER_RESPONDIDO | CONCLUIDO | ARQUIVADO | CANCELADO | REABERTO
-  note         String?   @db.Text
-  fromUnitId   String?
-  fromUnitName String?
-  toUnitId     String?
-  toUnitName   String?
-  toUserId     String?
-  toUserName   String?
-  userId       String
-  userName     String
-  readAt       DateTime?
+  id            String    @id @default(cuid())
+  tenantId      String?
+  processId     String
+  action        String // CRIADO | ENCAMINHADO | DEVOLVIDO | ATRIBUIDO | DESPACHO | PARECER_PEDIDO | PARECER_RESPONDIDO | CONCLUIDO | ARQUIVADO | CANCELADO | REABERTO
+  note          String?   @db.Text
+  fromUnitId    String?
+  fromUnitName  String?
+  toUnitId      String?
+  toUnitName    String?
+  toUserId      String?
+  toUserName    String?
+  userId        String
+  userName      String
+  readAt        DateTime?
   // assinatura eletrônica: SHA-256 do conteúdo + quem + quando (os 16 primeiros = código de verificação)
   signatureHash String?
-  createdAt    DateTime  @default(now())
+  createdAt     DateTime  @default(now())
 
   process InternalProcess @relation(fields: [processId], references: [id], onDelete: Cascade)
 
@@ -11819,9 +11830,9 @@ model InternalProcessDocument {
   createdAt     DateTime  @default(now())
   updatedAt     DateTime  @updatedAt
 
-  process            InternalProcess                   @relation(fields: [processId], references: [id], onDelete: Cascade)
-  signatureRequests  InternalProcessSignatureRequest[]
-  signatures         Signature[]
+  process           InternalProcess                   @relation(fields: [processId], references: [id], onDelete: Cascade)
+  signatureRequests InternalProcessSignatureRequest[]
+  signatures        Signature[]
 
   @@index([processId])
   @@index([tenantId])
@@ -11927,7 +11938,9 @@ model GeoCache {
   precision        String?
   placeId          String?
   hits             Int       @default(0)
-  /** já perguntado ao Google para melhorar um ponto aproximado dos grátis */
+  /**
+   * já perguntado ao Google para melhorar um ponto aproximado dos grátis
+   */
   googleTriedAt    DateTime?
   expiresAt        DateTime?
   createdAt        DateTime  @default(now())
@@ -11936,4 +11949,114 @@ model GeoCache {
   @@index([provider])
   @@index([expiresAt])
   @@map("geo_cache")
+}
+
+// ============================================================================
+// FILAS DE PEDIDOS DO PORTAL NOS APPS (Fase 1 da auditoria de 2026-10-08)
+// O pedido (protocolo) é o recibo do cidadão; estas filas são a mesa da equipe.
+// ============================================================================
+
+/// Pedido de vaga no transporte escolar (Educação)
+model SolicitacaoTransporteEscolar {
+  id               String    @id @default(cuid())
+  tenantId         String?
+  protocolId       String?   @unique
+  responsavelId    String?
+  alunoId          String?
+  nomeAluno        String
+  unidadeEscolar   String?
+  serie            String?
+  turno            String?
+  enderecoEmbarque String?
+  distanciaKm      Float?
+  veiculoAdaptado  Boolean   @default(false)
+  status           String    @default("PENDENTE") // PENDENTE | ATENDIDA | INDEFERIDA
+  rotaId           String?
+  alunoRotaId      String?
+  motivo           String?
+  decididoPor      String?
+  decididoEm       DateTime?
+  dados            Json?
+  createdAt        DateTime  @default(now())
+  updatedAt        DateTime  @updatedAt
+
+  @@index([tenantId])
+  @@index([status])
+  @@map("solicitacoes_transporte_escolar")
+}
+
+/// Renovação ou troca de ponto de uma credencial existente (Transportes e Trânsito)
+model AlteracaoCredencial {
+  id              String    @id @default(cuid())
+  tenantId        String?
+  protocolId      String?   @unique
+  credencialId    String?
+  tipo            String // RENOVACAO | TRANSFERENCIA_PONTO
+  numeroInformado String?
+  placa           String?
+  pontoAtual      String?
+  pontoDesejado   String?
+  motivo          String?
+  citizenId       String?
+  status          String    @default("PENDENTE") // PENDENTE | APROVADA | RECUSADA
+  motivoDecisao   String?
+  decididoPor     String?
+  decididoEm      DateTime?
+  dados           Json?
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+
+  @@index([tenantId])
+  @@index([status])
+  @@index([credencialId])
+  @@map("alteracoes_credencial")
+}
+
+/// Pedido de consulta feito no portal, esperando a equipe marcar na agenda (Saúde)
+model SolicitacaoConsulta {
+  id                 String    @id @default(cuid())
+  tenantId           String?
+  protocolId         String?   @unique
+  citizenId          String
+  especialidade      String
+  unidadePreferida   String?
+  observacoes        String?
+  status             String    @default("PENDENTE") // PENDENTE | AGENDADA | RECUSADA
+  consultaAgendadaId String?
+  motivo             String?
+  decididoPor        String?
+  decididoEm         DateTime?
+  createdAt          DateTime  @default(now())
+  updatedAt          DateTime  @updatedAt
+
+  @@index([tenantId])
+  @@index([status])
+  @@index([citizenId])
+  @@map("solicitacoes_consulta")
+}
+
+/// Pedido de remédio feito no portal, esperando a Farmácia (Saúde)
+model SolicitacaoMedicamento {
+  id               String    @id @default(cuid())
+  tenantId         String?
+  protocolId       String?   @unique
+  citizenId        String
+  medicamento      String
+  principioAtivo   String?
+  dosagem          String?
+  unidadePreferida String?
+  usoContinuo      Boolean   @default(false)
+  altoCusto        Boolean   @default(false)
+  status           String    @default("PENDENTE") // PENDENTE | AGUARDANDO_ESTOQUE | ENTREGUE | RECUSADA
+  motivo           String?
+  decididoPor      String?
+  decididoEm       DateTime?
+  dados            Json?
+  createdAt        DateTime  @default(now())
+  updatedAt        DateTime  @updatedAt
+
+  @@index([tenantId])
+  @@index([status])
+  @@index([citizenId])
+  @@map("solicitacoes_medicamento")
 }

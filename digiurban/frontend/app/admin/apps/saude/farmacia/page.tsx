@@ -25,6 +25,7 @@ import {
   XCircle,
 } from 'lucide-react';
 import Link from 'next/link';
+import { PedidosMedicamento } from '@/components/apps/portal-requests/PedidosMedicamento';
 
 export default function FarmaciaPage() {
   const router = useRouter();
@@ -101,6 +102,8 @@ export default function FarmaciaPage() {
           </>
         }
       />
+
+      <PedidosMedicamento />
 
 
       {/* Estatísticas Principais */}

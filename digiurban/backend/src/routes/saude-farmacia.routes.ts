@@ -695,6 +695,14 @@ router.post('/dispensacao', async (req: Request, res: Response) => {
     if (!profissionalId) {
       return res.status(400).json({ error: 'profissionalId e obrigatorio' });
     }
+    // Entrega de um pedido de remédio feito no portal: depois de baixar o
+    // estoque, o pedido do cidadão é concluído
+    const solicitacaoMedicamentoId: string | undefined = req.body.solicitacaoMedicamentoId || undefined;
+    const fecharPedido = async () => {
+      if (!solicitacaoMedicamentoId) return;
+      const { pedidoMedicamentoQueue } = await import('../services/apps/portal-queues.service');
+      await pedidoMedicamentoQueue.marcarEntregue(solicitacaoMedicamentoId, String(req.userId || profissionalId), req.body.observacoes);
+    };
 
     if (Array.isArray(req.body.itens) && req.body.itens.length > 0) {
       const resultados = [] as any[];
@@ -735,6 +743,7 @@ router.post('/dispensacao', async (req: Request, res: Response) => {
         resultados.push(dispensacao);
       }
 
+      await fecharPedido();
       return res.status(201).json({
         success: true,
         totalItens: resultados.length,
@@ -742,10 +751,12 @@ router.post('/dispensacao', async (req: Request, res: Response) => {
       });
     }
 
+    const { solicitacaoMedicamentoId: _pedido, ...dados } = req.body;
     const dispensacao = await DispensacaoService.dispensarMedicamento({
-      ...req.body,
+      ...dados,
       dispensadoPor: profissionalId,
     });
+    await fecharPedido();
     res.status(201).json(dispensacao);
   } catch (error: any) {
     res.status(400).json({ error: error.message });
@@ -1088,6 +1099,59 @@ router.put('/dispensacao/:id', async (req: Request, res: Response) => {
     res.json(dispensacao);
   } catch (error: any) {
     res.status(400).json({ error: error.message });
+  }
+});
+
+// ============================================================================
+// PEDIDOS DE REMÉDIO FEITOS NO PORTAL
+// ============================================================================
+
+const pedidos = async () => (await import('../services/apps/portal-queues.service')).pedidoMedicamentoQueue;
+
+/** GET /api/saude/farmacia/solicitacoes?status=PENDENTE */
+router.get('/solicitacoes', async (req: Request, res: Response) => {
+  try {
+    res.json(await (await pedidos()).list(req.query.status as string | undefined));
+  } catch (error: any) {
+    res.status(400).json({ error: error.message || 'Erro ao listar pedidos de remédio' });
+  }
+});
+
+/** GET /api/saude/farmacia/solicitacoes/:id */
+router.get('/solicitacoes/:id', async (req: Request, res: Response) => {
+  try {
+    const item = await (await pedidos()).get(req.params.id);
+    if (!item) return res.status(404).json({ error: 'Pedido não encontrado' });
+    res.json(item);
+  } catch (error: any) {
+    res.status(400).json({ error: error.message || 'Erro ao buscar pedido' });
+  }
+});
+
+/** POST /api/saude/farmacia/solicitacoes/:id/aguardar  { mensagem? } */
+router.post('/solicitacoes/:id/aguardar', async (req: Request, res: Response) => {
+  try {
+    res.json(await (await pedidos()).aguardarEstoque(req.params.id, String(req.userId), req.body?.mensagem));
+  } catch (error: any) {
+    res.status(400).json({ error: error.message || 'Erro ao atualizar pedido' });
+  }
+});
+
+/** POST /api/saude/farmacia/solicitacoes/:id/entregar  { observacao? } — entregue fora da dispensação (ex.: alto custo do Estado) */
+router.post('/solicitacoes/:id/entregar', async (req: Request, res: Response) => {
+  try {
+    res.json(await (await pedidos()).marcarEntregue(req.params.id, String(req.userId), req.body?.observacao));
+  } catch (error: any) {
+    res.status(400).json({ error: error.message || 'Erro ao atualizar pedido' });
+  }
+});
+
+/** POST /api/saude/farmacia/solicitacoes/:id/recusar  { motivo } */
+router.post('/solicitacoes/:id/recusar', async (req: Request, res: Response) => {
+  try {
+    res.json(await (await pedidos()).recusar(req.params.id, String(req.userId), req.body?.motivo));
+  } catch (error: any) {
+    res.status(400).json({ error: error.message || 'Erro ao recusar pedido' });
   }
 });
 

@@ -1,5 +1,6 @@
 import { Router } from 'express';
 import transitoService from '../../services/transito/transito.service';
+import { alteracaoCredencialQueue } from '../../services/apps/portal-queues.service';
 import { requireDepartmentAccess } from '../../middleware/department-access';
 
 /**
@@ -190,6 +191,32 @@ router.post(
 router.post(
   '/defesas/:id/cancelar',
   handle(async (req, res) => res.json(await transitoService.cancelarDefesa(req.params.id)))
+);
+
+// ------------------------------------------- renovação e troca de ponto (portal)
+// GET /api/apps/transportes-transito/alteracoes?status=PENDENTE
+router.get(
+  '/alteracoes',
+  handle(async (req, res) => res.json(await alteracaoCredencialQueue.list(req.query.status as string | undefined)))
+);
+
+// POST /api/apps/transportes-transito/alteracoes/:id/aprovar  { credencialId?, validadeMeses? }
+router.post(
+  '/alteracoes/:id/aprovar',
+  handle(async (req, res) =>
+    res.json(
+      await alteracaoCredencialQueue.aprovar(req.params.id, req.userId, {
+        credencialId: req.body?.credencialId,
+        validadeMeses: req.body?.validadeMeses,
+      })
+    )
+  )
+);
+
+// POST /api/apps/transportes-transito/alteracoes/:id/recusar  { motivo }
+router.post(
+  '/alteracoes/:id/recusar',
+  handle(async (req, res) => res.json(await alteracaoCredencialQueue.recusar(req.params.id, req.userId, req.body?.motivo)))
 );
 
 export default router;

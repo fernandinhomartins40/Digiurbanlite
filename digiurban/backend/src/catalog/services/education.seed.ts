@@ -28,16 +28,17 @@ export const educationServices: ServiceDefinition[] = [
       properties: {
         nomeAluno: { type: 'string', title: 'Nome Completo do Aluno', minLength: 3, maxLength: 200 },
         dataNascimentoAluno: { type: 'string', title: 'Data de Nascimento do Aluno', format: 'date' },
+        cpfAluno: { type: 'string', title: 'CPF do Aluno (se tiver)', pattern: '^\\d{11}$', maxLength: 11 },
         sexoAluno: { type: 'string', title: 'Sexo do Aluno', enum: ['Masculino', 'Feminino'] },
-        grauParentesco: { type: 'string', title: 'Grau de Parentesco', enum: ['Pai', 'Mãe', 'Avô/Avó', 'Tio(a)', 'Irmão(ã)', 'Tutor Legal', 'Outro'] },
+        grauParentesco: { type: 'string', title: 'Você é o quê do aluno?', enum: ['Pai', 'Mãe', 'Avô/Avó', 'Tio(a)', 'Irmão(ã)', 'Tutor Legal', 'Outro'] },
         escolaPreferencial: { type: 'string', title: 'Escola Preferencial', maxLength: 200 },
-        nivelEnsino: { type: 'string', title: 'Nível de Ensino', enum: ['Creche (0-3 anos)', 'Pré-Escola (4-5 anos)', 'Fundamental I (1º ao 5º)', 'Fundamental II (6º ao 9º)', 'EJA'] },
-        turnoDesejado: { type: 'string', title: 'Turno Desejado', enum: ['Matutino', 'Vespertino', 'Integral', 'Noturno'] },
+        serie: { type: 'string', title: 'Série/Ano pretendido', enum: ['Berçário', 'Maternal I', 'Maternal II', 'Pré I', 'Pré II', '1º Ano', '2º Ano', '3º Ano', '4º Ano', '5º Ano', '6º Ano', '7º Ano', '8º Ano', '9º Ano', 'EJA'] },
+        turnoDesejado: { type: 'string', title: 'Turno Desejado', enum: ['Matutino', 'Vespertino', 'Integral', 'Tanto faz'] },
         possuiNecessidadesEspeciais: { type: 'boolean', title: 'Possui Necessidades Especiais?' },
         descricaoNecessidades: { type: 'string', title: 'Descrição das Necessidades', maxLength: 500, widget: 'textarea' },
         observacoes: { type: 'string', title: 'Observações', maxLength: 500, widget: 'textarea' }
       },
-      required: ['nomeAluno', 'dataNascimentoAluno', 'sexoAluno', 'grauParentesco', 'escolaPreferencial', 'nivelEnsino', 'turnoDesejado']
+      required: ['nomeAluno', 'dataNascimentoAluno', 'sexoAluno', 'grauParentesco', 'escolaPreferencial', 'serie', 'turnoDesejado']
     }
   },
 

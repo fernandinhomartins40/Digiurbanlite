@@ -91,7 +91,8 @@ describe('catálogo de serviços × apps', () => {
   it('apps com porta de entrada recebem pelo menos um serviço do catálogo', () => {
     const reached = new Set(routed.map(({ route }: any) => findAppAction(route.appAction)?.app.code));
     const withActions = ['tfd', 'servicos-publicos', 'licenciamento', 'meio-ambiente', 'habitacao', 'defesa-civil',
-      'politicas-mulheres', 'esportes', 'cultura', 'transportes-transito', 'mobilidade-urbana', 'agricultura'];
+      'politicas-mulheres', 'esportes', 'cultura', 'transportes-transito', 'mobilidade-urbana', 'agricultura',
+      'educacao', 'assistencia-social', 'saude-atendimento', 'farmacia'];
     expect(withActions.filter((code) => !reached.has(code))).toEqual([]);
   });
 

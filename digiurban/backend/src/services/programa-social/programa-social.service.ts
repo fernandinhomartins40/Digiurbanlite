@@ -5,12 +5,28 @@ import {
   MeioPagamento,
 } from '@prisma/client';
 import workflowInstanceService from '../workflow/workflow-instance.service';
+import { concludeProtocolFromApp, noteProtocolFromApp } from '../apps/app-protocol-bridge.service';
+
+const APP_NAME = 'Assistência Social';
+
+async function nomeDoPrograma(programaId?: string | null, fallback?: string | null) {
+  if (programaId) {
+    const programa = await prisma.programaSocial.findFirst({ where: { id: programaId }, select: { nome: true } });
+    if (programa?.nome) return programa.nome;
+  }
+  return fallback || 'benefício';
+}
 
 
 export interface CreateInscricaoProgramaDTO {
-  programaId: string;
-  familiaId: string;
+  /** Programa e família podem faltar no pedido do portal até a análise */
+  programaId?: string | null;
+  familiaId?: string | null;
   beneficiarioId: string;
+  /** Pedido do portal que originou a inscrição */
+  protocolId?: string;
+  /** O que o cidadão pediu (ex.: "Cesta Básica") */
+  tipoSolicitado?: string;
   documentosAnexados?: any;
   observacoes?: string;
 }
@@ -85,9 +101,12 @@ export class ProgramaSocialService {
 
     const inscricao = await prisma.inscricaoProgramaSocial.create({
       data: {
-        programaId: data.programaId,
-        familiaId: data.familiaId,
+        protocolId: data.protocolId || null,
+        programaId: data.programaId || null,
+        familiaId: data.familiaId || null,
         beneficiarioId: data.beneficiarioId,
+        tipoSolicitado: data.tipoSolicitado || null,
+        observacoes: data.observacoes || null,
         workflowId: workflow.id,
         status: 'AGUARDANDO_ANALISE',
       },
@@ -105,9 +124,11 @@ export class ProgramaSocialService {
     if (!inscricao) throw new Error('Inscrição não encontrada');
 
     if (data.aprovado) {
+      // "Aguardando concessão": antes ia direto para APROVADO, que a tela trata
+      // como benefício ativo — o passo de conceder nunca aparecia
       await prisma.inscricaoProgramaSocial.update({
         where: { id: data.inscricaoId },
-        data: { status: 'APROVADO' },
+        data: { status: 'AGUARDANDO_APROVACAO', analisadoPor: data.analistaId, dataAnalise: new Date(), parecerSocial: data.justificativa || null },
       });
 
       await workflowInstanceService.transition(
@@ -118,12 +139,21 @@ export class ProgramaSocialService {
         undefined,
         data.justificativa
       );
+
+      await noteProtocolFromApp({
+        protocolId: inscricao.protocolId,
+        app: APP_NAME,
+        actorId: data.analistaId,
+        message: 'O seu pedido foi aprovado na análise social. Falta a liberação do benefício pela gestão.',
+      });
     } else {
       await prisma.inscricaoProgramaSocial.update({
         where: { id: data.inscricaoId },
         data: {
-          status: 'CANCELADO',
-          motivoCancelamento: data.justificativa,
+          status: 'INDEFERIDO',
+          motivoIndeferimento: data.justificativa,
+          analisadoPor: data.analistaId,
+          dataAnalise: new Date(),
         },
       });
 
@@ -133,6 +163,14 @@ export class ProgramaSocialService {
         undefined,
         data.justificativa || 'Inscrição não aprovada na análise'
       );
+
+      await concludeProtocolFromApp({
+        protocolId: inscricao.protocolId,
+        app: APP_NAME,
+        actorId: data.analistaId,
+        message: `Pedido não aprovado na análise social${data.justificativa ? `: ${data.justificativa}` : '.'} Procure o CRAS se quiser conversar sobre outras ajudas.`,
+        outcome: 'INDEFERIDO',
+      });
     }
 
     return await this.findById(data.inscricaoId);
@@ -144,14 +182,18 @@ export class ProgramaSocialService {
     });
 
     if (!inscricao) throw new Error('Inscrição não encontrada');
-    if (inscricao.status !== 'APROVADO') {
+    if (!['APROVADO', 'AGUARDANDO_APROVACAO', 'PARECER_FAVORAVEL', 'PARECER_PSICOLOGICO_CONCLUIDO'].includes(inscricao.status)) {
       throw new Error('Inscrição precisa estar aprovada na análise');
+    }
+    if (!inscricao.programaId) {
+      throw new Error('Escolha o programa/benefício antes de liberar');
     }
 
     await prisma.inscricaoProgramaSocial.update({
       where: { id: data.inscricaoId },
       data: {
         status: 'ATIVO',
+        aprovadoPor: data.gestorId,
         dataAprovacao: new Date(),
         dataInicio: data.dataInicio,
       },
@@ -164,7 +206,34 @@ export class ProgramaSocialService {
       'Benefício aprovado e ativado'
     );
 
+    const programa = await nomeDoPrograma(inscricao.programaId, inscricao.tipoSolicitado);
+    await concludeProtocolFromApp({
+      protocolId: inscricao.protocolId,
+      app: APP_NAME,
+      actorId: data.gestorId,
+      message: `${programa} liberado a partir de ${new Date(data.dataInicio).toLocaleDateString('pt-BR')}. A equipe do CRAS vai combinar a entrega/pagamento com você.`,
+      outcome: 'DEFERIDO',
+    });
+
     return await this.findById(data.inscricaoId);
+  }
+
+  /** Completa a inscrição que veio do portal: programa e/ou família do CadÚnico. */
+  async completarInscricao(inscricaoId: string, data: { programaId?: string; familiaId?: string }) {
+    const update: { programaId?: string; familiaId?: string } = {};
+    if (data.programaId) {
+      const programa = await prisma.programaSocial.findFirst({ where: { id: data.programaId }, select: { id: true } });
+      if (!programa) throw new Error('Programa não encontrado');
+      update.programaId = programa.id;
+    }
+    if (data.familiaId) {
+      const familia = await prisma.cadUnicoFamilia.findFirst({ where: { id: data.familiaId }, select: { id: true } });
+      if (!familia) throw new Error('Família não encontrada');
+      update.familiaId = familia.id;
+    }
+    if (!Object.keys(update).length) throw new Error('Escolha o programa ou a família');
+    await prisma.inscricaoProgramaSocial.update({ where: { id: inscricaoId }, data: update });
+    return await this.findById(inscricaoId);
   }
 
   async suspenderBeneficio(inscricaoId: string, userId: string, motivo: string) {

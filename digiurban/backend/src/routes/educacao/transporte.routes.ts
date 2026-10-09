@@ -175,4 +175,42 @@ router.delete('/alunos/:vinculoId', async (req, res) => {
   }
 });
 
+// ---------------------------------------------- pedidos de vaga feitos no portal
+// GET /api/apps/educacao/transporte/solicitacoes?status=PENDENTE
+router.get('/solicitacoes', async (req, res) => {
+  try {
+    const { transporteEscolarQueue } = await import('../../services/apps/portal-queues.service');
+    res.json(await transporteEscolarQueue.list(req.query.status as string | undefined));
+  } catch (error: any) {
+    res.status(400).json({ error: error.message || 'Erro ao listar pedidos' });
+  }
+});
+
+// POST /api/apps/educacao/transporte/solicitacoes/:id/atender  { rotaId, pontoEmbarque?, alunoId? }
+router.post('/solicitacoes/:id/atender', async (req, res) => {
+  try {
+    if (!req.body?.rotaId) return res.status(400).json({ error: 'Escolha a rota' });
+    const { transporteEscolarQueue } = await import('../../services/apps/portal-queues.service');
+    res.json(
+      await transporteEscolarQueue.atender(req.params.id, (req as any).userId, {
+        rotaId: req.body.rotaId,
+        pontoEmbarque: req.body.pontoEmbarque,
+        alunoId: req.body.alunoId,
+      })
+    );
+  } catch (error: any) {
+    res.status(400).json({ error: error.message || 'Erro ao atender pedido' });
+  }
+});
+
+// POST /api/apps/educacao/transporte/solicitacoes/:id/indeferir  { motivo }
+router.post('/solicitacoes/:id/indeferir', async (req, res) => {
+  try {
+    const { transporteEscolarQueue } = await import('../../services/apps/portal-queues.service');
+    res.json(await transporteEscolarQueue.indeferir(req.params.id, (req as any).userId, req.body?.motivo));
+  } catch (error: any) {
+    res.status(400).json({ error: error.message || 'Erro ao recusar pedido' });
+  }
+});
+
 export default router;

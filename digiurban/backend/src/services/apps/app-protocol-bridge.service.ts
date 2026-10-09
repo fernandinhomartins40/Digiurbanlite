@@ -103,3 +103,53 @@ export async function markProtocolInProgressFromApp(input: AppProtocolUpdate) {
     logger.warn(`[app-bridge] ${app}: falha ao atualizar protocolo ${protocolId} (não-fatal) — ${message}`, error);
   }
 }
+
+/**
+ * O app tem uma NOVIDADE para o cidadão que não encerra o caso (vaga
+ * reservada, documento pendente, aguardando estoque...). Vira mensagem
+ * visível no pedido + aviso no portal (sem e-mail: o plano do VeloMail é
+ * limitado e o encerramento já manda e-mail). Também tira o pedido de
+ * "Vinculado", porque alguém já está cuidando dele.
+ */
+export async function noteProtocolFromApp(input: AppProtocolUpdate) {
+  const { protocolId, app, message, actorId } = input;
+  if (!protocolId) return;
+
+  try {
+    const protocol = await prisma.protocolSimplified.findUnique({
+      where: { id: protocolId },
+      select: { status: true, number: true, citizenId: true },
+    });
+    if (!protocol || TERMINAL.includes(protocol.status)) return;
+
+    await markProtocolInProgressFromApp({ protocolId, app, message, actorId });
+
+    await prisma.protocolInteraction.create({
+      data: {
+        protocolId,
+        type: 'MESSAGE',
+        authorType: 'SYSTEM',
+        authorId: actorId,
+        authorName: app,
+        message,
+        isInternal: false,
+        metadata: { source: 'APP', app },
+      },
+    });
+
+    if (protocol.citizenId) {
+      const { default: notificationService } = await import('../notification.service');
+      await notificationService.notify({
+        recipientType: 'citizen',
+        recipientId: protocol.citizenId,
+        type: 'PROTOCOL_MESSAGE' as any,
+        title: `Novidade no pedido ${protocol.number}`,
+        message,
+        data: { protocolId, protocolNumber: protocol.number, url: `/cidadao/protocolos/${protocolId}` },
+        priority: 'normal',
+      } as any);
+    }
+  } catch (error) {
+    logger.warn(`[app-bridge] ${app}: falha ao avisar no protocolo ${protocolId} (não-fatal) — ${message}`, error);
+  }
+}

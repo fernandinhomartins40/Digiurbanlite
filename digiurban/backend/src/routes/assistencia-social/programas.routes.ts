@@ -24,10 +24,16 @@ async function comDetalhes(inscricoes: any[]) {
   ]);
   const pessoaPorId = new Map(pessoas.map((p) => [p.id, p]));
   const programaPorId = new Map(programas.map((p) => [p.id, p]));
+  const protocolIds = inscricoes.map((i) => i.protocolId).filter(Boolean);
+  const protocolos = protocolIds.length
+    ? await prisma.protocolSimplified.findMany({ where: { id: { in: protocolIds } }, select: { id: true, number: true } })
+    : [];
+  const numeroPorId = new Map(protocolos.map((p) => [p.id, p.number]));
   return inscricoes.map((i) => ({
     ...i,
     beneficiario: pessoaPorId.get(i.beneficiarioId) || null,
     programa: programaPorId.get(i.programaId) || null,
+    protocolNumber: i.protocolId ? numeroPorId.get(i.protocolId) || null : null,
   }));
 }
 
@@ -118,6 +124,21 @@ router.get('/inscricoes/:id', async (req, res) => {
     res.json(comDados);
   } catch (error: any) {
     res.status(400).json({ error: error.message || 'Erro ao buscar inscrição' });
+  }
+});
+
+// PUT /api/apps/assistencia-social/programas/inscricoes/:id/completar  { programaId?, familiaId? }
+// Pedido do portal chega sem programa/família definidos: a equipe completa aqui.
+router.put('/inscricoes/:id/completar', async (req, res) => {
+  try {
+    const inscricao = await programaSocialService.completarInscricao(req.params.id, {
+      programaId: req.body?.programaId || undefined,
+      familiaId: req.body?.familiaId || undefined,
+    });
+    const [comDados] = await comDetalhes([inscricao]);
+    res.json(comDados);
+  } catch (error: any) {
+    res.status(400).json({ error: error.message || 'Erro ao completar inscrição' });
   }
 });
 

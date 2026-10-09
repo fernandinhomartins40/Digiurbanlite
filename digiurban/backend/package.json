@@ -13,6 +13,7 @@
     "smoke:tenant": "ts-node --transpile-only scripts/smoke-tenant.ts",
     "smoke:tenant:isolation": "tsx scripts/smoke-multi-tenant.ts",
     "smoke:pendings": "tsx scripts/smoke-pendings.ts",
+    "smoke:apps": "tsx scripts/smoke-apps-portal.ts",
     "type-check": "tsc --noEmit",
     "type-check:watch": "tsc --noEmit --watch",
     "migrate:ts": "ts-migrate migrate src",
