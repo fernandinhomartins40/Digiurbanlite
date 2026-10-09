@@ -205,8 +205,23 @@ jobs:
           echo "RELEASE=${RELEASE}" >> .env
 
           echo "=== Baixando imagens prontas (a VPS NAO compila) ==="
-          RELEASE="${RELEASE}" docker-compose -f docker-compose.vps.yml pull \
-            digiurban ultrazend-messages ultrazend-face ultrazend-face-engine ultrazend-doc-engine
+          # A conexao com o registro de imagens as vezes cai no meio ("connection reset
+          # by peer") e derrubava o deploy inteiro. Tenta de novo: as camadas ja
+          # baixadas ficam guardadas, entao cada tentativa continua de onde parou.
+          PULL_OK=0
+          for tentativa in 1 2 3 4 5; do
+            if RELEASE="${RELEASE}" docker-compose -f docker-compose.vps.yml pull \
+              digiurban ultrazend-messages ultrazend-face ultrazend-face-engine ultrazend-doc-engine; then
+              PULL_OK=1
+              break
+            fi
+            echo "Download das imagens falhou (tentativa ${tentativa} de 5). Nova tentativa em 20 s..."
+            sleep 20
+          done
+          if [ "${PULL_OK}" != "1" ]; then
+            echo "ERRO: nao foi possivel baixar as imagens depois de 5 tentativas."
+            exit 1
+          fi
 
           # IA LOCAL REMOVIDA (2026-09-14): llamacpp e digiurban-ai sairam do compose
           # (a IA passa a ser externa). Containers de servicos removidos NAO somem
