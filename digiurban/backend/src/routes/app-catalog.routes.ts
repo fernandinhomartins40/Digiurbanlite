@@ -22,13 +22,16 @@ router.get('/', async (req, res) => {
     const onlyWithActions = req.query.withActions === 'true';
     let apps = appsForDepartment(departmentCode).filter((app) => !onlyWithActions || app.actions.length > 0);
 
+    // secretarias da própria pessoa (null = todas, para ADMIN) — a tela usa para não mostrar o que é de outra secretaria
+    let myDepartments: string[] | null | undefined;
     if (req.query.mine === 'true') {
       const user = (req as any).user;
       const userCodes = await getUserDepartmentCodes(user);
       apps = apps.filter((app) => canAccessDepartmentApp(String(user.role), userCodes, app.departments));
+      myDepartments = ['ADMIN', 'SUPER_ADMIN'].includes(String(user.role)) ? null : userCodes;
     }
 
-    res.json({ success: true, data: { apps } });
+    res.json({ success: true, data: { apps, myDepartments } });
   } catch (error) {
     console.error('Erro ao listar catálogo de apps:', error);
     res.status(500).json({ success: false, error: 'Erro ao listar apps' });

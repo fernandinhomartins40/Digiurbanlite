@@ -9,6 +9,7 @@
  *   com o menu visível (permissão, papel, plano do município, secretarias).
  *   Perdeu o acesso ou a tela saiu do menu → o atalho some sem erro.
  * - Nunca personalizou (null) → conjunto padrão (Protocolos, Balcão, Apps).
+ * - Cada app da tela Apps também pode ser fixado (com o ícone e a cor do app).
  */
 
 import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react';
@@ -16,6 +17,7 @@ import { toast } from 'sonner';
 import { apiRequest } from '@/lib/api';
 import type { AdminNavItem, AdminNavSection } from './admin-nav-config';
 import { useAdminNavigation } from './useAdminNavigation';
+import { useMyApps } from '@/lib/hooks/use-my-apps';
 
 export const MAX_PINNED = 12;
 export const DEFAULT_PINNED = ['/admin/protocolos', '/admin/balcao', '/admin/apps'];
@@ -55,6 +57,7 @@ const PinnedContext = createContext<PinnedContextValue | null>(null);
 
 export function PinnedShortcutsProvider({ children }: { children: React.ReactNode }) {
   const { visibleSections, visibleMayorPortalItems } = useAdminNavigation();
+  const myApps = useMyApps();
   // null = ainda não carregou ou nunca personalizou
   const [saved, setSaved] = useState<string[] | null>(null);
   const [loaded, setLoaded] = useState(false);
@@ -85,8 +88,14 @@ export function PinnedShortcutsProvider({ children }: { children: React.ReactNod
     };
     visibleSections.forEach((s) => s.items.forEach((item) => add(item, s.color, s.title || 'Início')));
     visibleMayorPortalItems.forEach((item) => add(item, 'indigo', 'Portal do Prefeito'));
+    // Apps que o servidor pode abrir (só para quem vê o menu Apps)
+    if (map.has('/admin/apps')) {
+      (myApps || []).forEach((app) => {
+        if (!map.has(app.route)) map.set(app.route, { item: { title: app.name, href: app.route, icon: app.icon }, color: app.color, section: 'Apps' });
+      });
+    }
     return map;
-  }, [visibleSections, visibleMayorPortalItems]);
+  }, [visibleSections, visibleMayorPortalItems, myApps]);
 
   const hrefs = saved ?? DEFAULT_PINNED;
   const pinned = useMemo(
@@ -133,7 +142,8 @@ export function PinnedShortcutsProvider({ children }: { children: React.ReactNod
 
   const value = useMemo<PinnedContextValue>(
     () => ({
-      pinned: loaded ? pinned : [],
+      // espera os apps carregarem para a barra não "pular" quando há app fixado
+      pinned: loaded && myApps !== null ? pinned : [],
       isPinned: (href) => pinned.some((p) => p.item.href === href),
       canPin: (href) => catalog.has(href),
       toggle: (href) => (pinned.some((p) => p.item.href === href) ? unpin(href) : pin(href)),
@@ -141,7 +151,7 @@ export function PinnedShortcutsProvider({ children }: { children: React.ReactNod
       unpin,
       reorder: (next) => persist(next.filter((h) => catalog.has(h))),
     }),
-    [loaded, pinned, catalog, pin, unpin, persist]
+    [loaded, myApps, pinned, catalog, pin, unpin, persist]
   );
 
   return <PinnedContext.Provider value={value}>{children}</PinnedContext.Provider>;
