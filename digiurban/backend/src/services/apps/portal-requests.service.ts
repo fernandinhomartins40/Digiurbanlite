@@ -132,19 +132,44 @@ async function findUnidadeEducacao(nome?: string) {
 // EDUCAÇÃO
 // ============================================================================
 
+/**
+ * Pedido aberto NO NOME do aluno (balcão atendendo a criança, ou dependente
+ * com acesso próprio): o titular do pedido é um dependente e o nome do
+ * formulário é o dele (ou veio vazio). Devolve o responsável (chefe da
+ * família) para a inscrição não nascer com a criança como responsável.
+ */
+export async function ownDependentRequest(citizenId: string, nomeAluno?: string): Promise<{ alunoId: string; responsavelId: string; nome: string } | null> {
+  const link = await prisma.familyComposition.findFirst({
+    where: { memberId: citizenId, isDependent: true, status: 'ACTIVE' },
+    select: { headId: true, member: { select: { name: true } } },
+  });
+  if (!link) return null;
+  if (nomeAluno && normalizeName(nomeAluno) !== normalizeName(link.member.name)) return null;
+  return { alunoId: citizenId, responsavelId: link.headId, nome: link.member.name };
+}
+
 async function matricula(protocol: PortalProtocol) {
   if (!protocol.citizenId) return;
   if (await prisma.inscricaoMatricula.findFirst({ where: { protocolId: protocol.id }, select: { id: true } })) return;
   const data = protocol.customData || {};
-  const nomeAluno = field(data, 'nomeAluno', 'nome_aluno', 'aluno');
+  let nomeAluno = field(data, 'nomeAluno', 'nome_aluno', 'aluno');
   const nascimento = dateField(data, 'dataNascimentoAluno', 'dataNascimento');
-  const alunoId = await resolveFamilyMember(protocol.citizenId, {
-    nome: nomeAluno,
-    nascimento,
-    cpf: field(data, 'cpfAluno'),
-    parentesco: field(data, 'grauParentesco'),
-    sexo: field(data, 'sexoAluno'),
-  });
+  let responsavelId = protocol.citizenId;
+  let alunoId: string | null;
+  const proprio = await ownDependentRequest(protocol.citizenId, nomeAluno);
+  if (proprio) {
+    alunoId = proprio.alunoId;
+    responsavelId = proprio.responsavelId;
+    nomeAluno = nomeAluno || proprio.nome;
+  } else {
+    alunoId = await resolveFamilyMember(protocol.citizenId, {
+      nome: nomeAluno,
+      nascimento,
+      cpf: field(data, 'cpfAluno'),
+      parentesco: field(data, 'grauParentesco'),
+      sexo: field(data, 'sexoAluno'),
+    });
+  }
   const escolaTexto = field(data, 'escolaPreferencial', 'escola', 'unidadeEscolar');
   const escola = await findUnidadeEducacao(escolaTexto);
   const observacoes = [
@@ -156,7 +181,7 @@ async function matricula(protocol: PortalProtocol) {
   const { default: matriculaService } = await import('../matricula/matricula.service');
   await matriculaService.createInscricao({
     protocolId: protocol.id,
-    responsavelId: protocol.citizenId,
+    responsavelId,
     alunoId,
     nomeAluno,
     dataNascimentoAluno: nascimento,
@@ -173,12 +198,18 @@ async function matricula(protocol: PortalProtocol) {
 async function transporteEscolar(protocol: PortalProtocol) {
   if (await prisma.solicitacaoTransporteEscolar.findFirst({ where: { protocolId: protocol.id }, select: { id: true } })) return;
   const data = protocol.customData || {};
-  const nomeAluno = field(data, 'nomeAluno', 'aluno') || 'Aluno';
-  const alunoId = protocol.citizenId ? await resolveFamilyMember(protocol.citizenId, { nome: nomeAluno }) : null;
+  const nomeInformado = field(data, 'nomeAluno', 'aluno');
+  const proprio = protocol.citizenId ? await ownDependentRequest(protocol.citizenId, nomeInformado) : null;
+  const nomeAluno = nomeInformado || proprio?.nome || 'Aluno';
+  const alunoId = proprio
+    ? proprio.alunoId
+    : protocol.citizenId
+      ? await resolveFamilyMember(protocol.citizenId, { nome: nomeAluno })
+      : null;
   await prisma.solicitacaoTransporteEscolar.create({
     data: {
       protocolId: protocol.id,
-      responsavelId: protocol.citizenId || null,
+      responsavelId: proprio?.responsavelId || protocol.citizenId || null,
       alunoId,
       nomeAluno,
       unidadeEscolar: field(data, 'unidadeEscolar', 'escola') || null,

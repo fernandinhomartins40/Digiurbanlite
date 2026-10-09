@@ -638,6 +638,15 @@ export async function convertProtocolToAppOnCreate(protocol: ProtocolLike): Prom
       logger.info(
         `[protocol-to-app] Protocolo ${protocol.number || protocol.id} (ASSISTENCIA_TECNICA): cidadão sem cadastro de produtor — conversão adiada`
       );
+      // O pedido fica esperando o cadastro de produtor: o cidadão é avisado e,
+      // quando o cadastro sair, `retryDeferredAssistencia` coloca o pedido na fila
+      const { noteProtocolFromApp } = await import('./app-protocol-bridge.service');
+      await noteProtocolFromApp({
+        protocolId: protocol.id,
+        app: 'Assistência Técnica Rural',
+        message:
+          'Para receber a visita do técnico é preciso ter o cadastro de produtor rural. Peça o serviço "Cadastro de Produtor Rural" (ou procure a Secretaria de Agricultura). Assim que o cadastro sair, este pedido entra na fila sozinho.',
+      });
       return;
     }
     await prisma.solicitacaoAssistenciaTecnica.create({
@@ -652,6 +661,49 @@ export async function convertProtocolToAppOnCreate(protocol: ProtocolLike): Prom
     logger.info(
       `[protocol-to-app] Protocolo ${protocol.number || protocol.id} → solicitação de assistência técnica (produtor ${produtor.nome})`
     );
+  }
+}
+
+/**
+ * O cidadão acabou de virar produtor cadastrado: os pedidos de assistência
+ * técnica dele que estavam esperando o cadastro entram na fila do app.
+ * NÃO-FATAL.
+ */
+export async function retryDeferredAssistencia(citizenId?: string | null): Promise<number> {
+  if (!citizenId) return 0;
+  try {
+    const abertos = await prisma.protocolSimplified.findMany({
+      where: {
+        citizenId,
+        status: { notIn: ['CONCLUIDO', 'CANCELADO'] },
+        service: {
+          OR: [
+            { destination: 'APP', appAction: 'ASSISTENCIA_TECNICA' },
+            { destination: null, moduleType: 'ASSISTENCIA_TECNICA' },
+          ],
+        },
+      },
+      select: { id: true, number: true, citizenId: true, customData: true },
+    });
+    let convertidos = 0;
+    for (const protocol of abertos) {
+      const jaTem = await prisma.solicitacaoAssistenciaTecnica.findFirst({ where: { protocolId: protocol.id }, select: { id: true } });
+      if (jaTem) continue;
+      await convertProtocolToAppOnCreate({ ...protocol, moduleType: 'ASSISTENCIA_TECNICA' });
+      if (await prisma.solicitacaoAssistenciaTecnica.findFirst({ where: { protocolId: protocol.id }, select: { id: true } })) {
+        convertidos++;
+        const { noteProtocolFromApp } = await import('./app-protocol-bridge.service');
+        await noteProtocolFromApp({
+          protocolId: protocol.id,
+          app: 'Assistência Técnica Rural',
+          message: 'Cadastro de produtor confirmado. O seu pedido de assistência técnica entrou na fila da equipe.',
+        });
+      }
+    }
+    return convertidos;
+  } catch (error) {
+    logger.warn('[protocol-to-app] falha ao retomar assistência técnica adiada (não-fatal)', error);
+    return 0;
   }
 }
 
@@ -705,6 +757,7 @@ export async function convertProtocolToAppOnApproval(protocolId: string): Promis
           citizenId: jaExiste.citizenId || protocol.citizenId,
         },
       });
+      await retryDeferredAssistencia(jaExiste.citizenId || protocol.citizenId);
       return;
     }
     const produtor = await prisma.produtorRural.create({
@@ -723,6 +776,7 @@ export async function convertProtocolToAppOnApproval(protocolId: string): Promis
       },
     });
     logger.info(`[protocol-to-app] Protocolo ${protocol.number} → produtor rural ${produtor.nome}`);
+    await retryDeferredAssistencia(protocol.citizenId);
     return;
   }
 

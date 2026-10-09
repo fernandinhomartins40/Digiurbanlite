@@ -60,7 +60,7 @@ class AgriculturaService {
     if (existente) {
       throw new Error('Já existe produtor cadastrado com este CPF');
     }
-    return prisma.produtorRural.create({
+    const produtor = await prisma.produtorRural.create({
       data: {
         citizenId: data.citizenId || null,
         cpf: cpfLimpo,
@@ -74,6 +74,12 @@ class AgriculturaService {
         protocolId: data.protocolId,
       },
     });
+    // Pedidos de assistência técnica que esperavam este cadastro entram na fila
+    if (produtor.citizenId) {
+      const { retryDeferredAssistencia } = await import('../apps/protocol-to-app.service');
+      await retryDeferredAssistencia(produtor.citizenId);
+    }
+    return produtor;
   }
 
   async updateProdutor(id: string, data: any) {

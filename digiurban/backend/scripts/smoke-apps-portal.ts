@@ -51,7 +51,7 @@ async function main() {
     await runAsPlatform(async () => {
       const where = { tenantId: tenant.id };
       const tables = [
-        'matricula', 'inscricaoMatricula', 'solicitacaoTransporteEscolar', 'alunoRota', 'rotaEscolar', 'veiculoEscolar',
+        'solicitacaoAssistenciaTecnica', 'produtorRural', 'matricula', 'inscricaoMatricula', 'solicitacaoTransporteEscolar', 'alunoRota', 'rotaEscolar', 'veiculoEscolar',
         'inscricaoProgramaSocial', 'programaSocial', 'alteracaoCredencial', 'credencialTransporte',
         'solicitacaoConsulta', 'solicitacaoMedicamento', 'turma', 'unidadeEducacao', 'workflowInstance', 'workflowDefinition',
         'notification', 'familyComposition', 'protocolSimplified', 'serviceSimplified', 'citizen', 'user', 'department',
@@ -84,12 +84,12 @@ async function scenario() {
   });
 
   let seq = 0;
-  const open = async (action: string, customData: Record<string, unknown>) => {
+  const open = async (action: string, customData: Record<string, unknown>, citizenId: string = citizen.id) => {
     const protocol = await prisma.protocolSimplified.create({
       data: {
         number: `SMKAPP-${STAMP}-${++seq}`,
         title: action,
-        citizenId: citizen.id,
+        citizenId,
         serviceId: service.id,
         departmentId: dept.id,
         status: 'VINCULADO',
@@ -215,6 +215,28 @@ async function scenario() {
     await pedidoMedicamentoQueue.marcarEntregue(med.id, user.id);
     check('entregar conclui o pedido', (await statusOf(pMed.id)) === 'CONCLUIDO', await statusOf(pMed.id));
   }
+
+  // ------------------------------------- pedido aberto no nome do dependente
+  console.log('\nMatrícula pedida no nome da criança');
+  const pDep = await open('MATRICULA_ESCOLAR', { serie: '2º Ano', turnoDesejado: 'Vespertino' }, filho.id);
+  const inscDep = await prisma.inscricaoMatricula.findFirst({ where: { protocolId: pDep.id } });
+  check('aluno = a criança, responsável = chefe da família', inscDep?.alunoId === filho.id && inscDep?.responsavelId === citizen.id, inscDep);
+
+  // ------------------------------------------- assistência técnica sem cadastro
+  console.log('\nAssistência técnica rural (sem cadastro de produtor)');
+  const servicoAt = await prisma.serviceSimplified.create({
+    data: { name: 'Assistência Técnica smoke', departmentId: dept.id, serviceType: 'COM_DADOS', estimatedDays: 10, destination: 'APP', appAction: 'ASSISTENCIA_TECNICA' } as any,
+  });
+  const pAt = await prisma.protocolSimplified.create({
+    data: { number: `SMKAPP-${STAMP}-AT`, title: 'AT', citizenId: citizen.id, serviceId: servicoAt.id, departmentId: dept.id, status: 'VINCULADO', customData: { tipoAssistencia: 'Análise de solo' } } as any,
+  });
+  await convertProtocolToAppOnCreate({ ...pAt, moduleType: 'ASSISTENCIA_TECNICA' } as any);
+  check('sem produtor: pedido espera e o cidadão é avisado',
+    !(await prisma.solicitacaoAssistenciaTecnica.findFirst({ where: { protocolId: pAt.id } })) &&
+    !!(await prisma.protocolInteraction.findFirst({ where: { protocolId: pAt.id, message: { contains: 'cadastro de produtor' } } })));
+  const { default: agriculturaService } = await import('../src/services/agricultura/agricultura.service');
+  await agriculturaService.createProdutor({ citizenId: citizen.id, cpf: citizen.cpf, nome: citizen.name });
+  check('cadastro de produtor destrava o pedido de assistência', !!(await prisma.solicitacaoAssistenciaTecnica.findFirst({ where: { protocolId: pAt.id } })));
 
   // ---------------------------------------------------------------- idempotência
   await convertProtocolToAppOnCreate({ ...pMed, moduleType: 'CONTROLE_MEDICAMENTOS' } as any);
