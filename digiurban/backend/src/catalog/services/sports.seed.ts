@@ -389,6 +389,7 @@ export const sportsServices: ServiceDefinition[] = [
     serviceType: 'COM_DADOS',
     serviceSubtype: ServiceSubtype.SOLICITACAO_SIMPLES,
     moduleType: 'CAMPEONATO_MUNICIPAL',
+    appAction: 'INSCRICAO_COMPETICAO',
     requiresDocuments: true,
     requiredDocuments: ['Lista de Atletas', 'Documentos dos Atletas'],
     estimatedDays: 15,

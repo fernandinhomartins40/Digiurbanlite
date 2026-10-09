@@ -247,7 +247,7 @@ export function suggestAppActions(input: { name?: string; description?: string; 
   const description = normalizeText(input.description);
   if (!name) return [];
   // documento, consulta ou reclamação: fica na fila do protocolo
-  if (NOT_AN_APP_CASE.some((word) => containsPhrase(name, word))) return [];
+  if (NOT_AN_APP_CASE.some((word) => containsPhrase(name, normalizeText(word)))) return [];
   const dept = (input.departmentCode || '').toUpperCase().replace(/-/g, '_');
 
   const results: AppSuggestion[] = [];
@@ -256,11 +256,13 @@ export function suggestAppActions(input: { name?: string; description?: string; 
     for (const action of app.actions) {
       const contract = APP_FIELD_CONTRACTS[action.code];
       if (!contract) continue;
-      if (contract.notKeywords?.some((word) => containsPhrase(name, word))) continue;
+      if (contract.notKeywords?.some((word) => containsPhrase(name, normalizeText(word)))) continue;
       let score = 0;
       let nameHit = false;
       const matched: string[] = [];
-      for (const keyword of contract.keywords) {
+      for (const rawKeyword of contract.keywords) {
+        // "habite-se" → "habite se" (o nome do serviço passa pela mesma limpeza)
+        const keyword = normalizeText(rawKeyword);
         const inName = containsPhrase(name, keyword);
         const inDescription = containsPhrase(description, keyword);
         if (!inName && !inDescription) continue;

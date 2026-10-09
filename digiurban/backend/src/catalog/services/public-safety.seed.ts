@@ -331,6 +331,7 @@ export const publicSafetyServices: ServiceDefinition[] = [
     serviceType: 'COM_DADOS',
     serviceSubtype: ServiceSubtype.CAPTURA_COMPLETA,
     moduleType: 'AUTORIZACAO_EVENTO_SEGURANCA',
+    appAction: 'GUARDA_PATRIMONIAL',
     requiresDocuments: true,
     requiredDocuments: ['Projeto do Evento', 'Plano de Segurança', 'Seguro (opcional)'],
     estimatedDays: 15,

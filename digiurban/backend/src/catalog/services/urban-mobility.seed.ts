@@ -97,6 +97,7 @@ export const urbanMobilityServices: ServiceDefinition[] = [
     serviceType: 'COM_DADOS',
     serviceSubtype: ServiceSubtype.CAPTURA_COMPLETA,
     moduleType: 'CARTAO_PCD',
+    appAction: 'CARTAO_TRANSPORTE',
     requiresDocuments: true,
     requiredDocuments: ['RG', 'CPF', 'Laudo Médico', 'Foto 3x4 recente', 'Comprovante de Residência'],
     estimatedDays: 15,

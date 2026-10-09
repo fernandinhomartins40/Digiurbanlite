@@ -167,6 +167,7 @@ export const housingServices: ServiceDefinition[] = [
     serviceType: 'COM_DADOS',
     serviceSubtype: ServiceSubtype.CAPTURA_COMPLETA,
     moduleType: 'INSCRICAO_MCMV_MUNICIPAL',
+    appAction: 'INSCRICAO_PROGRAMA_HABITACIONAL',
     requiresDocuments: true,
     requiredDocuments: ['CPF', 'RG', 'Comprovante de Renda', 'CadÚnico', 'Comprovante de Endereço', 'Certidão de Casamento (se aplicável)'],
     estimatedDays: 30,

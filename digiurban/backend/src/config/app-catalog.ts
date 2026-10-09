@@ -54,7 +54,10 @@ export const APP_CATALOG: AppDefinition[] = [
     description: 'Fila, triagem, consulta e prontuário',
     departments: ['SAUDE'],
     route: '/admin/apps/saude/atendimento',
-    actions: [criacao('AGENDAMENTO_CONSULTA', 'Pedido de consulta (a equipe marca na agenda)')],
+    actions: [
+      criacao('AGENDAMENTO_CONSULTA', 'Pedido de consulta ou exame (a equipe marca na agenda)'),
+      criacao('CADASTRO_GESTANTE', 'Cadastro de gestante (abre o pré-natal)'),
+    ],
   },
   {
     code: 'farmacia',
@@ -187,6 +190,7 @@ export const APP_CATALOG: AppDefinition[] = [
       criacao('INSCRICAO_ESCOLINHA_JUDO', 'Matrícula — escolinha de judô'),
       criacao('INSCRICAO_ESCOLINHA_CAPOEIRA', 'Matrícula — escolinha de capoeira'),
       criacao('INSCRICAO_ESCOLINHA_GINASTICA', 'Matrícula — escolinha de ginástica'),
+      criacao('INSCRICAO_ESCOLINHA_OUTRA', 'Matrícula — outra modalidade ou aula'),
       criacao('RESERVA_ESPACO_ESPORTIVO', 'Reserva de espaço esportivo'),
       criacao('USO_GINASIO', 'Reserva — uso do ginásio'),
       criacao('INSCRICAO_COMPETICAO', 'Inscrição em competição'),

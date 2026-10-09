@@ -198,6 +198,9 @@ async function matricula(protocol: PortalProtocol) {
     turno: turnoPreferencia(field(data, 'turnoDesejado', 'turno')) as any,
     escolaPreferencia1: escola?.id,
     necessidadeEspecial: data.possuiNecessidadesEspeciais === true,
+    isTransferencia: Boolean(field(data, 'escolaOrigem', 'motivoTransferencia')),
+    escolaOrigem: field(data, 'escolaOrigem'),
+    motivoTransferencia: field(data, 'motivoTransferencia'),
     descricaoNecessidade: field(data, 'descricaoNecessidades'),
     observacoes: observacoes || undefined,
   });
@@ -526,6 +529,41 @@ async function eventoTuristico(protocol: PortalProtocol, action: string) {
   logger.info(`[portal→app] ${protocol.number || protocol.id} → evento turístico`);
 }
 
+/**
+ * Cadastro de gestante feito no portal: abre o pré-natal com a DUM informada
+ * (semanas e data do parto calculadas) e conclui o pedido. Sem DUM, avisa.
+ */
+async function cadastroGestante(protocol: PortalProtocol) {
+  if (!protocol.citizenId) return;
+  const data = protocol.customData || {};
+  const { noteProtocolFromApp, concludeProtocolFromApp } = await import('./app-protocol-bridge.service');
+  const ativo = await prisma.acompanhamentoPreNatal.findFirst({ where: { citizenId: protocol.citizenId, status: 'EM_ANDAMENTO' }, select: { id: true } });
+  if (ativo) {
+    await concludeProtocolFromApp({ protocolId: protocol.id, app: 'Pré-natal', message: 'Você já está em acompanhamento de pré-natal. Continue indo às consultas marcadas.', outcome: 'DEFERIDO' });
+    return;
+  }
+  const dum = dateField(data, 'dum');
+  if (!dum || dum > new Date()) {
+    await noteProtocolFromApp({ protocolId: protocol.id, app: 'Pré-natal', message: 'Recebemos o seu cadastro. A unidade de saúde vai entrar em contato para marcar a primeira consulta de pré-natal.' });
+    return;
+  }
+  const { preNatalService } = await import('../saude/cuidado.service');
+  const pn = await preNatalService.iniciar({
+    citizenId: protocol.citizenId,
+    dum: dum.toISOString(),
+    gravidez: data.primeiraGestacao === true ? 1 : undefined,
+    observacoes: [field(data, 'unidadeSaude') && `Unidade preferida: ${field(data, 'unidadeSaude')}`, field(data, 'observacoes')].filter(Boolean).join(' · ') || undefined,
+  });
+  const dpp = pn?.dpp ? new Date(pn.dpp).toLocaleDateString('pt-BR', { timeZone: 'America/Sao_Paulo' }) : '';
+  await concludeProtocolFromApp({
+    protocolId: protocol.id,
+    app: 'Pré-natal',
+    message: `Pré-natal aberto${pn?.idadeGestacional ? ` (${pn.idadeGestacional})` : ''}${dpp ? `, parto previsto para ${dpp}` : ''}. A unidade de saúde vai marcar as consultas.`,
+    outcome: 'DEFERIDO',
+  });
+  logger.info(`[portal→app] ${protocol.number || protocol.id} → pré-natal aberto`);
+}
+
 /** Ações tratadas aqui (as mesmas do catálogo de apps) */
 export const PORTAL_REQUEST_ACTIONS = [
   'MATRICULA_ESCOLAR',
@@ -538,6 +576,7 @@ export const PORTAL_REQUEST_ACTIONS = [
   'AGENDAMENTO_CONSULTA',
   'CONTROLE_MEDICAMENTOS',
   'MEDICAMENTOS_ALTO_CUSTO',
+  'CADASTRO_GESTANTE',
   // Apps da Fase 3
   'SOLICITACAO_MAQUINAS',
   'CADASTRO_BALCAO_EMPREGOS',
@@ -581,6 +620,9 @@ export async function convertPortalRequest(action: string, protocol: PortalProto
     case 'CONTROLE_MEDICAMENTOS':
     case 'MEDICAMENTOS_ALTO_CUSTO':
       await pedidoMedicamento(protocol, action);
+      return true;
+    case 'CADASTRO_GESTANTE':
+      await cadastroGestante(protocol);
       return true;
     case 'SOLICITACAO_MAQUINAS':
       await mecanizacao(protocol);

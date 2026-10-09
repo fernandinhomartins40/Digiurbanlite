@@ -54,7 +54,7 @@ async function main() {
       const where = { tenantId: tenant.id };
       const tables = [
         'matriculaOficina', 'encaminhamentoEmprego', 'vagaEmprego', 'curriculoTrabalhador', 'servicoMecanizacao', 'maquinaAgricola', 'ocorrenciaSeguranca', 'prestadorTuristico', 'eventoTuristico',
-        'participanteAtividade', 'atividadeColetiva', 'visitaDomiciliar', 'examePreNatal', 'consultaPreNatal', 'acompanhamentoPreNatal',
+        'matriculaEscolinha', 'participanteAtividade', 'atividadeColetiva', 'visitaDomiciliar', 'examePreNatal', 'consultaPreNatal', 'acompanhamentoPreNatal',
         'procedimentoOdonto', 'atendimentoOdontologico', 'atendimentoMedico', 'filaAtendimento', 'unidadeSaude',
         'solicitacaoAssistenciaTecnica', 'produtorRural', 'matricula', 'inscricaoMatricula', 'solicitacaoTransporteEscolar', 'alunoRota', 'rotaEscolar', 'veiculoEscolar',
         'inscricaoProgramaSocial', 'programaSocial', 'alteracaoCredencial', 'credencialTransporte',
@@ -413,6 +413,33 @@ async function scenario() {
   await convertProtocolToAppOnCreate({ ...pSemCampo, moduleType: 'INSCRICAO_OFICINA' } as any);
   const matOficina = await prisma.matriculaOficina.findFirst({ where: { protocolId: pSemCampo.id } });
   check('sem campo de oficina: o nome do serviço diz a oficina', !!matOficina && JSON.stringify(matOficina).includes('Oficina de Violão'), matOficina);
+
+  // ------------------------------------------- portas novas: gestante e "outra modalidade"
+  console.log('\nPortas novas — cadastro de gestante e esporte de outra modalidade');
+  const gestante = await prisma.citizen.create({
+    data: { name: 'Paula Gestante', cpf: String(STAMP + 7).slice(-11).padStart(11, '0'), email: `g-${STAMP}@t.local`, password: 'x' } as any,
+  });
+  const svcGestante = await prisma.serviceSimplified.create({
+    data: { name: 'Cadastro de Gestante', departmentId: dept.id, serviceType: 'COM_DADOS', estimatedDays: 5, destination: 'APP', appAction: 'CADASTRO_GESTANTE',
+      formSchema: { type: 'object', properties: { campo_dum: { title: 'Data da Última Menstruação (DUM)', type: 'string', format: 'date' } } } } as any,
+  });
+  const dumTexto = new Date(Date.now() - 70 * 86400000).toISOString().slice(0, 10);
+  const pGest = await prisma.protocolSimplified.create({
+    data: { number: `SMKAPP-${STAMP}-GES`, title: 'gestante', citizenId: gestante.id, serviceId: svcGestante.id, departmentId: dept.id, status: 'VINCULADO', customData: { campo_dum: dumTexto } } as any,
+  });
+  await convertProtocolToAppOnCreate({ ...pGest, moduleType: 'CADASTRO_GESTANTE' } as any);
+  const preNatal = await prisma.acompanhamentoPreNatal.findFirst({ where: { citizenId: gestante.id } });
+  check('cadastro de gestante abre o pré-natal com a DUM do formulário e conclui o pedido', !!preNatal && preNatal.dum.toISOString().slice(0, 10) === dumTexto && (await statusOf(pGest.id)) === 'CONCLUIDO', preNatal && { dum: preNatal.dum });
+
+  const svcYoga = await prisma.serviceSimplified.create({
+    data: { name: 'Aulas de Yoga', departmentId: dept.id, serviceType: 'COM_DADOS', estimatedDays: 5, destination: 'APP', appAction: 'INSCRICAO_ESCOLINHA_OUTRA', formSchema: { type: 'object', properties: {} } } as any,
+  });
+  const pYoga = await prisma.protocolSimplified.create({
+    data: { number: `SMKAPP-${STAMP}-YOG`, title: 'yoga', citizenId: citizen.id, serviceId: svcYoga.id, departmentId: dept.id, status: 'VINCULADO', customData: {} } as any,
+  });
+  await convertProtocolToAppOnCreate({ ...pYoga, moduleType: 'INSCRICAO_ESCOLINHA_OUTRA' } as any);
+  const matYoga = await prisma.matriculaEscolinha.findFirst({ where: { protocolId: pYoga.id } });
+  check('outra modalidade (yoga) vira matrícula em Esportes com quem pediu como aluno', matYoga?.modalidadePretendida === 'OUTRA' && JSON.stringify(matYoga).includes(citizen.name), matYoga);
 
   // ---------------------------------------------------------------- idempotência
   await convertProtocolToAppOnCreate({ ...pMed, moduleType: 'CONTROLE_MEDICAMENTOS' } as any);

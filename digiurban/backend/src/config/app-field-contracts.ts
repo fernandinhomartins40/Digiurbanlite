@@ -82,7 +82,12 @@ const TFD: AppActionContract = {
 };
 
 const CONSULTA: AppActionContract = {
-  keywords: ['agendamento de consulta', 'agendar consulta', 'marcar consulta', 'consulta medica', 'consulta odontologica', 'consulta com', 'atendimento medico', 'dentista'],
+  keywords: [
+    'agendamento', 'agendar consulta', 'marcar consulta', 'consulta', 'atendimento medico', 'dentista',
+    'exame', 'exames', 'vacinacao', 'vacina', 'fisioterapia', 'atendimento psicologico', 'psicologo', 'nutricional', 'nutricionista',
+    'mamografia', 'preventivo', 'papanicolau', 'fonoaudiologico', 'fonoaudiologia', 'terapia ocupacional', 'ultrassonografia',
+    'eletrocardiograma', 'raio x', 'puericultura', 'planejamento familiar', 'teste do pezinho', 'teste da orelhinha', 'psa', 'especialista',
+  ],
   roles: [
     { role: r('especialidade', 'Especialidade', 'text', ['especialidade', 'tipo de consulta', 'tipo de atendimento', 'area medica']), required: true, fallback: 'serviceName' },
     { role: r('unidadeSaude', 'Unidade de saúde preferida', 'text', ['unidade de saude', 'ubs', 'posto', 'unidade']) },
@@ -91,7 +96,8 @@ const CONSULTA: AppActionContract = {
 };
 
 const MEDICAMENTO = (altoCusto: boolean): AppActionContract => ({
-  keywords: altoCusto ? ['alto custo', 'medicamento especial', 'componente especializado'] : ['medicamento', 'remedio', 'farmacia'],
+  keywords: altoCusto ? ['alto custo', 'medicamento especial', 'componente especializado'] : ['medicamento', 'remedio', 'farmacia', 'insulina', 'fralda', 'fornecimento de'],
+  notKeywords: ['oxigenio', 'cadeira de rodas', 'muleta'],
   roles: [
     { role: r('medicamento', 'Nome do remédio', 'text', ['medicamento', 'remedio']), required: true },
     { role: r('dosagem', 'Dosagem', 'text', ['dosagem', 'dose', 'mg']) },
@@ -103,14 +109,18 @@ const MEDICAMENTO = (altoCusto: boolean): AppActionContract => ({
 
 const NOME_ALUNO = r('nomeAluno', 'Nome do aluno', 'text', ['nome do aluno', 'nome da crianca', 'nome do estudante', 'aluno', 'crianca', 'estudante']);
 const MATRICULA: AppActionContract = {
-  notKeywords: ['trancamento', 'cancelamento', 'transferencia', 'desistencia'],
-  keywords: ['matricula', 'rematricula', 'vaga escolar', 'vaga em escola', 'vaga na escola', 'vaga em creche', 'vaga na creche', 'creche', 'cmei'],
+  // EJA: o aluno é o próprio adulto — o app de matrícula trabalha com criança + responsável
+  notKeywords: ['trancamento', 'cancelamento', 'desistencia', 'eja', 'jovens e adultos', 'alfabetizacao de adultos'],
+  keywords: ['matricula', 'rematricula', 'vaga escolar', 'vaga em escola', 'vaga na escola', 'vaga em creche', 'vaga na creche', 'creche', 'cmei', 'pre escola',
+    'transferencia de escola', 'transferencia escolar'],
   roles: [
     { role: NOME_ALUNO, required: true },
     { role: r('dataNascimentoAluno', 'Data de nascimento do aluno', 'date', ['nascimento']), required: true },
-    { role: r('serie', 'Série/Ano pretendido', 'text', ['serie', 'ano escolar', 'etapa', 'nivel de ensino', 'ano pretendido', 'turma']), required: true },
+    { role: r('serie', 'Série/Ano pretendido', 'text', ['serie', 'ano escolar', 'ano atual', 'etapa', 'nivel de ensino', 'ano pretendido', 'turma']), required: true },
     { role: r('turnoDesejado', 'Turno desejado', 'text', ['turno', 'periodo']) },
-    { role: r('escolaPreferencial', 'Escola preferida', 'text', ['escola', 'unidade escolar', 'creche', 'cmei']) },
+    { role: r('escolaPreferencial', 'Escola preferida', 'text', ['escola de destino', 'escola de preferencia', 'escola preferida', 'escola', 'unidade escolar', 'creche', 'cmei', 'pre escola']) },
+    { role: r('escolaOrigem', 'Escola atual (transferência)', 'text', ['escola atual', 'escola de origem']) },
+    { role: r('motivoTransferencia', 'Motivo da transferência', 'textarea', ['motivo da transferencia']) },
     { role: r('cpfAluno', 'CPF do aluno (se tiver)', 'text', ['cpf do aluno', 'cpf da crianca', 'cpf do estudante']) },
     { role: r('grauParentesco', 'Você é o quê do aluno?', 'text', ['parentesco', 'grau de parentesco']) },
     { role: r('descricaoNecessidades', 'Necessidade especial', 'textarea', ['necessidade especial', 'necessidades especiais', 'deficiencia', 'laudo']) },
@@ -211,8 +221,8 @@ const MULHER = (keywords: string[]): AppActionContract => ({
   ],
 });
 
-const ESCOLINHA = (modalidade: string): AppActionContract => ({
-  keywords: [`escolinha de ${modalidade}`, `escolinha ${modalidade}`, `aula de ${modalidade}`, `aulas de ${modalidade}`, `treino de ${modalidade}`],
+const ESCOLINHA = (modalidade: string, extra: string[] = []): AppActionContract => ({
+  keywords: [`escolinha de ${modalidade}`, `escolinha ${modalidade}`, `aula de ${modalidade}`, `aulas de ${modalidade}`, `treino de ${modalidade}`, modalidade, ...extra],
   roles: [
     // sem o campo, o aluno é quem fez o pedido
     { role: r('nomeAluno', 'Nome do aluno', 'text', ['nome do aluno', 'nome da crianca', 'nome do atleta', 'aluno', 'crianca', 'atleta']), fallback: 'citizenName' },
@@ -293,7 +303,8 @@ const EVENTO_TURISTICO = (keywords: string[]): AppActionContract => ({
 const SEGURANCA = (keywords: string[], comTipo = true): AppActionContract => ({
   keywords,
   roles: [
-    { role: r('relatoDetalhado', 'O que aconteceu', 'textarea', ['relato', 'descricao', 'o que aconteceu', 'detalhe', 'situacao', 'motivo']), required: true },
+    // ocorrência/denúncia precisa do relato; pedido de ronda/guarda, não
+    { role: r('relatoDetalhado', 'O que aconteceu', 'textarea', ['relato', 'descricao', 'o que aconteceu', 'detalhe', 'situacao', 'motivo', 'observac']), required: comTipo },
     { role: r('localOcorrencia', 'Local', 'text', ['local', 'endereco', 'onde', 'logradouro']), required: true },
     { role: BAIRRO },
     ...(comTipo ? [{ role: r('tipoOcorrencia', 'Tipo', 'text', ['tipo de ocorrencia', 'tipo de denuncia', 'tipo', 'natureza']) }] : []),
@@ -309,6 +320,8 @@ const SEGURANCA = (keywords: string[], comTipo = true): AppActionContract => ({
 export const NOT_AN_APP_CASE = [
   'certidao', 'declaracao', 'segunda via', '2 via', '2a via', 'consulta de', 'consulta da', 'consulta do', 'reclamacao',
   'atestado', 'comprovante', 'historico', 'informacoes sobre', 'informacao sobre', 'copia de', 'boleto', 'extrato',
+  'certificado de', 'consulta previa', 'consulta ao', 'consulta sobre', 'consulta de resultado', 'pesquisa de satisfacao',
+  'palestra', 'orientacao sobre', 'isencao de taxa',
 ];
 
 export const APP_FIELD_CONTRACTS: Record<string, AppActionContract> = {
@@ -316,64 +329,95 @@ export const APP_FIELD_CONTRACTS: Record<string, AppActionContract> = {
   ENCAMINHAMENTOS_TFD: TFD,
   AGENDAMENTO_CONSULTA: CONSULTA,
   CONTROLE_MEDICAMENTOS: MEDICAMENTO(false),
+  CADASTRO_GESTANTE: {
+    keywords: ['cadastro de gestante', 'gestante', 'pre natal', 'gravidez', 'gestacao'],
+    notKeywords: ['grupo de'],
+    roles: [
+      { role: r('dum', 'Data da última menstruação', 'date', ['dum', 'ultima menstruacao']), required: true },
+      { role: r('unidadeSaude', 'Unidade de saúde para o pré-natal', 'text', ['unidade de saude', 'ubs', 'posto', 'unidade']) },
+      { role: r('primeiraGestacao', 'É a primeira gestação?', 'boolean', ['primeira gestacao', 'primeira gravidez']) },
+    ],
+  },
   MEDICAMENTOS_ALTO_CUSTO: MEDICAMENTO(true),
   // Educação
   MATRICULA_ESCOLAR: MATRICULA,
   TRANSPORTE_ESCOLAR,
   // Assistência Social
-  SOLICITACAO_BENEFICIO: BENEFICIO(['beneficio social', 'solicitacao de beneficio', 'bolsa', 'auxilio financeiro', 'programa social', 'tarifa social']),
+  SOLICITACAO_BENEFICIO: BENEFICIO(['beneficio social', 'solicitacao de beneficio', 'bolsa', 'auxilio financeiro', 'programa social', 'tarifa social', 'bpc', 'prestacao continuada', 'programa', 'cisterna']),
   CESTA_BASICA: BENEFICIO(['cesta basica', 'cesta de alimentos', 'alimentos', 'auxilio emergencial']),
-  BENEFICIO_EVENTUAL: BENEFICIO(['beneficio eventual', 'auxilio natalidade', 'auxilio funeral', 'auxilio calamidade', 'kit enxoval', 'kit natalidade']),
+  BENEFICIO_EVENTUAL: BENEFICIO(['beneficio eventual', 'auxilio natalidade', 'auxilio funeral', 'auxilio calamidade', 'kit enxoval', 'kit natalidade', 'vulnerabilidade temporaria']),
   // Serviços públicos
-  ILUMINACAO_PUBLICA: OS(['iluminacao', 'poste', 'lampada', 'luminaria']),
-  LIMPEZA_URBANA: OS(['limpeza', 'varricao', 'lixo', 'coleta de lixo', 'terreno baldio', 'terreno abandonado']),
+  ILUMINACAO_PUBLICA: OS(['iluminacao publica', 'iluminacao', 'poste', 'lampada', 'luminaria']),
+  LIMPEZA_URBANA: OS(['limpeza', 'varricao', 'lixo', 'coleta de lixo', 'terreno baldio', 'terreno abandonado', 'roteiro de coleta', 'lixeira']),
   COLETA_ESPECIAL: OS(['entulho', 'coleta especial', 'cata treco', 'cata-treco', 'moveis velhos', 'eletronico', 'volumoso']),
   SOLICITACAO_CAPINA: OS(['capina', 'rocagem', 'rocada', 'mato alto', 'mato']),
   SOLICITACAO_DESOBSTRUCAO: OS(['bueiro', 'boca de lobo', 'desobstrucao', 'galeria pluvial', 'drenagem', 'esgoto entupido']),
   SOLICITACAO_PODA: OS(['poda', 'galho', 'arvore caida']),
-  ATENDIMENTOS_SERVICOS_PUBLICOS: OS(['registro de problema', 'problema com foto', 'buraco', 'tapa buraco', 'calcamento', 'meio fio', 'praca', 'jardim', 'dedetizacao', 'animal morto', 'reparo', 'manutencao']),
+  ATENDIMENTOS_SERVICOS_PUBLICOS: OS(['registro de problema', 'problema com foto', 'vazamento', 'hidrometro', 'religacao de agua', 'ligacao de agua', 'caminhao pipa', 'caixa d agua', 'buraco', 'tapa buraco', 'calcamento', 'meio fio', 'praca', 'jardim', 'dedetizacao', 'animal morto', 'reparo', 'manutencao']),
   // Licenciamento urbano
-  APROVACAO_PROJETO: LICENCIAMENTO(['aprovacao de projeto', 'projeto arquitetonico', 'projeto de construcao', 'regularizacao de obra']),
-  ALVARA_CONSTRUCAO: LICENCIAMENTO(['alvara de construcao', 'licenca de construcao', 'reforma', 'demolicao', 'habite-se', 'habitese']),
-  ALVARA_FUNCIONAMENTO: LICENCIAMENTO(['alvara de funcionamento', 'licenca de funcionamento', 'abertura de empresa']),
+  APROVACAO_PROJETO: LICENCIAMENTO(['aprovacao de projeto', 'projeto arquitetonico', 'projeto de construcao', 'regularizacao de obra', 'loteamento', 'desmembramento',
+    'remembramento', 'unificacao de lotes', 'aprovacao de condominio', 'ampliacao de area construida', 'modificacao de projeto', 'aprovacao de edificio',
+    'aprovacao de mezanino', 'aprovacao de piscina']),
+  ALVARA_CONSTRUCAO: LICENCIAMENTO(['alvara de construcao', 'licenca de construcao', 'reforma', 'demolicao', 'habite-se', 'habitese', 'cvo', 'movimento de terra',
+    'tapume', 'andaime', 'instalacao de antena', 'renovacao de alvara']),
+  ALVARA_FUNCIONAMENTO: LICENCIAMENTO(['alvara de funcionamento', 'licenca de funcionamento', 'abertura de empresa', 'localizacao e funcionamento',
+    'comercio ambulante', 'ambulante', 'licenca para publicidade', 'ocupacao temporaria']),
   // Meio ambiente
-  LICENCA_AMBIENTAL: AMBIENTAL(['licenca ambiental', 'licenciamento ambiental', 'atividade poluidora', 'poluidora', 'licenca previa', 'licenca de operacao']),
-  AUTORIZACAO_PODA_CORTE: AMBIENTAL(['corte de arvore', 'supressao', 'autorizacao de poda', 'remocao de arvore']),
+  LICENCA_AMBIENTAL: AMBIENTAL(['licenca ambiental', 'licenciamento ambiental', 'atividade poluidora', 'poluidora', 'queimada controlada', 'outorga de uso de agua',
+    'perfuracao de poco', 'manejo de fauna', 'area degradada', 'impacto ambiental', 'compensacao ambiental', 'licenca previa', 'licenca de operacao']),
+  AUTORIZACAO_PODA_CORTE: AMBIENTAL(['corte de arvore', 'supressao', 'autorizacao de poda', 'remocao de arvore', 'poda de arvore', 'poda']),
   DENUNCIA_AMBIENTAL: AMBIENTAL(['denuncia ambiental', 'queimada', 'desmatamento', 'poluicao', 'descarte irregular', 'maus tratos', 'barulho', 'poluicao sonora'], true),
-  VISTORIA_AMBIENTAL: AMBIENTAL(['vistoria ambiental', 'fiscalizacao ambiental'], true),
+  VISTORIA_AMBIENTAL: AMBIENTAL(['vistoria ambiental', 'fiscalizacao ambiental', 'inspecao ambiental', 'fiscalizacao de criacao', 'fauna silvestre', 'resgate de fauna'], true),
   // Habitação
-  INSCRICAO_PROGRAMA_HABITACIONAL: { ...HABITACAO(['programa habitacional', 'casa propria', 'moradia popular', 'minha casa', 'conjunto habitacional', 'lote urbanizado']), notKeywords: ['horta'] },
+  INSCRICAO_PROGRAMA_HABITACIONAL: { ...HABITACAO(['programa habitacional', 'casa propria', 'moradia popular', 'minha casa', 'conjunto habitacional', 'lote urbanizado',
+    'sorteio', 'habitacao rural', 'habitacao indigena', 'habitacao quilombola', 'reforma habitacional', 'kit construcao', 'mutirao habitacional', 'credito habitacional',
+    'lote social', 'consorcio habitacional', 'melhorias sanitarias', 'autoconstrucao']), notKeywords: ['horta', 'cadastro de morador', 'curso', 'oficina'] },
   INSCRICAO_FILA_HABITACAO: HABITACAO(['fila da habitacao', 'fila de moradia', 'cadastro habitacional']),
-  SOLICITACAO_AUXILIO_ALUGUEL: HABITACAO(['aluguel social', 'auxilio aluguel', 'auxilio moradia']),
+  SOLICITACAO_AUXILIO_ALUGUEL: HABITACAO(['aluguel social', 'auxilio aluguel', 'auxilio moradia', 'locacao social']),
   // Defesa civil
-  VISTORIA_AREA_RISCO: DEFESA_CIVIL(['area de risco', 'vistoria de risco', 'deslizamento', 'rachadura', 'desabamento'], false, ['evento', 'cadastro de familia']),
+  VISTORIA_AREA_RISCO: DEFESA_CIVIL(['area de risco', 'vistoria de risco', 'deslizamento', 'rachadura', 'desabamento', 'solicitacao de vistoria', 'laudo tecnico'], false, ['evento', 'cadastro de familia']),
   DENUNCIA_AREA_RISCO: DEFESA_CIVIL(['denuncia de risco', 'encosta', 'barranco']),
   DENUNCIA_CONSTRUCAO: DEFESA_CIVIL(['construcao irregular', 'construcao em encosta', 'construcao em area de risco']),
   REMOCAO_PREVENTIVA: DEFESA_CIVIL(['remocao preventiva', 'desocupacao', 'remocao de familia'], true),
   SOLICITACAO_ABRIGO: DEFESA_CIVIL(['abrigo', 'desabrigado', 'desalojado'], true, ['doacao']),
-  ALERTA_EMERGENCIA: DEFESA_CIVIL(['alerta', 'enchente', 'alagamento', 'inundacao', 'emergencia', 'vendaval'], false, ['sms', 'cadastro para alerta', 'cadastro de alerta', 'sirene']),
+  ALERTA_EMERGENCIA: DEFESA_CIVIL(['alerta', 'enchente', 'alagamento', 'inundacao', 'emergencia', 'vendaval', 'incendio', 'queda de arvore'], false, ['sms', 'cadastro para alerta', 'cadastro de alerta', 'sirene', 'declaracao de situacao']),
   // Rede da mulher
-  DENUNCIA_VIOLENCIA: MULHER(['violencia contra a mulher', 'violencia domestica', 'agressao', 'maria da penha']),
+  DENUNCIA_VIOLENCIA: MULHER(['violencia contra a mulher', 'violencia contra mulher', 'violencia domestica', 'agressao', 'maria da penha', 'violencia']),
   DENUNCIA_ASSEDIO: MULHER(['assedio']),
-  ACOLHIMENTO_CASA_ABRIGO: MULHER(['casa abrigo', 'acolhimento da mulher', 'casa da mulher']),
+  ACOLHIMENTO_CASA_ABRIGO: MULHER(['casa abrigo', 'acolhimento da mulher', 'casa da mulher', 'acolhimento']),
   MEDIDA_PROTETIVA: MULHER(['medida protetiva']),
-  ACOMPANHAMENTO_SOCIAL: MULHER(['acompanhamento psicossocial', 'acompanhamento social', 'atendimento a mulher', 'apoio a mulher']),
+  ACOMPANHAMENTO_SOCIAL: MULHER(['acompanhamento psicossocial', 'acompanhamento social', 'atendimento especializado', 'atendimento psicologico', 'assistencia social',
+    'grupo de apoio', 'rede de apoio', 'atendimento a mulher', 'apoio a mulher']),
   // Esportes
-  INSCRICAO_ESCOLINHA_FUTEBOL: ESCOLINHA('futebol'),
+  INSCRICAO_ESCOLINHA_FUTEBOL: ESCOLINHA('futebol', ['futsal']),
   INSCRICAO_ESCOLINHA_BASQUETE: ESCOLINHA('basquete'),
   INSCRICAO_ESCOLINHA_VOLEI: ESCOLINHA('volei'),
-  INSCRICAO_ESCOLINHA_NATACAO: ESCOLINHA('natacao'),
+  INSCRICAO_ESCOLINHA_NATACAO: ESCOLINHA('natacao', ['hidroginastica']),
   INSCRICAO_ESCOLINHA_JUDO: ESCOLINHA('judo'),
   INSCRICAO_ESCOLINHA_CAPOEIRA: ESCOLINHA('capoeira'),
   INSCRICAO_ESCOLINHA_GINASTICA: ESCOLINHA('ginastica'),
+  // Qualquer outra modalidade/aula: matrícula com modalidade "OUTRA" (o nome do serviço diz qual)
+  INSCRICAO_ESCOLINHA_OUTRA: {
+    keywords: ['escolinha', 'aulas de', 'aula de', 'treino', 'karate', 'handebol', 'atletismo', 'tenis', 'xadrez', 'yoga', 'pilates', 'patinacao', 'skate',
+      'musculacao', 'academia', 'tai chi', 'funcional', 'alongamento', 'danca', 'ritmos', 'badminton', 'esgrima', 'tiro com arco', 'rugby', 'bocha', 'slackline',
+      'beach tennis', 'futevolei', 'frescobol', 'avaliacao fisica', 'grupo de', 'ciclismo', 'caminhada'],
+    notKeywords: ['cadastro de', 'bolsa', 'organizacao', 'arbitro', 'treinador'],
+    roles: [
+      { role: r('modalidade', 'Modalidade', 'text', ['modalidade', 'atividade', 'esporte']), fallback: 'serviceName' },
+      { role: r('nomeAluno', 'Nome do aluno', 'text', ['nome do aluno', 'nome da crianca', 'nome do atleta', 'aluno', 'crianca', 'atleta']), fallback: 'citizenName' },
+      { role: NASCIMENTO },
+      { role: TELEFONE },
+    ],
+  },
   RESERVA_ESPACO_ESPORTIVO: RESERVA(['reserva de quadra', 'reserva de espaco esportivo', 'reservar quadra', 'uso de quadra', 'campo de futebol', 'estadio']),
   USO_GINASIO: RESERVA(['ginasio']),
   INSCRICAO_COMPETICAO: {
-    keywords: ['campeonato', 'competicao', 'torneio', 'jogos', 'copa'],
+    keywords: ['campeonato', 'competicao', 'torneio', 'jogos', 'copa', 'olimpiada'],
     roles: [{ role: r('participante', 'Equipe ou atleta', 'text', ['equipe', 'time', 'atleta', 'participante']), required: true }, { role: CATEGORIA }, { role: TELEFONE }],
   },
   INSCRICAO_CORRIDA_RUA: {
     keywords: ['corrida', 'maratona', 'caminhada', 'ciclismo', 'passeio ciclistico'],
+    notKeywords: ['grupo de'],
     roles: [{ role: r('participante', 'Nome do atleta', 'text', ['atleta', 'participante', 'corredor']) }, { role: CATEGORIA }, { role: NASCIMENTO }],
   },
   EMPRESTIMO_MATERIAL_ESPORTIVO: {
@@ -382,7 +426,7 @@ export const APP_FIELD_CONTRACTS: Record<string, AppActionContract> = {
   },
   // Cultura
   INSCRICAO_OFICINA: {
-    keywords: ['oficina', 'curso de musica', 'aula de danca', 'aula de teatro', 'aula de violao', 'curso de artesanato', 'aula de pintura'],
+    keywords: ['oficina', 'curso de musica', 'aula de danca', 'aula de teatro', 'aula de violao', 'curso de artesanato', 'aula de pintura', 'coral', 'banda municipal', 'clube de leitura'],
     roles: [
       { role: r('oficina', 'Oficina desejada', 'text', ['oficina', 'curso', 'atividade', 'aula']), required: true, fallback: 'serviceName' },
       { role: r('participante', 'Nome do participante', 'text', ['participante', 'aluno', 'nome do aluno']) },
@@ -394,16 +438,16 @@ export const APP_FIELD_CONTRACTS: Record<string, AppActionContract> = {
     keywords: ['oficina cultural'],
     roles: [{ role: r('oficina', 'Oficina desejada', 'text', ['oficina', 'curso', 'atividade', 'aula']), required: true, fallback: 'serviceName' }, { role: r('participante', 'Nome do participante', 'text', ['participante', 'aluno']) }, { role: TELEFONE }],
   },
-  RESERVA_ESPACO_CULTURAL: RESERVA(['reserva de espaco cultural', 'teatro municipal', 'auditorio', 'casa da cultura', 'centro cultural', 'anfiteatro']),
-  INSCRICAO_EDITAL: PROJETO_CULTURAL(['edital', 'chamamento', 'lei paulo gustavo', 'aldir blanc', 'premio cultural']),
-  PROJETO_CULTURAL: PROJETO_CULTURAL(['projeto cultural', 'submissao de projeto']),
+  RESERVA_ESPACO_CULTURAL: RESERVA(['reserva de espaco cultural', 'teatro municipal', 'auditorio', 'casa da cultura', 'centro cultural', 'anfiteatro', 'espaco para exposicao']),
+  INSCRICAO_EDITAL: PROJETO_CULTURAL(['edital', 'chamamento', 'lei paulo gustavo', 'aldir blanc', 'premio cultural', 'incentivo a cultura', 'lei de incentivo']),
+  PROJETO_CULTURAL: PROJETO_CULTURAL(['projeto cultural', 'submissao de projeto', 'projeto de mural', 'cinema itinerante']),
   SUBMISSAO_PROJETO_CULTURAL: PROJETO_CULTURAL(['submissao de projeto cultural']),
-  APOIO_CULTURAL: PROJETO_CULTURAL(['apoio cultural', 'patrocinio cultural', 'apoio a evento cultural']),
+  APOIO_CULTURAL: PROJETO_CULTURAL(['apoio cultural', 'patrocinio cultural', 'apoio a evento cultural', 'apoio a manifestacoes', 'apoio a']),
   // Transportes e trânsito
   CREDENCIAMENTO_TAXI: CREDENCIAL(['taxi', 'taxista']),
   CREDENCIAMENTO_MOTOTAXI: CREDENCIAL(['mototaxi', 'mototaxista', 'motofrete']),
-  CREDENCIAMENTO_TRANSPORTE_ESCOLAR: CREDENCIAL(['credenciamento de transporte escolar', 'condutor escolar', 'perueiro']),
-  VISTORIA_VEICULO: CREDENCIAL(['vistoria de veiculo', 'vistoria veicular', 'inspecao de veiculo']),
+  CREDENCIAMENTO_TRANSPORTE_ESCOLAR: CREDENCIAL(['credenciamento de transporte escolar', 'cadastro em transporte escolar', 'condutor escolar', 'perueiro']),
+  VISTORIA_VEICULO: CREDENCIAL(['vistoria de veiculo', 'vistoria veicular', 'inspecao de veiculo', 'vistoria de taxi', 'vistoria de mototaxi', 'agendamento de vistoria']),
   DEFESA_AUTUACAO: {
     keywords: ['defesa de autuacao', 'recurso de multa', 'defesa previa', 'jari', 'multa de transito', 'indicacao de condutor'],
     roles: [
@@ -426,18 +470,22 @@ export const APP_FIELD_CONTRACTS: Record<string, AppActionContract> = {
     ],
   },
   // Mobilidade urbana
-  CARTAO_ESTUDANTE: CARTEIRA(['carteira de estudante', 'cartao estudante', 'meia passagem', 'passe escolar', 'passe estudantil'], true),
-  CARTAO_TRANSPORTE: CARTEIRA(['cartao transporte', 'bilhete unico', 'cartao de onibus']),
-  ISENCAO_IDOSO: CARTEIRA(['idoso', 'gratuidade idoso', 'carteira do idoso', 'isencao de tarifa']),
+  CARTAO_ESTUDANTE: CARTEIRA(['carteira de estudante', 'cartao estudante', 'meia passagem', 'meia tarifa', 'passe escolar', 'passe estudantil', 'passe livre estudantil', 'estudantil'], true),
+  CARTAO_TRANSPORTE: CARTEIRA(['cartao transporte', 'cartao de transporte', 'bilhete unico', 'cartao de onibus']),
+  ISENCAO_IDOSO: CARTEIRA(['idoso', 'gratuidade idoso', 'carteira do idoso', 'isencao de tarifa', 'passe livre para idoso']),
   PASSE_LIVRE_INTERESTADUAL: CARTEIRA(['passe livre', 'pessoa com deficiencia no transporte']),
   VAGA_ESPECIAL_PCD: CARTEIRA(['vaga especial', 'cartao de estacionamento', 'credencial de estacionamento', 'vaga para pcd', 'vaga de idoso']),
   // Agricultura
   ASSISTENCIA_TECNICA: {
-    keywords: ['assistencia tecnica', 'visita tecnica', 'ater', 'analise de solo', 'orientacao tecnica', 'extensao rural'],
+    keywords: ['assistencia tecnica', 'visita tecnica', 'ater', 'analise de solo', 'orientacao tecnica', 'extensao rural', 'receituario agronomico',
+      'silagem', 'inseminacao', 'sistema de irrigacao', 'olericultura', 'agroflorestal', 'agroecologica', 'quintal produtivo', 'galinheiro', 'vacinacao animal',
+      'plantas medicinais', 'fomento'],
+    notKeywords: ['curso'],
     roles: [{ role: r('tipoAssistencia', 'Tipo de assistência', 'text', ['tipo de assistencia', 'assistencia', 'cultura', 'atividade', 'tipo']), required: true, fallback: 'serviceName' }, { role: DESCRICAO }],
   },
   SOLICITACAO_MAQUINAS: {
-    keywords: ['maquina', 'maquinas', 'trator', 'patrulha agricola', 'patrulha mecanizada', 'mecanizacao', 'hora maquina', 'implemento', 'retroescavadeira'],
+    keywords: ['maquina', 'maquinas', 'trator', 'patrulha agricola', 'patrulha mecanizada', 'mecanizacao', 'hora maquina', 'implemento', 'retroescavadeira',
+      'tanque', 'acude', 'terraplanagem', 'curva de nivel', 'gradeamento', 'aracao'],
     roles: [
       { role: r('tipoMaquina', 'Máquina pedida', 'text', ['maquina', 'implemento', 'equipamento', 'trator', 'tipo de servico']), required: true, fallback: 'serviceName' },
       { role: r('dataDesejada', 'Para quando', 'date', ['data preferencial', 'data desejada', 'data de uso', 'quando', 'data']) },
@@ -447,7 +495,7 @@ export const APP_FIELD_CONTRACTS: Record<string, AppActionContract> = {
     ],
   },
   CADASTRO_PRODUTOR: {
-    keywords: ['cadastro de produtor', 'produtor rural', 'agricultor familiar', 'carteira de produtor'],
+    keywords: ['cadastro de produtor', 'produtor rural', 'agricultor familiar', 'carteira de produtor', 'apicultor', 'piscicultor', 'agroindustria familiar'],
     roles: [
       { role: r('producoes', 'O que produz', 'text', ['producao', 'producoes', 'cultura', 'criacao', 'atividade']) },
       { role: r('tipoProdutor', 'Tipo de produtor', 'text', ['tipo de produtor', 'categoria']) },
@@ -469,7 +517,8 @@ export const APP_FIELD_CONTRACTS: Record<string, AppActionContract> = {
   // Desenvolvimento econômico
   CADASTRO_BALCAO_EMPREGOS: {
     notKeywords: ['agendamento'],
-    keywords: ['balcao de empregos', 'banco de empregos', 'cadastro de curriculo', 'curriculo', 'procura de emprego', 'vaga de emprego', 'sine'],
+    keywords: ['balcao de empregos', 'banco de empregos', 'cadastro de curriculo', 'curriculo', 'procura de emprego', 'vaga de emprego', 'sine',
+      'cadastro de trabalhador', 'primeiro emprego', 'jovem aprendiz', 'encaminhamento para emprego'],
     roles: [
       { role: r('areaInteresse', 'Em que quer trabalhar', 'text', ['area de interesse', 'area de atuacao', 'funcao', 'cargo', 'profissao', 'interesse', 'ocupacao']), required: true },
       { role: r('escolaridade', 'Escolaridade', 'text', ['escolaridade', 'formacao', 'grau de instrucao']) },
@@ -480,20 +529,20 @@ export const APP_FIELD_CONTRACTS: Record<string, AppActionContract> = {
     ],
   },
   // Segurança pública
-  REGISTRO_OCORRENCIA: SEGURANCA(['ocorrencia', 'boletim', 'furto', 'roubo', 'vandalismo', 'perturbacao do sossego', 'som alto']),
-  SOLICITACAO_PATRULHAMENTO: SEGURANCA(['patrulhamento', 'ronda', 'policiamento'], false),
+  REGISTRO_OCORRENCIA: SEGURANCA(['ocorrencia', 'boletim', 'furto', 'roubo', 'vandalismo', 'perturbacao do sossego', 'som alto', 'denuncia']),
+  SOLICITACAO_PATRULHAMENTO: SEGURANCA(['patrulhamento', 'ronda', 'policiamento', 'patrulha'], false),
   DENUNCIA_ANONIMA: SEGURANCA(['denuncia anonima', 'disque denuncia', 'trafico']),
   CADASTRO_PONTO_CRITICO: SEGURANCA(['ponto critico', 'local perigoso', 'ponto de risco'], false),
   ALERTA_SEGURANCA: SEGURANCA(['alerta de seguranca', 'pessoa desaparecida', 'veiculo suspeito'], false),
   PATRULHA_ESCOLAR: SEGURANCA(['patrulha escolar', 'ronda escolar', 'seguranca na escola'], false),
-  GUARDA_PATRIMONIAL: SEGURANCA(['guarda patrimonial', 'guarda municipal no evento', 'seguranca de evento', 'protecao de patrimonio'], false),
-  SOS_MULHER: { ...SEGURANCA(['sos mulher', 'pedido de ajuda urgente', 'botao do panico', 'violencia domestica'], false), notKeywords: ['idoso', 'idosa'] },
+  GUARDA_PATRIMONIAL: SEGURANCA(['guarda patrimonial', 'guarda municipal no evento', 'seguranca de evento', 'seguranca para eventos', 'protecao de patrimonio', 'escolta'], false),
+  SOS_MULHER: { ...SEGURANCA(['sos mulher', 'pedido de ajuda urgente', 'botao do panico', 'violencia domestica', 'violacao de medida protetiva'], false), notKeywords: ['idoso', 'idosa'] },
   // Turismo
-  CADASTRO_ESTABELECIMENTO_TURISTICO: PRESTADOR(['estabelecimento turistico', 'meio de hospedagem', 'pousada', 'hotel', 'restaurante turistico']),
+  CADASTRO_ESTABELECIMENTO_TURISTICO: PRESTADOR(['estabelecimento turistico', 'meio de hospedagem', 'hospedagem', 'pousada', 'hotel', 'restaurante', 'camping', 'loja de souvenir']),
   CADASTRO_GUIA_TURISTICO: PRESTADOR(['guia turistico', 'guia de turismo', 'condutor de turismo'], true),
-  CREDENCIAMENTO_AGENCIA_TURISMO: PRESTADOR(['agencia de turismo', 'agencia de viagem', 'operadora de turismo']),
-  AUTORIZACAO_TRANSPORTE_TURISTICO: PRESTADOR(['transporte turistico', 'van de turismo', 'onibus de turismo']),
-  CADASTRO_ATRACAO_TURISTICA: PRESTADOR(['atracao turistica', 'atrativo turistico', 'ponto turistico']),
-  REGISTRO_EVENTO_TURISTICO: { ...EVENTO_TURISTICO(['evento turistico', 'calendario de eventos', 'festa tradicional', 'festival']), notKeywords: ['inscricao para', 'participacao'] },
-  APOIO_FEIRA_EXPOSICAO: { ...EVENTO_TURISTICO(['feira', 'exposicao', 'apoio a evento']), notKeywords: ['participacao', 'inscricao para', 'barraca'] },
+  CREDENCIAMENTO_AGENCIA_TURISMO: { ...PRESTADOR(['agencia de turismo', 'agencia de viagem', 'operadora de turismo', 'receptivo', 'tour']), notKeywords: ['fam tour'] },
+  AUTORIZACAO_TRANSPORTE_TURISTICO: PRESTADOR(['transporte turistico', 'van de turismo', 'onibus de turismo', 'passeio nautico']),
+  CADASTRO_ATRACAO_TURISTICA: PRESTADOR(['atracao turistica', 'atrativo turistico', 'ponto turistico', 'trilha', 'museu', 'turismo rural']),
+  REGISTRO_EVENTO_TURISTICO: { ...EVENTO_TURISTICO(['evento turistico', 'calendario de eventos', 'calendario oficial', 'festa tradicional', 'festival']), notKeywords: ['inscricao para', 'participacao'] },
+  APOIO_FEIRA_EXPOSICAO: { ...EVENTO_TURISTICO(['feira', 'exposicao', 'apoio a evento', 'apoio municipal a eventos']), notKeywords: ['participacao', 'inscricao para', 'barraca'] },
 };

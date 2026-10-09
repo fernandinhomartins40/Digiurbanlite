@@ -49,6 +49,7 @@ export const educationServices: ServiceDefinition[] = [
     serviceType: 'COM_DADOS',
     serviceSubtype: ServiceSubtype.CAPTURA_COMPLETA,
     moduleType: 'TRANSFERENCIA_ESCOLAR',
+    appAction: 'MATRICULA_ESCOLAR',
     requiresDocuments: true,
     requiredDocuments: ['Histórico Escolar', 'Comprovante de Residência', 'Declaração de Transferência'],
     estimatedDays: 7,
@@ -60,6 +61,7 @@ export const educationServices: ServiceDefinition[] = [
       type: 'object',
       citizenFields: ['citizen_name', 'citizen_cpf', 'citizen_rg', 'citizen_birthdate', 'citizen_email', 'citizen_phone', 'citizen_phonesecondary', 'citizen_zipcode', 'citizen_address', 'citizen_addressnumber', 'citizen_addresscomplement', 'citizen_neighborhood'],
       properties: {
+        dataNascimentoAluno: { type: 'string', title: 'Data de Nascimento do Aluno', format: 'date' },
         nomeAluno: { type: 'string', title: 'Nome Completo do Aluno', minLength: 3, maxLength: 200 },
         escolaOrigem: { type: 'string', title: 'Escola de Origem', maxLength: 200 },
         escolaDestino: { type: 'string', title: 'Escola de Destino', maxLength: 200 },
@@ -67,7 +69,7 @@ export const educationServices: ServiceDefinition[] = [
         motivoTransferencia: { type: 'string', title: 'Motivo da Transferência', enum: ['Mudança de Endereço', 'Preferência de Turno', 'Proximidade', 'Outro'] },
         observacoes: { type: 'string', title: 'Observações', maxLength: 500, widget: 'textarea' }
       },
-      required: ['nomeAluno', 'escolaOrigem', 'escolaDestino', 'anoAtual', 'motivoTransferencia']
+      required: ['dataNascimentoAluno', 'nomeAluno', 'escolaOrigem', 'escolaDestino', 'anoAtual', 'motivoTransferencia']
     }
   },
 
@@ -262,6 +264,7 @@ export const educationServices: ServiceDefinition[] = [
     serviceType: 'COM_DADOS',
     serviceSubtype: ServiceSubtype.CAPTURA_COMPLETA,
     moduleType: 'INSCRICAO_CRECHE',
+    appAction: 'MATRICULA_ESCOLAR',
     requiresDocuments: true,
     requiredDocuments: ['Certidão de Nascimento da Criança', 'RG do Responsável', 'CPF do Responsável', 'Comprovante de Residência', 'Comprovante de Trabalho dos Pais', 'Cartão de Vacina'],
     estimatedDays: 30,
@@ -273,6 +276,7 @@ export const educationServices: ServiceDefinition[] = [
       type: 'object',
       citizenFields: ['citizen_name', 'citizen_cpf', 'citizen_rg', 'citizen_birthdate', 'citizen_email', 'citizen_phone', 'citizen_phonesecondary', 'citizen_zipcode', 'citizen_address', 'citizen_addressnumber', 'citizen_addresscomplement', 'citizen_neighborhood', 'citizen_mothername'],
       properties: {
+        serie: { type: 'string', title: 'Turma Pretendida', enum: ['Berçário', 'Maternal I', 'Maternal II'] },
         nomeCrianca: { type: 'string', title: 'Nome Completo da Criança', minLength: 3, maxLength: 200 },
         dataNascimentoCrianca: { type: 'string', title: 'Data de Nascimento da Criança', format: 'date' },
         idadeMeses: { type: 'integer', title: 'Idade em Meses', minimum: 0, maximum: 36 },
@@ -283,7 +287,7 @@ export const educationServices: ServiceDefinition[] = [
         situacaoTrabalho: { type: 'string', title: 'Situação de Trabalho dos Pais', enum: ['Ambos Trabalham', 'Apenas um Trabalha', 'Nenhum Trabalha', 'Família Monoparental'] },
         observacoes: { type: 'string', title: 'Observações', maxLength: 500, widget: 'textarea' }
       },
-      required: ['nomeCrianca', 'dataNascimentoCrianca', 'idadeMeses', 'crechePreferencial', 'turnoDesejado', 'situacaoTrabalho']
+      required: ['serie', 'nomeCrianca', 'dataNascimentoCrianca', 'idadeMeses', 'crechePreferencial', 'turnoDesejado', 'situacaoTrabalho']
     }
   },
 

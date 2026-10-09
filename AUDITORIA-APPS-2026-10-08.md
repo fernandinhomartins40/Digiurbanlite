@@ -167,3 +167,26 @@ e a sugestão tem `tipo_maquina`.
 - Aba Configurar da secretaria: avisa serviço que já existe e "pode ir para o app X" ou "o app não recebe: …".
 - Catálogo: as 4 licenças ambientais não perguntavam o endereço do local — agora perguntam. Os 104 serviços do catálogo
   que vão para app mandam todos os dados obrigatórios (trava em teste).
+
+### Revisão das ~946 sugestões, secretaria por secretaria (2026-10-09)
+
+Primeira medição só olhou o total. Revisando uma a uma as que ficavam SEM app nas secretarias com app:
+- **Defeito:** sugestões de Transportes e Trânsito gravavam o código `TRANSPORTE_TRANSITO` (a secretaria é
+  `TRANSPORTES_TRANSITO`) — corrigido nas 43.
+- **Defeito:** palavras com hífen ("Habite-se", "Cata-treco") nunca batiam — o leitor agora limpa as duas pontas.
+- Palavras faltando em quase todas as secretarias (Saúde: exames, vacinação, fisioterapia, mamografia…; Planejamento:
+  loteamento, desmembramento, tapume…; Turismo: hospedagem, camping, trilha…; Habitação: sorteio, kit construção…).
+- Portas novas: **Esportes — outras modalidades** (futsal, karatê, xadrez, yoga, hidroginástica… viram matrícula com
+  modalidade "OUTRA") e **Saúde — cadastro de gestante** (abre o pré-natal com a DUM e conclui o pedido).
+- Transferência de escola entra na Matrícula marcada como transferência.
+- Precisão revisada nas 300: palestra/orientação/isenção de taxa ficam na fila; portas certas para passe livre
+  estudantil/idoso, vistoria de táxi, grupos de caminhada/ciclismo.
+- Resultado: sugestões indo para app **126 → 300**. Catálogo: **129** serviços indo para app (eram 104), todos com os
+  dados que o app precisa (trava em teste). Catálogo ganhou "Data de nascimento do aluno" na Transferência Escolar e
+  "Turma pretendida" na Inscrição em Creche.
+- Relatório por secretaria: `npx tsx scripts/report-sugestoes-apps.ts resumo|com|sem`.
+
+**Ficam na fila de propósito:** EJA (o aluno é o próprio adulto; o app de matrícula trabalha com criança +
+responsável), Habite-se do catálogo (não tem formulário nem endereço), e as secretarias sem app (Administração,
+Finanças, Tecnologia). **Decisão pendente:** Obras Públicas tem ~20 sugestões de manutenção (tapa-buraco, drenagem,
+bueiro, iluminação) e não tem app de Ordens de Serviço — o app hoje é só de Serviços Públicos.

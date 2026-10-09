@@ -377,6 +377,7 @@ export const womenPoliciesServices: ServiceDefinition[] = [
     serviceType: 'COM_DADOS',
     serviceSubtype: ServiceSubtype.SOLICITACAO_SIMPLES,
     moduleType: 'CANAL_ESCUTA',
+    appAction: 'ACOLHIMENTO_CASA_ABRIGO',
     requiresDocuments: false,
     estimatedDays: 1,
     priority: 5,
