@@ -1,6 +1,6 @@
 import { prisma } from '../../lib/prisma';
 import { logger } from '../../config/logger.config';
-import { concludeProtocolFromApp } from '../apps/app-protocol-bridge.service';
+import { concludeProtocolFromApp, markProtocolInProgressFromApp } from '../apps/app-protocol-bridge.service';
 
 /**
  * App Ordens de Serviço — Serviços Públicos (Fase 1D do plano de apps).
@@ -134,6 +134,8 @@ class OrdemServicoService {
         descricao: params.observacoes || 'OS despachada para execução',
       },
     });
+    // O cidadão vê no pedido que a equipe foi acionada (antes ficava em "recebido" até a conclusão)
+    await markProtocolInProgressFromApp({ protocolId: ordem.protocolId, app: 'Serviços Públicos', message: 'equipe acionada para o serviço', actorId: params.userId });
     return atualizada;
   }
 
@@ -216,6 +218,8 @@ class OrdemServicoService {
         descricao: params.motivo || 'OS cancelada',
       },
     });
+    // Cancelar no app também encerra o pedido do cidadão (antes ficava aberto para sempre)
+    await concludeProtocolFromApp({ protocolId: ordem.protocolId, app: 'Serviços Públicos', message: `Ordem de serviço cancelada${params.motivo ? `: ${params.motivo}` : ''}.`, outcome: 'INDEFERIDO' });
     return atualizada;
   }
 

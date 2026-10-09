@@ -14,6 +14,7 @@
     "smoke:tenant:isolation": "tsx scripts/smoke-multi-tenant.ts",
     "smoke:pendings": "tsx scripts/smoke-pendings.ts",
     "smoke:apps": "tsx scripts/smoke-apps-portal.ts",
+    "smoke:apps:antigos": "tsx scripts/smoke-apps-legados.ts",
     "type-check": "tsc --noEmit",
     "type-check:watch": "tsc --noEmit --watch",
     "migrate:ts": "ts-migrate migrate src",

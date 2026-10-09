@@ -1,4 +1,5 @@
 import { Router } from 'express';
+import { sendError } from '../../utils/explain-error';
 import escutaInicialService from '../../services/saude/escuta-inicial.service';
 
 const router = Router();
@@ -10,7 +11,7 @@ router.post('/', async (req, res) => {
     res.status(201).json(escuta);
   } catch (error) {
     console.error('Erro ao criar escuta inicial:', error);
-    res.status(500).json({ error: 'Erro ao criar escuta inicial' });
+    sendError(res, error, 'Erro ao criar escuta inicial');
   }
 });
 
@@ -22,7 +23,7 @@ router.get('/fila/:filaId', async (req, res) => {
     res.json(escuta);
   } catch (error) {
     console.error('Erro ao buscar escuta inicial:', error);
-    res.status(500).json({ error: 'Erro ao buscar escuta inicial' });
+    sendError(res, error, 'Erro ao buscar escuta inicial');
   }
 });
 
@@ -38,7 +39,7 @@ router.get('/', async (req, res) => {
     res.json(escutas);
   } catch (error) {
     console.error('Erro ao listar escutas:', error);
-    res.status(500).json({ error: 'Erro ao listar escutas iniciais' });
+    sendError(res, error, 'Erro ao listar escutas iniciais');
   }
 });
 

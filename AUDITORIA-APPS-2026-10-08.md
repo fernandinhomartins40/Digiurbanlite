@@ -89,24 +89,62 @@ Defeitos antigos achados e corrigidos no caminho:
 Ainda fora (caso raro, tratar no balcão): pedido de matrícula feito em nome do próprio dependente; assistência técnica
 rural de quem ainda não é produtor cadastrado (a conversão é adiada e não é refeita sozinha).
 
-### Fase 2 — Completar o Atendimento de Saúde
-Modelos já no banco, sem tela nem rota: atendimento **odontológico**, **pré-natal**, **visita domiciliar** (ACS),
-anexos do prontuário; atividades coletivas tem rota mas não tem tela; integração **e-SUS/LEDI** tem código pronto
-sem rota (`src/apps/saude/integracao`). `AlergiasCidadao`/`ComorbidadesCidadao` duplicam alergias/problemas — remover.
+### Fase 2 — FEITA: Atendimento de Saúde completo (menos e-SUS)
 
-### Fase 3 — Apps que ainda não existem
-- **Agricultura › Mecanização** (patrulha agrícola: pedido de hora-máquina, agenda das máquinas, execução) — o modelo
-  `MaquinaAgricola` existe sem uso; a tela é "em desenvolvimento".
-- **Desenvolvimento Econômico**: balcão de empregos (vagas × currículos) e cadastro de MEI/feirantes.
-- **Segurança Pública**: ocorrências com mapa (mesmo padrão da Defesa Civil).
-- **Turismo**: cadastro municipal de prestadores (Cadastur municipal) e agenda de eventos.
-- **Segurança Escolar** (biometria): desligada; decidir se entra no produto antes de fazer a tela.
+- **Odontologia** (`/admin/apps/saude/atendimento/odonto`): fila do dentista, desenho da boca (odontograma), índice
+  CPO-D calculado, procedimentos, plano de tratamento e histórico.
+- **Pré-natal** (`.../pre-natal`): idade gestacional e data provável do parto calculadas, consultas, exames com
+  resultado, risco e desfecho; painel com alto risco, parto em 30 dias e gestantes sem consulta há 30+ dias.
+- **Visitas domiciliares** (`.../visitas`): registro do agente de saúde (com localização opcional) e produção por agente.
+- **Atividades coletivas** (`.../atividades-coletivas`): a rota existia sem tela; agora tem tela com lista de presença.
+  Corrigido vazamento: a lista devolvia o cadastro inteiro (com senha cifrada) do profissional e do cidadão.
+- Backend em `services/saude/cuidado.service.ts` + `routes/saude/cuidado.routes.ts`; regras em `saude-cuidado.test.ts`.
 
-### Fase 4 — Qualidade
-- Testes das regras de cada app (hoje só o catálogo e o roteamento têm teste).
-- Smoke de ponta a ponta por app: pedido no portal → caso no app → conclusão → aviso ao cidadão (2 municípios).
-- Mensagens de erro: várias rotas da Saúde respondem só "Erro ao …" (500) — devolver o motivo em português.
+**Não feito — e-SUS/LEDI.** O código em `src/apps/saude/` é de outro tipo de projeto (NestJS), não é compilado aqui,
+guarda a senha da API de um jeito que impede usá-la e "serializa" a ficha como JSON em vez do formato oficial (Thrift).
+Integração de verdade exige as definições LEDI oficiais e um PEC e-SUS de teste para validar o envio — sem isso não dá
+para provar que funciona. Recomendação: apagar esse código morto e abrir um projeto próprio quando houver um PEC de teste.
+
+**Não feito — outros.** Anexos do prontuário (precisa de envio de arquivo com regra de acesso clínico);
+`AlergiasCidadao`/`ComorbidadesCidadao` continuam no banco sem uso (apagar tabela é irreversível — decidir antes).
+
+### Fase 3 — FEITA: apps que não existiam
+
+| App | Secretaria | O que faz | Tela |
+|---|---|---|---|
+| Mecanização | Agricultura | pedido de máquina → agenda (uma máquina por dia) → execução → conclusão com horas e valor | `/admin/apps/agricultura/mecanizacao` (era "em desenvolvimento") |
+| Balcão de Empregos | Desenvolvimento Econômico | currículos × vagas, sugestão de candidatos por nota explicável (sem IA), encaminhamento e resultado | `/admin/apps/desenvolvimento-economico` |
+| Ocorrências de Segurança | Segurança Pública | fila por urgência, mapa, denúncia anônima sem guardar quem fez, resposta ao cidadão | `/admin/apps/seguranca-publica` |
+| Cadastro do Turismo | Turismo | prestadores com número e validade, guia da cidade, calendário de eventos | `/admin/apps/turismo` |
+
+Código: `services/{agricultura/mecanizacao,emprego,seguranca,turismo}`, rotas em `routes/fase3/`, migração
+`20261011150000_apps_fase3`, regras em `apps-fase3.test.ts`. Entram pelo portal 17 serviços do catálogo a mais.
+
+**Não feito — Segurança Escolar** (biometria na entrada da escola): segue desligada. É decisão de produto (dado
+biométrico de criança) antes de ser trabalho de tela.
+
+### Fase 4 — FEITA: qualidade
+
+- **Dois roteiros de ponta a ponta no banco** (município de teste criado e apagado):
+  `npm run smoke:apps` (64 conferências: Fases 1 a 3) e `npm run smoke:apps:antigos` (40 conferências: os 12 apps
+  que já existiam). Precisam de Postgres e Redis; não rodam no CI.
+- **Cancelar no app encerrava nada**: 16 formas de cancelar um caso (ordem de serviço, licenciamento, ambiental,
+  habitação, defesa civil, esportes, cultura, trânsito, mobilidade, TFD) deixavam o pedido do cidadão aberto para
+  sempre. Agora todas encerram o pedido com o motivo.
+- **Início da análise aparece no pedido**: nos apps antigos o pedido ficava em "recebido" até a decisão final.
+  Agora "em análise / equipe acionada / vistoria agendada" move o pedido para "em andamento".
+- **Erros da Saúde explicam o motivo** (`utils/explain-error.ts`): 53 respostas "Erro ao ..." passam a dizer o que
+  houve (regra do serviço, registro repetido, campo faltando) sem mostrar detalhe interno do banco.
+- Testes automáticos: de 145 para 178.
+
+## O que ainda falta (depois das 4 fases)
+
+1. **Ver as telas no navegador.** Todas compilam e o backend foi provado no banco, mas nenhuma tela nova foi
+   clicada de verdade. Conferir: matrículas, transporte escolar, benefícios, trânsito (aba nova), agendamentos,
+   farmácia, odontologia, pré-natal, visitas, atividades coletivas, mecanização, empregos, segurança, turismo.
+2. **e-SUS**, anexos do prontuário, tabelas duplicadas de alergia/comorbidade, Segurança Escolar (ver acima).
+3. Os roteiros `smoke:apps*` não rodam no CI (precisam de banco) — rodar à mão antes de mudanças grandes nos apps.
 
 ## Depois do deploy
 Rodar **"Atualizar catálogo de serviços"** em cada município (Super-admin › município) para os serviços existentes
-passarem a mandar o pedido para o app certo e receberem o novo formulário do TFD.
+passarem a mandar o pedido para o app certo (inclusive os apps novos) e receberem os formulários novos de TFD e matrícula.

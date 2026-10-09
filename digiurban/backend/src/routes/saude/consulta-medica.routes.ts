@@ -1,4 +1,5 @@
 import { Router } from 'express';
+import { sendError } from '../../utils/explain-error';
 import consultaMedicaService from '../../services/saude/consulta-medica.service';
 import { prisma } from '../../lib/prisma';
 
@@ -12,7 +13,7 @@ router.get('/contexto-fila/:filaId', async (req, res) => {
     res.json(contexto);
   } catch (error) {
     console.error('Erro ao buscar contexto da fila:', error);
-    res.status(500).json({ error: 'Erro ao buscar contexto' });
+    sendError(res, error, 'Erro ao buscar contexto');
   }
 });
 
@@ -34,7 +35,7 @@ router.get('/fila/:filaId', async (req, res) => {
     res.json(consulta);
   } catch (error) {
     console.error('Erro ao buscar consulta:', error);
-    res.status(500).json({ error: 'Erro ao buscar consulta' });
+    sendError(res, error, 'Erro ao buscar consulta');
   }
 });
 
@@ -56,7 +57,7 @@ router.post('/:consultaId/prescricao', async (req, res) => {
     res.status(201).json(prescricao);
   } catch (error) {
     console.error('Erro ao criar prescrição:', error);
-    res.status(500).json({ error: 'Erro ao criar prescrição' });
+    sendError(res, error, 'Erro ao criar prescrição');
   }
 });
 
@@ -66,7 +67,7 @@ router.get('/:consultaId/prescricoes', async (req, res) => {
     res.json(prescricoes);
   } catch (error) {
     console.error('Erro ao listar prescrições:', error);
-    res.status(500).json({ error: 'Erro ao listar prescrições' });
+    sendError(res, error, 'Erro ao listar prescrições');
   }
 });
 
@@ -77,7 +78,7 @@ router.post('/:consultaId/exame', async (req, res) => {
     res.status(201).json(exame);
   } catch (error) {
     console.error('Erro ao criar exame:', error);
-    res.status(500).json({ error: 'Erro ao criar exame' });
+    sendError(res, error, 'Erro ao criar exame');
   }
 });
 
@@ -87,7 +88,7 @@ router.get('/:consultaId/exames', async (req, res) => {
     res.json(exames);
   } catch (error) {
     console.error('Erro ao listar exames:', error);
-    res.status(500).json({ error: 'Erro ao listar exames' });
+    sendError(res, error, 'Erro ao listar exames');
   }
 });
 
@@ -98,7 +99,7 @@ router.post('/:consultaId/encaminhamento', async (req, res) => {
     res.status(201).json(enc);
   } catch (error) {
     console.error('Erro ao criar encaminhamento:', error);
-    res.status(500).json({ error: 'Erro ao criar encaminhamento' });
+    sendError(res, error, 'Erro ao criar encaminhamento');
   }
 });
 
@@ -108,7 +109,7 @@ router.get('/:consultaId/encaminhamentos', async (req, res) => {
     res.json(encs);
   } catch (error) {
     console.error('Erro ao listar encaminhamentos:', error);
-    res.status(500).json({ error: 'Erro ao listar encaminhamentos' });
+    sendError(res, error, 'Erro ao listar encaminhamentos');
   }
 });
 
@@ -119,7 +120,7 @@ router.post('/:consultaId/atestado', async (req, res) => {
     res.status(201).json(atestado);
   } catch (error) {
     console.error('Erro ao criar atestado:', error);
-    res.status(500).json({ error: 'Erro ao criar atestado' });
+    sendError(res, error, 'Erro ao criar atestado');
   }
 });
 
@@ -129,7 +130,7 @@ router.get('/:consultaId/atestados', async (req, res) => {
     res.json(atestados);
   } catch (error) {
     console.error('Erro ao listar atestados:', error);
-    res.status(500).json({ error: 'Erro ao listar atestados' });
+    sendError(res, error, 'Erro ao listar atestados');
   }
 });
 
@@ -140,7 +141,7 @@ router.get('/problemas/:citizenId', async (req, res) => {
     res.json(problemas);
   } catch (error) {
     console.error('Erro ao buscar problemas:', error);
-    res.status(500).json({ error: 'Erro ao buscar problemas' });
+    sendError(res, error, 'Erro ao buscar problemas');
   }
 });
 
@@ -150,7 +151,7 @@ router.post('/problemas/:citizenId', async (req, res) => {
     res.status(201).json(problema);
   } catch (error) {
     console.error('Erro ao criar problema:', error);
-    res.status(500).json({ error: 'Erro ao criar problema' });
+    sendError(res, error, 'Erro ao criar problema');
   }
 });
 
@@ -163,7 +164,7 @@ router.get('/medicamentos/busca', async (req, res) => {
     res.json(meds);
   } catch (error) {
     console.error('Erro ao buscar medicamentos:', error);
-    res.status(500).json({ error: 'Erro ao buscar medicamentos' });
+    sendError(res, error, 'Erro ao buscar medicamentos');
   }
 });
 
@@ -253,7 +254,7 @@ router.get('/prontuario/:citizenId', async (req, res) => {
     });
   } catch (error) {
     console.error('Erro ao buscar prontuario:', error);
-    return res.status(500).json({ error: 'Erro ao buscar prontuario' });
+    return sendError(res, error, 'Erro ao buscar prontuario');
   }
 });
 
@@ -288,7 +289,7 @@ router.get('/prontuario/:citizenId/timeline', async (req, res) => {
     return res.json(timeline);
   } catch (error) {
     console.error('Erro ao buscar timeline do prontuario:', error);
-    return res.status(500).json({ error: 'Erro ao buscar timeline do prontuario' });
+    return sendError(res, error, 'Erro ao buscar timeline do prontuario');
   }
 });
 
@@ -396,7 +397,7 @@ router.get('/prescricoes/pendentes', async (req, res) => {
     return res.json(payload);
   } catch (error) {
     console.error('Erro ao listar prescricoes pendentes:', error);
-    return res.status(500).json({ error: 'Erro ao listar prescricoes pendentes' });
+    return sendError(res, error, 'Erro ao listar prescricoes pendentes');
   }
 });
 

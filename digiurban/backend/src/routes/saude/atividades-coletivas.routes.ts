@@ -1,4 +1,5 @@
 import { Router } from 'express';
+import { sendError } from '../../utils/explain-error';
 import atividadeService from '../../services/saude/atividade-coletiva.service';
 
 const router = Router();
@@ -13,7 +14,7 @@ router.post('/', async (req, res) => {
     res.status(201).json(atividade);
   } catch (error) {
     console.error('Erro ao criar atividade:', error);
-    res.status(500).json({ error: 'Erro ao criar atividade coletiva' });
+    sendError(res, error, 'Erro ao criar atividade coletiva');
   }
 });
 
@@ -31,7 +32,7 @@ router.get('/', async (req, res) => {
     res.json(atividades);
   } catch (error) {
     console.error('Erro ao listar atividades:', error);
-    res.status(500).json({ error: 'Erro ao listar atividades' });
+    sendError(res, error, 'Erro ao listar atividades');
   }
 });
 
@@ -43,7 +44,7 @@ router.get('/:id', async (req, res) => {
     res.json(atividade);
   } catch (error) {
     console.error('Erro ao buscar atividade:', error);
-    res.status(500).json({ error: 'Erro ao buscar atividade' });
+    sendError(res, error, 'Erro ao buscar atividade');
   }
 });
 
@@ -56,7 +57,7 @@ router.post('/:id/profissionais', async (req, res) => {
     res.status(201).json(prof);
   } catch (error) {
     console.error('Erro ao adicionar profissional:', error);
-    res.status(500).json({ error: 'Erro ao adicionar profissional' });
+    sendError(res, error, 'Erro ao adicionar profissional');
   }
 });
 
@@ -81,7 +82,7 @@ router.patch('/:id/status', async (req, res) => {
     res.json(atividade);
   } catch (error) {
     console.error('Erro ao atualizar status:', error);
-    res.status(500).json({ error: 'Erro ao atualizar status' });
+    sendError(res, error, 'Erro ao atualizar status');
   }
 });
 

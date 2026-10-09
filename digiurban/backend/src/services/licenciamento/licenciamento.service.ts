@@ -1,6 +1,6 @@
 import { prisma } from '../../lib/prisma';
 import { logger } from '../../config/logger.config';
-import { concludeProtocolFromApp } from '../apps/app-protocol-bridge.service';
+import { concludeProtocolFromApp, markProtocolInProgressFromApp } from '../apps/app-protocol-bridge.service';
 
 /**
  * App Licenciamento Urbano (Fase 2, blueprint B4) — único para
@@ -121,10 +121,13 @@ class LicenciamentoService {
 
   async iniciarAnalise(id: string, responsavelId?: string) {
     await this.exigirProcessoAberto(id);
-    return prisma.processoLicenciamento.update({
+    const emAndamento = await prisma.processoLicenciamento.update({
       where: { id },
       data: { status: 'EM_ANALISE', ...(responsavelId ? { responsavelId } : {}) },
     });
+    // O cidadão vê no pedido que o caso saiu da fila (antes ficava em "recebido" até a decisão final)
+    await markProtocolInProgressFromApp({ protocolId: emAndamento.protocolId, app: 'Licenciamento Urbano', message: 'pedido em análise técnica' });
+    return emAndamento;
   }
 
   /**
@@ -256,10 +259,13 @@ class LicenciamentoService {
         autorId,
       },
     });
-    return prisma.processoLicenciamento.update({
+    const cancelado = await prisma.processoLicenciamento.update({
       where: { id: processo.id },
       data: { status: 'CANCELADO' },
     });
+    // Cancelar no app também encerra o pedido do cidadão (antes ficava aberto para sempre)
+    await concludeProtocolFromApp({ protocolId: processo.protocolId, app: 'Licenciamento Urbano', message: `Processo cancelado${motivo ? `: ${motivo}` : ''}.`, outcome: 'INDEFERIDO' });
+    return cancelado;
   }
 
   /** Retroalimenta o protocolo de origem (NÃO-FATAL). */

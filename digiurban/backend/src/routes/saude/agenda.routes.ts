@@ -1,4 +1,5 @@
 import { Router } from 'express';
+import { sendError } from '../../utils/explain-error';
 import agendaService from '../../services/saude/agenda.service';
 
 const router = Router();
@@ -10,7 +11,7 @@ router.post('/', async (req, res) => {
     res.status(201).json(config);
   } catch (error) {
     console.error('Erro ao configurar agenda:', error);
-    res.status(500).json({ error: 'Erro ao configurar agenda' });
+    sendError(res, error, 'Erro ao configurar agenda');
   }
 });
 
@@ -26,7 +27,7 @@ router.get('/', async (req, res) => {
     res.json(configs);
   } catch (error) {
     console.error('Erro ao listar agenda:', error);
-    res.status(500).json({ error: 'Erro ao listar agenda' });
+    sendError(res, error, 'Erro ao listar agenda');
   }
 });
 
@@ -37,7 +38,7 @@ router.post('/indisponibilidade', async (req, res) => {
     res.status(201).json(indisponibilidade);
   } catch (error) {
     console.error('Erro ao marcar indisponibilidade:', error);
-    res.status(500).json({ error: 'Erro ao marcar indisponibilidade' });
+    sendError(res, error, 'Erro ao marcar indisponibilidade');
   }
 });
 
@@ -53,7 +54,7 @@ router.get('/indisponibilidade', async (req, res) => {
     res.json(indisponibilidades);
   } catch (error) {
     console.error('Erro ao listar indisponibilidades:', error);
-    res.status(500).json({ error: 'Erro ao listar indisponibilidades' });
+    sendError(res, error, 'Erro ao listar indisponibilidades');
   }
 });
 

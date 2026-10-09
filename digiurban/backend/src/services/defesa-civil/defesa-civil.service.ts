@@ -1,6 +1,6 @@
 import { prisma } from '../../lib/prisma';
 import { logger } from '../../config/logger.config';
-import { concludeProtocolFromApp } from '../apps/app-protocol-bridge.service';
+import { concludeProtocolFromApp, markProtocolInProgressFromApp } from '../apps/app-protocol-bridge.service';
 
 /**
  * App Ocorrências & Áreas de Risco (Fase 2, blueprint B2 + mapa) — Defesa
@@ -145,10 +145,13 @@ class DefesaCivilService {
 
   async iniciarAtendimento(id: string, responsavelId?: string) {
     await this.exigirOcorrenciaAberta(id);
-    return prisma.ocorrenciaDefesaCivil.update({
+    const emAndamento = await prisma.ocorrenciaDefesaCivil.update({
       where: { id },
       data: { status: 'EM_ATENDIMENTO', ...(responsavelId ? { responsavelId } : {}) },
     });
+    // O cidadão vê no pedido que o caso saiu da fila (antes ficava em "recebido" até a decisão final)
+    await markProtocolInProgressFromApp({ protocolId: emAndamento.protocolId, app: 'Defesa Civil', message: 'equipe da Defesa Civil em atendimento' });
+    return emAndamento;
   }
 
   /**
@@ -200,7 +203,7 @@ class DefesaCivilService {
 
   async cancelar(id: string, motivo?: string) {
     const ocorrencia = await this.exigirOcorrenciaAberta(id);
-    return prisma.ocorrenciaDefesaCivil.update({
+    const cancelado = await prisma.ocorrenciaDefesaCivil.update({
       where: { id: ocorrencia.id },
       data: {
         status: 'CANCELADA',
@@ -209,6 +212,9 @@ class DefesaCivilService {
           : {}),
       },
     });
+    // Cancelar no app também encerra o pedido do cidadão (antes ficava aberto para sempre)
+    await concludeProtocolFromApp({ protocolId: ocorrencia.protocolId, app: 'Defesa Civil', message: `Ocorrência cancelada${motivo ? `: ${motivo}` : ''}.`, outcome: 'INDEFERIDO' });
+    return cancelado;
   }
 
   // ------------------------------------------------------------------ abrigos

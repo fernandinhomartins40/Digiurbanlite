@@ -329,10 +329,13 @@ class EsportesService {
   async cancelarReserva(id: string, motivo?: string) {
     const reserva = await prisma.reservaEspaco.findFirst({ where: { id } });
     if (!reserva) throw new Error('Reserva não encontrada');
-    return prisma.reservaEspaco.update({
+    const cancelado = await prisma.reservaEspaco.update({
       where: { id: reserva.id },
       data: { status: 'CANCELADA', ...(motivo ? { observacoes: motivo } : {}) },
     });
+    // Cancelar no app também encerra o pedido do cidadão (antes ficava aberto para sempre)
+    await concludeProtocolFromApp({ protocolId: reserva.protocolId, app: 'Esportes', message: `Reserva cancelada${motivo ? `: ${motivo}` : ''}.`, outcome: 'INDEFERIDO' });
+    return cancelado;
   }
 
   // -------------------------------------------------------------- competições
@@ -424,10 +427,13 @@ class EsportesService {
   async cancelarInscricaoCompeticao(id: string) {
     const inscricao = await prisma.inscricaoCompeticao.findFirst({ where: { id } });
     if (!inscricao) throw new Error('Inscrição não encontrada');
-    return prisma.inscricaoCompeticao.update({
+    const cancelado = await prisma.inscricaoCompeticao.update({
       where: { id: inscricao.id },
       data: { status: 'CANCELADA' },
     });
+    // Cancelar no app também encerra o pedido do cidadão (antes ficava aberto para sempre)
+    await concludeProtocolFromApp({ protocolId: inscricao.protocolId, app: 'Esportes', message: 'Inscrição na competição cancelada.', outcome: 'INDEFERIDO' });
+    return cancelado;
   }
 
   // -------------------------------------------------------------- empréstimos
@@ -489,10 +495,13 @@ class EsportesService {
   async cancelarEmprestimo(id: string, motivo?: string) {
     const emprestimo = await prisma.emprestimoMaterial.findFirst({ where: { id } });
     if (!emprestimo) throw new Error('Empréstimo não encontrado');
-    return prisma.emprestimoMaterial.update({
+    const cancelado = await prisma.emprestimoMaterial.update({
       where: { id: emprestimo.id },
       data: { status: 'CANCELADO', ...(motivo ? { observacoes: motivo } : {}) },
     });
+    // Cancelar no app também encerra o pedido do cidadão (antes ficava aberto para sempre)
+    await concludeProtocolFromApp({ protocolId: emprestimo.protocolId, app: 'Esportes', message: `Empréstimo cancelado${motivo ? `: ${motivo}` : ''}.`, outcome: 'INDEFERIDO' });
+    return cancelado;
   }
 
   // -------------------------------------------------------------------- geral

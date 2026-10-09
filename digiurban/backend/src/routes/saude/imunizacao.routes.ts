@@ -1,4 +1,5 @@
 import { Router } from 'express';
+import { sendError } from '../../utils/explain-error';
 import { prisma } from '../../lib/prisma';
 
 const router = Router();
@@ -37,7 +38,7 @@ router.post('/', async (req, res) => {
     res.status(201).json(imunizacao);
   } catch (error: any) {
     console.error('Erro ao registrar imunização:', error);
-    res.status(500).json({ error: 'Erro ao registrar imunização' });
+    sendError(res, error, 'Erro ao registrar imunização');
   }
 });
 
@@ -56,7 +57,7 @@ router.get('/cidadao/:citizenId', async (req, res) => {
     res.json(imunizacoes);
   } catch (error: any) {
     console.error('Erro ao listar imunizações:', error);
-    res.status(500).json({ error: 'Erro ao listar imunizações' });
+    sendError(res, error, 'Erro ao listar imunizações');
   }
 });
 
@@ -107,7 +108,7 @@ router.get('/cidadao/:citizenId/carteira', async (req, res) => {
     });
   } catch (error: any) {
     console.error('Erro ao gerar carteira de vacinação:', error);
-    res.status(500).json({ error: 'Erro ao gerar carteira de vacinação' });
+    sendError(res, error, 'Erro ao gerar carteira de vacinação');
   }
 });
 
@@ -128,7 +129,7 @@ router.put('/:id', async (req, res) => {
     res.json(imunizacao);
   } catch (error: any) {
     console.error('Erro ao atualizar imunização:', error);
-    res.status(500).json({ error: 'Erro ao atualizar imunização' });
+    sendError(res, error, 'Erro ao atualizar imunização');
   }
 });
 
@@ -139,7 +140,7 @@ router.delete('/:id', async (req, res) => {
     res.json({ success: true });
   } catch (error: any) {
     console.error('Erro ao remover imunização:', error);
-    res.status(500).json({ error: 'Erro ao remover imunização' });
+    sendError(res, error, 'Erro ao remover imunização');
   }
 });
 

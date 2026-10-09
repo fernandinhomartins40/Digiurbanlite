@@ -1,6 +1,6 @@
 import { prisma } from '../../lib/prisma';
 import { logger } from '../../config/logger.config';
-import { concludeProtocolFromApp } from '../apps/app-protocol-bridge.service';
+import { concludeProtocolFromApp, markProtocolInProgressFromApp } from '../apps/app-protocol-bridge.service';
 
 /**
  * App Credenciamentos & Vistorias (Fase 3, blueprint B4-lite + carteirinha)
@@ -103,10 +103,13 @@ class TransitoService {
     if (credencial.status !== 'SOLICITADA') {
       throw new Error('Somente solicitações podem entrar em análise');
     }
-    return prisma.credencialTransporte.update({
+    const emAndamento = await prisma.credencialTransporte.update({
       where: { id: credencial.id },
       data: { status: 'EM_ANALISE' },
     });
+    // O cidadão vê no pedido que o caso saiu da fila (antes ficava em "recebido" até a decisão final)
+    await markProtocolInProgressFromApp({ protocolId: emAndamento.protocolId, app: 'Transportes e Trânsito', message: 'pedido de credencial em análise' });
+    return emAndamento;
   }
 
   /** Emite a credencial (CRD-ano-seq + validade) e conclui o protocolo. */
@@ -186,10 +189,13 @@ class TransitoService {
   async cancelarCredencial(id: string, motivo?: string) {
     const credencial = await prisma.credencialTransporte.findFirst({ where: { id } });
     if (!credencial) throw new Error('Credencial não encontrada');
-    return prisma.credencialTransporte.update({
+    const cancelado = await prisma.credencialTransporte.update({
       where: { id: credencial.id },
       data: { status: 'CANCELADA', ...(motivo ? { observacoes: motivo } : {}) },
     });
+    // Cancelar no app também encerra o pedido do cidadão (antes ficava aberto para sempre)
+    await concludeProtocolFromApp({ protocolId: credencial.protocolId, app: 'Transportes e Trânsito', message: `Credencial cancelada${motivo ? `: ${motivo}` : ''}.`, outcome: 'INDEFERIDO' });
+    return cancelado;
   }
 
   // ---------------------------------------------------------------- vistorias
@@ -233,7 +239,7 @@ class TransitoService {
       throw new Error('Vistoria já realizada ou cancelada');
     }
     if (!agendadaPara) throw new Error('Informe a data do agendamento');
-    return prisma.vistoriaVeiculo.update({
+    const emAndamento = await prisma.vistoriaVeiculo.update({
       where: { id: vistoria.id },
       data: {
         status: 'AGENDADA',
@@ -241,6 +247,9 @@ class TransitoService {
         ...(credencialId ? { credencialId } : {}),
       },
     });
+    // O cidadão vê no pedido que o caso saiu da fila (antes ficava em "recebido" até a decisão final)
+    await markProtocolInProgressFromApp({ protocolId: emAndamento.protocolId, app: 'Transportes e Trânsito', message: 'vistoria agendada' });
+    return emAndamento;
   }
 
   /** Registra o resultado da vistoria e conclui o protocolo de origem. */
@@ -274,10 +283,13 @@ class TransitoService {
   async cancelarVistoria(id: string, motivo?: string) {
     const vistoria = await prisma.vistoriaVeiculo.findFirst({ where: { id } });
     if (!vistoria) throw new Error('Vistoria não encontrada');
-    return prisma.vistoriaVeiculo.update({
+    const cancelado = await prisma.vistoriaVeiculo.update({
       where: { id: vistoria.id },
       data: { status: 'CANCELADA', ...(motivo ? { observacoes: motivo } : {}) },
     });
+    // Cancelar no app também encerra o pedido do cidadão (antes ficava aberto para sempre)
+    await concludeProtocolFromApp({ protocolId: vistoria.protocolId, app: 'Transportes e Trânsito', message: `Vistoria cancelada${motivo ? `: ${motivo}` : ''}.`, outcome: 'INDEFERIDO' });
+    return cancelado;
   }
 
   // ------------------------------------------------------------------ defesas
@@ -320,10 +332,13 @@ class TransitoService {
     const defesa = await prisma.defesaAutuacao.findFirst({ where: { id } });
     if (!defesa) throw new Error('Defesa não encontrada');
     if (defesa.status !== 'RECEBIDA') throw new Error('Somente defesas recebidas podem entrar em análise');
-    return prisma.defesaAutuacao.update({
+    const emAndamento = await prisma.defesaAutuacao.update({
       where: { id: defesa.id },
       data: { status: 'EM_ANALISE' },
     });
+    // O cidadão vê no pedido que o caso saiu da fila (antes ficava em "recebido" até a decisão final)
+    await markProtocolInProgressFromApp({ protocolId: emAndamento.protocolId, app: 'Transportes e Trânsito', message: 'defesa em análise' });
+    return emAndamento;
   }
 
   /** Julga a defesa (parecer JARI) e conclui o protocolo de origem. */
@@ -351,10 +366,13 @@ class TransitoService {
   async cancelarDefesa(id: string) {
     const defesa = await prisma.defesaAutuacao.findFirst({ where: { id } });
     if (!defesa) throw new Error('Defesa não encontrada');
-    return prisma.defesaAutuacao.update({
+    const cancelado = await prisma.defesaAutuacao.update({
       where: { id: defesa.id },
       data: { status: 'CANCELADA' },
     });
+    // Cancelar no app também encerra o pedido do cidadão (antes ficava aberto para sempre)
+    await concludeProtocolFromApp({ protocolId: defesa.protocolId, app: 'Transportes e Trânsito', message: 'Defesa cancelada.', outcome: 'INDEFERIDO' });
+    return cancelado;
   }
 
   // -------------------------------------------------------------------- geral

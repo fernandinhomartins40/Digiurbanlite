@@ -1,7 +1,7 @@
 import { randomBytes } from 'crypto';
 import { prisma } from '../../lib/prisma';
 import { logger } from '../../config/logger.config';
-import { concludeProtocolFromApp } from '../apps/app-protocol-bridge.service';
+import { concludeProtocolFromApp, markProtocolInProgressFromApp } from '../apps/app-protocol-bridge.service';
 
 /**
  * App Carteiras & Gratuidades (Fase 3, blueprint carteirinha)
@@ -95,10 +95,13 @@ class MobilidadeService {
     if (carteira.status !== 'SOLICITADA') {
       throw new Error('Somente solicitações podem entrar em análise');
     }
-    return prisma.carteiraGratuidade.update({
+    const emAndamento = await prisma.carteiraGratuidade.update({
       where: { id: carteira.id },
       data: { status: 'EM_ANALISE' },
     });
+    // O cidadão vê no pedido que o caso saiu da fila (antes ficava em "recebido" até a decisão final)
+    await markProtocolInProgressFromApp({ protocolId: emAndamento.protocolId, app: 'Mobilidade Urbana', message: 'pedido de carteira em análise' });
+    return emAndamento;
   }
 
   /** Emite a carteira (CTR-ano-seq + código de validação) e conclui o protocolo. */
@@ -191,10 +194,13 @@ class MobilidadeService {
   async cancelarCarteira(id: string, motivo?: string) {
     const carteira = await prisma.carteiraGratuidade.findFirst({ where: { id } });
     if (!carteira) throw new Error('Carteira não encontrada');
-    return prisma.carteiraGratuidade.update({
+    const cancelado = await prisma.carteiraGratuidade.update({
       where: { id: carteira.id },
       data: { status: 'CANCELADA', ...(motivo ? { observacoes: motivo } : {}) },
     });
+    // Cancelar no app também encerra o pedido do cidadão (antes ficava aberto para sempre)
+    await concludeProtocolFromApp({ protocolId: carteira.protocolId, app: 'Mobilidade Urbana', message: `Carteira cancelada${motivo ? `: ${motivo}` : ''}.`, outcome: 'INDEFERIDO' });
+    return cancelado;
   }
 
   /**

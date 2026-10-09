@@ -1,4 +1,5 @@
 import { Router } from 'express';
+import { sendError } from '../../utils/explain-error';
 import { prisma } from '../../lib/prisma';
 
 const router = Router();
@@ -27,7 +28,7 @@ router.post('/', async (req, res) => {
     res.status(201).json(chamada);
   } catch (error: any) {
     console.error('Erro ao registrar chamada no painel:', error);
-    res.status(500).json({ error: 'Erro ao registrar chamada no painel' });
+    sendError(res, error, 'Erro ao registrar chamada no painel');
   }
 });
 
@@ -53,7 +54,7 @@ router.get('/unidade/:unidadeId', async (req, res) => {
     res.json(chamadas);
   } catch (error: any) {
     console.error('Erro ao listar chamadas do painel:', error);
-    res.status(500).json({ error: 'Erro ao listar chamadas do painel' });
+    sendError(res, error, 'Erro ao listar chamadas do painel');
   }
 });
 
@@ -81,7 +82,7 @@ router.post('/:id/repetir', async (req, res) => {
     res.status(201).json(repetida);
   } catch (error: any) {
     console.error('Erro ao repetir chamada:', error);
-    res.status(500).json({ error: 'Erro ao repetir chamada' });
+    sendError(res, error, 'Erro ao repetir chamada');
   }
 });
 

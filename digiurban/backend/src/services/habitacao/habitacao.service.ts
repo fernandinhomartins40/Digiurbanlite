@@ -1,6 +1,6 @@
 import { prisma } from '../../lib/prisma';
 import { logger } from '../../config/logger.config';
-import { concludeProtocolFromApp } from '../apps/app-protocol-bridge.service';
+import { concludeProtocolFromApp, markProtocolInProgressFromApp } from '../apps/app-protocol-bridge.service';
 
 /**
  * App Programas Habitacionais (Fase 2, blueprint B6 + fila) — Habitação.
@@ -234,7 +234,10 @@ class HabitacaoService {
 
   async iniciarAnalise(id: string) {
     await this.exigirInscricaoAberta(id);
-    return prisma.inscricaoHabitacional.update({ where: { id }, data: { status: 'EM_ANALISE' } });
+    const emAndamento = await prisma.inscricaoHabitacional.update({ where: { id }, data: { status: 'EM_ANALISE' } });
+    // O cidadão vê no pedido que o caso saiu da fila (antes ficava em "recebido" até a decisão final)
+    await markProtocolInProgressFromApp({ protocolId: emAndamento.protocolId, app: 'Habitação', message: 'inscrição em análise' });
+    return emAndamento;
   }
 
   /** Deferimento: entra na fila com a pontuação recalculada. */
@@ -338,10 +341,13 @@ class HabitacaoService {
 
   async cancelar(id: string, motivo?: string) {
     const inscricao = await this.exigirInscricaoAberta(id);
-    return prisma.inscricaoHabitacional.update({
+    const cancelado = await prisma.inscricaoHabitacional.update({
       where: { id: inscricao.id },
       data: { status: 'CANCELADA', observacoes: motivo || inscricao.observacoes },
     });
+    // Cancelar no app também encerra o pedido do cidadão (antes ficava aberto para sempre)
+    await concludeProtocolFromApp({ protocolId: inscricao.protocolId, app: 'Habitação', message: `Inscrição cancelada${motivo ? `: ${motivo}` : ''}.`, outcome: 'INDEFERIDO' });
+    return cancelado;
   }
 
   /** Retroalimenta o protocolo de origem (NÃO-FATAL). */

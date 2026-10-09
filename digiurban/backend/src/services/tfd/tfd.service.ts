@@ -571,6 +571,16 @@ export class TFDService {
       motivo
     );
 
+    // Cancelar no app também encerra o pedido do cidadão (antes ficava aberto para sempre)
+    const { concludeProtocolFromApp } = await import('../apps/app-protocol-bridge.service');
+    await concludeProtocolFromApp({
+      protocolId: solicitacao.protocolId,
+      app: 'TFD — Tratamento Fora do Domicílio',
+      actorId: userId,
+      message: `Solicitação de TFD cancelada: ${motivo}`,
+      outcome: 'INDEFERIDO',
+    });
+
     return await this.findById(solicitacaoId);
   }
 

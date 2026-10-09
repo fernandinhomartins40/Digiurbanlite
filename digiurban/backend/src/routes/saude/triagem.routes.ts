@@ -1,4 +1,5 @@
 import { Router } from 'express';
+import { sendError } from '../../utils/explain-error';
 import triagemService from '../../services/saude/triagem-enfermagem.service';
 
 const router = Router();
@@ -12,7 +13,7 @@ router.post('/', async (req, res) => {
     res.status(201).json(triagem);
   } catch (error) {
     console.error('Erro ao criar triagem:', error);
-    res.status(500).json({ error: 'Erro ao criar triagem' });
+    sendError(res, error, 'Erro ao criar triagem');
   }
 });
 
@@ -24,7 +25,7 @@ router.get('/fila/:filaId', async (req, res) => {
     res.json(triagem);
   } catch (error) {
     console.error('Erro ao buscar triagem:', error);
-    res.status(500).json({ error: 'Erro ao buscar triagem' });
+    sendError(res, error, 'Erro ao buscar triagem');
   }
 });
 
@@ -40,7 +41,7 @@ router.get('/', async (req, res) => {
     res.json(triagens);
   } catch (error) {
     console.error('Erro ao listar triagens:', error);
-    res.status(500).json({ error: 'Erro ao listar triagens' });
+    sendError(res, error, 'Erro ao listar triagens');
   }
 });
 
@@ -56,7 +57,7 @@ router.get('/estatisticas', async (req, res) => {
     res.json(stats);
   } catch (error) {
     console.error('Erro ao obter estatísticas:', error);
-    res.status(500).json({ error: 'Erro ao obter estatísticas' });
+    sendError(res, error, 'Erro ao obter estatísticas');
   }
 });
 

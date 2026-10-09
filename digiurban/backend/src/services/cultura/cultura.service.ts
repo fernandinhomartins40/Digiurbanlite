@@ -1,6 +1,6 @@
 import { prisma } from '../../lib/prisma';
 import { logger } from '../../config/logger.config';
-import { concludeProtocolFromApp } from '../apps/app-protocol-bridge.service';
+import { concludeProtocolFromApp, markProtocolInProgressFromApp } from '../apps/app-protocol-bridge.service';
 
 /**
  * App Espaços & Oficinas Culturais (Fase 3, blueprints B5 + B6 + B4-lite)
@@ -333,10 +333,13 @@ class CulturaService {
   async cancelarReserva(id: string, motivo?: string) {
     const reserva = await prisma.reservaEspaco.findFirst({ where: { id, area: 'CULTURA' } });
     if (!reserva) throw new Error('Reserva não encontrada');
-    return prisma.reservaEspaco.update({
+    const cancelado = await prisma.reservaEspaco.update({
       where: { id: reserva.id },
       data: { status: 'CANCELADA', ...(motivo ? { observacoes: motivo } : {}) },
     });
+    // Cancelar no app também encerra o pedido do cidadão (antes ficava aberto para sempre)
+    await concludeProtocolFromApp({ protocolId: reserva.protocolId, app: 'Cultura', message: `Reserva cancelada${motivo ? `: ${motivo}` : ''}.`, outcome: 'INDEFERIDO' });
+    return cancelado;
   }
 
   // ------------------------------------------------------------------ editais
@@ -451,10 +454,13 @@ class CulturaService {
     const projeto = await prisma.projetoCultural.findFirst({ where: { id } });
     if (!projeto) throw new Error('Projeto não encontrado');
     if (projeto.status !== 'RECEBIDO') throw new Error('Somente projetos recebidos podem entrar em análise');
-    return prisma.projetoCultural.update({
+    const emAndamento = await prisma.projetoCultural.update({
       where: { id: projeto.id },
       data: { status: 'EM_ANALISE' },
     });
+    // O cidadão vê no pedido que o caso saiu da fila (antes ficava em "recebido" até a decisão final)
+    await markProtocolInProgressFromApp({ protocolId: emAndamento.protocolId, app: 'Cultura', message: 'projeto em análise' });
+    return emAndamento;
   }
 
   async adicionarParecer(
@@ -515,10 +521,13 @@ class CulturaService {
   async cancelarProjeto(id: string) {
     const projeto = await prisma.projetoCultural.findFirst({ where: { id } });
     if (!projeto) throw new Error('Projeto não encontrado');
-    return prisma.projetoCultural.update({
+    const cancelado = await prisma.projetoCultural.update({
       where: { id: projeto.id },
       data: { status: 'CANCELADO' },
     });
+    // Cancelar no app também encerra o pedido do cidadão (antes ficava aberto para sempre)
+    await concludeProtocolFromApp({ protocolId: projeto.protocolId, app: 'Cultura', message: 'Projeto cancelado.', outcome: 'INDEFERIDO' });
+    return cancelado;
   }
 
   // -------------------------------------------------------------- empréstimos
@@ -580,10 +589,13 @@ class CulturaService {
   async cancelarEmprestimo(id: string, motivo?: string) {
     const emprestimo = await prisma.emprestimoEquipamentoCultural.findFirst({ where: { id } });
     if (!emprestimo) throw new Error('Empréstimo não encontrado');
-    return prisma.emprestimoEquipamentoCultural.update({
+    const cancelado = await prisma.emprestimoEquipamentoCultural.update({
       where: { id: emprestimo.id },
       data: { status: 'CANCELADO', ...(motivo ? { observacoes: motivo } : {}) },
     });
+    // Cancelar no app também encerra o pedido do cidadão (antes ficava aberto para sempre)
+    await concludeProtocolFromApp({ protocolId: emprestimo.protocolId, app: 'Cultura', message: `Empréstimo cancelado${motivo ? `: ${motivo}` : ''}.`, outcome: 'INDEFERIDO' });
+    return cancelado;
   }
 
   // -------------------------------------------------------------------- geral

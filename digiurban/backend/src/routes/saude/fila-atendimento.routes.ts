@@ -1,4 +1,5 @@
 import { Router } from 'express';
+import { sendError } from '../../utils/explain-error';
 import filaAtendimentoService from '../../services/saude/fila-atendimento.service';
 
 const router = Router();
@@ -10,7 +11,7 @@ router.post('/', async (req, res) => {
     res.status(201).json(fila);
   } catch (error) {
     console.error('Erro ao adicionar na fila:', error);
-    res.status(500).json({ error: 'Erro ao adicionar paciente na fila' });
+    sendError(res, error, 'Erro ao adicionar paciente na fila');
   }
 });
 
@@ -25,7 +26,7 @@ router.get('/', async (req, res) => {
     res.json(fila);
   } catch (error) {
     console.error('Erro ao listar fila:', error);
-    res.status(500).json({ error: 'Erro ao listar fila de atendimento' });
+    sendError(res, error, 'Erro ao listar fila de atendimento');
   }
 });
 
@@ -38,7 +39,7 @@ router.patch('/:id/status', async (req, res) => {
     res.json(fila);
   } catch (error) {
     console.error('Erro ao atualizar status:', error);
-    res.status(500).json({ error: 'Erro ao atualizar status' });
+    sendError(res, error, 'Erro ao atualizar status');
   }
 });
 
@@ -52,7 +53,7 @@ router.post('/chamar-proximo', async (req, res) => {
     res.json(proximo);
   } catch (error) {
     console.error('Erro ao chamar próximo:', error);
-    res.status(500).json({ error: 'Erro ao chamar próximo paciente' });
+    sendError(res, error, 'Erro ao chamar próximo paciente');
   }
 });
 
@@ -68,7 +69,7 @@ router.get('/estatisticas', async (req, res) => {
     res.json(stats);
   } catch (error) {
     console.error('Erro ao obter estatísticas:', error);
-    res.status(500).json({ error: 'Erro ao obter estatísticas' });
+    sendError(res, error, 'Erro ao obter estatísticas');
   }
 });
 
@@ -83,7 +84,7 @@ router.get('/:id', async (req, res) => {
     res.json(fila);
   } catch (error) {
     console.error('Erro ao buscar fila:', error);
-    res.status(500).json({ error: 'Erro ao buscar registro' });
+    sendError(res, error, 'Erro ao buscar registro');
   }
 });
 

@@ -1,4 +1,5 @@
 import { Router } from 'express';
+import { sendError } from '../../utils/explain-error';
 import equipeService from '../../services/saude/equipe-saude.service';
 import { requireDepartmentAccess } from '../../middleware/department-access';
 
@@ -13,7 +14,7 @@ router.post('/', async (req, res) => {
     res.status(201).json(equipe);
   } catch (error) {
     console.error('Erro ao criar equipe:', error);
-    res.status(500).json({ error: 'Erro ao criar equipe' });
+    sendError(res, error, 'Erro ao criar equipe');
   }
 });
 
@@ -25,7 +26,7 @@ router.get('/', async (req, res) => {
     res.json(equipes);
   } catch (error) {
     console.error('Erro ao listar equipes:', error);
-    res.status(500).json({ error: 'Erro ao listar equipes' });
+    sendError(res, error, 'Erro ao listar equipes');
   }
 });
 
@@ -37,7 +38,7 @@ router.get('/:id', async (req, res) => {
     res.json(equipe);
   } catch (error) {
     console.error('Erro ao buscar equipe:', error);
-    res.status(500).json({ error: 'Erro ao buscar equipe' });
+    sendError(res, error, 'Erro ao buscar equipe');
   }
 });
 
@@ -49,7 +50,7 @@ router.patch('/:id', async (req, res) => {
     res.json(equipe);
   } catch (error) {
     console.error('Erro ao atualizar equipe:', error);
-    res.status(500).json({ error: 'Erro ao atualizar equipe' });
+    sendError(res, error, 'Erro ao atualizar equipe');
   }
 });
 
@@ -61,7 +62,7 @@ router.delete('/:id', async (req, res) => {
     res.json(equipe);
   } catch (error) {
     console.error('Erro ao desativar equipe:', error);
-    res.status(500).json({ error: 'Erro ao desativar equipe' });
+    sendError(res, error, 'Erro ao desativar equipe');
   }
 });
 
@@ -74,7 +75,7 @@ router.post('/:id/microareas', async (req, res) => {
     res.status(201).json(microarea);
   } catch (error) {
     console.error('Erro ao criar microárea:', error);
-    res.status(500).json({ error: 'Erro ao criar microárea' });
+    sendError(res, error, 'Erro ao criar microárea');
   }
 });
 
@@ -86,7 +87,7 @@ router.get('/:id/microareas', async (req, res) => {
     res.json(microareas);
   } catch (error) {
     console.error('Erro ao listar microáreas:', error);
-    res.status(500).json({ error: 'Erro ao listar microáreas' });
+    sendError(res, error, 'Erro ao listar microáreas');
   }
 });
 
