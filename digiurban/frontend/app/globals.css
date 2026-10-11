@@ -145,3 +145,18 @@
 @media (prefers-reduced-motion: reduce) {
   .du-pop { animation: none; }
 }
+
+/*
+ * Celular/tablet: campo de digitação com letra menor que 16px faz o iPhone
+ * (Safari e o app instalado) aumentar a página ao tocar no campo — e ela não
+ * volta sozinha, a pessoa precisa fazer pinça. 16px em tela de toque evita isso
+ * sem travar o zoom (que a pessoa pode precisar para ler).
+ */
+@media (hover: none) and (pointer: coarse) {
+  input:not([type='checkbox']):not([type='radio']):not([type='range']):not([type='color']):not([type='file']),
+  textarea,
+  select,
+  [contenteditable='true'] {
+    font-size: max(16px, 1em) !important;
+  }
+}
