@@ -10,6 +10,7 @@
 import { createHash } from 'crypto';
 import { effectiveDestination, findAppAction } from '../../config/app-catalog';
 import { ServiceDefinition } from './types';
+import { expandRequiredDocuments } from '../../shared/constants/required-documents';
 import { healthServices } from './health.seed';
 import { educationServices } from './education.seed';
 import { socialServices } from './social.seed';
@@ -92,7 +93,8 @@ export function catalogFields(def: ServiceDefinition) {
     serviceSubtype: def.serviceSubtype || null,
     formSchema: (def.formSchema as any) ?? null,
     requiresDocuments: Boolean(def.requiresDocuments),
-    requiredDocuments: def.requiredDocuments ?? null,
+    // grava o documento padronizado (nome, dica, formatos) a partir do código
+    requiredDocuments: expandRequiredDocuments(def.requiredDocuments) as any,
     estimatedDays: def.estimatedDays ?? null,
     priority: def.priority ?? 3,
     category: def.category ?? null,

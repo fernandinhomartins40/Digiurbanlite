@@ -8,16 +8,41 @@
  * por vez ("aproxime", "segure firme", "tem reflexo") e a foto sai sozinha quando
  * fica bom. Desligada (ou se o modelo não carregar), aparece uma moldura fixa e a
  * pessoa tira a foto no botão. Nos dois casos a foto é recortada, endireitada e
- * clareada aqui mesmo; RG, CIN e CNH pedem frente e verso, que viram um arquivo só.
+ * clareada aqui mesmo.
+ *
+ * O jeito de fotografar vem do NOME do documento pedido (`docKindFromName`):
+ *  - RG, CIN e CNH pedem frente e verso, que viram uma imagem só (a leitura
+ *    automática dos documentos lê imagem, não PDF);
+ *  - folhas (comprovante, matrícula, contrato, laudo...) aceitam várias páginas:
+ *    com mais de uma, vira PDF quando o pedido aceita PDF;
+ *  - a moldura tem a forma do documento (cartão, folha, carteira, carnê, 3x4) e
+ *    pode ser girada; "Fotos do local" não têm moldura.
+ * Antes de usar a foto, avisa se ficou escura, tremida, com reflexo ou se é o
+ * mesmo lado/página de novo.
  */
 
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
-import { Check, Crop, Loader2, RotateCcw, X, Zap, ZapOff } from 'lucide-react';
+import {
+  AlertTriangle,
+  Check,
+  Crop,
+  Loader2,
+  Plus,
+  RectangleHorizontal,
+  RectangleVertical,
+  RotateCcw,
+  RotateCw,
+  X,
+  Zap,
+  ZapOff,
+} from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 import { DocDetector, loadDocDetector, smartCameraEnabled } from '@/lib/doc-scanner/detector';
-import { docKindFromName } from '@/lib/doc-scanner/document-kinds';
+import { docKindFor } from '@/lib/doc-scanner/document-kinds';
+import { buildPdf } from '@/lib/doc-scanner/pdf';
+import { checkPhoto, looksLikeSameSide } from '@/lib/doc-scanner/quality';
 import {
   cropRect,
   enhanceDocument,
@@ -27,12 +52,15 @@ import {
   Quad,
   quadArea,
   quadShift,
+  rotate90,
   stackVertically,
   warpQuad,
 } from '@/lib/doc-scanner/geometry';
 
 interface DocumentScannerProps {
   documentName: string;
+  /** código do catálogo único de documentos (quando o serviço tem) */
+  documentCode?: string | null;
   acceptedFormats: string[];
   maxSizeMB: number;
   onCapture: (file: File) => void;
@@ -63,6 +91,13 @@ interface Shot {
   preview: string;
   /** foto inteira para ajustar as pontas (feita só quando a pessoa pede) */
   frameUrl?: string;
+  /** aviso da conferência (escura, tremida, mesmo lado...) */
+  warning: string | null;
+}
+
+interface Page {
+  canvas: HTMLCanvasElement;
+  thumb: string;
 }
 
 function coverLayout(stageWidth: number, stageHeight: number, sourceWidth: number, sourceHeight: number): Layout {
@@ -109,6 +144,23 @@ function canvasToBlob(canvas: HTMLCanvasElement, quality: number): Promise<Blob 
   return new Promise((resolve) => canvas.toBlob(resolve, 'image/jpeg', quality));
 }
 
+async function canvasToBytes(canvas: HTMLCanvasElement, quality: number): Promise<Uint8Array | null> {
+  const blob = await canvasToBlob(canvas, quality);
+  return blob ? new Uint8Array(await blob.arrayBuffer()) : null;
+}
+
+function scaleCanvas(canvas: HTMLCanvasElement, ratio: number): HTMLCanvasElement {
+  const out = document.createElement('canvas');
+  out.width = Math.max(1, Math.round(canvas.width * ratio));
+  out.height = Math.max(1, Math.round(canvas.height * ratio));
+  out.getContext('2d')?.drawImage(canvas, 0, 0, out.width, out.height);
+  return out;
+}
+
+function thumbnail(canvas: HTMLCanvasElement): string {
+  return scaleCanvas(canvas, Math.min(1, 160 / Math.max(canvas.width, canvas.height))).toDataURL('image/jpeg', 0.7);
+}
+
 function slug(value: string) {
   return (
     value
@@ -121,8 +173,10 @@ function slug(value: string) {
   );
 }
 
-export function DocumentScanner({ documentName, maxSizeMB, onCapture, onCancel }: DocumentScannerProps) {
-  const kind = docKindFromName(documentName);
+export function DocumentScanner({ documentName, documentCode, acceptedFormats, maxSizeMB, onCapture, onCancel }: DocumentScannerProps) {
+  const kind = docKindFor({ code: documentCode, name: documentName });
+  const acceptsPdf = (acceptedFormats || []).some((format) => format.toLowerCase().replace('.', '') === 'pdf');
+  const isScene = kind.shape === 'scene';
   const videoRef = useRef<HTMLVideoElement | null>(null);
   const stageRef = useRef<HTMLDivElement | null>(null);
   const streamRef = useRef<MediaStream | null>(null);
@@ -135,7 +189,7 @@ export function DocumentScanner({ documentName, maxSizeMB, onCapture, onCancel }
   const bestSharpRef = useRef(0);
   const capturingRef = useRef(false);
   const phaseRef = useRef<Phase>('starting');
-  const doneSidesRef = useRef<HTMLCanvasElement[]>([]);
+  const pagesRef = useRef<Page[]>([]);
 
   const [mounted, setMounted] = useState(false);
   const [phase, setPhaseState] = useState<Phase>('starting');
@@ -146,7 +200,18 @@ export function DocumentScanner({ documentName, maxSizeMB, onCapture, onCancel }
     layoutRef.current = next;
     setLayoutState(next);
   };
-  const [sideIndex, setSideIndex] = useState(0);
+  // o que já foi fotografado; o passo atual é o próximo
+  const [pages, setPagesState] = useState<Page[]>([]);
+  const setPages = (next: Page[]) => {
+    pagesRef.current = next;
+    setPagesState(next);
+  };
+  const sideIndex = pages.length;
+  // moldura girada (folha deitada, cartão em pé)
+  const [flipped, setFlipped] = useState(false);
+  const aspect = flipped ? 1 / kind.aspect : kind.aspect;
+  const aspectRef = useRef(aspect);
+  aspectRef.current = aspect;
   const [screenQuad, setScreenQuad] = useState<Quad | null>(null);
   const [message, setMessage] = useState('Abrindo a câmera...');
   const [tone, setTone] = useState<Tone>('neutral');
@@ -224,7 +289,8 @@ export function DocumentScanner({ documentName, maxSizeMB, onCapture, onCancel }
     // câmera inteligente: só se a plataforma liberou; se falhar, fica a moldura fixa
     smartCameraEnabled()
       .then(async (enabled) => {
-        if (!enabled || cancelled) return;
+        // foto de lugar não tem documento para achar
+        if (!enabled || cancelled || isScene) return;
         const detector = await loadDocDetector();
         if (cancelled) return;
         detectorRef.current = detector;
@@ -310,7 +376,9 @@ export function DocumentScanner({ documentName, maxSizeMB, onCapture, onCancel }
 
   const finishShot = (frame: HTMLCanvasElement, quad: Quad, straighten: boolean) => {
     let output: HTMLCanvasElement;
-    if (straighten) {
+    if (isScene) {
+      output = scaleCanvas(frame, Math.min(1, MAX_LONG_SIDE / Math.max(frame.width, frame.height)));
+    } else if (straighten) {
       const size = outputSize(quad, MAX_LONG_SIDE);
       output = warpQuad(frame, quad, size.width, size.height);
     } else {
@@ -327,8 +395,17 @@ export function DocumentScanner({ documentName, maxSizeMB, onCapture, onCancel }
         output = scaled;
       }
     }
-    enhanceDocument(output);
-    setShot({ frame, quad, output, preview: output.toDataURL('image/jpeg', 0.85) });
+    // confere antes de clarear (o clareamento esconde foto escura)
+    let warning = checkPhoto(output, kind).warning;
+    if (kind.enhance) enhanceDocument(output);
+    const previous = pagesRef.current[pagesRef.current.length - 1];
+    if (!warning && previous && !isScene && looksLikeSameSide(previous.canvas, output)) {
+      warning =
+        pagesRef.current.length < kind.sides.length
+          ? 'Parece o mesmo lado da foto anterior. Vire o documento e tire de novo.'
+          : 'Parece a mesma página da foto anterior. Confira antes de usar.';
+    }
+    setShot({ frame, quad, output, preview: output.toDataURL('image/jpeg', 0.85), warning });
     setPhase('review');
   };
 
@@ -340,6 +417,10 @@ export function DocumentScanner({ documentName, maxSizeMB, onCapture, onCancel }
     try {
       const frame = grabFrame();
       if (!frame) throw new Error('Câmera sem imagem');
+      if (isScene) {
+        finishShot(frame, [{ x: 0, y: 0 }, { x: frame.width, y: 0 }, { x: frame.width, y: frame.height }, { x: 0, y: frame.height }], false);
+        return;
+      }
       if (detectorRef.current) {
         // confere de novo na foto inteira (mais precisa que o quadro ao vivo)
         const detection = await detectorRef.current.detect(frame, frame.width, frame.height);
@@ -351,7 +432,7 @@ export function DocumentScanner({ documentName, maxSizeMB, onCapture, onCancel }
       }
       // moldura fixa: recorta a área da moldura (convertida da tela para a foto)
       const l = layoutRef.current || coverLayout(frame.width, frame.height, frame.width, frame.height);
-      const g = guideRect(l, kind.aspect);
+      const g = guideRect(l, aspectRef.current);
       const toFrame = (x: number, y: number): Pt => ({ x: (x - l.left) / l.scale, y: (y - l.top) / l.scale });
       const quad: Quad = [toFrame(g.x, g.y), toFrame(g.x + g.width, g.y), toFrame(g.x + g.width, g.y + g.height), toFrame(g.x, g.y + g.height)];
       finishShot(frame, quad, false);
@@ -370,7 +451,13 @@ export function DocumentScanner({ documentName, maxSizeMB, onCapture, onCancel }
     if (phase !== 'live') return;
     if (!smart) {
       say(
-        kind.shape === 'card' ? 'Coloque o documento dentro da moldura e toque no botão.' : 'Enquadre a folha inteira na moldura e toque no botão.',
+        isScene
+          ? 'Mostre o lugar e toque no botão.'
+          : kind.shape === 'card'
+            ? 'Coloque o documento dentro da moldura e toque no botão.'
+            : kind.shape === 'photo'
+              ? 'Coloque a foto dentro da moldura e toque no botão.'
+              : 'Enquadre a folha inteira na moldura e toque no botão.',
         'neutral'
       );
       return;
@@ -462,10 +549,36 @@ export function DocumentScanner({ documentName, maxSizeMB, onCapture, onCancel }
   };
 
   const finalize = async (parts: HTMLCanvasElement[]) => {
+    if (!parts.length) return;
     setPhase('processing');
     say('Preparando o arquivo...', 'neutral');
-    let canvas = stackVertically(parts);
     const limit = Math.max(maxSizeMB, 0.5) * 1024 * 1024;
+
+    // várias páginas de folha: PDF (uma foto por página), se o pedido aceita PDF
+    if (parts.length > 1 && kind.multiPage && !isScene && acceptsPdf) {
+      let current = parts;
+      for (const step of [0.85, 0.75, 0.65, 0.65, 0.65, 0.65]) {
+        const images: { jpeg: Uint8Array; width: number; height: number }[] = [];
+        for (const part of current) {
+          const jpeg = await canvasToBytes(part, step);
+          if (jpeg) images.push({ jpeg, width: part.width, height: part.height });
+        }
+        if (images.length !== current.length) break;
+        const pdf = buildPdf(images);
+        if (pdf.size <= limit) {
+          stopCamera();
+          onCapture(new File([pdf], `${slug(documentName)}.pdf`, { type: 'application/pdf' }));
+          return;
+        }
+        // na qualidade mais baixa, diminui as páginas
+        if (step === 0.65) current = current.map((part) => scaleCanvas(part, 0.8));
+      }
+      setErrorText('As páginas ficaram grandes demais para enviar. Tente de novo com menos páginas.');
+      setPhase('error');
+      return;
+    }
+
+    let canvas = stackVertically(parts);
     let blob: Blob | null = null;
     for (const quality of [0.88, 0.8, 0.7, 0.6]) {
       blob = await canvasToBlob(canvas, quality);
@@ -489,17 +602,28 @@ export function DocumentScanner({ documentName, maxSizeMB, onCapture, onCancel }
     onCapture(new File([blob], `${slug(documentName)}.jpg`, { type: 'image/jpeg' }));
   };
 
-  const accept = () => {
+  /** `more`: depois desta, fotografar mais uma página */
+  const accept = (more = false) => {
     if (!shot) return;
-    const parts = [...doneSidesRef.current, shot.output];
-    if (parts.length < kind.sides.length) {
-      doneSidesRef.current = parts;
-      setSideIndex(parts.length);
+    const next = [...pagesRef.current, { canvas: shot.output, thumb: thumbnail(shot.output) }];
+    const needsFixedSide = next.length < kind.sides.length;
+    if (needsFixedSide || (more && kind.multiPage && next.length < kind.maxPages)) {
+      setPages(next);
       retake();
       return;
     }
-    doneSidesRef.current = [];
-    void finalize(parts);
+    void finalize(next.map((page) => page.canvas));
+  };
+
+  /** termina com o que já foi fotografado (sem verso, ou sem mais páginas) */
+  const finishWithDone = () => void finalize(pagesRef.current.map((page) => page.canvas));
+
+  const removePage = (index: number) => setPages(pagesRef.current.filter((_, i) => i !== index));
+
+  const rotateShot = () => {
+    if (!shot) return;
+    const output = rotate90(shot.output);
+    setShot({ ...shot, output, preview: output.toDataURL('image/jpeg', 0.85) });
   };
 
   // ---------------------------------------------------------------- ajustar as pontas
@@ -540,10 +664,26 @@ export function DocumentScanner({ documentName, maxSizeMB, onCapture, onCancel }
 
   // ---------------------------------------------------------------- tela
 
-  const sideLabel = kind.sides[sideIndex] || 'Documento';
-  const stepText = kind.sides.length > 1 ? `${sideLabel} · passo ${sideIndex + 1} de ${kind.sides.length}` : documentName;
+  const extraLabel = (index: number) => (isScene ? `Foto ${index + 1}` : `Página ${index + 1}`);
+  const labelOf = (index: number) => kind.sides[index] ?? extraLabel(index);
+  const sideLabel = labelOf(sideIndex);
+  const sideHint =
+    sideIndex < kind.hints.length ? kind.hints[sideIndex] : isScene ? 'Mais uma foto, de outro ângulo.' : 'Mostre a próxima folha inteira.';
+  const stepText =
+    kind.sides.length > 1 && sideIndex < kind.sides.length
+      ? `${sideLabel} · passo ${sideIndex + 1} de ${kind.sides.length}`
+      : sideIndex > 0
+        ? `${documentName} · ${sideLabel}`
+        : documentName;
+  const plural = (n: number) => `${n} ${isScene ? (n === 1 ? 'foto' : 'fotos') : n === 1 ? 'página' : 'páginas'}`;
+  // ao vivo: terminar sem mais páginas, ou sem o verso ("RG ou CPF" mandando o CPF)
+  const canFinishNow = kind.multiPage && sideIndex > 0 && sideIndex >= kind.sides.length;
+  const canSkipBack = kind.backOptional && sideIndex > 0 && sideIndex === kind.sides.length - 1;
+  const canAddPage = kind.multiPage && sideIndex + 1 >= kind.sides.length && sideIndex + 1 < kind.maxPages;
   const color = tone === 'success' ? '#34d399' : tone === 'warning' ? '#fbbf24' : '#22d3ee';
-  const guide = layout && !smart ? guideRect(layout, kind.aspect) : null;
+  // moldura: fixa sem a câmera inteligente; com ela, um contorno fraco enquanto procura
+  const guide = layout && !isScene && (!smart || !screenQuad) ? guideRect(layout, aspect) : null;
+  const guideRadius = kind.shape === 'card' ? 18 : kind.shape === 'photo' ? 6 : 8;
   const liveVisible = phase === 'live' || phase === 'processing' || phase === 'starting';
 
   const overlay = (
@@ -580,20 +720,23 @@ export function DocumentScanner({ documentName, maxSizeMB, onCapture, onCancel }
             <mask id="doc-scan-mask">
               <rect width={layout.width} height={layout.height} fill="white" />
               {screenQuad && <polygon points={polygonPoints(screenQuad)} fill="black" />}
-              {guide && <rect x={guide.x} y={guide.y} width={guide.width} height={guide.height} rx={kind.shape === 'card' ? 18 : 8} fill="black" />}
+              {guide && !smart && <rect x={guide.x} y={guide.y} width={guide.width} height={guide.height} rx={guideRadius} fill="black" />}
             </mask>
           </defs>
-          <rect width={layout.width} height={layout.height} fill={smart && !screenQuad ? 'rgba(2,6,23,0.35)' : 'rgba(2,6,23,0.72)'} mask="url(#doc-scan-mask)" />
+          {!isScene && (
+            <rect width={layout.width} height={layout.height} fill={smart && !screenQuad ? 'rgba(2,6,23,0.35)' : 'rgba(2,6,23,0.72)'} mask="url(#doc-scan-mask)" />
+          )}
           {guide && (
             <rect
               x={guide.x}
               y={guide.y}
               width={guide.width}
               height={guide.height}
-              rx={kind.shape === 'card' ? 18 : 8}
+              rx={guideRadius}
               fill="none"
               stroke="#22d3ee"
-              strokeWidth={4}
+              strokeOpacity={smart ? 0.5 : 1}
+              strokeWidth={smart ? 3 : 4}
               strokeDasharray="14 10"
             />
           )}
@@ -619,11 +762,18 @@ export function DocumentScanner({ documentName, maxSizeMB, onCapture, onCancel }
         </svg>
       )}
 
+      {/* nome do passo em cima da moldura ("Frente", "Página 2") */}
+      {phase === 'live' && guide && (
+        <div className="pointer-events-none absolute flex justify-center" style={{ left: guide.x, width: guide.width, top: Math.max(guide.y - 40, 72) }}>
+          <span className="rounded-full bg-cyan-400/90 px-3 py-1 text-sm font-semibold text-slate-950 shadow">{sideLabel}</span>
+        </div>
+      )}
+
       {(phase === 'review' || phase === 'adjust') && <div className="absolute inset-0 bg-slate-950" aria-hidden />}
 
       {/* revisão: a foto já recortada */}
       {phase === 'review' && shot && (
-        <div className="absolute inset-x-0 top-16 bottom-56 flex items-center justify-center px-4">
+        <div className={cn('absolute inset-x-0 bottom-72 flex items-center justify-center px-4', pages.length ? 'top-32' : 'top-16')}>
           <img src={shot.preview} alt={`${sideLabel} recortado`} className="max-h-full max-w-full rounded-xl bg-white object-contain shadow-2xl" />
         </div>
       )}
@@ -675,10 +825,32 @@ export function DocumentScanner({ documentName, maxSizeMB, onCapture, onCancel }
         </div>
       )}
 
+      {/* o que já foi fotografado (frente, páginas) */}
+      {pages.length > 0 && (phase === 'live' || phase === 'review') && (
+        <div className="absolute inset-x-0 top-[calc(max(0.9rem,env(safe-area-inset-top))+3.5rem)] flex justify-center gap-2 overflow-x-auto px-4 pt-1.5">
+          {pages.map((page, index) => (
+            <div key={index} className="relative shrink-0">
+              <img src={page.thumb} alt={labelOf(index)} className="h-12 w-auto rounded-md border-2 border-emerald-400 bg-white object-contain" />
+              <span className="absolute bottom-0.5 left-0.5 rounded bg-slate-950/75 px-1 text-[10px] font-semibold">{index + 1}</span>
+              {kind.multiPage && index >= kind.sides.length && phase === 'live' && (
+                <button
+                  type="button"
+                  onClick={() => removePage(index)}
+                  aria-label={`Tirar a ${labelOf(index).toLowerCase()}`}
+                  className="absolute -right-1.5 -top-1.5 flex h-5 w-5 items-center justify-center rounded-full bg-rose-500 text-white"
+                >
+                  <X className="h-3 w-3" />
+                </button>
+              )}
+            </div>
+          ))}
+        </div>
+      )}
+
       {/* topo: passos e fechar */}
       <div className="absolute inset-x-0 top-0 flex items-center justify-between gap-3 px-4 pt-[max(0.9rem,env(safe-area-inset-top))]">
         <div className="flex min-w-0 items-center gap-3">
-          {kind.sides.length > 1 && (
+          {kind.sides.length > 1 && sideIndex < kind.sides.length && (
             <div className="flex items-center gap-1.5" aria-hidden>
               {kind.sides.map((label, index) => (
                 <span
@@ -694,6 +866,17 @@ export function DocumentScanner({ documentName, maxSizeMB, onCapture, onCancel }
           <p className="truncate text-sm font-medium text-white/80">{stepText}</p>
         </div>
         <div className="flex items-center gap-2">
+          {phase === 'live' && guide && (
+            <button
+              type="button"
+              onClick={() => setFlipped((value) => !value)}
+              aria-label={aspect >= 1 ? 'Deixar a moldura em pé' : 'Deixar a moldura deitada'}
+              title="Girar a moldura"
+              className="flex h-11 w-11 items-center justify-center rounded-full bg-white/15 backdrop-blur transition hover:bg-white/25"
+            >
+              {aspect >= 1 ? <RectangleVertical className="h-5 w-5" /> : <RectangleHorizontal className="h-5 w-5" />}
+            </button>
+          )}
           {torchAvailable && phase === 'live' && (
             <button
               type="button"
@@ -726,8 +909,11 @@ export function DocumentScanner({ documentName, maxSizeMB, onCapture, onCancel }
                 tone === 'success' ? 'text-emerald-300' : tone === 'warning' ? 'text-amber-300' : 'text-white'
               )}
             >
-              {kind.sides.length > 1 && sideIndex > 0 && !screenQuad ? `Agora vire o documento e mostre o ${sideLabel.toLowerCase()}.` : message}
+              {kind.sides.length > 1 && sideIndex > 0 && sideIndex < kind.sides.length && !screenQuad
+                ? `Agora vire o documento e mostre o ${sideLabel.toLowerCase()}.`
+                : message}
             </p>
+            {sideHint && !screenQuad && <p className="-mt-2 text-sm text-white/70">{sideHint}</p>}
             <button
               type="button"
               onClick={() => void capture()}
@@ -736,7 +922,18 @@ export function DocumentScanner({ documentName, maxSizeMB, onCapture, onCancel }
             >
               <span className="h-14 w-14 rounded-full bg-white" />
             </button>
-            {smart && <p className="text-xs text-white/60">A foto sai sozinha quando o contorno ficar verde.</p>}
+            {smart && !isScene && <p className="text-xs text-white/60">A foto sai sozinha quando o contorno ficar verde.</p>}
+            {(canFinishNow || canSkipBack) && (
+              <Button
+                type="button"
+                variant="outline"
+                onClick={finishWithDone}
+                className="h-11 w-full border-white/30 bg-white/10 text-base text-white hover:bg-white/20"
+              >
+                <Check className="mr-2 h-4 w-4" />
+                {canSkipBack ? 'Este documento não tem verso' : `Concluir com ${plural(pages.length)}`}
+              </Button>
+            )}
           </div>
         )}
 
@@ -750,19 +947,47 @@ export function DocumentScanner({ documentName, maxSizeMB, onCapture, onCancel }
 
         {phase === 'review' && (
           <div className="mx-auto max-w-md space-y-3">
-            <p className="text-lg font-semibold">Dá para ler tudo?</p>
-            <Button type="button" size="lg" onClick={accept} className="h-12 w-full bg-emerald-500 text-base text-white hover:bg-emerald-600">
+            {shot?.warning ? (
+              <p className="flex items-start justify-center gap-2 text-left text-base font-semibold text-amber-300" aria-live="polite">
+                <AlertTriangle className="mt-0.5 h-5 w-5 shrink-0" />
+                {shot.warning}
+              </p>
+            ) : (
+              <p className="text-lg font-semibold">{isScene ? 'A foto ficou boa?' : 'Dá para ler tudo?'}</p>
+            )}
+            <Button type="button" size="lg" onClick={() => accept(false)} className="h-12 w-full bg-emerald-500 text-base text-white hover:bg-emerald-600">
               <Check className="mr-2 h-5 w-5" />
-              {sideIndex + 1 < kind.sides.length ? `Usar e fotografar o ${kind.sides[sideIndex + 1].toLowerCase()}` : 'Usar esta foto'}
+              {sideIndex + 1 < kind.sides.length
+                ? `Usar e fotografar o ${kind.sides[sideIndex + 1].toLowerCase()}`
+                : sideIndex > 0 && kind.multiPage
+                  ? `Usar e concluir (${plural(sideIndex + 1)})`
+                  : 'Usar esta foto'}
             </Button>
-            <div className="flex gap-3">
-              <Button type="button" variant="outline" onClick={retake} className="h-12 flex-1 border-white/30 bg-white/10 text-base text-white hover:bg-white/20">
-                <RotateCcw className="mr-2 h-4 w-4" />
-                Tirar de novo
+            {canAddPage && (
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => accept(true)}
+                className="h-12 w-full border-emerald-300/50 bg-emerald-500/10 text-base text-emerald-100 hover:bg-emerald-500/20"
+              >
+                <Plus className="mr-2 h-5 w-5" />
+                {isScene ? 'Usar e tirar mais uma foto' : 'Usar e fotografar mais uma página'}
               </Button>
-              <Button type="button" variant="outline" onClick={startAdjust} className="h-12 flex-1 border-white/30 bg-white/10 text-base text-white hover:bg-white/20">
-                <Crop className="mr-2 h-4 w-4" />
-                Ajustar pontas
+            )}
+            <div className="flex gap-2">
+              <Button type="button" variant="outline" onClick={retake} className="h-12 flex-1 border-white/30 bg-white/10 px-2 text-base text-white hover:bg-white/20">
+                <RotateCcw className="mr-1.5 h-4 w-4" />
+                De novo
+              </Button>
+              {!isScene && (
+                <Button type="button" variant="outline" onClick={startAdjust} className="h-12 flex-1 border-white/30 bg-white/10 px-2 text-base text-white hover:bg-white/20">
+                  <Crop className="mr-1.5 h-4 w-4" />
+                  Pontas
+                </Button>
+              )}
+              <Button type="button" variant="outline" onClick={rotateShot} aria-label="Girar a foto" className="h-12 flex-1 border-white/30 bg-white/10 px-2 text-base text-white hover:bg-white/20">
+                <RotateCw className="mr-1.5 h-4 w-4" />
+                Girar
               </Button>
             </div>
           </div>

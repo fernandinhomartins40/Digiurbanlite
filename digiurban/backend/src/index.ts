@@ -417,6 +417,7 @@ try { require('./jobs/org-chart-startup.job').initOrgChartStartupSync(); } catch
 try { require('./jobs/signing-keys-startup.job').initSigningKeysStartup(); } catch (e) { logger.error('Failed to start signing keys setup', { error: e }); }
 try { require('./jobs/protocol-geocoding.job').initProtocolGeocodingJob(); } catch (e) { logger.error('Failed to start protocol geocoding job', { error: e }); }
 try { require('./jobs/document-templates-startup.job').initDocumentTemplatesStartup(); } catch (e) { logger.error('Failed to start document templates catalog', { error: e }); }
+try { require('./jobs/required-documents-startup.job').initRequiredDocumentsStartup(); } catch (e) { logger.error('Failed to start required documents standardization', { error: e }); }
 try { require('./jobs/internal-process-deadlines.job').initInternalProcessDeadlinesJob(); } catch (e) { logger.error('Failed to start internal process deadlines job', { error: e }); }
 
 // Saúde - Apps integrados

@@ -6,6 +6,8 @@
  */
 
 export interface DocumentConfig {
+  /** código do catálogo único (shared/constants/required-documents.ts) */
+  code?: string;
   name: string;
   description?: string;
   required: boolean;
@@ -404,6 +406,7 @@ export function normalizeDocumentConfig(doc: any): DocumentConfig {
   }
 
   return {
+    code: typeof doc.code === 'string' ? doc.code : undefined,
     name: doc.name || 'Documento',
     description: doc.description || '',
     required: doc.required !== undefined ? doc.required : true,

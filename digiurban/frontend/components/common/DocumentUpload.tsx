@@ -287,6 +287,7 @@ export function DocumentUpload({
       {showScanner && mounted && createPortal(
         <DocumentScanner
           documentName={documentConfig.name}
+          documentCode={documentConfig.code}
           acceptedFormats={documentConfig.acceptedFormats}
           maxSizeMB={documentConfig.maxSizeMB}
           onCapture={handleCameraCapture}

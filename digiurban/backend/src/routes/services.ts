@@ -25,6 +25,10 @@ import {
   shouldAutoCreateWorkflow,
 } from '../services/service-creation-policy.service';
 import { effectiveDestination, validateServiceDestination } from '../config/app-catalog';
+import { normalizeRequiredDocumentList } from '../catalog/documents/normalize';
+
+/** O que o servidor salvar vira documento padrão quando o nome é conhecido */
+const standardDocuments = (value: unknown) => (Array.isArray(value) ? normalizeRequiredDocumentList(value).documents : value);
 
 // ====================== TIPOS LOCAIS ISOLADOS ======================
 
@@ -446,7 +450,7 @@ router.post('/', adminAuthMiddleware, requireMinRole(UserRole.MANAGER), async (r
           serviceType: resolvedServiceType,
           serviceSubtype: resolvedServiceSubtype,
           requiresDocuments: requiresDocuments || false,
-          requiredDocuments: requiredDocuments || null,
+          requiredDocuments: (standardDocuments(requiredDocuments) as any) || null,
           estimatedDays: estimatedDays || null,
           priority: priority || 3,
           icon: icon || null,
@@ -661,7 +665,7 @@ router.put('/:id', adminAuthMiddleware, requireMinRole(UserRole.MANAGER), async 
         description: description !== undefined ? description : service.description,
         category: category !== undefined ? category : service.category,
         requiresDocuments: requiresDocuments !== undefined ? requiresDocuments : service.requiresDocuments,
-        requiredDocuments: requiredDocuments !== undefined ? requiredDocuments : service.requiredDocuments,
+        requiredDocuments: requiredDocuments !== undefined ? (standardDocuments(requiredDocuments) as any) : service.requiredDocuments,
         estimatedDays: estimatedDays !== undefined ? estimatedDays : service.estimatedDays,
         priority: priority !== undefined ? priority : service.priority,
         isActive: isActive !== undefined ? isActive : service.isActive,

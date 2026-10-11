@@ -3,6 +3,7 @@
  */
 
 import { ServiceType, CitizenLinkType, ServiceRole } from '@prisma/client';
+import type { RequiredDocumentRef } from '../../shared/constants/required-documents';
 
 // 🆕 NOVO: Enum de subtipos de serviços
 export enum ServiceSubtype {
@@ -78,7 +79,8 @@ export interface ServiceDefinition {
    */
   appAction?: string | null;
   requiresDocuments: boolean;
-  requiredDocuments?: string[];
+  /** só códigos do catálogo único de documentos (shared/constants/required-documents.ts) */
+  requiredDocuments?: RequiredDocumentRef[];
   estimatedDays: number | null;
   priority: number;
   category?: string;

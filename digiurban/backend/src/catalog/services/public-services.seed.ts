@@ -118,7 +118,7 @@ export const publicServices: ServiceDefinition[] = [
     moduleType: 'REGISTRO_PROBLEMA_FOTO',
     appAction: 'ATENDIMENTOS_SERVICOS_PUBLICOS',
     requiresDocuments: true,
-    requiredDocuments: ['Foto do Problema'],
+    requiredDocuments: ['FOTOS_LOCAL'],
     estimatedDays: 10,
     priority: 3,
     category: 'Geral',

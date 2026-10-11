@@ -209,11 +209,31 @@ export function enhanceDocument(canvas: HTMLCanvasElement): HTMLCanvasElement {
   return canvas;
 }
 
-/** Junta frente e verso numa imagem só (um arquivo por envio, como antes) */
+/** Gira a imagem 90° no sentido do relógio (ou contra, com `clockwise = false`) */
+export function rotate90(source: HTMLCanvasElement, clockwise = true): HTMLCanvasElement {
+  const out = document.createElement('canvas');
+  out.width = source.height;
+  out.height = source.width;
+  const ctx = out.getContext('2d');
+  if (!ctx) return source;
+  ctx.translate(clockwise ? out.width : 0, clockwise ? 0 : out.height);
+  ctx.rotate(clockwise ? Math.PI / 2 : -Math.PI / 2);
+  ctx.drawImage(source, 0, 0);
+  return out;
+}
+
+/** Celular (Safari) não desenha canvas com mais de ~16,7 milhões de pontos */
+const MAX_CANVAS_AREA = 16_000_000;
+
+/** Junta frente e verso (ou várias fotos) numa imagem só, uma embaixo da outra */
 export function stackVertically(parts: HTMLCanvasElement[], gap = 32): HTMLCanvasElement {
   if (parts.length === 1) return parts[0];
-  const width = Math.max(...parts.map((part) => part.width));
-  const height = parts.reduce((sum, part) => sum + part.height, 0) + gap * (parts.length - 1);
+  let width = Math.max(...parts.map((part) => part.width));
+  let height = parts.reduce((sum, part) => sum + part.height * (width / part.width), 0) + gap * (parts.length - 1);
+  // muitas páginas: diminui tudo por igual para caber
+  const ratio = Math.min(1, Math.sqrt(MAX_CANVAS_AREA / (width * height)));
+  width = Math.round(width * ratio);
+  height = Math.round(height * ratio);
   const out = document.createElement('canvas');
   out.width = width;
   out.height = height;
@@ -223,8 +243,10 @@ export function stackVertically(parts: HTMLCanvasElement[], gap = 32): HTMLCanva
   ctx.fillRect(0, 0, width, height);
   let y = 0;
   for (const part of parts) {
-    ctx.drawImage(part, Math.round((width - part.width) / 2), y);
-    y += part.height + gap;
+    // todas na mesma largura (o verso fotografado mais longe não fica menor)
+    const h = Math.round(part.height * (width / part.width));
+    ctx.drawImage(part, 0, y, width, h);
+    y += h + Math.round(gap * ratio);
   }
   return out;
 }
