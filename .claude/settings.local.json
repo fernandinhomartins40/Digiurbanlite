@@ -169,7 +169,6 @@
       "WebFetch(domain:github.com)",
       "WebFetch(domain:www.postman.com)",
       "Bash(\"c:/Projetos Cursor/Digiurbanlite/digiurban-prices/Dockerfile\":*)",
-      "Bash(sshpass -p 'Nando157940/' ssh-copy-id -i ~/.ssh/digiurban.pub -o StrictHostKeyChecking=no root@digiurban.com.br)",
       "Bash(Processos\" com minRole COORDINATOR e badge NOVO.:*)",
       "WebFetch(domain:1doc.com.br)",
       "WebFetch(domain:www.inceptionlabs.ai)",
@@ -283,7 +282,8 @@
       "Bash(python /tmp/vps_ssh.py 'echo \"=== status ===\"; docker ps --filter name=digiurban-vps --format \"{{.Status}}\"; echo \"=== env \\(via inspect, não exec\\) ===\"; docker inspect digiurban-vps --format \"{{range .Config.Env}}{{println .}}{{end}}\" 2>/dev/null | grep -iE \"TENANT_BASE_DOMAIN|TENANT_DEFAULT_HOSTS\"; echo \"=== subdomínio palmital \\(via porta 3060 do host, Host forçado\\) ===\"; curl -s http://localhost:3060/api/public/tenant-config -H \"X-Forwarded-Host: palmital.digiurban.com.br\" | head -c 500')",
       "Bash(python /tmp/vps_ssh.py 'echo \"=== teste passando pelo Nginx do container \\(porta 80, como produção real\\) ===\"; docker exec digiurban-vps sh -c \"curl -s http://localhost:80/api/public/tenant-config -H \\\\\"Host: palmital.digiurban.com.br\\\\\"\" 2>/dev/null | head -c 300; echo \"\"; echo \"=== e via nginx externo do host \\(Host palmital\\) ===\"; curl -s -k --resolve palmital.digiurban.com.br:443:127.0.0.1 https://palmital.digiurban.com.br/api/public/tenant-config | head -c 300')",
       "Bash(python /tmp/vps_ssh.py 'echo \"=== nameservers atuais de digiurban.com.br \\(visto de fora\\) ===\"; dig NS digiurban.com.br +short @1.1.1.1 2>/dev/null; echo \"=== já resolve pelo Cloudflare? \\(palmital deve virar IP do CF, não NXDOMAIN\\) ===\"; dig A palmital.digiurban.com.br +short @1.1.1.1 2>/dev/null || echo \"\\(ainda NXDOMAIN\\)\"')",
-      "Bash(python /tmp/watch_cf.py)"
+      "Bash(python /tmp/watch_cf.py)",
+      "Bash(ssh digiurban-vps:*)"
     ],
     "deny": [],
     "ask": []
