@@ -48,7 +48,7 @@ RUN ./node_modules/.bin/prisma generate && \
     ls -la dist && \
     if [ ! -f "dist/index.js" ]; then echo "❌ ERRO: index.js não foi compilado!"; exit 1; fi && \
     if [ ! -f "dist/routes/citizen-services.js" ]; then echo "❌ ERRO: citizen-services.js não foi compilado!"; exit 1; fi && \
-    if [ ! -f "dist/routes/prices-proxy.routes.js" ]; then echo "❌ ERRO: prices-proxy.routes.js não foi compilado!"; exit 1; fi && \
+    if [ ! -f "dist/routes/price-research.routes.js" ]; then echo "❌ ERRO: price-research.routes.js não foi compilado!"; exit 1; fi && \
     echo "✅ Build do TypeScript concluído com sucesso"
 
 # ========== STAGE 2: Build Frontend ==========
