@@ -10,7 +10,8 @@
 
 export type QuoteSource = 'COMPRAS' | 'ARP' | 'PNCP' | 'BPS' | 'FORNECEDOR' | 'NOTA_FISCAL' | 'OUTRO';
 export type PriceMethod = 'MEDIANA' | 'MEDIA' | 'MENOR';
-export type AutoFlag = 'UNIDADE_DIFERENTE' | 'ANTIGO' | 'FORA_DA_FAIXA' | 'CONFIRMAR';
+/** TEXTO = achado pela descrição e parecido o bastante: entra no cálculo, mas fica a etiqueta para conferir */
+export type AutoFlag = 'UNIDADE_DIFERENTE' | 'ANTIGO' | 'FORA_DA_FAIXA' | 'CONFIRMAR' | 'TEXTO';
 
 /** Fonte → inciso do art. 23, § 1º e prazo máximo do preço (IN 65, art. 5º) */
 export const SOURCE_INFO: Record<QuoteSource, { label: string; inciso: 'I' | 'II' | 'III' | 'IV' | 'V'; maxAgeDays: number; needsReview: boolean }> = {
@@ -39,7 +40,8 @@ export const FLAG_REASON: Record<AutoFlag, string> = {
   UNIDADE_DIFERENTE: 'Unidade diferente da usada na comparação',
   ANTIGO: 'Preço mais antigo que o prazo da fonte (IN 65, art. 5º)',
   FORA_DA_FAIXA: 'Muito acima ou muito abaixo dos demais (possível preço inexequível ou excessivo)',
-  CONFIRMAR: 'Confirme se é o mesmo item e a mesma unidade (achado pelo texto ou sem a quantidade por embalagem)',
+  CONFIRMAR: 'Confirme se é o mesmo item e a mesma unidade (parecido só em parte com a descrição, ou sem a quantidade por embalagem)',
+  TEXTO: 'Achado pela descrição: confira se é o mesmo item',
 };
 
 // ─── texto ────────────────────────────────────────────────────────────────
@@ -76,16 +78,40 @@ export function keywords(value: string, limit = 8): string[] {
   return out;
 }
 
-/** Quanto da descrição pedida aparece na outra (0 a 1) */
+/** Apelidos comuns em compras públicas: "A4" aparece no catálogo como "297 X 210 MM" */
+const ALIASES: Record<string, string[]> = {
+  a4: ['297 x 210', '210 x 297', '297x210', '210x297'],
+  a3: ['420 x 297', '297 x 420', '420x297', '297x420'],
+  oficio: ['216 x 330', '330 x 216', '216x330', '330x216'],
+};
+
+/** Texto pronto para comparação: sem acento, sem pontuação e "75 g" junto ("75g") */
+function comparable(value: string): string {
+  return ` ${normalizeText(value).replace(/[,./]/g, ' ').replace(/(\d) (g|kg|mg|ml|l|m|cm|mm|w|v|gb|tb|mb)\b/g, '$1$2').replace(/\s+/g, ' ')} `;
+}
+
+/**
+ * Quanto da descrição pedida aparece na outra (0 a 1). Palavra conta inteira
+ * ou pelo começo ("caneta" acha "canetas"), nunca no meio ("intel" não acha
+ * "tinteiro"); número com unidade junto ou separado ("75g" = "75 G/M2").
+ */
 export function matchScore(wanted: string, candidate: string): number {
   const words = keywords(wanted, 6);
   if (!words.length) return 0;
-  const text = ` ${normalizeText(candidate).replace(/[,./]/g, ' ')} `;
-  const hits = words.filter((word) => text.includes(` ${word} `) || (word.length >= 5 && text.includes(word.slice(0, word.length - 1)))).length;
+  const text = comparable(candidate);
+  const hits = words.filter(
+    (word) =>
+      text.includes(` ${word} `) ||
+      (word.length >= 5 && text.includes(` ${word.slice(0, word.length - 1)}`)) ||
+      (/^\d+[a-z]+$/.test(word) && text.includes(` ${word}`)) ||
+      (ALIASES[word] || []).some((alias) => text.includes(` ${alias}`))
+  ).length;
   return hits / words.length;
 }
 
 export const PNCP_MATCH_MIN = 0.6;
+/** A partir daqui o preço achado pelo texto já entra no cálculo (com etiqueta para conferir) */
+export const STRONG_MATCH = 0.8;
 
 // ─── unidades ─────────────────────────────────────────────────────────────
 
@@ -270,6 +296,8 @@ export interface FlagInput {
   baseUnit: string | null;
   basePrice: number | null;
   manual?: boolean;
+  /** semelhança com a descrição pedida (0 a 1) quando o preço foi achado pelo texto */
+  matchScore?: number | null;
 }
 
 export interface FlagResult {
@@ -291,15 +319,21 @@ export function flagQuotes<T extends FlagInput>(quotes: T[], itemBaseUnit: strin
     let autoFlag: AutoFlag | null = null;
     if (itemBaseUnit && quote.baseUnit && quote.baseUnit !== itemBaseUnit) autoFlag = 'UNIDADE_DIFERENTE';
     else if (quote.date && now.getTime() - quote.date.getTime() > info.maxAgeDays * DAY) autoFlag = 'ANTIGO';
-    else if ((info.needsReview || (itemBaseUnit && !quote.baseUnit)) && !quote.manual) autoFlag = 'CONFIRMAR';
+    else if (!quote.manual) {
+      const byText = typeof quote.matchScore === 'number';
+      if (itemBaseUnit && !quote.baseUnit) autoFlag = 'CONFIRMAR';
+      else if (byText) autoFlag = (quote.matchScore as number) >= STRONG_MATCH ? 'TEXTO' : 'CONFIRMAR';
+      else if (info.needsReview) autoFlag = 'CONFIRMAR';
+    }
     return { ...quote, autoFlag: autoFlag as AutoFlag | null };
   });
-  const candidates = first.filter((quote) => !quote.autoFlag && !quote.manual && Number(quote.basePrice) > 0);
+  const counts = (quote: { autoFlag: AutoFlag | null; manual?: boolean }) => !quote.manual && (!quote.autoFlag || quote.autoFlag === 'TEXTO');
+  const candidates = first.filter((quote) => counts(quote) && Number(quote.basePrice) > 0);
   const fence = iqrFence(candidates.map((quote) => Number(quote.basePrice)));
   return first.map((quote) => {
     let autoFlag = quote.autoFlag;
-    if (!autoFlag && !quote.manual && fence && (Number(quote.basePrice) < fence.low || Number(quote.basePrice) > fence.high)) autoFlag = 'FORA_DA_FAIXA';
-    const included = !autoFlag || (!!quote.manual && autoFlag !== 'UNIDADE_DIFERENTE');
+    if (counts(quote) && fence && (Number(quote.basePrice) < fence.low || Number(quote.basePrice) > fence.high)) autoFlag = 'FORA_DA_FAIXA';
+    const included = !autoFlag || autoFlag === 'TEXTO' || (!!quote.manual && autoFlag !== 'UNIDADE_DIFERENTE');
     return { ...quote, autoFlag, included, excludedReason: autoFlag && !included ? FLAG_REASON[autoFlag] : null };
   });
 }

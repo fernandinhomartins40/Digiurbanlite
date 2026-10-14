@@ -26,6 +26,14 @@ function ataUrl(control: unknown): string | null {
   return match ? `https://pncp.gov.br/app/atas/${match[1]}/${match[3]}/${Number(match[2])}/${Number(match[4])}` : null;
 }
 
+/** Descrição do catálogo + o que o órgão escreveu (costuma ter o modelo, ex.: "Core i5") */
+function withDetail(item: unknown, detail: unknown): string {
+  const base = String(item || '').trim();
+  const extra = String(detail || '').trim();
+  if (!extra || extra.toLowerCase().startsWith(base.toLowerCase().slice(0, 40))) return base || extra;
+  return `${base} — ${extra.slice(0, 600)}`;
+}
+
 const esfera = (value: unknown) => (['F', 'E', 'M'].includes(String(value)) ? String(value) : null);
 
 /** Último ano (a API não aceita mais que 365 dias de intervalo) */
@@ -35,16 +43,20 @@ function priceWindow() {
   return { from: isoDay(from), to: isoDay(to) };
 }
 
-/** Preços praticados de um material (por código CATMAT) */
-export async function materialPrices(code: number, maxPages = 2): Promise<RawQuote[]> {
+/**
+ * Preços praticados de um material: por código CATMAT (`codigoItemCatalogo`)
+ * ou pela família inteira (`codigoPdm`, usada quando o servidor ainda não
+ * escolheu o código — aí a descrição filtra os itens).
+ */
+export async function materialPrices(code: number, maxPages = 2, tipo: 'codigoItemCatalogo' | 'codigoPdm' = 'codigoItemCatalogo'): Promise<RawQuote[]> {
   const { from, to } = priceWindow();
   const rows: any[] = [];
   for (let page = 1; page <= maxPages; page++) {
-    const data = await cached<Paged<any>>(`compras:mat:${code}:${from}:${page}`, 12 * HOUR, () =>
+    const data = await cached<Paged<any>>(`compras:${tipo === 'codigoPdm' ? 'pdm' : 'mat'}:${code}:${from}:${page}`, 12 * HOUR, () =>
       getJson(`${COMPRAS_BASE}/modulo-pesquisa-preco/1_consultarMaterial`, {
         pagina: page,
         tamanhoPagina: PAGE,
-        tipo: 'codigoItemCatalogo',
+        tipo,
         codigo: code,
         dataCompraInicio: from,
         dataCompraFim: to,
@@ -58,8 +70,8 @@ export async function materialPrices(code: number, maxPages = 2): Promise<RawQuo
     return {
       source: 'COMPRAS' as const,
       sourceRef: String(row.idCompraItem || `${row.idCompra}-${row.numeroItemCompra}`),
-      sourceUrl: `https://dadosabertos.compras.gov.br/modulo-pesquisa-preco/1_consultarMaterial?tipo=codigoItemCatalogo&codigo=${code}&idCompra=${row.idCompra}`,
-      description: String(row.descricaoItem || '').trim(),
+      sourceUrl: `https://dadosabertos.compras.gov.br/modulo-pesquisa-preco/1_consultarMaterial?tipo=codigoItemCatalogo&codigo=${row.codigoItemCatalogo || code}&idCompra=${row.idCompra}`,
+      description: withDetail(row.descricaoItem, row.descricaoDetalhadaItem),
       buyer: row.nomeUasg || row.nomeOrgao || null,
       buyerCity: row.municipio || null,
       buyerUf: row.estado || null,
@@ -153,7 +165,8 @@ export async function arpPrices(code: number): Promise<RawQuote[]> {
 
 // ─── catálogo ─────────────────────────────────────────────────────────────
 
-export async function catalogPage(kind: 'PDM' | 'SERVICO', page: number): Promise<Paged<any>> {
+export async function catalogPage(kind: 'PDM' | 'SERVICO' | 'MATERIAL', page: number): Promise<Paged<any>> {
+  if (kind === 'MATERIAL') return getJson(`${COMPRAS_BASE}/modulo-material/4_consultarItemMaterial`, { pagina: page, tamanhoPagina: PAGE, statusItem: true }, 6);
   return kind === 'PDM'
     ? getJson(`${COMPRAS_BASE}/modulo-material/3_consultarPdmMaterial`, { pagina: page, tamanhoPagina: PAGE, statusPdm: true })
     : getJson(`${COMPRAS_BASE}/modulo-servico/6_consultarItemServico`, { pagina: page, tamanhoPagina: PAGE, statusServico: true });

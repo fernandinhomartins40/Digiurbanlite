@@ -21,4 +21,6 @@ export interface RawQuote {
   measureUnit: string | null;
   baseUnit: string | null;
   basePrice: number | null;
+  /** semelhança com a descrição pedida, quando achado pelo texto (PNCP, família sem código) */
+  matchScore?: number | null;
 }

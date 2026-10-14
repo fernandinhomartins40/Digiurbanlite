@@ -1,15 +1,16 @@
 /**
  * Catálogo de materiais e serviços para achar o código pelo texto.
  * A API oficial só busca por código, então mantemos uma cópia local
- * (price_catalog): famílias de material (PDM, ~20 mil) e serviços (CATSER,
- * ~3 mil) atualizados toda semana; os itens de uma família (CATMAT) são
- * baixados quando alguém abre a família e ficam guardados.
+ * (price_catalog): famílias de material (PDM, ~15 mil), serviços (CATSER,
+ * ~3 mil) e TODOS os itens de material (CATMAT, ~250 mil, com a descrição
+ * completa: "PAPEL… SULFITE… 297 X 210 MM… 75 G/M2"). É a descrição do item
+ * que permite achar o código pelo texto, como fazia o sistema antigo.
  */
 
 import { prisma } from '../../lib/prisma';
 import logger from '../../config/logger.config';
 import { catalogPage, materialByCode, materialsOfPdm } from './sources/compras';
-import { keywords, matchScore, normalizeText } from './rules';
+import { PNCP_MATCH_MIN, keywords, matchScore, normalizeText } from './rules';
 
 export type CatalogKind = 'PDM' | 'MATERIAL' | 'SERVICO';
 
@@ -57,17 +58,21 @@ export async function searchCatalog(text: string, kind?: 'MATERIAL' | 'SERVICO')
   if (!words.length) return [];
   const code = Number(text.trim());
   const kinds: CatalogKind[] = kind === 'SERVICO' ? ['SERVICO'] : kind === 'MATERIAL' ? ['PDM', 'MATERIAL'] : ['PDM', 'MATERIAL', 'SERVICO'];
-  const rows = await prisma.priceCatalogEntry.findMany({
-    where: {
-      kind: { in: kinds },
-      active: true,
-      OR: [
-        { AND: words.map((word) => ({ searchText: { contains: word } })) },
-        ...(Number.isInteger(code) && code > 0 ? [{ code }] : []),
-      ],
-    },
-    take: 200,
-  });
+  const find = (list: string[]) =>
+    prisma.priceCatalogEntry.findMany({
+      where: {
+        kind: { in: kinds },
+        active: true,
+        OR: [
+          { AND: list.map((word) => ({ searchText: { contains: word } })) },
+          ...(Number.isInteger(code) && code > 0 ? [{ code }] : []),
+        ],
+      },
+      take: 200,
+    });
+  // "papel sulfite a4": o catálogo escreve "297 X 210 MM" — sem resultado, tenta só as duas primeiras palavras
+  let rows = await find(words);
+  if (!rows.length && words.length > 2) rows = await find(words.slice(0, 2));
   return rows
     .map((row) => ({ row, score: matchScore(text, row.name) - row.name.length / 2000 + (row.code === code ? 2 : 0) + (row.kind === 'PDM' ? 0.05 : 0) }))
     .sort((a, b) => b.score - a.score)
@@ -98,4 +103,77 @@ export async function describeCode(kind: 'MATERIAL' | 'SERVICO', code: number): 
   if (kind === 'SERVICO') return null;
   const remote = await materialByCode(code).catch(() => null);
   return remote ? { kind: 'MATERIAL', code: remote.code, name: remote.name, className: remote.className, pdmCode: remote.pdmCode } : null;
+}
+
+/**
+ * Copia todos os itens de material ativos (~500 páginas de 500; a API leva
+ * ~10 s por página). Retoma de onde parou se o servidor reiniciar no meio
+ * (página guardada em price_source_cache). Só acrescenta itens novos.
+ */
+export async function syncMaterialItems(fresh = false): Promise<number> {
+  const KEY = 'prices:catalog-material-page';
+  const saved = fresh ? null : await prisma.priceSourceCache.findUnique({ where: { key: KEY } }).catch(() => null);
+  let page = Number((saved?.payload as any)?.next) || 1;
+  let total = 0;
+  let pages = Infinity;
+  while (page <= pages) {
+    const batch = [page, page + 1].filter((n) => n <= pages);
+    const results = await Promise.all(batch.map((n) => catalogPage('MATERIAL', n)));
+    for (const data of results) {
+      pages = Math.max(1, Number(data?.totalPaginas) || 1);
+      const rows = (data?.resultado || [])
+        .map((row: any) => {
+          const name = String(row.descricaoItem || '').trim();
+          return {
+            kind: 'MATERIAL',
+            code: Number(row.codigoItem),
+            pdmCode: Number(row.codigoPdm) || null,
+            name,
+            className: row.nomeClasse || null,
+            searchText: normalizeText(`${name} ${row.nomePdm || ''}`),
+          };
+        })
+        .filter((row: any) => row.code && row.name);
+      if (rows.length) await prisma.priceCatalogEntry.createMany({ data: rows, skipDuplicates: true });
+      total += rows.length;
+    }
+    page += batch.length;
+    const expiresAt = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000);
+    const payload = page > pages ? { next: 1, doneAt: new Date().toISOString() } : { next: page };
+    await prisma.priceSourceCache.upsert({ where: { key: KEY }, create: { key: KEY, payload, expiresAt }, update: { payload, expiresAt } });
+  }
+  logger.info(`[prices] catálogo MATERIAL: ${total} itens lidos`);
+  return total;
+}
+
+export async function materialItemsCount(): Promise<number> {
+  return prisma.priceCatalogEntry.count({ where: { kind: 'MATERIAL' } });
+}
+
+export interface GuessedItem extends CatalogHit {
+  score: number;
+}
+
+/**
+ * Sem código escolhido: os itens do catálogo cuja descrição mais se parece com
+ * o texto (até 3). A busca nas fontes usa os códigos deles; cada preço leva a
+ * semelhança do item (parecido o bastante entra no cálculo com etiqueta).
+ */
+export async function guessItems(text: string, kind: 'MATERIAL' | 'SERVICO', limit = 3): Promise<GuessedItem[]> {
+  const words = keywords(text, 6);
+  if (!words.length) return [];
+  const where = (list: string[]) => ({
+    kind: kind === 'SERVICO' ? 'SERVICO' : 'MATERIAL',
+    active: true,
+    AND: list.map((word) => ({ searchText: { contains: /^\d+[a-z]+$/.test(word) ? word.replace(/[a-z]+$/, '') : word } })),
+  });
+  // todas as palavras; sem resultado, as duas primeiras (o nome do produto costuma vir antes)
+  let rows = await prisma.priceCatalogEntry.findMany({ where: where(words), take: 300 });
+  if (!rows.length && words.length > 2) rows = await prisma.priceCatalogEntry.findMany({ where: where(words.slice(0, 2)), take: 300 });
+  return rows
+    .map((row) => ({ row, score: matchScore(text, row.name) }))
+    .filter((entry) => entry.score >= PNCP_MATCH_MIN)
+    .sort((a, b) => b.score - a.score || a.row.name.length - b.row.name.length)
+    .slice(0, limit)
+    .map(({ row, score }) => ({ kind: row.kind as CatalogKind, code: row.code, name: row.name, className: row.className, pdmCode: row.pdmCode, score }));
 }

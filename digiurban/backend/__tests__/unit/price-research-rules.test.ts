@@ -80,6 +80,23 @@ describe('marcas automáticas', () => {
     expect(ok).toMatchObject({ autoFlag: null, included: true, excludedReason: null });
   });
 
+  it('achado pelo texto: parecido o bastante entra no cálculo com etiqueta; parecido em parte fica a confirmar', () => {
+    const [strong, weak, byCode] = flagQuotes(
+      [quote(0.05, { source: 'PNCP', matchScore: 1 }), quote(0.05, { source: 'PNCP', matchScore: 0.6 }), quote(0.05, { matchScore: null })],
+      'FL',
+      NOW
+    );
+    expect(strong).toMatchObject({ autoFlag: 'TEXTO', included: true, excludedReason: null });
+    expect(weak).toMatchObject({ autoFlag: 'CONFIRMAR', included: false });
+    expect(byCode).toMatchObject({ autoFlag: null, included: true });
+  });
+
+  it('o achado pelo texto também passa pela faixa (IQR)', () => {
+    const flagged = flagQuotes([0.05, 0.051, 0.049, 0.052, 0.5].map((price) => quote(price, { source: 'PNCP', matchScore: 1 })), 'FL', NOW);
+    expect(flagged[4]).toMatchObject({ autoFlag: 'FORA_DA_FAIXA', included: false });
+    expect(flagged.slice(0, 4).every((item) => item.included && item.autoFlag === 'TEXTO')).toBe(true);
+  });
+
   it('marca preço muito fora da faixa dos demais (IQR) com o motivo', () => {
     const flagged = flagQuotes([quote(0.05), quote(0.051), quote(0.049), quote(0.052), quote(0.048), quote(0.5)], 'FL', NOW);
     expect(flagged[5]).toMatchObject({ autoFlag: 'FORA_DA_FAIXA', included: false });
@@ -145,6 +162,17 @@ describe('comparação de textos (PNCP)', () => {
   it('reconhece o mesmo item com outras palavras em volta', () => {
     expect(matchScore('Papel sulfite A4 75g', 'PAPEL SULFITE A4 75G/M² BRANCO, PACOTE COM 500 FOLHAS')).toBeGreaterThanOrEqual(0.75);
     expect(matchScore('Papel sulfite A4 75g', 'Adesivos personalizados 20x20cm')).toBe(0);
+  });
+
+  it('entende como o catálogo escreve: "A4" = 297 X 210 MM e "75g" = 75 G/M2', () => {
+    const catmat = 'PAPEL PARA IMPRESSÃO FORMATADO, TIPO: SULFITE/APERGAMINHADO/OFÍCIO, TAMANHO (C X L): 297 X 210 MM, GRAMATURA: 75 G/M2, COR: BRANCO';
+    expect(matchScore('Papel sulfite A4 75g', catmat)).toBe(1);
+  });
+
+  it('palavra conta pelo começo, nunca pelo meio', () => {
+    expect(matchScore('caneta azul', 'CANETAS ESFEROGRÁFICAS AZUIS')).toBe(0.5);
+    expect(matchScore('intel i5', 'CARTUCHO CANETA TINTEIRO')).toBe(0);
+    expect(matchScore('intel i5', 'Notebook com processador Intel Core i5 de 12ª geração')).toBe(1);
   });
 });
 

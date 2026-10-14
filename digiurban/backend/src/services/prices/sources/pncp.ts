@@ -5,7 +5,8 @@
  *  2. os itens de cada compra (/api/pncp/v1/orgaos/.../itens) são comparados
  *     com a descrição pedida (matchScore);
  *  3. o preço homologado vem de .../itens/{n}/resultados.
- * Tudo chega marcado "a confirmar": o servidor diz se é o mesmo item.
+ * Cada preço leva a semelhança com a descrição (matchScore): parecido o
+ * bastante entra no cálculo com etiqueta "Pela descrição"; em parte, fica a confirmar.
  * Limitado a poucas compras por item para não sobrecarregar a fonte.
  */
 
@@ -13,7 +14,7 @@ import { DAY, PNCP_BASE, cached, getJson, parseDate, pool } from '../http';
 import { PNCP_MATCH_MIN, keywords, matchScore, quoteBase } from '../rules';
 import type { RawQuote } from './types';
 
-const MAX_PURCHASES = 12;
+const MAX_PURCHASES = 25;
 const MAX_ITEMS_PER_PURCHASE = 3;
 
 interface SearchHit {
@@ -33,7 +34,7 @@ interface SearchHit {
 export async function searchPurchases(description: string, uf: string | null): Promise<SearchHit[]> {
   const q = keywords(description, 4).join(' ');
   if (!q) return [];
-  const params: Record<string, unknown> = { tipos_documento: 'edital', ordenacao: '-data', pagina: 1, tam_pagina: 40, status: 'encerradas', q };
+  const params: Record<string, unknown> = { tipos_documento: 'edital', ordenacao: '-data', pagina: 1, tam_pagina: 60, status: 'encerradas', q };
   if (uf) params.ufs = uf;
   const data = await cached<{ items?: SearchHit[] }>(`pncp:search:${uf || 'BR'}:${q}`, DAY, () => getJson(`${PNCP_BASE}/api/search/`, params));
   const limit = Date.now() - 366 * DAY;
@@ -82,7 +83,7 @@ async function itemResults(hit: SearchHit, numeroItem: number): Promise<any[]> {
 export async function pncpPrices(description: string, kind: 'MATERIAL' | 'SERVICO', uf: string | null): Promise<RawQuote[]> {
   const hits = (await searchPurchases(description, uf)).slice(0, MAX_PURCHASES);
   const wanted = kind === 'SERVICO' ? 'S' : 'M';
-  const perPurchase = await pool(hits, 3, async (hit) => {
+  const perPurchase = await pool(hits, 5, async (hit) => {
     try {
       const items = (await purchaseItems(hit))
         .filter((item) => item.temResultado && (!item.materialOuServico || item.materialOuServico === wanted))
@@ -91,7 +92,7 @@ export async function pncpPrices(description: string, kind: 'MATERIAL' | 'SERVIC
         .sort((a, b) => b.score - a.score)
         .slice(0, MAX_ITEMS_PER_PURCHASE);
       const quotes: RawQuote[] = [];
-      for (const { item } of items) {
+      for (const { item, score } of items) {
         const results = await itemResults(hit, Number(item.numeroItem)).catch(() => []);
         for (const result of results) {
           const price = Number(result.valorUnitarioHomologado);
@@ -113,6 +114,7 @@ export async function pncpPrices(description: string, kind: 'MATERIAL' | 'SERVIC
             quantity: Number(result.quantidadeHomologada) || null,
             ...unit,
             ...quoteBase(unit),
+            matchScore: score,
           });
         }
       }

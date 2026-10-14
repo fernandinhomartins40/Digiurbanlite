@@ -25,7 +25,7 @@ export interface PriceQuote {
   basePrice: number | null
   included: boolean
   excludedReason: string | null
-  autoFlag: 'UNIDADE_DIFERENTE' | 'ANTIGO' | 'FORA_DA_FAIXA' | 'CONFIRMAR' | null
+  autoFlag: 'UNIDADE_DIFERENTE' | 'ANTIGO' | 'FORA_DA_FAIXA' | 'CONFIRMAR' | 'TEXTO' | null
   manual: boolean
   decidedByName: string | null
   hasAttachment: boolean
@@ -105,6 +105,7 @@ export const FLAG_LABEL: Record<NonNullable<PriceQuote['autoFlag']>, { label: st
   ANTIGO: { label: 'Antigo', className: 'bg-amber-100 text-amber-800' },
   FORA_DA_FAIXA: { label: 'Fora da faixa', className: 'bg-red-100 text-red-700' },
   CONFIRMAR: { label: 'Confirmar', className: 'bg-blue-100 text-blue-800' },
+  TEXTO: { label: 'Pela descrição', className: 'bg-sky-50 text-sky-800' },
 }
 
 export const METHOD_LABEL: Record<PriceMethod, string> = { MEDIANA: 'Mediana', MEDIA: 'Média', MENOR: 'Menor preço' }

@@ -56,6 +56,11 @@ export function PriceItemCard({ item, readOnly, methodLabel, onChanged, onAddQuo
   const counts = useMemo(() => ({ in: item.quotes.filter((q) => q.included).length, out: item.quotes.filter((q) => !q.included).length, all: item.quotes.length }), [item.quotes])
   const list = item.quotes.filter((quote) => (filter === 'in' ? quote.included : filter === 'out' ? !quote.included : true))
 
+  // nada no cálculo mas há preços encontrados: mostra os encontrados (não "Nenhum preço aqui")
+  useEffect(() => {
+    if (filter === 'in' && counts.in === 0 && counts.all > 0) setFilter('all')
+  }, [filter, counts.in, counts.all])
+
   const call = async (path: string, init: RequestInit, done?: string) => {
     await apiRequest(path, init)
     if (done) toast({ title: done })
@@ -284,8 +289,11 @@ export function PriceItemCard({ item, readOnly, methodLabel, onChanged, onAddQuo
               </button>
             ))}
           </div>
+          {counts.in === 0 && counts.all > 0 && (
+            <p className="rounded-md bg-amber-50 p-2 text-xs text-amber-800">Nenhum preço entrou no cálculo sozinho. Marque os que são o mesmo item (ou escolha o código do catálogo para buscar com precisão).</p>
+          )}
           {filter === 'out' && counts.out > 0 && (
-            <p className="text-xs text-gray-500">Confira os marcados &quot;Confirmar&quot;: vieram pelo texto (PNCP) ou sem a quantidade por embalagem (atas). Se for o mesmo item, marque para entrar no cálculo.</p>
+            <p className="text-xs text-gray-500">Os marcados &quot;Confirmar&quot; parecem só em parte com a descrição ou vieram sem a quantidade por embalagem (atas). Se for o mesmo item, marque para entrar no cálculo.</p>
           )}
           <ul className="divide-y rounded-md border">
             {list.slice(0, shown).map((quote) => (

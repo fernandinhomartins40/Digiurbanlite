@@ -25,11 +25,13 @@ import {
   dominantBaseUnit,
   dominantCapacity,
   flagQuotes,
+  matchScore,
   normalizeUnit,
   quoteBase,
   summarizeItem,
 } from './rules';
 import { arpPrices, materialPrices, servicePrices } from './sources/compras';
+import { guessItems } from './catalog.service';
 import { bpsPrices } from './sources/bps';
 import { pncpPrices } from './sources/pncp';
 import { ipcaRates } from './sources/ipca';
@@ -254,8 +256,14 @@ export async function deleteItem(actor: PriceActor, itemId: string) {
 }
 
 async function reflag(itemId: string, baseUnit: string | null) {
+  const item = await prisma.priceResearchItem.findFirst({ where: { id: itemId }, select: { description: true, catalogCode: true } });
   const quotes = await prisma.priceQuote.findMany({ where: { itemId } });
-  const flagged = flagQuotes(quotes.map((quote) => ({ ...quote, source: quote.source as QuoteSource })), baseUnit);
+  // achado pelo texto = PNCP, ou qualquer fonte quando o código não foi escolhido: a semelhança é recalculada
+  const byText = (quote: { source: string; manual: boolean }) => !quote.manual && (quote.source === 'PNCP' || !item?.catalogCode);
+  const flagged = flagQuotes(
+    quotes.map((quote) => ({ ...quote, source: quote.source as QuoteSource, matchScore: byText(quote) ? matchScore(item?.description || '', quote.description) : null })),
+    baseUnit
+  );
   for (const quote of flagged) {
     if (quote.decidedById) continue;
     await prisma.priceQuote.update({ where: { id: quote.id }, data: { autoFlag: quote.autoFlag, included: quote.included, excludedReason: quote.excludedReason } });
@@ -296,11 +304,24 @@ export async function runSearch(itemId: string): Promise<void> {
     const tasks: Array<Promise<RawQuote[]>> = [
       collect('PNCP', () => pncpPrices(item.description, isService ? 'SERVICO' : 'MATERIAL', uf), failures),
     ];
+    let families: string[] = [];
     if (code) {
       tasks.push(collect('Compras.gov.br', () => (isService ? servicePrices(code) : materialPrices(code)), failures));
       if (!isService) {
         tasks.push(collect('Atas de registro de preços', () => arpPrices(code), failures));
         tasks.push(collect('Banco de Preços em Saúde', () => bpsPrices(code), failures));
+      }
+    } else {
+      // sem código: os itens do catálogo mais parecidos com o texto (como o sistema antigo)
+      const guessed = await guessItems(item.description, isService ? 'SERVICO' : 'MATERIAL').catch(() => []);
+      families = guessed.map((hit) => `${hit.code}`);
+      for (const hit of guessed) {
+        const tag = (rows: RawQuote[]) => rows.map((row) => ({ ...row, matchScore: hit.score }));
+        tasks.push(collect('Compras.gov.br', async () => tag(isService ? await servicePrices(hit.code, 1) : await materialPrices(hit.code, 1)), failures));
+        if (!isService) {
+          tasks.push(collect('Atas de registro de preços', async () => tag(await arpPrices(hit.code)), failures));
+          tasks.push(collect('Banco de Preços em Saúde', async () => tag(await bpsPrices(hit.code)), failures));
+        }
       }
     }
     const raw = (await Promise.all(tasks)).flat();
@@ -368,7 +389,11 @@ export async function runSearch(itemId: string): Promise<void> {
           searchedAt: new Date(),
           searchMessage: [
             `${flagged.length} preço(s) encontrado(s), ${flagged.filter((quote) => quote.included).length} no cálculo.`,
-            !code ? 'Sem o código do catálogo, só o PNCP foi consultado: escolha o código para buscar no Compras.gov.br.' : '',
+            !code
+              ? families.length
+                ? `Sem código escolhido: buscamos pela descrição no PNCP e nos itens do catálogo mais parecidos (${isService ? 'CATSER' : 'CATMAT'} ${families.join(', ')}) no Compras.gov.br${isService ? '' : ', nas atas e no BPS'}. Para mais precisão, escolha o código.`
+                : 'Sem código escolhido: buscamos pela descrição só no PNCP (nenhum item do catálogo parecido). Escolha o código para buscar também no Compras.gov.br, nas atas e no BPS.'
+              : '',
             failures.length ? `Não responderam agora: ${failures.join('; ')}.` : '',
           ].filter(Boolean).join(' '),
         },
