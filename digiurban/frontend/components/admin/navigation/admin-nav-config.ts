@@ -197,6 +197,13 @@ export function getAdminMainNavigation(stats?: AdminNavStats): AdminNavSection[]
           badge: numberBadge(stats?.internalProcessInbox),
         },
         {
+          // cotação com as fontes oficiais (IN 65/2021); vira o documento do processo interno
+          title: 'Pesquisa de preços',
+          href: '/admin/pesquisa-precos',
+          icon: Search,
+          minRole: 'USER',
+        },
+        {
           title: 'DigiBot',
           href: '/admin/digibot',
           icon: Bot,
@@ -234,8 +241,6 @@ export function getAdminMainNavigation(stats?: AdminNavStats): AdminNavSection[]
         { title: 'Documentos', href: '/admin/meus-documentos', icon: FileText, minRole: 'USER' },
         // Painel · Relatórios · Assistente de IA (abas dentro da página)
         { title: 'Análises e relatórios', href: '/admin/analytics', icon: BarChart3, minRole: 'COORDINATOR' },
-        // PESQUISA_PRECOS: disabled via FEATURE_FLAGS.PESQUISA_PRECOS
-        // { title: 'Pesquisa de Preços', href: '/admin/pesquisa-precos', icon: Search, minRole: 'COORDINATOR' },
         // SEGURANCA_ESCOLAR: disabled via FEATURE_FLAGS.SEGURANCA_ESCOLAR
         // { title: 'Seg. Escolar', href: '/admin/apps/seguranca-escolar', icon: Shield, badge: 'NOVO' },
       ],

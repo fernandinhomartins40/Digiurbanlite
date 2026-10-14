@@ -12507,3 +12507,162 @@ model PedidoInsumoAgricola {
   @@index([status])
   @@map("pedidos_insumos_agricolas")
 }
+
+// ============================================================================
+// PESQUISA DE PREÇOS (IN 65/2021, Lei 14.133/2021 art. 23) — 2026-10-14
+// Substitui o antigo serviço digiurban-prices (OpenSearch). As fontes oficiais
+// são consultadas na hora; a pesquisa vira o documento do processo interno.
+// ============================================================================
+
+/// Pesquisa de preços de um objeto (avulsa ou ligada a um processo interno)
+model PriceResearch {
+  id            String    @id @default(cuid())
+  tenantId      String?
+  title         String
+  processId     String?
+  status        String    @default("RASCUNHO") // RASCUNHO | CONCLUIDA
+  method        String    @default("MEDIANA") // MEDIANA | MEDIA | MENOR
+  applyIpca     Boolean   @default(true)
+  uf            String? // UF usada no PNCP (padrão: a do município)
+  nationwide    Boolean   @default(false) // PNCP no Brasil todo
+  notes         String?   @db.Text
+  documentId    String? // último documento gerado no processo
+  createdById   String
+  createdByName String
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  items PriceResearchItem[]
+
+  @@index([tenantId])
+  @@index([processId])
+  @@index([createdById])
+  @@map("price_researches")
+}
+
+/// Item pesquisado (o que a prefeitura vai comprar)
+model PriceResearchItem {
+  id            String    @id @default(cuid())
+  tenantId      String?
+  researchId    String
+  position      Int       @default(0)
+  description   String    @db.Text
+  kind          String    @default("MATERIAL") // MATERIAL | SERVICO
+  catalogCode   Int? // código CATMAT/CATSER
+  catalogName   String?   @db.Text
+  unit          String    @default("UN") // como a prefeitura vai comprar (ex.: PCT)
+  baseUnit      String? // unidade de comparação (ex.: FL)
+  unitCapacity  Float     @default(1) // quantas unidades de comparação há em cada unidade comprada
+  quantity      Float     @default(1)
+  justification String?   @db.Text // menos de 3 preços, preço antigo...
+  searchStatus  String    @default("NOVO") // NOVO | BUSCANDO | PRONTO | ERRO
+  searchMessage String?   @db.Text
+  searchedAt    DateTime?
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  research PriceResearch @relation(fields: [researchId], references: [id], onDelete: Cascade)
+  quotes   PriceQuote[]
+
+  @@index([tenantId])
+  @@index([researchId])
+  @@map("price_research_items")
+}
+
+/// Preço coletado de uma fonte (automática ou anexada pelo servidor)
+model PriceQuote {
+  id             String    @id @default(cuid())
+  tenantId       String?
+  itemId         String
+  source         String // COMPRAS | ARP | PNCP | BPS | FORNECEDOR | NOTA_FISCAL | OUTRO
+  sourceRef      String?
+  sourceUrl      String?   @db.Text
+  description    String    @db.Text
+  buyer          String?
+  buyerCity      String?
+  buyerUf        String?
+  sphere         String? // F | E | M
+  supplier       String?
+  supplierDoc    String?
+  brand          String?
+  date           DateTime?
+  quantity       Float?
+  unitLabel      String?
+  capacity       Float?
+  measureUnit    String?
+  unitPrice      Float
+  baseUnit       String?
+  basePrice      Float?
+  included       Boolean   @default(true)
+  excludedReason String?   @db.Text
+  autoFlag       String? // UNIDADE_DIFERENTE | ANTIGO | FORA_DA_FAIXA | CONFIRMAR
+  manual         Boolean   @default(false)
+  decidedById    String? // o servidor incluiu/tirou à mão (a marca automática não desfaz)
+  decidedByName  String?
+  attachmentPath String?
+  attachmentName String?
+  accessedAt     DateTime  @default(now()) // data e hora da consulta (art. 23, § 1º, III)
+  createdAt      DateTime  @default(now())
+
+  item PriceResearchItem @relation(fields: [itemId], references: [id], onDelete: Cascade)
+
+  @@index([tenantId])
+  @@index([itemId])
+  @@map("price_quotes")
+}
+
+/// Cópia local do catálogo do Compras.gov.br para busca por texto (plataforma).
+/// PDM = família de materiais; MATERIAL = item (baixado por família, sob demanda); SERVICO = CATSER.
+model PriceCatalogEntry {
+  id         String   @id @default(cuid())
+  kind       String // PDM | MATERIAL | SERVICO
+  code       Int
+  pdmCode    Int?
+  name       String   @db.Text
+  className  String?
+  searchText String   @db.Text // sem acento, minúsculo
+  active     Boolean  @default(true)
+  updatedAt  DateTime @updatedAt
+
+  @@unique([kind, code])
+  @@index([kind])
+  @@index([pdmCode])
+  @@map("price_catalog")
+}
+
+/// Banco de Preços em Saúde (arquivos anuais do Ministério da Saúde, plataforma)
+model PriceBpsEntry {
+  id           String   @id // co_seq_bps
+  year         Int
+  catmat       Int?
+  pdmCode      Int?
+  description  String   @db.Text
+  uf           String?
+  sphere       String?
+  institution  String?
+  city         String?
+  purchaseDate DateTime?
+  supplyUnit   String?
+  capacity     Float?
+  measureUnit  String?
+  quantity     Float?
+  unitPrice    Float
+  supplier     String?
+  modality     String?
+
+  @@index([catmat])
+  @@index([year])
+  @@map("price_bps")
+}
+
+/// Respostas guardadas das fontes e estado das fontes (plataforma)
+model PriceSourceCache {
+  key       String   @id
+  payload   Json
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([expiresAt])
+  @@map("price_source_cache")
+}

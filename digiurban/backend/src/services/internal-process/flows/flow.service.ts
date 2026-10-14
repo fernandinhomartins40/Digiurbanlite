@@ -136,8 +136,13 @@ export function sanitizeFields(input: Record<string, any> | null | undefined, cu
   };
 }
 
+/** Mesma regra de acesso do processo, para quem liga outra coisa a ele (ex.: pesquisa de preços) */
+export function loadProcessFor(actor: ProcessActor, id: string, mustAct: boolean) {
+  return loadProcess(actor, id, mustAct);
+}
+
 /** Novo documento a partir do modelo, já preenchido com os dados do processo */
-export async function createDocument(actor: ProcessActor & { name: string }, processId: string, templateKey: string) {
+export async function createDocument(actor: ProcessActor & { name: string }, processId: string, templateKey: string, extra?: Record<string, string>) {
   const process = await loadProcess(actor, processId, true);
   const base = DOCUMENT_TEMPLATES[templateKey];
   if (!base) throw new InternalProcessError('Modelo não encontrado.');
@@ -164,6 +169,7 @@ export async function createDocument(actor: ProcessActor & { name: string }, pro
     cargo: (assignment as any)?.position?.nome || '',
     flowKey: flowBaseKey(resolveFlow(process)),
     fields: (process.fields as Record<string, any>) || {},
+    extra,
   });
   const document = await prisma.internalProcessDocument.create({
     data: { processId, templateKey, title: template.title, stageKey: process.stageKey, content, createdById: actor.id, createdByName: actor.name },

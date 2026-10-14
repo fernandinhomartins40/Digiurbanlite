@@ -181,17 +181,13 @@ PESQUISA DE PREÇOS
 Objeto: {{objeto}}
 
 1. PARÂMETROS UTILIZADOS (art. 23, § 1º)
-( ) I — Painel de Preços / banco de preços em saúde (composição de custos)
-( ) II — Contratações similares de outros entes (até 1 ano)
-( ) III — Mídia especializada, tabelas de referência, sites (com data e hora de acesso)
-( ) IV — Pesquisa direta com no mínimo 3 fornecedores (cotações de até 6 meses)
-( ) V — Notas fiscais de compras pelo ente (até 1 ano)
+{{parametros}}
 
 2. MAPA COMPARATIVO
-Item | Fonte 1 | Fonte 2 | Fonte 3 | Média/mediana | Preço adotado
+{{mapa}}
 
 3. TRATAMENTO DOS PREÇOS
-(Critério: média, mediana ou menor preço; preços descartados por serem inexequíveis ou excessivos e o motivo.)
+{{tratamento}}
 
 4. VALOR ESTIMADO DA CONTRATAÇÃO
 {{valor}}
@@ -659,7 +655,20 @@ export interface TemplateContext {
   cargo: string;
   flowKey: string | null;
   fields: Record<string, any>;
+  /** textos prontos que valem mais que os padrões (ex.: mapa da pesquisa de preços) */
+  extra?: Record<string, string>;
 }
+
+/** Formulário em branco da pesquisa de preços (quando não veio de uma pesquisa feita no sistema) */
+export const PESQUISA_PRECOS_BLANK = {
+  parametros: `( ) I — Painel de Preços / banco de preços em saúde (composição de custos)
+( ) II — Contratações similares de outros entes (até 1 ano)
+( ) III — Mídia especializada, tabelas de referência, sites (com data e hora de acesso)
+( ) IV — Pesquisa direta com no mínimo 3 fornecedores (cotações de até 6 meses)
+( ) V — Notas fiscais de compras pelo ente (até 1 ano)`,
+  mapa: 'Item | Fonte 1 | Fonte 2 | Fonte 3 | Média/mediana | Preço adotado',
+  tratamento: '(Critério: média, mediana ou menor preço; preços descartados por serem inexequíveis ou excessivos e o motivo.)',
+};
 
 const participantsText = (fields: Record<string, any>) => {
   const list = Array.isArray(fields?.participantes) ? fields.participantes.map((item: any) => item?.nome).filter(Boolean) : [];
@@ -707,6 +716,8 @@ export function fillTemplate(template: DocumentTemplate, ctx: TemplateContext): 
       : isDireta
         ? 'Publique-se o ato em sítio eletrônico oficial (art. 72, parágrafo único).'
         : 'Designo como agente de contratação/pregoeiro(a) ____ e equipe de apoio ____ (arts. 7º e 8º).',
+    ...PESQUISA_PRECOS_BLANK,
+    ...(ctx.extra || {}),
   };
   return template.body.replace(/\{\{(\w+)\}\}/g, (_match, key: string) => values[key] ?? '____');
 }

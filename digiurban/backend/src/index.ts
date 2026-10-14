@@ -228,8 +228,8 @@ loadRoute('/api/admin/ai-credits', './routes/admin-ai-credits.routes');
 // Registry — motor de dados orientado a metadados (F2: query + schema)
 loadRoute('/api/registry', './routes/registry.routes');
 
-// Módulo de Pesquisa de Preços Públicos (proxy → digiurban-prices)
-loadRoute('/api/prices', './routes/prices-proxy.routes');
+// Pesquisa de preços (IN 65/2021): fontes oficiais na hora + documento do processo interno
+loadRoute('/api/prices', './routes/price-research.routes');
 
 // Módulo de Processos Internos (proxy → digiurban-flow)
 // Processo interno (substitui o proxy /api/flow do antigo digiurban-flow)
@@ -419,6 +419,7 @@ try { require('./jobs/protocol-geocoding.job').initProtocolGeocodingJob(); } cat
 try { require('./jobs/document-templates-startup.job').initDocumentTemplatesStartup(); } catch (e) { logger.error('Failed to start document templates catalog', { error: e }); }
 try { require('./jobs/required-documents-startup.job').initRequiredDocumentsStartup(); } catch (e) { logger.error('Failed to start required documents standardization', { error: e }); }
 try { require('./jobs/internal-process-deadlines.job').initInternalProcessDeadlinesJob(); } catch (e) { logger.error('Failed to start internal process deadlines job', { error: e }); }
+try { require('./jobs/prices.job').initPricesJob(); } catch (e) { logger.error('Failed to start price research jobs', { error: e }); }
 
 // Saúde - Apps integrados
 // REMOVIDO (Fase 0, achado do fail-fast): ./routes/saude-atendimento.routes não

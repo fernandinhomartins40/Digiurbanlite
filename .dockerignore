@@ -94,7 +94,6 @@ ultrazend-smtp-server/logs/
 
 # Serviços que NÃO são construídos por este Dockerfile (têm contexto próprio no CI)
 digiurban-ai/
-digiurban-prices/
 digiurban-flow/
 ultrazend-messages-server/
 ultrazend-smtp-server/

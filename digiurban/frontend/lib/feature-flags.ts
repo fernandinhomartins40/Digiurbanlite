@@ -4,9 +4,6 @@
  * da respectiva page.tsx.
  */
 export const FEATURE_FLAGS = {
-  /** Cotação / Pesquisa de Preços */
-  PESQUISA_PRECOS: false,
-
   /** Workflows de serviço (/admin/workflows) */
   WORKFLOWS: false,
 

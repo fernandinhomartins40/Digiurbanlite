@@ -5,12 +5,13 @@
  * onde está, o fundamento legal, o que fazer, os documentos da etapa (feitos
  * a partir dos modelos), para qual unidade cada etapa vai e os botões de
  * avançar (vai sozinho para o setor da próxima etapa) e devolver para ajuste.
+ * O documento de pesquisa de preços pode vir pronto da tela Pesquisa de preços.
  */
 
 import { useState } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
-import { AlertTriangle, ArrowRight, CheckCircle2, Circle, CornerUpLeft, FileText, Loader2, PenLine, Plus, Scale } from 'lucide-react'
+import { AlertTriangle, ArrowRight, CheckCircle2, Circle, CornerUpLeft, FileText, Loader2, PenLine, Plus, Scale, Search } from 'lucide-react'
 import { useAdminAuth } from '@/contexts/AdminAuthContext'
 import { Button } from '@/components/ui/button'
 import { Label } from '@/components/ui/label'
@@ -239,12 +240,21 @@ export function FlowPanel({ processId, flow, documents, stageDueAt, fields, warn
                     ))
                   )}
                 </div>
-                {canAct && shown.status === 'current' && (
-                  <Button size="sm" variant="outline" onClick={() => createFromTemplate(doc.key)} disabled={!!busy}>
-                    {busy === doc.key ? <Loader2 className="mr-1 h-4 w-4 animate-spin" /> : made.length ? <PenLine className="mr-1 h-4 w-4" /> : <Plus className="mr-1 h-4 w-4" />}
-                    {made.length ? 'Nova versão' : 'Fazer pelo modelo'}
-                  </Button>
-                )}
+                <div className="flex shrink-0 flex-wrap gap-2">
+                  {doc.key === 'PESQUISA_PRECOS' && (
+                    <Button size="sm" asChild>
+                      <Link href={`/admin/pesquisa-precos?processo=${processId}`}>
+                        <Search className="mr-1 h-4 w-4" /> Pesquisar preços
+                      </Link>
+                    </Button>
+                  )}
+                  {canAct && shown.status === 'current' && (
+                    <Button size="sm" variant="outline" onClick={() => createFromTemplate(doc.key)} disabled={!!busy}>
+                      {busy === doc.key ? <Loader2 className="mr-1 h-4 w-4 animate-spin" /> : made.length ? <PenLine className="mr-1 h-4 w-4" /> : <Plus className="mr-1 h-4 w-4" />}
+                      {made.length ? 'Nova versão' : 'Fazer pelo modelo'}
+                    </Button>
+                  )}
+                </div>
               </div>
             )
           })}
