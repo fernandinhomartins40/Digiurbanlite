@@ -14,6 +14,10 @@ import {
   SOURCE_LABELS,
   addItem,
   addManualQuote,
+  addSearchToList,
+  getItem,
+  quickSearch,
+  recentSearches,
   createResearch,
   decideQuote,
   deleteItem,
@@ -90,7 +94,26 @@ router.get('/catalog/code/:kind/:code', handle(async (req, res) => {
   res.json({ success: true, data: { item } });
 }));
 
-// ─── pesquisas ────────────────────────────────────────────────────────────
+// ─── busca avulsa ("O que você quer comprar?") ─────────────────────────────
+
+router.post('/search', handle(async (req, res) => {
+  res.status(202).json({ success: true, data: { item: await quickSearch(actorOf(req), req.body || {}) } });
+}));
+
+router.get('/search/recent', handle(async (req, res) => {
+  res.json({ success: true, data: { items: await recentSearches(actorOf(req)) } });
+}));
+
+router.get('/items/:itemId', handle(async (req, res) => {
+  res.json({ success: true, data: { item: await getItem(actorOf(req), req.params.itemId) } });
+}));
+
+/** Leva a busca (toda ou os preços escolhidos) para uma lista de compras */
+router.post('/items/:itemId/add-to-list', handle(async (req, res) => {
+  res.status(201).json({ success: true, data: await addSearchToList(actorOf(req), req.params.itemId, req.body || {}) });
+}));
+
+// ─── listas de compras (pesquisas) ────────────────────────────────────────
 
 router.get('/researches', handle(async (req, res) => {
   res.json({

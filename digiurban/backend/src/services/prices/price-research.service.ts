@@ -101,8 +101,11 @@ const assertOpen = (research: { status: string }) => {
 
 // ─── pesquisa ─────────────────────────────────────────────────────────────
 
+/** Rascunho de cada servidor onde ficam as buscas avulsas (não aparece entre as listas) */
+const SEARCH_STATUS = 'BUSCA';
+
 export async function listResearches(actor: PriceActor, filters: { processId?: string; search?: string }) {
-  const where: any = {};
+  const where: any = { status: { not: SEARCH_STATUS } };
   if (filters.processId) where.processId = filters.processId;
   if (filters.search?.trim()) where.title = { contains: filters.search.trim(), mode: 'insensitive' };
   if (!MANAGERS.includes(actor.role) && !filters.processId) where.createdById = actor.id;
@@ -111,9 +114,20 @@ export async function listResearches(actor: PriceActor, filters: { processId?: s
     where,
     orderBy: { updatedAt: 'desc' },
     take: 100,
-    include: { _count: { select: { items: true } } },
+    include: { items: { include: { quotes: { where: { included: true } } } } },
   });
-  return rows.map(({ _count, ...row }) => ({ ...row, itemCount: _count.items }));
+  const rates = await ipcaRates();
+  return rows.map(({ items, ...row }) => ({
+    ...row,
+    itemCount: items.length,
+    total:
+      Math.round(
+        items.reduce((sum, item) => {
+          const summary = summarizeItem(item, item.quotes.map((quote) => ({ ...quote, source: quote.source as QuoteSource })), row.method as PriceMethod, row.applyIpca ? rates : []);
+          return sum + (summary.total || 0);
+        }, 0) * 100
+      ) / 100,
+  }));
 }
 
 interface ItemInput {
@@ -162,7 +176,7 @@ export async function createResearch(actor: PriceActor, input: { title?: unknown
   const tenantId = tryGetTenantId() || null;
   const tenant = tenantId ? await prisma.tenant.findFirst({ where: { id: tenantId }, select: { ufMunicipio: true } }).catch(() => null) : null;
   const items = (Array.isArray(input.items) ? input.items : []).slice(0, 200).map((item, index) => ({ ...itemData(item, false), position: index + 1, tenantId }));
-  return prisma.priceResearch.create({
+  const research = await prisma.priceResearch.create({
     data: {
       title,
       processId,
@@ -172,7 +186,11 @@ export async function createResearch(actor: PriceActor, input: { title?: unknown
       // a extension não injeta tenantId em gravação aninhada
       items: items.length ? { create: items as any } : undefined,
     },
+    include: { items: { select: { id: true } } },
   });
+  // a busca começa sozinha: o servidor só diz o que quer comprar
+  for (const item of research.items) await queueSearch(item.id);
+  return research;
 }
 
 export async function getResearch(actor: PriceActor, id: string) {
@@ -183,18 +201,7 @@ export async function getResearch(actor: PriceActor, id: string) {
     include: { quotes: { orderBy: [{ included: 'desc' }, { date: 'desc' }] } },
   });
   const rates = research.applyIpca ? await ipcaRates() : [];
-  const now = Date.now();
-  const shaped = items.map((item) => {
-    const stale = item.searchStatus === 'BUSCANDO' && now - item.updatedAt.getTime() > STALE_SEARCH_MS;
-    const summary = summarizeItem(item, item.quotes.map((quote) => ({ ...quote, source: quote.source as QuoteSource })), research.method as PriceMethod, rates);
-    return {
-      ...item,
-      searchStatus: stale ? 'ERRO' : item.searchStatus,
-      searchMessage: stale ? 'A busca demorou demais. Tente de novo.' : item.searchMessage,
-      summary,
-      quotes: item.quotes.map((quote) => ({ ...quote, attachmentPath: undefined, hasAttachment: !!quote.attachmentPath })),
-    };
-  });
+  const shaped = items.map((item) => shapeItem(item, research.method as PriceMethod, rates));
   const total = Math.round(shaped.reduce((sum, item) => sum + (item.summary.total || 0), 0) * 100) / 100;
   let process: { id: string; number: string; subject: string } | null = null;
   if (research.processId) {
@@ -202,6 +209,139 @@ export async function getResearch(actor: PriceActor, id: string) {
     process = row || null;
   }
   return { ...research, process, items: shaped, total, ipcaAvailable: rates.length > 0 };
+}
+
+type ItemWithQuotes = Awaited<ReturnType<typeof prisma.priceResearchItem.findMany>>[number] & { quotes: Awaited<ReturnType<typeof prisma.priceQuote.findMany>> };
+
+function shapeItem(item: ItemWithQuotes, method: PriceMethod, rates: Awaited<ReturnType<typeof ipcaRates>>) {
+  const stale = item.searchStatus === 'BUSCANDO' && Date.now() - item.updatedAt.getTime() > STALE_SEARCH_MS;
+  const summary = summarizeItem(item, item.quotes.map((quote) => ({ ...quote, source: quote.source as QuoteSource })), method, rates);
+  return {
+    ...item,
+    searchStatus: stale ? 'ERRO' : item.searchStatus,
+    searchMessage: stale ? 'A busca demorou demais. Tente de novo.' : item.searchMessage,
+    summary,
+    quotes: item.quotes.map((quote) => ({ ...quote, attachmentPath: undefined, hasAttachment: !!quote.attachmentPath })),
+  };
+}
+
+// ─── busca avulsa e "adicionar à lista de compras" ────────────────────────
+
+async function searchScratch(actor: PriceActor) {
+  const existing = await prisma.priceResearch.findFirst({ where: { createdById: actor.id, status: SEARCH_STATUS } });
+  if (existing) return existing;
+  const tenantId = tryGetTenantId() || null;
+  const tenant = tenantId ? await prisma.tenant.findFirst({ where: { id: tenantId }, select: { ufMunicipio: true } }).catch(() => null) : null;
+  return prisma.priceResearch.create({
+    data: { title: 'Buscas', status: SEARCH_STATUS, uf: tenant?.ufMunicipio || null, createdById: actor.id, createdByName: actor.name },
+  });
+}
+
+/** "O que você quer comprar?": cria a busca e já começa a procurar */
+export async function quickSearch(actor: PriceActor, input: { text?: unknown; kind?: unknown }) {
+  const description = text(input.text, 500);
+  if (description.length < 3) throw new PriceResearchError('Escreva o que você quer comprar.');
+  const scratch = await searchScratch(actor);
+  // guarda só as 30 buscas mais recentes
+  const old = await prisma.priceResearchItem.findMany({ where: { researchId: scratch.id }, orderBy: { createdAt: 'desc' }, skip: 29, select: { id: true } });
+  if (old.length) await prisma.priceResearchItem.deleteMany({ where: { id: { in: old.map((row) => row.id) } } });
+  const item = await prisma.priceResearchItem.create({
+    data: { researchId: scratch.id, description, kind: input.kind === 'SERVICO' ? 'SERVICO' : 'MATERIAL', position: 0 },
+  });
+  return queueSearch(item.id);
+}
+
+/** Últimas buscas do servidor (para voltar a uma delas) */
+export async function recentSearches(actor: PriceActor) {
+  const scratch = await prisma.priceResearch.findFirst({ where: { createdById: actor.id, status: SEARCH_STATUS } });
+  if (!scratch) return [];
+  return prisma.priceResearchItem.findMany({
+    where: { researchId: scratch.id },
+    orderBy: { createdAt: 'desc' },
+    take: 8,
+    select: { id: true, description: true, searchStatus: true, createdAt: true },
+  });
+}
+
+/** Um item (da busca ou de uma lista) com preços e resultado */
+export async function getItem(actor: PriceActor, itemId: string) {
+  const { item, research } = await loadItem(actor, itemId);
+  const full = await prisma.priceResearchItem.findFirst({ where: { id: item.id }, include: { quotes: { orderBy: [{ included: 'desc' }, { date: 'desc' }] } } });
+  const rates = research.applyIpca ? await ipcaRates() : [];
+  return shapeItem(full as ItemWithQuotes, research.method as PriceMethod, rates);
+}
+
+/**
+ * Leva o resultado de uma busca (todos os preços usados, ou só os escolhidos)
+ * para uma lista de compras: como item novo ou somando a um item que já existe.
+ * A lista pode ser criada na hora, só com o nome.
+ */
+export async function addSearchToList(
+  actor: PriceActor,
+  itemId: string,
+  input: { researchId?: unknown; newListName?: unknown; targetItemId?: unknown; quoteIds?: unknown; quantity?: unknown }
+) {
+  const { item: source } = await loadItem(actor, itemId);
+  let researchId = text(input.researchId, 60);
+  if (!researchId) {
+    const name = text(input.newListName, 300);
+    if (!name) throw new PriceResearchError('Escolha uma lista ou dê o nome da nova lista.');
+    researchId = (await createResearch(actor, { title: name })).id;
+  }
+  const research = await loadResearch(actor, researchId);
+  if (research.status === SEARCH_STATUS) throw new PriceResearchError('Escolha uma lista de compras.');
+  assertOpen(research);
+
+  const chosen = Array.isArray(input.quoteIds) ? (input.quoteIds as unknown[]).map(String).slice(0, 2000) : [];
+  const quotes = await prisma.priceQuote.findMany({ where: chosen.length ? { itemId: source.id, id: { in: chosen } } : { itemId: source.id, included: true } });
+  if (!quotes.length) throw new PriceResearchError('Escolha ao menos um preço (ou espere a busca terminar).');
+
+  let target;
+  const targetItemId = text(input.targetItemId, 60);
+  if (targetItemId) {
+    target = await prisma.priceResearchItem.findFirst({ where: { id: targetItemId, researchId } });
+    if (!target) throw new PriceResearchError('Item da lista não encontrado', 404);
+  } else {
+    const last = await prisma.priceResearchItem.findFirst({ where: { researchId }, orderBy: { position: 'desc' }, select: { position: true } });
+    target = await prisma.priceResearchItem.create({
+      data: {
+        researchId,
+        position: (last?.position || 0) + 1,
+        description: source.description,
+        kind: source.kind,
+        catalogCode: source.catalogCode,
+        catalogName: source.catalogName,
+        unit: source.unit,
+        baseUnit: source.baseUnit,
+        unitCapacity: source.unitCapacity,
+        quantity: positive(input.quantity, 1),
+        searchStatus: 'PRONTO',
+        searchedAt: source.searchedAt,
+        searchMessage: source.searchMessage,
+      },
+    });
+  }
+  const targetId = target.id;
+  const targetTenant = target.tenantId;
+  const existing = new Set(
+    (await prisma.priceQuote.findMany({ where: { itemId: targetId }, select: { source: true, sourceRef: true, unitPrice: true } })).map(
+      (quote) => `${quote.source}:${quote.sourceRef}:${quote.unitPrice}`
+    )
+  );
+  const copies = quotes
+    .filter((quote) => !existing.has(`${quote.source}:${quote.sourceRef}:${quote.unitPrice}`))
+    .map(({ id: _id, itemId: _itemId, createdAt: _createdAt, ...quote }) => ({
+      ...quote,
+      tenantId: targetTenant,
+      itemId: targetId,
+      // escolhido a dedo pelo servidor = vai para o cálculo (menos unidade diferente)
+      ...(chosen.length && quote.autoFlag !== 'UNIDADE_DIFERENTE'
+        ? { included: true, excludedReason: null, decidedById: actor.id, decidedByName: actor.name }
+        : {}),
+    }));
+  if (copies.length) await prisma.priceQuote.createMany({ data: copies as any });
+  await prisma.priceResearch.update({ where: { id: researchId }, data: { updatedAt: new Date() } });
+  return { researchId, itemId: targetId, added: copies.length };
 }
 
 export async function updateResearch(actor: PriceActor, id: string, input: Record<string, unknown>) {
@@ -236,7 +376,8 @@ export async function addItem(actor: PriceActor, researchId: string, input: Item
   const research = await loadResearch(actor, researchId);
   assertOpen(research);
   const last = await prisma.priceResearchItem.findFirst({ where: { researchId }, orderBy: { position: 'desc' }, select: { position: true } });
-  return prisma.priceResearchItem.create({ data: { ...(itemData(input, false) as any), researchId, position: (last?.position || 0) + 1 } });
+  const item = await prisma.priceResearchItem.create({ data: { ...(itemData(input, false) as any), researchId, position: (last?.position || 0) + 1 } });
+  return queueSearch(item.id);
 }
 
 export async function updateItem(actor: PriceActor, itemId: string, input: ItemInput) {
@@ -244,6 +385,9 @@ export async function updateItem(actor: PriceActor, itemId: string, input: ItemI
   assertOpen(research);
   const data = itemData(input, true);
   const updated = await prisma.priceResearchItem.update({ where: { id: itemId }, data });
+  // mudou o que se procura: busca de novo sozinho
+  const changed = (key: 'description' | 'kind' | 'catalogCode') => data[key] !== undefined && data[key] !== item[key];
+  if (changed('description') || changed('kind') || changed('catalogCode')) return queueSearch(itemId);
   // trocou a unidade de comparação: remarca os preços (sem desfazer decisões do servidor)
   if (data.baseUnit !== undefined && data.baseUnit !== item.baseUnit) await reflag(updated.id, updated.baseUnit);
   return updated;
@@ -274,8 +418,15 @@ async function reflag(itemId: string, baseUnit: string | null) {
 
 /** Marca o item como "buscando" e roda a busca em segundo plano */
 export async function startSearch(actor: PriceActor, itemId: string) {
-  const { item, research } = await loadItem(actor, itemId);
+  const { research } = await loadItem(actor, itemId);
   assertOpen(research);
+  return queueSearch(itemId);
+}
+
+/** Marca "buscando" e roda a busca em segundo plano (no contexto do município) */
+async function queueSearch(itemId: string) {
+  const item = await prisma.priceResearchItem.findFirst({ where: { id: itemId } });
+  if (!item) throw new PriceResearchError('Item não encontrado', 404);
   if (item.searchStatus === 'BUSCANDO' && Date.now() - item.updatedAt.getTime() < STALE_SEARCH_MS) return item;
   const updated = await prisma.priceResearchItem.update({ where: { id: itemId }, data: { searchStatus: 'BUSCANDO', searchMessage: null } });
   const tenantId = tryGetTenantId();
@@ -343,6 +494,18 @@ export async function runSearch(itemId: string): Promise<void> {
     const official = quotes.filter((quote) => quote.source === 'COMPRAS' || quote.source === 'BPS');
     const baseUnit = item.baseUnit || dominantBaseUnit(official.length ? official : quotes);
     const unitCapacity = item.baseUnit ? item.unitCapacity : baseUnit ? dominantCapacity(official.length ? official : quotes, baseUnit) : 1;
+    // unidade de compra: se o servidor não disse (padrão UN) e o mercado vende em embalagem
+    // ("EMB com 500 FL"), usa a embalagem mais comum — o resultado fica "por pacote com 500 folhas"
+    let unit = item.unit;
+    if (unit === 'UN' && baseUnit && baseUnit !== 'UN' && unitCapacity > 1) {
+      const labels = new Map<string, number>();
+      for (const quote of official) {
+        const label = normalizeUnit(quote.unitLabel);
+        if (quote.baseUnit === baseUnit && label && label !== baseUnit) labels.set(label, (labels.get(label) || 0) + 1);
+      }
+      const best = [...labels.entries()].sort((a, b) => b[1] - a[1])[0];
+      if (best) unit = best[0];
+    }
     const flagged = flagQuotes(quotes.map((quote) => ({ ...quote, manual: false })), baseUnit);
 
     const kept = await prisma.priceQuote.findMany({ where: { itemId, OR: [{ manual: true }, { decidedById: { not: null } }] } });
@@ -385,6 +548,7 @@ export async function runSearch(itemId: string): Promise<void> {
         data: {
           baseUnit,
           unitCapacity,
+          unit,
           searchStatus: 'PRONTO',
           searchedAt: new Date(),
           searchMessage: [

@@ -122,3 +122,68 @@ export function brl(value: number | null | undefined, small = false): string {
 export function dateBr(value: string | null | undefined): string {
   return value ? new Date(value).toLocaleDateString('pt-BR', { timeZone: 'America/Sao_Paulo' }) : '—'
 }
+
+export interface ShoppingList {
+  id: string
+  title: string
+  status: 'RASCUNHO' | 'CONCLUIDA'
+  processId: string | null
+  createdByName: string
+  updatedAt: string
+  itemCount: number
+  total: number
+}
+
+export interface RecentSearch {
+  id: string
+  description: string
+  searchStatus: PriceItem['searchStatus']
+  createdAt: string
+}
+
+/** Nomes das unidades em português ("PCT" → "pacote") */
+const UNIT_NAME: Record<string, [string, string]> = {
+  UN: ['unidade', 'unidades'], PCT: ['pacote', 'pacotes'], CX: ['caixa', 'caixas'], EMB: ['embalagem', 'embalagens'],
+  FL: ['folha', 'folhas'], RESMA: ['resma', 'resmas'], KG: ['kg', 'kg'], G: ['g', 'g'], L: ['litro', 'litros'], ML: ['ml', 'ml'],
+  M: ['metro', 'metros'], M2: ['m²', 'm²'], M3: ['m³', 'm³'], FR: ['frasco', 'frascos'], GL: ['galão', 'galões'], AMP: ['ampola', 'ampolas'],
+  COMP: ['comprimido', 'comprimidos'], CAPS: ['cápsula', 'cápsulas'], ROLO: ['rolo', 'rolos'], TB: ['tubo', 'tubos'], CJ: ['conjunto', 'conjuntos'],
+  KIT: ['kit', 'kits'], PAR: ['par', 'pares'], DZ: ['dúzia', 'dúzias'], SC: ['saco', 'sacos'], BD: ['balde', 'baldes'], H: ['hora', 'horas'],
+  DIA: ['dia', 'dias'], MES: ['mês', 'meses'], SV: ['serviço', 'serviços'], KM: ['km', 'km'],
+}
+
+export function unitName(unit: string | null | undefined, plural = false): string {
+  if (!unit) return plural ? 'unidades' : 'unidade'
+  const known = UNIT_NAME[unit.toUpperCase()]
+  return known ? known[plural ? 1 : 0] : unit.toLowerCase()
+}
+
+/** "pacote com 500 folhas", "unidade", "caixa com 12 unidades" */
+export function unitPhrase(item: Pick<PriceItem, 'unit' | 'baseUnit' | 'unitCapacity'>): string {
+  const main = unitName(item.unit)
+  if (!item.baseUnit || item.unitCapacity === 1 || item.baseUnit === item.unit) return main
+  return `${main} com ${item.unitCapacity.toLocaleString('pt-BR')} ${unitName(item.baseUnit, item.unitCapacity !== 1)}`
+}
+
+/** Preço do anúncio levado para a unidade que a prefeitura vai comprar (para comparar maçã com maçã) */
+export function priceForItem(quote: PriceQuote, item: Pick<PriceItem, 'baseUnit' | 'unitCapacity'>): number {
+  if (quote.baseUnit && item.baseUnit && quote.baseUnit === item.baseUnit && quote.basePrice !== null) return quote.basePrice * (item.unitCapacity || 1)
+  return quote.unitPrice
+}
+
+/** Em que grupo o preço aparece na tela */
+export function quoteGroup(quote: PriceQuote): 'used' | 'check' | 'discarded' {
+  if (quote.included) return 'used'
+  if (quote.autoFlag === 'CONFIRMAR' && !quote.decidedByName) return 'check'
+  return 'discarded'
+}
+
+/** Motivo em linguagem simples para preço que não está sendo usado */
+export function discardReason(quote: PriceQuote): string {
+  if (quote.excludedReason && quote.decidedByName) return quote.excludedReason
+  switch (quote.autoFlag) {
+    case 'UNIDADE_DIFERENTE': return 'Vendido em outra unidade ou embalagem'
+    case 'ANTIGO': return 'Compra antiga demais para a lei'
+    case 'FORA_DA_FAIXA': return 'Muito acima ou muito abaixo dos outros preços'
+    default: return quote.excludedReason || 'Não usado'
+  }
+}

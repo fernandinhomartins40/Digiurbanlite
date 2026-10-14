@@ -130,7 +130,7 @@ describe('cálculo do item', () => {
   it('pede justificativa com menos de 3 preços ou só fornecedores', () => {
     expect(summarizeItem(item, [q(0.05), q(0.06)], 'MEDIANA', [], NOW).warnings.join(' ')).toMatch(/pelo menos 3/);
     const onlySuppliers = summarizeItem(item, [q(0.05, { source: 'FORNECEDOR' }), q(0.05, { source: 'FORNECEDOR' }), q(0.05, { source: 'FORNECEDOR' })], 'MEDIANA', [], NOW);
-    expect(onlySuppliers.warnings.join(' ')).toMatch(/Só cotações de fornecedores/);
+    expect(onlySuppliers.warnings.join(' ')).toMatch(/orçamentos de fornecedores/);
     expect(summarizeItem({ ...item, justification: 'Item exclusivo.' }, [q(0.05)], 'MEDIANA', [], NOW).warnings).toEqual([]);
   });
 

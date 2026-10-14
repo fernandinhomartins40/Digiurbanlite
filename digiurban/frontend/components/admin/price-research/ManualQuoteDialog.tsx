@@ -13,12 +13,12 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog'
-import type { PriceItem } from '@/lib/price-research'
+import { type PriceItem, unitName } from '@/lib/price-research'
 
 type Source = 'FORNECEDOR' | 'NOTA_FISCAL' | 'OUTRO'
 
 const SOURCES: Array<{ id: Source; label: string; hint: string }> = [
-  { id: 'FORNECEDOR', label: 'Cotação de fornecedor', hint: 'Válida por até 6 meses. A IN 65 pede no mínimo 3 fornecedores quando esta for a fonte.' },
+  { id: 'FORNECEDOR', label: 'Orçamento de fornecedor', hint: 'Vale por até 6 meses. Se for usar só orçamentos, junte pelo menos 3 fornecedores.' },
   { id: 'NOTA_FISCAL', label: 'Nota fiscal', hint: 'De compra feita pela prefeitura ou outro órgão, emitida há até 1 ano.' },
   { id: 'OUTRO', label: 'Site, tabela ou mídia especializada', hint: 'Informe o endereço consultado; a data e a hora ficam registradas.' },
 ]
@@ -50,7 +50,7 @@ export function ManualQuoteDialog({ item, onClose, onSaved }: ManualQuoteDialogP
     setSupplierDoc('')
     setDate(new Date().toISOString().slice(0, 10))
     setUnitPrice('')
-    setUnitLabel(item.unit)
+    setUnitLabel(unitName(item.unit))
     setCapacity(item.baseUnit && item.unitCapacity !== 1 ? String(item.unitCapacity) : '')
     setSourceUrl('')
     setFile(null)
@@ -92,7 +92,7 @@ export function ManualQuoteDialog({ item, onClose, onSaved }: ManualQuoteDialogP
     <Dialog open={!!item} onOpenChange={(open) => !open && onClose()}>
       <DialogContent className="max-h-[90vh] overflow-y-auto sm:max-w-lg">
         <DialogHeader>
-          <DialogTitle>Anexar preço</DialogTitle>
+          <DialogTitle>Anexar orçamento ou nota</DialogTitle>
           <DialogDescription>{item?.description}</DialogDescription>
         </DialogHeader>
         <div className="space-y-3">
@@ -139,7 +139,7 @@ export function ManualQuoteDialog({ item, onClose, onSaved }: ManualQuoteDialogP
           </div>
           {item?.baseUnit && (
             <div className="space-y-1">
-              <Label htmlFor="quote-capacity">Quantos {item.baseUnit} vêm nessa unidade (deixe vazio se for 1)</Label>
+              <Label htmlFor="quote-capacity">Quantas {unitName(item.baseUnit, true)} vêm em cada (deixe vazio se for 1)</Label>
               <Input id="quote-capacity" inputMode="decimal" value={capacity} onChange={(e) => setCapacity(e.target.value)} />
             </div>
           )}

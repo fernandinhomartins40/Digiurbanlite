@@ -1,191 +1,258 @@
 'use client'
 
 /**
- * Pesquisa de preços (IN 65/2021, Lei 14.133/2021 art. 23): lista das
- * pesquisas, situação das fontes oficiais e começo de uma nova. A pesquisa
- * ligada a um processo interno vira o documento "Pesquisa de preços e mapa
- * comparativo" da etapa.
+ * Pesquisa de preços (IN 65/2021), pensada para quem não é da área:
+ *  1. "O que você quer comprar?" → a busca começa sozinha;
+ *  2. o resultado mostra o preço de referência e os preços encontrados;
+ *  3. "Adicionar à lista de compras" leva tudo (ou os preços marcados) para
+ *     uma lista com nome, criada pelo próprio servidor.
+ * As listas viram o documento da etapa "Pesquisa de preços" do processo interno.
  */
 
-import { Suspense, useEffect, useState } from 'react'
+import { Suspense, useCallback, useEffect, useState } from 'react'
 import Link from 'next/link'
 import { useRouter, useSearchParams } from 'next/navigation'
-import { CheckCircle2, Loader2, Plus, Search, XCircle } from 'lucide-react'
+import { ClipboardList, History, Loader2, Plus, Search, ShoppingCart } from 'lucide-react'
 import { useAdminAuth } from '@/contexts/AdminAuthContext'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
-import { Label } from '@/components/ui/label'
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog'
-
-interface ResearchRow {
-  id: string
-  title: string
-  status: 'RASCUNHO' | 'CONCLUIDA'
-  processId: string | null
-  createdByName: string
-  updatedAt: string
-  itemCount: number
-}
-
-interface Health {
-  checkedAt: string
-  sources: Array<{ name: string; ok: boolean; message: string }>
-}
+import { useToast } from '@/hooks/use-toast'
+import { PriceResult } from '@/components/admin/price-research/PriceResult'
+import { AddToListDialog } from '@/components/admin/price-research/AddToListDialog'
+import { PriceItem, PriceQuote, RecentSearch, ShoppingList, brl } from '@/lib/price-research'
 
 function PesquisaPrecos() {
   const router = useRouter()
   const params = useSearchParams()
   const processId = params.get('processo')
   const { user, apiRequest } = useAdminAuth()
-  const [items, setItems] = useState<ResearchRow[]>([])
-  const [health, setHealth] = useState<Health | null>(null)
-  const [search, setSearch] = useState('')
-  const [loading, setLoading] = useState(true)
-  const [error, setError] = useState<string | null>(null)
-  const [creating, setCreating] = useState(false)
-  const [title, setTitle] = useState('')
-  const [firstItem, setFirstItem] = useState('')
+  const { toast } = useToast()
+
+  const [text, setText] = useState('')
+  const [isService, setIsService] = useState(false)
+  const [current, setCurrent] = useState<PriceItem | null>(null)
+  const [searching, setSearching] = useState(false)
+  const [selected, setSelected] = useState<Set<string>>(new Set())
+  const [adding, setAdding] = useState(false)
+  const [recent, setRecent] = useState<RecentSearch[]>([])
+  const [lists, setLists] = useState<ShoppingList[] | null>(null)
+  const [newList, setNewList] = useState(false)
+  const [listName, setListName] = useState('')
   const [busy, setBusy] = useState(false)
-  const [createError, setCreateError] = useState<string | null>(null)
+  const [error, setError] = useState<string | null>(null)
 
-  useEffect(() => {
-    if (!user) return
-    apiRequest('/prices/health').then((response: any) => setHealth(response?.data?.health || null)).catch(() => undefined)
+  const loadLists = useCallback(() => {
+    apiRequest(`/prices/researches${processId ? `?processId=${processId}` : ''}`)
+      .then((response: any) => setLists(response?.data?.items || []))
+      .catch(() => setLists([]))
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [user?.id])
+  }, [processId])
 
   useEffect(() => {
     if (!user) return
-    let cancelled = false
-    setLoading(true)
-    const query = new URLSearchParams()
-    if (search.trim()) query.set('search', search.trim())
-    if (processId) query.set('processId', processId)
-    const timer = setTimeout(() => {
-      apiRequest(`/prices/researches?${query.toString()}`)
-        .then((response: any) => !cancelled && setItems(response?.data?.items || []))
-        .catch((loadError: any) => !cancelled && setError(loadError?.message || 'Não foi possível carregar'))
-        .finally(() => !cancelled && setLoading(false))
-    }, search ? 300 : 0)
-    return () => {
-      cancelled = true
-      clearTimeout(timer)
+    loadLists()
+    apiRequest('/prices/search/recent').then((response: any) => setRecent(response?.data?.items || [])).catch(() => undefined)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [user?.id, loadLists])
+
+  const openSearch = useCallback(
+    async (id: string) => {
+      const response = await apiRequest(`/prices/items/${id}`)
+      setCurrent(response?.data?.item || null)
+    },
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    []
+  )
+
+  // enquanto busca, pergunta o andamento
+  useEffect(() => {
+    if (!current || current.searchStatus !== 'BUSCANDO') return
+    const id = current.id
+    const timer = setInterval(() => openSearch(id).catch(() => undefined), 4000)
+    return () => clearInterval(timer)
+  }, [current, openSearch])
+
+  const search = async (value = text) => {
+    if (value.trim().length < 3) return setError('Escreva o que você quer comprar (ex.: papel sulfite A4).')
+    setError(null)
+    setSelected(new Set())
+    try {
+      setSearching(true)
+      const response = await apiRequest('/prices/search', { method: 'POST', body: JSON.stringify({ text: value.trim(), kind: isService ? 'SERVICO' : 'MATERIAL' }) })
+      await openSearch(response?.data?.item?.id)
+      apiRequest('/prices/search/recent').then((r: any) => setRecent(r?.data?.items || [])).catch(() => undefined)
+    } catch (searchError: any) {
+      setError(searchError?.message || 'Não foi possível buscar')
+    } finally {
+      setSearching(false)
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [user?.id, search, processId])
+  }
 
-  // veio do processo interno: abre a pesquisa dele ou já oferece criar
-  useEffect(() => {
-    if (processId && !loading && items.length === 0 && !error) setCreating(true)
-  }, [processId, loading, items.length, error])
+  const toggle = (quote: PriceQuote) => {
+    setSelected((previous) => {
+      const next = new Set(previous)
+      if (next.has(quote.id)) next.delete(quote.id)
+      else next.add(quote.id)
+      return next
+    })
+  }
 
-  const create = async () => {
-    setCreateError(null)
+  const createList = async () => {
+    if (!listName.trim() && !processId) return
     try {
       setBusy(true)
-      const response = await apiRequest('/prices/researches', {
-        method: 'POST',
-        body: JSON.stringify({ title, processId: processId || undefined, items: firstItem.trim() ? [{ description: firstItem.trim() }] : [] }),
-      })
-      const id = response?.data?.research?.id
-      if (id) router.push(`/admin/pesquisa-precos/${id}`)
+      const response = await apiRequest('/prices/researches', { method: 'POST', body: JSON.stringify({ title: listName.trim(), processId: processId || undefined }) })
+      router.push(`/admin/pesquisa-precos/${response?.data?.research?.id}`)
     } catch (saveError: any) {
-      setCreateError(saveError?.message || 'Não foi possível criar')
+      toast({ variant: 'destructive', title: 'Não foi possível criar', description: saveError?.message })
     } finally {
       setBusy(false)
     }
   }
 
-  const failing = health?.sources.filter((source) => !source.ok) || []
+  const usable = current ? current.quotes.filter((quote) => quote.included).length : 0
 
   return (
-    <div className="space-y-6">
-      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+    <div className="mx-auto max-w-4xl space-y-8">
+      {/* 1. a pergunta */}
+      <section className="space-y-3">
         <div>
           <h1 className="text-2xl font-bold text-gray-900">Pesquisa de preços</h1>
-          <p className="text-sm text-gray-600">Preços de compras públicas para estimar o valor da contratação (IN 65/2021).</p>
+          <p className="text-sm text-gray-600">Veja quanto outras prefeituras e órgãos públicos pagaram e monte sua lista de compras.</p>
         </div>
-        <Button onClick={() => setCreating(true)}>
-          <Plus className="mr-1 h-4 w-4" /> Nova pesquisa
-        </Button>
-      </div>
-
-      {health && (
-        <div className="flex flex-wrap items-center gap-x-4 gap-y-1 rounded-lg border bg-white px-3 py-2 text-xs text-gray-600">
-          <span className="font-medium text-gray-800">Fontes oficiais</span>
-          {health.sources.map((source) => (
-            <span key={source.name} className="inline-flex items-center gap-1" title={source.message}>
-              {source.ok ? <CheckCircle2 className="h-3.5 w-3.5 text-green-600" /> : <XCircle className="h-3.5 w-3.5 text-red-600" />}
-              {source.name}
-            </span>
-          ))}
-          <span className="text-gray-400">conferido em {new Date(health.checkedAt).toLocaleString('pt-BR')}</span>
-          {failing.length > 0 && <span className="w-full text-amber-700">Fora do ar na última conferência: {failing.map((source) => `${source.name} (${source.message})`).join('; ')}. A busca usa as demais.</span>}
-        </div>
-      )}
-
-      {processId && (
-        <p className="rounded-md bg-blue-50 p-2 text-sm text-blue-800">
-          Pesquisas deste processo. <Link href={`/admin/processos-internos/${processId}`} className="underline">Voltar ao processo</Link>
-        </p>
-      )}
-
-      <div className="relative max-w-md">
-        <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
-        <Input value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Procurar pelo nome" className="pl-9" />
-      </div>
-
-      {error && <p className="rounded-md bg-red-50 p-2 text-sm text-red-700">{error}</p>}
-      {loading ? (
-        <p className="flex items-center gap-2 text-sm text-gray-500"><Loader2 className="h-4 w-4 animate-spin" /> Carregando...</p>
-      ) : items.length === 0 ? (
-        <div className="rounded-xl border bg-white p-6 text-center text-sm text-gray-600">
-          Nenhuma pesquisa ainda. Comece uma pelo botão &quot;Nova pesquisa&quot; ou pela etapa de pesquisa de preços de um processo interno.
-        </div>
-      ) : (
-        <ul className="divide-y rounded-xl border bg-white">
-          {items.map((item) => (
-            <li key={item.id}>
-              <Link href={`/admin/pesquisa-precos/${item.id}`} className="flex flex-col gap-1 p-4 hover:bg-gray-50 sm:flex-row sm:items-center sm:justify-between">
-                <div className="min-w-0">
-                  <p className="truncate font-medium text-gray-900">{item.title}</p>
-                  <p className="text-xs text-gray-500">
-                    {item.itemCount} item(ns) · {item.createdByName} · atualizada em {new Date(item.updatedAt).toLocaleDateString('pt-BR')}
-                    {item.processId ? ' · ligada a processo interno' : ''}
-                  </p>
-                </div>
-                <span className={item.status === 'CONCLUIDA' ? 'text-xs font-medium text-green-700' : 'text-xs text-gray-500'}>
-                  {item.status === 'CONCLUIDA' ? 'Documento gerado' : 'Em andamento'}
-                </span>
-              </Link>
-            </li>
-          ))}
-        </ul>
-      )}
-
-      <Dialog open={creating} onOpenChange={setCreating}>
-        <DialogContent className="sm:max-w-lg">
-          <DialogHeader>
-            <DialogTitle>Nova pesquisa de preços</DialogTitle>
-            <DialogDescription>
-              {processId ? 'Ligada ao processo interno: ao final, gera o documento da etapa.' : 'Pesquisa avulsa. Para virar documento, comece pela etapa do processo interno.'}
-            </DialogDescription>
-          </DialogHeader>
-          <div className="space-y-3">
-            <div className="space-y-1">
-              <Label htmlFor="research-title">Objeto da compra {processId && <span className="font-normal text-gray-500">(vazio = assunto do processo)</span>}</Label>
-              <Input id="research-title" value={title} onChange={(e) => setTitle(e.target.value)} placeholder="Ex.: Material de escritório para a Educação" />
-            </div>
-            <div className="space-y-1">
-              <Label htmlFor="research-item">Primeiro item (opcional)</Label>
-              <Input id="research-item" value={firstItem} onChange={(e) => setFirstItem(e.target.value)} placeholder="Ex.: Papel sulfite A4 75g branco" />
-            </div>
-            {createError && <p className="rounded-md bg-red-50 p-2 text-sm text-red-700">{createError}</p>}
+        {processId && (
+          <p className="rounded-md bg-blue-50 p-2 text-sm text-blue-800">
+            Você veio de um processo interno. A lista deste processo fica logo abaixo. <Link href={`/admin/processos-internos/${processId}`} className="underline">Voltar ao processo</Link>
+          </p>
+        )}
+        <form
+          className="flex flex-col gap-2 sm:flex-row"
+          onSubmit={(event) => {
+            event.preventDefault()
+            search()
+          }}
+        >
+          <div className="relative flex-1">
+            <Search className="absolute left-3 top-1/2 h-5 w-5 -translate-y-1/2 text-gray-400" />
+            <Input value={text} onChange={(e) => setText(e.target.value)} placeholder="O que você quer comprar? Ex.: papel sulfite A4" className="h-12 pl-10 text-base" />
           </div>
+          <Button type="submit" className="h-12 px-6 text-base" disabled={searching}>
+            {searching ? <Loader2 className="mr-2 h-5 w-5 animate-spin" /> : <Search className="mr-2 h-5 w-5" />}Buscar preços
+          </Button>
+        </form>
+        <div className="flex flex-wrap items-center gap-x-4 gap-y-2 text-sm">
+          <label className="flex cursor-pointer items-center gap-2 text-gray-600">
+            <input type="checkbox" checked={isService} onChange={(e) => setIsService(e.target.checked)} /> É um serviço (ex.: limpeza, manutenção)
+          </label>
+          {recent.length > 0 && (
+            <span className="flex flex-wrap items-center gap-1.5 text-gray-500">
+              <History className="h-4 w-4" />
+              {recent.slice(0, 5).map((row) => (
+                <button
+                  key={row.id}
+                  type="button"
+                  onClick={() => {
+                    setText(row.description)
+                    setSelected(new Set())
+                    openSearch(row.id).catch(() => undefined)
+                  }}
+                  className="rounded-full border bg-white px-2.5 py-0.5 text-xs text-gray-700 hover:bg-gray-50"
+                >
+                  {row.description}
+                </button>
+              ))}
+            </span>
+          )}
+        </div>
+        {error && <p className="rounded-md bg-red-50 p-2 text-sm text-red-700">{error}</p>}
+      </section>
+
+      {/* 2. o resultado */}
+      {current && (
+        <section className="space-y-3">
+          <PriceResult item={current} mode="search" selected={selected} onToggle={toggle} onRetry={() => search(current.description)} />
+          {current.searchStatus !== 'BUSCANDO' && current.quotes.length > 0 && (
+            <div className="sticky bottom-20 z-10 flex flex-col gap-2 rounded-xl border bg-white p-3 shadow-lg sm:flex-row sm:items-center sm:justify-between">
+              <p className="text-sm text-gray-700">
+                {selected.size
+                  ? `${selected.size} preço(s) marcado(s)`
+                  : usable
+                    ? `Leva os ${usable} preços encontrados — ou marque só os que quiser`
+                    : 'Marque os preços que servem'}
+              </p>
+              <Button onClick={() => setAdding(true)} disabled={!selected.size && !usable}>
+                <ShoppingCart className="mr-2 h-4 w-4" /> Adicionar à lista de compras
+              </Button>
+            </div>
+          )}
+        </section>
+      )}
+
+      {/* 3. as listas */}
+      <section className="space-y-3">
+        <div className="flex items-center justify-between gap-2">
+          <h2 className="text-lg font-semibold text-gray-900">{processId ? 'Listas deste processo' : 'Minhas listas de compras'}</h2>
+          <Button variant="outline" onClick={() => { setListName(''); setNewList(true) }}>
+            <Plus className="mr-1 h-4 w-4" /> Nova lista
+          </Button>
+        </div>
+        {lists === null ? (
+          <p className="flex items-center gap-2 text-sm text-gray-500"><Loader2 className="h-4 w-4 animate-spin" /> Carregando...</p>
+        ) : lists.length === 0 ? (
+          <div className="rounded-xl border border-dashed bg-white p-6 text-center text-sm text-gray-600">
+            <ClipboardList className="mx-auto mb-2 h-8 w-8 text-gray-300" />
+            Nenhuma lista ainda. Busque um produto acima e clique em &quot;Adicionar à lista de compras&quot;.
+          </div>
+        ) : (
+          <ul className="grid gap-3 sm:grid-cols-2">
+            {lists.map((list) => (
+              <li key={list.id}>
+                <Link href={`/admin/pesquisa-precos/${list.id}`} className="block rounded-xl border bg-white p-4 hover:border-blue-300 hover:shadow-sm">
+                  <p className="truncate font-medium text-gray-900">{list.title}</p>
+                  <p className="mt-1 text-2xl font-bold text-gray-900">{brl(list.total)}</p>
+                  <p className="text-xs text-gray-500">
+                    {list.itemCount} {list.itemCount === 1 ? 'item' : 'itens'} · atualizada em {new Date(list.updatedAt).toLocaleDateString('pt-BR')}
+                    {list.status === 'CONCLUIDA' ? ' · documento gerado' : ''}
+                  </p>
+                </Link>
+              </li>
+            ))}
+          </ul>
+        )}
+      </section>
+
+      <AddToListDialog
+        item={adding ? current : null}
+        quoteIds={Array.from(selected)}
+        defaultListId={processId ? lists?.[0]?.id : null}
+        onClose={() => setAdding(false)}
+        onAdded={({ researchId, listName: name, added }) => {
+          setAdding(false)
+          setSelected(new Set())
+          loadLists()
+          toast({ title: `Adicionado à lista "${name}"`, description: added ? `${added} preço(s) levados para a lista.` : 'Esses preços já estavam na lista.' })
+          if (researchId && processId) router.push(`/admin/pesquisa-precos/${researchId}`)
+        }}
+      />
+
+      <Dialog open={newList} onOpenChange={setNewList}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>Nova lista de compras</DialogTitle>
+            <DialogDescription>{processId ? 'Ligada ao processo interno: no fim, vira o documento da etapa.' : 'Dê um nome; depois é só ir adicionando os produtos.'}</DialogDescription>
+          </DialogHeader>
+          <Input
+            autoFocus
+            value={listName}
+            onChange={(e) => setListName(e.target.value)}
+            onKeyDown={(e) => e.key === 'Enter' && createList()}
+            placeholder={processId ? 'Vazio = assunto do processo' : 'Ex.: Material de limpeza das escolas'}
+          />
           <DialogFooter>
-            <Button variant="outline" onClick={() => setCreating(false)} disabled={busy}>Cancelar</Button>
-            <Button onClick={create} disabled={busy || (!title.trim() && !processId)}>
-              {busy && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}Começar
+            <Button variant="outline" onClick={() => setNewList(false)} disabled={busy}>Cancelar</Button>
+            <Button onClick={createList} disabled={busy || (!listName.trim() && !processId)}>
+              {busy && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}Criar lista
             </Button>
           </DialogFooter>
         </DialogContent>

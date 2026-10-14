@@ -379,12 +379,13 @@ export function summarizeItem(
   const unitPrice = basePrice !== null ? round2(basePrice * capacity) : null;
   const warnings: string[] = [];
   const hasJustification = !!String(item.justification || '').trim();
-  if (used.length < 3 && !hasJustification) warnings.push(`Só ${used.length} preço(s) no cálculo: a IN 65 pede pelo menos 3 ou justificativa (art. 6º, § 5º).`);
+  if (used.length < 3 && !hasJustification)
+    warnings.push(`Achamos só ${used.length} preço(s) válido(s). A lei pede pelo menos 3: escreva abaixo por que não há mais (justificativa).`);
   if (used.length && used.every((quote) => quote.source === 'FORNECEDOR') && !hasJustification)
-    warnings.push('Só cotações de fornecedores: justifique por que não há preços públicos (IN 65, art. 5º, § 1º).');
-  if (s && s.cv > 25) warnings.push(`Preços muito espalhados (variação de ${Math.round(s.cv)}%): confira se são o mesmo item.`);
+    warnings.push('Todos os preços são orçamentos de fornecedores. Escreva abaixo por que não há preços de compras públicas (justificativa).');
+  if (s && s.cv > 25) warnings.push(`Os preços variam bastante (${Math.round(s.cv)}%). Confira se são todos do mesmo produto.`);
   const old = used.filter((quote) => quote.date && now.getTime() - quote.date.getTime() > SOURCE_INFO[quote.source].maxAgeDays * DAY).length;
-  if (old && !hasJustification) warnings.push(`${old} preço(s) fora do prazo da fonte: justifique ou retire.`);
+  if (old && !hasJustification) warnings.push(`${old} preço(s) são antigos demais para a lei. Tire-os ou escreva o motivo abaixo (justificativa).`);
   return {
     baseUnit: item.baseUnit,
     count: used.length,
