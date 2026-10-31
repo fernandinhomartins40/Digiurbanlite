@@ -14,6 +14,7 @@ import { useCallback, useEffect, useState } from 'react';
 export type ThemePreference = 'system' | 'light' | 'dark';
 
 import { THEME_STORAGE_KEY } from './lg-theme-boot';
+import { startLiquidGlass } from './liquid-glass/runtime';
 
 export { THEME_STORAGE_KEY };
 
@@ -47,9 +48,12 @@ export function useLgThemeScope() {
     const media = window.matchMedia('(prefers-color-scheme: dark)');
     media.addEventListener?.('change', apply);
     window.addEventListener('digiurban-theme-change', apply);
+    // lente (refração) + toque interativo em todas as peças .lg-glass
+    const stopGlass = startLiquidGlass();
     return () => {
       media.removeEventListener?.('change', apply);
       window.removeEventListener('digiurban-theme-change', apply);
+      stopGlass();
       document.documentElement.classList.remove('dark');
     };
   }, []);

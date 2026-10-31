@@ -71,54 +71,86 @@
 .lg-orb { position: absolute; border-radius: 9999px; filter: blur(90px); opacity: 0.45; }
 .dark .lg-orb { opacity: 0.32; }
 
-/* Material Liquid Glass (variante regular, transparente ao máximo) */
+/* Material Liquid Glass — o mesmo vidro do iOS 26 (UIGlassEffect, que o
+   expo-glass-effect usa no app nativo). Três partes, como na Apple:
+   1. LENTE: a borda entorta o que está atrás (refração). Feita pelo
+      lib/liquid-glass/runtime.ts com filtro SVG em backdrop-filter (Chromium);
+      o backdrop-filter abaixo é o plano B (Safari/Firefox): só desfoque.
+   2. BRILHO ESPECULAR: filete de luz fino na borda, forte no canto de cima à
+      esquerda e no de baixo à direita (luz vindo de cima), sem cor própria.
+   3. QUASE SEM TINTA: o vidro é incolor; a cor vem do que está atrás. */
 /* posição fraca (:where) para não anular fixed/absolute das utilidades */
 :where(.lg-glass) { position: relative; }
 .lg-glass {
-  --ta: 150, 205, 255;
-  --tb: 255, 160, 215;
-  background: linear-gradient(180deg, rgba(255, 255, 255, 0.2), rgba(255, 255, 255, 0.05));
-  -webkit-backdrop-filter: blur(4px) saturate(185%) brightness(1.06);
-  backdrop-filter: blur(4px) saturate(185%) brightness(1.06);
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.16), rgba(255, 255, 255, 0.06));
+  -webkit-backdrop-filter: blur(3px) saturate(190%) brightness(1.05);
+  backdrop-filter: blur(3px) saturate(190%) brightness(1.05);
   box-shadow:
-    0 14px 30px -12px rgba(20, 28, 48, 0.32),
-    0 2px 6px rgba(20, 28, 48, 0.08),
-    inset 0 1px 1px rgba(255, 255, 255, 0.95),
-    inset 0 -1px 1px rgba(255, 255, 255, 0.5),
-    inset 0 12px 16px -14px rgba(255, 255, 255, 0.95),
-    inset 0 -14px 18px -14px rgba(30, 40, 70, 0.26),
-    inset 8px 0 12px -12px rgba(255, 255, 255, 0.75),
-    inset -8px 0 12px -12px rgba(30, 40, 70, 0.16);
+    0 8px 24px -10px rgba(16, 24, 40, 0.28),
+    0 1px 3px rgba(16, 24, 40, 0.08),
+    inset 0 0 0 0.5px rgba(255, 255, 255, 0.35),
+    inset 0 0 10px -2px rgba(255, 255, 255, 0.45);
+  transition: scale 0.45s cubic-bezier(0.34, 1.56, 0.64, 1), box-shadow 0.3s ease;
 }
-/* Borda de luz (especular) que pega a cor de baixo */
+/* Borda especular (luz de cima à esquerda; reflexo mais fraco embaixo à direita) */
 .lg-glass::before {
   content: '';
   position: absolute;
   inset: 0;
   border-radius: inherit;
-  padding: 1.6px;
-  background: linear-gradient(155deg, rgba(255, 255, 255, 1) 0%, rgba(255, 255, 255, 0.6) 10%, rgba(var(--ta), 0.75) 22%, rgba(255, 255, 255, 0) 40%, rgba(255, 255, 255, 0) 58%, rgba(var(--tb), 0.7) 80%, rgba(255, 255, 255, 0.95) 100%);
+  padding: 1px;
+  background:
+    linear-gradient(135deg, rgba(255, 255, 255, 0.95) 0%, rgba(255, 255, 255, 0.35) 18%, rgba(255, 255, 255, 0) 38%, rgba(255, 255, 255, 0) 62%, rgba(255, 255, 255, 0.3) 84%, rgba(255, 255, 255, 0.75) 100%);
   -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
   -webkit-mask-composite: xor;
   mask-composite: exclude;
   pointer-events: none;
   z-index: 2;
 }
-/* Reflexo no topo */
+/* Luz interna: brilho de toque (isInteractive) ou um leve reflexo no topo */
 .lg-glass::after {
   content: '';
   position: absolute;
-  left: 8%;
-  right: 8%;
-  top: 2px;
-  height: 42%;
-  border-radius: 9999px;
-  background: linear-gradient(180deg, rgba(255, 255, 255, 0.42), rgba(255, 255, 255, 0));
+  inset: 0;
+  border-radius: inherit;
+  background: radial-gradient(120% 60% at 30% 0%, rgba(255, 255, 255, 0.22), rgba(255, 255, 255, 0) 60%);
   pointer-events: none;
-  opacity: 0.55;
   z-index: 2;
+  transition: opacity 0.3s ease;
 }
 .lg-glass > * { position: relative; z-index: 3; }
+
+/* Com a lente ligada o vidro pede menos tinta: o que está atrás aparece entortado */
+.lg-glass[data-lg-refract='on']:not(.lg-thick) {
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.1), rgba(255, 255, 255, 0.03));
+}
+.dark .lg-glass[data-lg-refract='on']:not(.lg-thick) {
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.06), rgba(0, 0, 0, 0.12));
+}
+
+/* Barras com texto: um pouco mais de leitoso para ler bem, mesmo com a lente */
+.lg-bar[data-lg-refract='on'] {
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.26), rgba(255, 255, 255, 0.1));
+}
+.dark .lg-bar[data-lg-refract='on'] {
+  background: linear-gradient(180deg, rgba(60, 60, 68, 0.36), rgba(30, 30, 36, 0.26));
+}
+
+/* Interativo (isInteractive do expo-glass-effect): cresce com mola e acende onde tocou */
+.lg-pressed:is(.lg-glass, .lg-interactive) { scale: 1.06; }
+.lg-tab.lg-pressed:not(.lg-glass) { scale: 0.94; }
+.lg-glass.lg-pressed::after {
+  background: radial-gradient(circle at var(--lg-px, 50%) var(--lg-py, 50%), rgba(255, 255, 255, 0.55), rgba(255, 255, 255, 0) 65%);
+}
+.dark .lg-glass.lg-pressed::after {
+  background: radial-gradient(circle at var(--lg-px, 50%) var(--lg-py, 50%), rgba(255, 255, 255, 0.28), rgba(255, 255, 255, 0) 65%);
+}
+
+/* Vidro tingido (tintColor do GlassView) */
+.lg-glass-tint {
+  color: #fff;
+  background: linear-gradient(180deg, color-mix(in srgb, var(--lg-tint) 62%, transparent), color-mix(in srgb, var(--lg-tint) 82%, transparent)) !important;
+}
 
 /* Barras de navegação: um pouco mais de desfoque para o texto ficar legível */
 .lg-bar {
@@ -134,16 +166,14 @@
 }
 
 .dark .lg-glass {
-  background: linear-gradient(180deg, rgba(255, 255, 255, 0.1), rgba(255, 255, 255, 0.02));
-  -webkit-backdrop-filter: blur(5px) saturate(170%) brightness(0.92);
-  backdrop-filter: blur(5px) saturate(170%) brightness(0.92);
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.08), rgba(255, 255, 255, 0.02));
+  -webkit-backdrop-filter: blur(4px) saturate(170%) brightness(0.9);
+  backdrop-filter: blur(4px) saturate(170%) brightness(0.9);
   box-shadow:
-    0 14px 30px -10px rgba(0, 0, 0, 0.7),
-    0 2px 6px rgba(0, 0, 0, 0.4),
-    inset 0 1px 1px rgba(255, 255, 255, 0.42),
-    inset 0 -1px 1px rgba(255, 255, 255, 0.1),
-    inset 0 12px 16px -14px rgba(255, 255, 255, 0.35),
-    inset 0 -14px 18px -14px rgba(0, 0, 0, 0.55);
+    0 10px 26px -10px rgba(0, 0, 0, 0.7),
+    0 1px 3px rgba(0, 0, 0, 0.4),
+    inset 0 0 0 0.5px rgba(255, 255, 255, 0.18),
+    inset 0 0 10px -2px rgba(255, 255, 255, 0.12);
 }
 .dark .lg-bar {
   background: linear-gradient(180deg, rgba(60, 60, 68, 0.46), rgba(30, 30, 36, 0.34));
@@ -156,12 +186,12 @@
   backdrop-filter: blur(22px) saturate(160%);
 }
 /* Folhas grandes (menus, login): sem o reflexo do topo, que só funciona em peças pequenas */
-.lg-thick::after { display: none; }
-.dark .lg-glass::before { opacity: 0.6; }
-.dark .lg-glass::after { opacity: 0.18; }
+.lg-thick:not(.lg-pressed)::after { display: none; }
+.dark .lg-glass::before { opacity: 0.55; }
+.dark .lg-glass:not(.lg-pressed)::after { opacity: 0.35; }
 
 /* Aba selecionada: "gota" de vidro mais clara */
-.lg-tab { color: var(--lg-ink); transition: background-color 0.25s, color 0.25s; }
+.lg-tab { color: var(--lg-ink); transition: background-color 0.25s, color 0.25s, scale 0.45s cubic-bezier(0.34, 1.56, 0.64, 1); }
 .lg-tab:hover { background: var(--lg-fill); }
 .lg-tab-on,
 .lg-tab-on:hover {
@@ -186,12 +216,14 @@
 @media (prefers-reduced-transparency: reduce) {
   .lg-glass, .lg-bar, .lg-thick { background: var(--lg-surface) !important; -webkit-backdrop-filter: none !important; backdrop-filter: none !important; }
   .lg-glass::after { display: none; }
+  .lg-glass[style*='backdrop-filter'] { -webkit-backdrop-filter: none !important; backdrop-filter: none !important; }
 }
 @media (prefers-contrast: more) {
   .lg-glass { outline: 1.5px solid var(--lg-ink); }
 }
 @media (prefers-reduced-motion: reduce) {
-  .lg-tab { transition: none; }
+  .lg-tab, .lg-glass { transition: none; }
+  .lg-pressed:is(.lg-glass, .lg-interactive, .lg-tab) { scale: none; }
 }
 
 /* ---------------------------------------------------------------------------
