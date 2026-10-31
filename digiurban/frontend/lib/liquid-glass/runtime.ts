@@ -65,8 +65,10 @@ function variantOf(el: HTMLElement): Variant {
  * cor de trás), força da lente, aumento no meio e franja de cor na borda.
  */
 const VARIANT_LOOK: Record<Variant, { blur: number; saturate: number; strength: number; magnify: number; fringe: number }> = {
-  clear: { blur: 1, saturate: 1.25, strength: 1, magnify: 0, fringe: 0.08 },
-  regular: { blur: 5, saturate: 1.2, strength: 1, magnify: 0, fringe: 0.06 },
+  // "vidro de verdade" (o do iOS 26): quase sem desfoque, lente forte na borda e
+  // um leve aumento no meio — o que está atrás aparece nítido e entortado
+  clear: { blur: 0.6, saturate: 1.1, strength: 1.35, magnify: 0.1, fringe: 0.035 },
+  regular: { blur: 0.8, saturate: 1.1, strength: 1.3, magnify: 0.1, fringe: 0.035 },
   thick: { blur: 16, saturate: 1.15, strength: 0.7, magnify: 0, fringe: 0 },
 };
 
@@ -110,7 +112,8 @@ const CHANNEL_ONLY = {
 function createFilter(key: string, width: number, height: number, radius: number, variant: Variant) {
   const look = VARIANT_LOOK[variant];
   const short = Math.min(width, height);
-  const bezel = Math.max(8, Math.min(30, short * 0.38));
+  // borda curva larga (metade da altura numa pílula), como o vidro grosso da Apple
+  const bezel = variant === 'thick' ? Math.max(8, Math.min(30, short * 0.38)) : Math.max(10, Math.min(40, short * 0.5));
   const scale = Math.round(bezel * 0.95 * look.strength * 2);
   const url = mapToDataUrl(width, height, radius, bezel, look.magnify);
   if (!url) return null;
