@@ -4,6 +4,10 @@
 
 Plataforma de governo digital municipal. Monorepo com 4 serviços: Backend (Express), Frontend (Next.js), Messages Server (Socket.IO + Bot). E-mail só transacional, pela API do VeloMail. Tudo orquestrado via Docker Compose com PostgreSQL e Redis. IA por APIs externas via gateway no backend (sem IA local).
 
+## Git
+
+- **Trabalhar sempre na `main`** — não criar branch nova. Depois de implementar, fazer commit e push direto para a `main`.
+
 ## Estrutura do Monorepo
 
 ```
