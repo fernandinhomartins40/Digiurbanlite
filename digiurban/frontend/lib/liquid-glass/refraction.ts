@@ -21,6 +21,8 @@ export interface RefractionShape {
   radius: number;
   /** Largura da faixa curva da borda (px) — fora dela o vidro é plano */
   bezel: number;
+  /** Aumento no meio (0..1), como a gota de vidro da aba selecionada do iOS 26 */
+  magnify?: number;
 }
 
 const GLASS_INDEX = 1.5;
@@ -72,6 +74,7 @@ export function buildDisplacementMap(shape: RefractionShape): Uint8ClampedArray 
   const data = new Uint8ClampedArray(w * h * 4);
   const hx = w / 2 - r;
   const hy = h / 2 - r;
+  const magnify = Math.max(0, Math.min(1, shape.magnify || 0));
 
   for (let y = 0; y < h; y++) {
     const py = y + 0.5 - h / 2;
@@ -105,9 +108,16 @@ export function buildDisplacementMap(shape: RefractionShape): Uint8ClampedArray 
 
       const o = (y * w + x) * 4;
       const m = depth < 0 ? 0 : displacementAt(depth, bezel);
-      // busca para DENTRO: deslocamento oposto à normal
-      data[o] = Math.round(128 - nx * m * 127);
-      data[o + 1] = Math.round(128 - ny * m * 127);
+      // busca para DENTRO: deslocamento oposto à normal (+ aumento: puxa para o centro)
+      let dx = -nx * m - (px / (w / 2)) * magnify;
+      let dy = -ny * m - (py / (h / 2)) * magnify;
+      const len = Math.hypot(dx, dy);
+      if (len > 1) {
+        dx /= len;
+        dy /= len;
+      }
+      data[o] = Math.round(128 + dx * 127);
+      data[o + 1] = Math.round(128 + dy * 127);
       data[o + 2] = 128;
       data[o + 3] = 255;
     }
