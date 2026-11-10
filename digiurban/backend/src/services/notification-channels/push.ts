@@ -7,6 +7,7 @@
 import webpush from 'web-push';
 import { prisma } from '../../lib/prisma';
 import { NotificationPayload } from '../../types/notification.types';
+import { sendNativePush } from '../native-push/native-push.service';
 
 // Configurar VAPID keys
 const vapidPublicKey = process.env.VAPID_PUBLIC_KEY;
@@ -21,9 +22,21 @@ if (vapidPublicKey && vapidPrivateKey) {
 }
 
 export async function sendPush(payload: NotificationPayload): Promise<{ success: boolean; sent: number; failed: number }> {
+  // Apps nativos (Android/iOS): FCM / APNs, independente do Web Push
+  const native = await sendNativePush(payload.recipientType, payload.recipientId, {
+    title: payload.title,
+    body: payload.message,
+    data: { ...(payload.data || {}), type: payload.type, recipientType: payload.recipientType },
+    highPriority: payload.priority === 'high',
+  });
+  const web = await sendWebPush(payload);
+  const sent = web.sent + native.sent;
+  return { success: sent > 0 || (web.success && native.failed === 0), sent, failed: web.failed + native.failed };
+}
+
+async function sendWebPush(payload: NotificationPayload): Promise<{ success: boolean; sent: number; failed: number }> {
   if (!vapidPublicKey || !vapidPrivateKey) {
-    console.warn('[Push] VAPID not configured, skipping push notification');
-    return { success: false, sent: 0, failed: 0 };
+    return { success: true, sent: 0, failed: 0 };
   }
 
   try {

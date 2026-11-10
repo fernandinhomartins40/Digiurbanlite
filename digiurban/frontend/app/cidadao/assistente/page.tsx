@@ -33,6 +33,7 @@ import {
   Trash2,
   Eraser,
   Home,
+  Flag,
 } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
@@ -63,6 +64,7 @@ import { cn } from '@/lib/utils';
 import { BottomNavigation } from '@/components/citizen/mobile/BottomNavigation';
 import { NewConversationDialog } from '@/src/components/Messages/NewConversationDialog';
 import { BotMessageRenderer } from '@/src/components/bot';
+import { getFullApiUrl } from '@/lib/api-config';
 
 // Hook unificado
 import { useConversations, Message, Conversation } from '@/src/hooks/useConversations';
@@ -102,6 +104,43 @@ export default function CitizenAssistantPage() {
     conversationId: string;
     title: string;
   } | null>(null);
+
+  // IA: a pessoa escolhe antes do 1º uso (null = ainda não respondeu; false = sem IA)
+  const [aiConsent, setAiConsent] = useState<boolean | null | undefined>(undefined);
+  const [reportingId, setReportingId] = useState<string | null>(null);
+  const [reportReason, setReportReason] = useState('');
+
+  useEffect(() => {
+    if (!citizen?.id) return;
+    fetch(getFullApiUrl('/citizen/auth/ai-consent'), { credentials: 'include' })
+      .then((res) => (res.ok ? res.json() : null))
+      .then((data) => data && setAiConsent(data.aiConsent ?? null))
+      .catch(() => undefined);
+  }, [citizen?.id]);
+
+  const chooseAi = async (accepted: boolean) => {
+    setAiConsent(accepted);
+    await fetch(getFullApiUrl('/citizen/auth/ai-consent'), {
+      method: 'PUT',
+      credentials: 'include',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ accepted }),
+    }).catch(() => undefined);
+  };
+
+  const sendReport = async () => {
+    if (!reportingId) return;
+    const res = await fetch(getFullApiUrl('/citizen/auth/assistant/report'), {
+      method: 'POST',
+      credentials: 'include',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ messageId: reportingId, reason: reportReason }),
+    }).catch(() => null);
+    const data = res ? await res.json().catch(() => ({})) : {};
+    toast({ title: res?.ok ? 'Resposta denunciada' : 'Não foi possível enviar', description: res?.ok ? data.message : data.error || 'Tente de novo.' });
+    setReportingId(null);
+    setReportReason('');
+  };
 
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const messageRefs = useRef<Record<string, HTMLDivElement | null>>({});
@@ -1167,6 +1206,15 @@ export default function CitizenAssistantPage() {
                                 onReveal={() => keepInView(message.id)}
                               />
                               <div className="flex items-center justify-end gap-1 mt-1 text-gray-500">
+                                <button
+                                  type="button"
+                                  onClick={() => setReportingId(message.id)}
+                                  className="mr-auto inline-flex items-center gap-1 rounded px-1 text-[11px] text-gray-400 hover:text-red-600"
+                                  aria-label="Denunciar esta resposta"
+                                >
+                                  <Flag className="h-3 w-3" />
+                                  Denunciar
+                                </button>
                                 <span className="text-xs">{formatTime(message.sentAt)}</span>
                               </div>
                             </div>
@@ -1346,6 +1394,53 @@ export default function CitizenAssistantPage() {
           }}
         />
       )}
+
+      {/* Antes do 1º uso: a pessoa decide se o assistente pode usar IA (regra das lojas) */}
+      <AlertDialog open={aiConsent === null}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>O assistente usa inteligência artificial</AlertDialogTitle>
+            <AlertDialogDescription asChild>
+              <div className="space-y-2 text-sm text-gray-600">
+                <p>
+                  Para entender o que você escreve, o assistente pode enviar suas mensagens a serviços de inteligência artificial de
+                  outras empresas. Antes de sair, CPF, telefone, e-mail e CEP são escondidos.
+                </p>
+                <p>
+                  Se preferir, você é atendido sem inteligência artificial: pelos menus e pela busca de serviços. Dá para mudar depois em
+                  Meu perfil. <Link href="/privacidade#ia" className="underline">Saiba mais</Link>
+                </p>
+              </div>
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel onClick={() => chooseAi(false)}>Usar sem IA</AlertDialogCancel>
+            <AlertDialogAction onClick={() => chooseAi(true)}>Concordo, usar com IA</AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      {/* Denunciar uma resposta do assistente */}
+      <AlertDialog open={!!reportingId} onOpenChange={(open) => !open && setReportingId(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Denunciar esta resposta</AlertDialogTitle>
+            <AlertDialogDescription>
+              A resposta está errada, é ofensiva ou não faz sentido? A prefeitura vai revisar.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <Input
+            value={reportReason}
+            onChange={(e) => setReportReason(e.target.value)}
+            placeholder="O que está errado? (opcional)"
+            maxLength={500}
+          />
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            <AlertDialogAction onClick={sendReport}>Enviar denúncia</AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
 
       {/* Dialog de confirmação para ações destrutivas */}
       <AlertDialog open={!!confirmAction} onOpenChange={(open) => !open && setConfirmAction(null)}>

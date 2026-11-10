@@ -11,6 +11,11 @@ export default function robots(): MetadataRoute.Robots {
           '/',
           '/landing',
           '/validar-documento',
+          '/privacidade',
+          '/termos',
+          '/excluir-conta',
+          '/suporte',
+          '/legal',
         ],
         disallow: [
           '/api/',
@@ -28,6 +33,11 @@ export default function robots(): MetadataRoute.Robots {
           '/',
           '/landing',
           '/validar-documento',
+          '/privacidade',
+          '/termos',
+          '/excluir-conta',
+          '/suporte',
+          '/legal',
         ],
         disallow: [
           '/api/',

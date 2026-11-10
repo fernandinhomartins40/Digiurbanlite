@@ -810,6 +810,14 @@ function CitizenLoginForm() {
             >
               ← Voltar para página inicial
             </Link>
+            <p className="mt-3 text-xs text-gray-500">
+              Ao entrar ou criar a conta, você concorda com os{' '}
+              <Link href="/termos" className="underline">Termos de uso</Link> e a{' '}
+              <Link href="/privacidade" className="underline">Política de privacidade</Link>.
+            </p>
+            <p className="mt-2 text-xs text-gray-400">
+              O DigiUrban é a plataforma digital usada pela sua prefeitura. Não é um órgão de governo.
+            </p>
           </div>
         </div>
       </main>

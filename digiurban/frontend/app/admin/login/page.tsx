@@ -33,6 +33,35 @@ export default function AdminLoginPage() {
   const logo = tenantConfig.branding?.logoUrl || null
   const municipioNome = tenantConfig.nomeMunicipio || tenantConfig.nome
 
+  // Domínio raiz (ex.: app nativo, que abre digiurban.com.br) não diz o município:
+  // o servidor escolhe aqui; o backend lê o cookie digiurban_tenant_slug (mesmo do portal do cidadão).
+  const hostResolvedTenant = tenantConfig.slug !== 'default'
+  const [municipios, setMunicipios] = useState<{ slug: string; nomeMunicipio: string; ufMunicipio: string }[]>([])
+  // shortcut: escolha opcional — contas do tenant 'default' (sem município na lista) ainda entram sem escolher
+  const [selectedSlug, setSelectedSlug] = useState('')
+  const [municipioError, setMunicipioError] = useState<string | null>(null)
+
+  useEffect(() => {
+    if (hostResolvedTenant) return
+    const saved = document.cookie.split('; ').find((c) => c.startsWith('digiurban_tenant_slug='))?.split('=')[1]
+      || (() => { try { return localStorage.getItem('digiurban_tenant_slug') } catch { return null } })()
+    fetch(`${process.env.NEXT_PUBLIC_API_URL || '/api'}/public/municipios`, { credentials: 'omit', cache: 'no-store' })
+      .then((r) => r.json())
+      .then((data) => {
+        const list = Array.isArray(data?.municipios) ? data.municipios : []
+        setMunicipios(list)
+        if (saved && list.some((m: { slug: string }) => m.slug === saved)) setSelectedSlug(saved)
+      })
+      .catch(() => setMunicipioError('Não foi possível carregar os municípios. Verifique sua internet.'))
+  }, [hostResolvedTenant])
+
+  const selectMunicipio = (slug: string) => {
+    setSelectedSlug(slug)
+    setMunicipioError(null)
+    document.cookie = `digiurban_tenant_slug=${slug}; path=/; max-age=31536000; SameSite=Lax`
+    try { localStorage.setItem('digiurban_tenant_slug', slug) } catch {}
+  }
+
   // Sem gradientes: principal sólida no botão/painel, destaque só em acentos.
   const inputFocus = { '--tw-ring-color': primary } as React.CSSProperties
   const primaryBtn: React.CSSProperties = { background: primary, color: onPrimary }
@@ -199,6 +228,31 @@ export default function AdminLoginPage() {
           )}
 
           <form onSubmit={handleSubmit} className="space-y-4">
+            {!hostResolvedTenant && (
+              <div className="space-y-2">
+                <label htmlFor="municipio" className="text-sm font-medium text-gray-700">
+                  Município
+                </label>
+                <div className="relative">
+                  <Building2 className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 pointer-events-none" style={{ color: primary }} />
+                  <select
+                    id="municipio"
+                    value={selectedSlug}
+                    onChange={(e) => selectMunicipio(e.target.value)}
+                    className="w-full h-12 pl-10 pr-3 rounded-xl border border-gray-200 bg-white text-gray-900 text-sm focus:outline-none focus:ring-2"
+                    style={inputFocus}
+                    disabled={loading}
+                  >
+                    <option value="">Selecione o seu município...</option>
+                    {municipios.map((m) => (
+                      <option key={m.slug} value={m.slug}>{m.nomeMunicipio} - {m.ufMunicipio}</option>
+                    ))}
+                  </select>
+                </div>
+                {municipioError && <p className="text-xs text-red-600">{municipioError}</p>}
+              </div>
+            )}
+
             <div className="space-y-2">
               <label htmlFor="email" className="text-sm font-medium text-gray-700">
                 Email

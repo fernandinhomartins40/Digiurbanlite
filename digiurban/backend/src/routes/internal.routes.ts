@@ -36,6 +36,8 @@ import { sanitizeDocumentId, mapUploadedFilesToDocuments } from '../utils/docume
 import { normalizeEmail, normalizeNullableString } from '../utils/identity';
 import fs from 'fs';
 import path from 'path';
+import { citizenAllowsAi } from '../services/digibot/assistant-privacy.service';
+
 
 const router = Router();
 const documentUploadService = new DocumentUploadService();
@@ -1302,7 +1304,21 @@ function aiError(res: Response, error: any) {
   return res.status(status).json({ error: error?.message || 'Erro na IA', code: status === 402 ? 'NO_CREDITS' : status === 503 ? 'AI_UNAVAILABLE' : 'AI_ERROR' });
 }
 
+/**
+ * O cidadão escolhe antes do 1º uso se o assistente pode usar IA (provedores de
+ * outras empresas). Sem o "sim" dele: 403 e o bot segue sem IA (menus).
+ * O bot manda o cidadão da conversa em X-Citizen-Id.
+ */
+async function ensureCitizenAiConsent(req: Request, res: Response): Promise<boolean> {
+  const citizenId = req.header('x-citizen-id');
+  if (!citizenId) return true;
+  if (await citizenAllowsAi(citizenId).catch(() => false)) return true;
+  res.status(403).json({ error: 'O cidadão não autorizou o uso de IA', code: 'AI_NO_CONSENT' });
+  return false;
+}
+
 router.post('/ai/decide', async (req: Request, res: Response) => {
+  if (!(await ensureCitizenAiConsent(req, res))) return;
   try {
     const body = z
       .object({
@@ -1323,6 +1339,7 @@ router.post('/ai/decide', async (req: Request, res: Response) => {
 });
 
 router.post('/ai/complete', async (req: Request, res: Response) => {
+  if (!(await ensureCitizenAiConsent(req, res))) return;
   try {
     const body = z
       .object({

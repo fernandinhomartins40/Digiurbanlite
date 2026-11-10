@@ -13,6 +13,7 @@ import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { Input } from '@/components/ui/input'
 import { useToast } from '@/hooks/use-toast'
+import { isNativeApp } from '@/lib/native-app'
 
 interface Pkg {
   id: string
@@ -61,6 +62,8 @@ export default function AiCreditsPage() {
   const [data, setData] = useState<Summary | null>(null)
   const [loading, setLoading] = useState(true)
   const [buying, setBuying] = useState<string | null>(null)
+  const [native, setNative] = useState(false)
+  useEffect(() => setNative(isNativeApp()), [])
   const [alertValue, setAlertValue] = useState('')
   const [savingAlert, setSavingAlert] = useState(false)
 
@@ -261,7 +264,8 @@ export default function AiCreditsPage() {
         </Card>
       )}
 
-      <Card>
+      {/* No app das lojas não há compra (regra da Apple/Google): só o saldo. Compra pelo site. */}
+      {!native && <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <ShoppingCart className="h-5 w-5" />
@@ -283,7 +287,7 @@ export default function AiCreditsPage() {
             </div>
           ))}
         </CardContent>
-      </Card>
+      </Card>}
 
       <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
         <Card>

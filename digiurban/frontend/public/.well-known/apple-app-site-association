@@ -1,0 +1,14 @@
+{
+  "applinks": {
+    "details": [
+      {
+        "appIDs": ["TEAMID.br.com.digiurban.app"],
+        "components": [
+          { "/": "/cidadao" },
+          { "/": "/cidadao/*" },
+          { "/": "/validar-documento*" }
+        ]
+      }
+    ]
+  }
+}

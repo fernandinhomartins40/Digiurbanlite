@@ -18,6 +18,7 @@ import { BotConfig, BotOverview, BotSettingsResponse, digibotApi } from '@/compo
 import { HumanTab, MenuTab, MessagesTab } from '@/components/admin/digibot/ConfigTabs';
 import { FaqTab, ServicesTab, TeachTab } from '@/components/admin/digibot/KnowledgeTabs';
 import { PhonePreview } from '@/components/admin/digibot/PhonePreview';
+import { ReportsTab } from '@/components/admin/digibot/ReportsTab';
 
 const TABS = [
   { id: 'visao', label: 'Visão geral' },
@@ -27,6 +28,7 @@ const TABS = [
   { id: 'perguntas', label: 'Perguntas frequentes' },
   { id: 'ensinar', label: 'Ensinar o bot' },
   { id: 'atendimento', label: 'Atendimento humano' },
+  { id: 'denuncias', label: 'Denúncias' },
   { id: 'historico', label: 'Histórico' },
 ] as const;
 type TabId = (typeof TABS)[number]['id'];
@@ -319,6 +321,7 @@ function DigibotPage() {
           {tab === 'atendimento' && <HumanTab config={form} onChange={change} />}
           {tab === 'servicos' && <ServicesTab />}
           {tab === 'perguntas' && <FaqTab />}
+          {tab === 'denuncias' && <ReportsTab />}
           {tab === 'ensinar' && <TeachTab onTaught={() => void loadOverview()} />}
           {tab === 'historico' && <HistoryTab settings={settings} onRestore={(id) => void restore(id)} />}
           {isConfigTab && <p className="text-xs text-gray-500">As alterações ficam em rascunho (salvas automaticamente). Clique em Publicar para valer no app.</p>}

@@ -115,6 +115,13 @@ const nextConfig = {
     const backend = process.env.BACKEND_INTERNAL_URL || 'http://localhost:3001';
     return [{ source: '/api/:path*', destination: `${backend}/api/:path*` }];
   },
+  // Links do app (Android App Links / iOS Universal Links): o arquivo da Apple não tem extensão
+  async headers() {
+    return [{
+      source: '/.well-known/apple-app-site-association',
+      headers: [{ key: 'Content-Type', value: 'application/json' }],
+    }];
+  },
   typescript: {
     // Permitir build com erros TypeScript (para deploy)
     ignoreBuildErrors: true,

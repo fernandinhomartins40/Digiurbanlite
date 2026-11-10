@@ -1017,9 +1017,11 @@ function Footer() {
         <Container className="flex flex-col items-center gap-2 py-4 text-[12px] md:flex-row md:justify-between">
           <p>© {new Date().getFullYear()} Digiurban. Todos os direitos reservados.</p>
           <p className="flex items-center gap-3">
-            <span>Termos de Uso</span>
+            <a href="/termos" className="hover:text-white">Termos de Uso</a>
             <span className="h-3 w-px bg-white/25" />
-            <span>Política de Privacidade</span>
+            <a href="/privacidade" className="hover:text-white">Política de Privacidade</a>
+            <span className="h-3 w-px bg-white/25" />
+            <a href="/legal" className="hover:text-white">Documentos legais</a>
           </p>
           <p className="flex items-center gap-1.5">
             Desenvolvido para cidades que evoluem.

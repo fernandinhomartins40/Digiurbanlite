@@ -15,7 +15,8 @@ import {
   User,
   Users,
   Shield,
-  MessageSquare
+  MessageSquare,
+  Trash2
 } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { MunicipioSwitcher } from '@/components/citizen/MunicipioSwitcher';
@@ -78,6 +79,20 @@ export default function MaisPage() {
       icon: Shield,
       href: '/cidadao/biometria-facial',
     },
+    {
+      id: 'help',
+      label: 'Ajuda e suporte',
+      description: 'Dúvidas comuns e como falar com a gente',
+      icon: HelpCircle,
+      href: '/suporte',
+    },
+    {
+      id: 'legal',
+      label: 'Privacidade e termos',
+      description: 'Política de privacidade, termos de uso e seus direitos',
+      icon: Info,
+      href: '/legal',
+    },
   ];
 
   const dangerItems: MenuItem[] = [
@@ -87,6 +102,14 @@ export default function MaisPage() {
       description: 'Encerrar sessão',
       icon: LogOut,
       onClick: handleLogout,
+      variant: 'danger',
+    },
+    {
+      id: 'delete-account',
+      label: 'Excluir minha conta',
+      description: 'Apagar os seus dados do portal',
+      icon: Trash2,
+      href: '/cidadao/perfil?excluir=1',
       variant: 'danger',
     },
   ];
@@ -199,6 +222,12 @@ export default function MaisPage() {
               <p className="text-sm font-medium text-gray-700">Portal do Cidadão</p>
             </div>
             <p className="text-xs text-gray-500">Versão 1.0.0</p>
+            <p className="text-xs text-gray-500 mt-2">
+              O DigiUrban é a plataforma digital usada pela sua prefeitura. Não é um órgão de governo.
+            </p>
+            <p className="text-xs text-gray-500 mt-1">
+              Suporte: <a href="mailto:contato@digiurban.com.br" className="underline">contato@digiurban.com.br</a>
+            </p>
             <p className="text-xs text-gray-400 mt-1">
               © {new Date().getFullYear()} - Todos os direitos reservados
             </p>

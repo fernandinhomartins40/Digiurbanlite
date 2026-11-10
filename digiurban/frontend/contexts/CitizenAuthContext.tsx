@@ -2,6 +2,7 @@
 
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
+import { registerNativePush, unregisterNativePush } from '@/lib/native-app';
 import type { Address } from '@/shared/types/address.types';
 
 interface TenantInfo {
@@ -162,7 +163,8 @@ export function CitizenAuthProvider({ children }: { children: React.ReactNode })
       // algumas rotas mandam { error: 'CODIGO', message: 'texto' }: a pessoa vê o texto
       const errorText = typeof errorData.error === 'string' ? errorData.error : errorData.error?.message;
       const isCode = /^[A-Z0-9_]+$/.test(String(errorText || ''));
-      throw new Error((isCode && errorData.message ? errorData.message : errorText || errorData.message) || 'Erro na requisição');
+      const failure = new Error((isCode && errorData.message ? errorData.message : errorText || errorData.message) || 'Erro na requisição');
+      throw Object.assign(failure, { status: response.status, code: errorData.code, data: errorData });
     }
 
     return response.json();
@@ -298,8 +300,15 @@ export function CitizenAuthProvider({ children }: { children: React.ReactNode })
     }
   };
 
+  // app nativo: depois do login (ou da troca de município) o celular passa a receber os avisos desta conta
+  useEffect(() => {
+    if (citizen?.id) void registerNativePush('citizen');
+  }, [citizen?.id, tenantId]);
+
   const logout = async () => {
     try {
+      // app nativo: este celular para de receber os avisos desta pessoa
+      await unregisterNativePush();
       const { getFullApiUrl } = await import('@/lib/api-config');
 
       // ✅ SEGURANÇA: Chamar endpoint de logout para limpar cookie httpOnly

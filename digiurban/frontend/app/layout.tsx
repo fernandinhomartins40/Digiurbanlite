@@ -5,6 +5,7 @@ import './liquid-glass.css'
 import { ToasterProvider } from '@/components/providers/ToasterProvider'
 import { QueryProvider } from '@/components/providers/QueryProvider'
 import { TenantProvider } from '@/components/providers/TenantProvider'
+import { NativeAppBridge } from '@/components/native/NativeAppBridge'
 import { fetchTenantConfig, brandingToCssVars } from '@/lib/tenant'
 
 // Multi-tenant: o layout resolve o município pelo HOST a cada request. Sem
@@ -174,6 +175,7 @@ export default async function RootLayout({
           <QueryProvider>
             {children}
             <ToasterProvider />
+            <NativeAppBridge />
           </QueryProvider>
         </TenantProvider>
       </body>

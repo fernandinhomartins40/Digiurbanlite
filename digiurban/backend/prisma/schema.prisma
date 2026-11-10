@@ -384,6 +384,7 @@ model User {
   // ✅ NOVO: Sistema de Notificações Completo (2026-02-06)
   notifications           Notification[]          @relation("UserNotifications")
   pushSubscriptions       PushSubscription[]      @relation("UserPushSubscriptions")
+  nativePushDevices       NativePushDevice[]      @relation("UserNativePushDevices")
   notificationPreferences NotificationPreference? @relation("UserNotificationPreferences")
   faceEnrollmentsApproved FaceEnrollment[]        @relation("FaceEnrollmentApprovedBy")
   faceEventsReviewed      FaceRecognitionEvent[]  @relation("FaceEventReviewedBy")
@@ -592,6 +593,11 @@ model Citizen {
   homeLocationSource  String? // 'GPS' | 'PIN'
   homeLocationAt      DateTime?
   homeLocationKey     String?
+  // Assistente com IA (2026-11-10): o cidadão escolhe antes do 1º uso se as
+  // mensagens podem ir a provedores de IA (dados pessoais mascarados).
+  // null = ainda não respondeu; false = atendimento sem IA.
+  aiConsent           Boolean?
+  aiConsentAt         DateTime?
   municipioId         String?
   isActive            Boolean            @default(true)
   password            String
@@ -671,6 +677,7 @@ model Citizen {
 
   // ✅ NOVO: Sistema de Notificações Completo (2026-02-06)
   pushSubscriptions       PushSubscription[]       @relation("CitizenPushSubscriptions")
+  nativePushDevices       NativePushDevice[]       @relation("CitizenNativePushDevices")
   notificationPreferences NotificationPreference?  @relation("CitizenNotificationPreferences")
   faceIdentity            FaceRecognitionIdentity?
   faceEventsAsStudent     FaceRecognitionEvent[]   @relation("FaceEventStudent")
@@ -1837,6 +1844,27 @@ model PushSubscription {
   @@index([endpoint])
   @@index([tenantId])
   @@map("push_subscriptions")
+}
+
+/// Aparelho com o app nativo (Android/iOS) que recebe avisos push (2026-11-10).
+/// Android: token do Firebase (FCM). iOS: token da Apple (APNs). Token recusado = apagado.
+model NativePushDevice {
+  id        String   @id @default(cuid())
+  tenantId  String?
+  userId    String?
+  citizenId String?
+  platform  String // ANDROID | IOS
+  token     String   @unique
+  createdAt DateTime @default(now())
+  lastUsed  DateTime @default(now())
+
+  user    User?    @relation("UserNativePushDevices", fields: [userId], references: [id], onDelete: Cascade)
+  citizen Citizen? @relation("CitizenNativePushDevices", fields: [citizenId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([citizenId])
+  @@index([tenantId])
+  @@map("native_push_devices")
 }
 
 // Preferências de notificações
@@ -11671,6 +11699,27 @@ model BotServiceTerm {
 }
 
 /// O que o DigiBot não entendeu (texto com dados pessoais mascarados) — tela "Ensinar o bot".
+/// Resposta do assistente denunciada pelo cidadão (2026-11-10, regra de IA gerativa do Google Play).
+/// Aparece para o administrador no painel do DigiBot.
+model BotAnswerReport {
+  id             String    @id @default(cuid())
+  tenantId       String?
+  citizenId      String
+  conversationId String
+  messageId      String
+  answer         String    @db.Text // cópia do texto denunciado
+  reason         String?
+  status         String    @default("OPEN") // OPEN | REVIEWED
+  reviewedAt     DateTime?
+  reviewedBy     String?
+  createdAt      DateTime  @default(now())
+
+  @@unique([messageId, citizenId])
+  @@index([tenantId])
+  @@index([tenantId, status])
+  @@map("bot_answer_reports")
+}
+
 model BotUnanswered {
   id         String    @id @default(cuid())
   tenantId   String?

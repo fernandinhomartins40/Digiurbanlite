@@ -6,7 +6,7 @@
  * Na exclusão ficam só o nome, o CPF e os pedidos já feitos — a prefeitura
  * precisa guardar o registro do atendimento (LGPD art. 16, I: obrigação
  * legal). Todo o resto é apagado: contato, endereço, documentos pessoais,
- * biometria, família, avisos e o acesso ao portal.
+ * biometria, família, avisos, celulares com o app e o acesso ao portal.
  */
 
 import * as fs from 'fs';
@@ -17,6 +17,7 @@ import { Prisma } from '@prisma/client';
 import { prisma } from '../lib/prisma';
 import { BCRYPT_ROUNDS } from '../config/security';
 import facePlatformClientService from './face-platform-client.service';
+import { cancelProtocolByCitizen } from './protocol-status-wrapper.service';
 
 const OPEN_STATUSES = ['VINCULADO', 'PROGRESSO', 'PENDENCIA', 'ATUALIZACAO'];
 
@@ -29,7 +30,7 @@ export async function exportCitizenData(citizenId: string) {
   const citizen = await prisma.citizen.findUnique({ where: { id: citizenId } });
   if (!citizen) return null;
 
-  const [protocols, documents, familyAsHead, familyAsMember, tags, face, preferences] = await Promise.all([
+  const [protocols, documents, familyAsHead, familyAsMember, tags, face, preferences, devices] = await Promise.all([
     prisma.protocolSimplified.findMany({
       where: { citizenId },
       orderBy: { createdAt: 'desc' },
@@ -54,6 +55,7 @@ export async function exportCitizenData(citizenId: string) {
     }),
     prisma.faceRecognitionIdentity.findFirst({ where: { citizenId }, select: { status: true, createdAt: true } }),
     prisma.notificationPreference.findFirst({ where: { citizenId } }).catch(() => null),
+    prisma.nativePushDevice.findMany({ where: { citizenId }, select: { platform: true, createdAt: true, lastUsed: true } }),
   ]);
 
   const { password: _password, failedLoginAttempts: _attempts, lockedUntil: _locked, ...profile } = citizen;
@@ -85,11 +87,32 @@ export async function exportCitizenData(citizenId: string) {
     etiquetas: tags.map((tag) => ({ nome: tag.category.name, desde: tag.assignedAt })),
     biometriaFacial: face ? { cadastrada: true, situacao: face.status, desde: face.createdAt } : { cadastrada: false },
     preferenciasDeAviso: preferences,
+    celularesComOApp: devices.map((device) => ({ sistema: device.platform === 'IOS' ? 'iPhone' : 'Android', desde: device.createdAt, ultimoAviso: device.lastUsed })),
   };
 }
 
 export async function countOpenProtocols(citizenId: string): Promise<number> {
   return prisma.protocolSimplified.count({ where: { citizenId, status: { in: OPEN_STATUSES as any } } });
+}
+
+export const ACCOUNT_DELETED_REASON = 'Conta excluída pelo cidadão';
+
+/**
+ * Exclusão com pedido em andamento: cancela cada um pelo motor de status
+ * (fecha pendências e avisa a equipe). Devolve quantos foram cancelados.
+ */
+export async function cancelOpenProtocols(citizenId: string): Promise<number> {
+  const open = await prisma.protocolSimplified.findMany({ where: { citizenId, status: { in: OPEN_STATUSES as any } }, select: { id: true } });
+  let cancelled = 0;
+  for (const protocol of open) {
+    try {
+      await cancelProtocolByCitizen(protocol.id, citizenId, ACCOUNT_DELETED_REASON);
+      cancelled++;
+    } catch (error) {
+      console.error('[privacy] não cancelou o pedido', protocol.id, error instanceof Error ? error.message : error);
+    }
+  }
+  return cancelled;
 }
 
 function removeFile(filePath: string | null | undefined) {
@@ -103,8 +126,8 @@ function removeFile(filePath: string | null | undefined) {
 }
 
 /**
- * Exclui a conta a pedido do titular. Quem chama já conferiu a senha e que
- * não há pedido em andamento.
+ * Exclui a conta a pedido do titular. Quem chama já conferiu a senha e
+ * cancelou os pedidos em andamento (cancelOpenProtocols).
  */
 export async function deleteCitizenAccount(citizenId: string, context: { ip?: string | null; userAgent?: string | null }) {
   const actor = { type: 'CITIZEN' as const, id: citizenId };
@@ -127,6 +150,7 @@ export async function deleteCitizenAccount(citizenId: string, context: { ip?: st
     await tx.familyInvite.deleteMany({ where: { headId: citizenId } });
     await tx.citizenCategoryAssignment.deleteMany({ where: { citizenId } });
     await tx.pushSubscription.deleteMany({ where: { citizenId } });
+    await tx.nativePushDevice.deleteMany({ where: { citizenId } });
     await tx.notificationPreference.deleteMany({ where: { citizenId } });
     await tx.notification.deleteMany({ where: { citizenId } });
     await tx.passwordResetToken.deleteMany({ where: { citizenId } });

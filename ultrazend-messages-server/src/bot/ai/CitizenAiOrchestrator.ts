@@ -134,7 +134,8 @@ export class CitizenAiOrchestrator {
     const decision = await citizenAiClient.withBudget(
       `${execution.citizenId}:${params.conversationId}`,
       botConfig().aiCallsPerConversation,
-      () => this.processTextTurn(execution, params)
+      () => this.processTextTurn(execution, params),
+      execution.citizenId
     );
     // Só falhas SEGUIDAS contam para oferecer atendente: entendeu agora → zera
     const after = decision.session.lowConfidenceFallbacks || 0;

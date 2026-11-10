@@ -299,6 +299,13 @@ app.use('/api/super-admin', superAdminRoutes);
   app.use('/api/platform/maps', maps.platformMapsRouter);
   app.use('/api/maps', maps.mapsConfigRouter);
 }
+// Apps nativos (Android/iOS): aparelhos que recebem push + Super-admin › Apps nativos
+loadRoute('/api/native-push', './routes/native-push.routes');
+try {
+  app.use('/api/platform/native-apps', require('./routes/native-push.routes').platformNativeAppsRouter);
+} catch (error) {
+  console.error('❌ Falha ao carregar /api/platform/native-apps', error);
+}
 const mailboxRetired = (_req: express.Request, res: express.Response) =>
   res.status(410).json({ error: 'Caixas de e-mail desativadas. O DigiUrban envia apenas e-mails do sistema (notificações e senhas).' });
 app.use(['/api/super-admin/email-subscriptions', '/api/super-admin/email-stats', '/api/super-admin/email/plans', '/api/super-admin/email-server'], mailboxRetired);

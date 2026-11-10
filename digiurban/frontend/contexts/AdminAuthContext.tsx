@@ -2,6 +2,7 @@
 
 import React, { createContext, useContext, useState, useEffect, useCallback, ReactNode } from 'react'
 import { useRouter } from 'next/navigation'
+import { registerNativePush, unregisterNativePush } from '@/lib/native-app'
 import { getFullApiUrl } from '@/lib/api-config'
 import { ROLE_HIERARCHY, ROLE_DISPLAY_NAMES, type UserRoleType } from '@/types/roles'
 
@@ -265,9 +266,16 @@ export function AdminAuthProvider({ children }: AdminAuthProviderProps) {
     }
   }
 
+  // app nativo: servidor logado recebe os avisos no celular
+  useEffect(() => {
+    if (user?.id) void registerNativePush('admin')
+  }, [user?.id])
+
   // Função de logout
   const logout = async () => {
     try {
+      // app nativo: este celular para de receber os avisos desta pessoa
+      await unregisterNativePush()
       // Chamar endpoint de logout para limpar cookie httpOnly no backend
       await apiRequest('/admin/auth/logout', { method: 'POST' })
     } catch (err) {

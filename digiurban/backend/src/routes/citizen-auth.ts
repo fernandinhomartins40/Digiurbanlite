@@ -25,10 +25,12 @@ async function contactEmailFor(tenantId: string | null) {
 }
 import { syncCitizenPersonIdentity } from '../services/person-identity.service';
 import { sendTemplatedMail } from '../services/mail/templated';
-import { countOpenProtocols, deleteCitizenAccount, exportCitizenData } from '../services/citizen-privacy.service';
+import { countOpenProtocols, cancelOpenProtocols, deleteCitizenAccount, exportCitizenData } from '../services/citizen-privacy.service';
 import { citizenTagsAndSuggestions } from '../services/citizen-tags.service';
 import { isCpfLike, normalizeCpf, normalizeEmail, normalizeNullableString } from '../utils/identity';
 import { citizenAuthMiddleware } from '../middleware/citizen-auth';
+import { removeNativeDevices } from '../services/native-push/native-push.service';
+import { getAiConsent, reportAnswer, setAiConsent } from '../services/digibot/assistant-privacy.service';
 import facePlatformClientService from '../services/face-platform-client.service';
 import { autoPromoteToGold, getCitizenAccessLevelSummary } from '../services/citizen-verification.service';
 
@@ -1217,13 +1219,17 @@ router.post(
       return res.status(400).json({ error: 'Senha incorreta.' });
     }
 
+    // pedidos em andamento não impedem a exclusão (regra das lojas): a tela avisa
+    // que serão cancelados e a pessoa confirma (cancelOpenProtocols: true)
     const open = await countOpenProtocols(citizenId);
-    if (open > 0) {
+    if (open > 0 && req.body?.cancelOpenProtocols !== true) {
       return res.status(409).json({
-        error: `Você tem ${open} pedido${open > 1 ? 's' : ''} em andamento. Espere terminar ou cancele antes de excluir a conta.`,
+        error: `Você tem ${open} pedido${open > 1 ? 's' : ''} em andamento. Ao excluir a conta, ${open > 1 ? 'eles serão cancelados' : 'ele será cancelado'}.`,
         code: 'OPEN_PROTOCOLS',
+        openProtocols: open,
       });
     }
+    if (open > 0) await cancelOpenProtocols(citizenId);
 
     await deleteCitizenAccount(citizenId, { ip: req.ip, userAgent: String(req.headers['user-agent'] || '') });
 
@@ -1234,6 +1240,34 @@ router.post(
     return res.json({ success: true, message: 'Sua conta foi excluída.' });
   })
 );
+
+// GET/PUT /api/citizen/auth/ai-consent - Assistente com IA: a escolha do cidadão (null = ainda não respondeu)
+router.get('/ai-consent', citizenAuthMiddleware, asyncHandler(async (req: Request, res: Response) => {
+  const citizenId = (req as any).citizenId as string | undefined;
+  if (!citizenId) return res.status(401).json({ error: 'Cidadão não autenticado' });
+  return res.json(await getAiConsent(citizenId));
+}));
+
+router.put('/ai-consent', citizenAuthMiddleware, asyncHandler(async (req: Request, res: Response) => {
+  const citizenId = (req as any).citizenId as string | undefined;
+  if (!citizenId) return res.status(401).json({ error: 'Cidadão não autenticado' });
+  if (typeof req.body?.accepted !== 'boolean') return res.status(400).json({ error: 'Escolha sim ou não.' });
+  return res.json(await setAiConsent(citizenId, req.body.accepted));
+}));
+
+// POST /api/citizen/auth/assistant/report - Denunciar uma resposta do assistente
+router.post('/assistant/report', citizenAuthMiddleware, asyncHandler(async (req: Request, res: Response) => {
+  const citizenId = (req as any).citizenId as string | undefined;
+  if (!citizenId) return res.status(401).json({ error: 'Cidadão não autenticado' });
+  const messageId = typeof req.body?.messageId === 'string' ? req.body.messageId : '';
+  if (!messageId) return res.status(400).json({ error: 'Resposta não informada.' });
+  try {
+    await reportAnswer({ citizenId, messageId, reason: typeof req.body?.reason === 'string' ? req.body.reason : null });
+    return res.json({ success: true, message: 'Obrigado. A prefeitura vai revisar esta resposta.' });
+  } catch (error: any) {
+    return res.status(error?.status || 500).json({ error: error?.status ? error.message : 'Não foi possível enviar agora.' });
+  }
+}));
 
 // POST /api/auth/citizen/logout - Logout (limpar cookie)
 router.post('/logout', asyncHandler(async (req: Request, res: Response) => {
@@ -1306,6 +1340,10 @@ router.post('/switch-municipio', citizenAuthMiddleware, asyncHandler(async (req:
     return res.status(403).json({ error: 'Município indisponível', code: 'TENANT_UNAVAILABLE' });
   }
 
+  // o celular com o app deixa de receber os avisos do município anterior (o app registra de novo no novo)
+  if (typeof req.body?.nativePushToken === 'string' && req.body.nativePushToken) {
+    await removeNativeDevices({ token: req.body.nativePushToken, citizenId: (req as any).citizen?.id }).catch(() => undefined);
+  }
   issueCitizenSession(res, { id: target.id, tenantId: target.tenantId });
 
   await logAuditEvent({

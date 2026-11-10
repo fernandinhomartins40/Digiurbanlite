@@ -91,9 +91,31 @@ export default function PerfilPage() {
 
   // LGPD: baixar os meus dados e excluir a minha conta
   const [deleting, setDeleting] = useState(false);
+  // /excluir-conta (site) manda para cá com ?excluir=1: já abre a exclusão
+  useEffect(() => {
+    if (new URLSearchParams(window.location.search).get('excluir') !== '1') return;
+    setDeleting(true);
+    setTimeout(() => document.getElementById('meus-dados')?.scrollIntoView({ behavior: 'smooth' }), 300);
+  }, []);
   const [deletePassword, setDeletePassword] = useState('');
   const [deleteError, setDeleteError] = useState<string | null>(null);
   const [deleteBusy, setDeleteBusy] = useState(false);
+  const [openToCancel, setOpenToCancel] = useState(0);
+  // assistente com IA: a escolha feita no 1º uso pode ser mudada aqui
+  const [aiConsent, setAiConsent] = useState<boolean | null>(null);
+  useEffect(() => {
+    apiRequest('/citizen/auth/ai-consent').then((data: any) => setAiConsent(data?.aiConsent ?? null)).catch(() => undefined);
+  }, [apiRequest]);
+  const toggleAi = async () => {
+    const next = !aiConsent;
+    try {
+      await apiRequest('/citizen/auth/ai-consent', { method: 'PUT', body: JSON.stringify({ accepted: next }) });
+      setAiConsent(next);
+      toast.success(next ? 'O assistente vai usar inteligência artificial.' : 'O assistente vai atender sem inteligência artificial.');
+    } catch (error: any) {
+      toast.error(error?.message || 'Não foi possível mudar agora.');
+    }
+  };
 
   const handleDownloadData = async () => {
     try {
@@ -116,10 +138,15 @@ export default function PerfilPage() {
     if (!deletePassword) return setDeleteError('Digite a sua senha para confirmar.');
     try {
       setDeleteBusy(true);
-      await apiRequest('/citizen/auth/delete-account', { method: 'POST', body: JSON.stringify({ password: deletePassword }) });
+      await apiRequest('/citizen/auth/delete-account', {
+        method: 'POST',
+        body: JSON.stringify({ password: deletePassword, cancelOpenProtocols: openToCancel > 0 }),
+      });
       toast.success('Sua conta foi excluída.');
       window.location.href = '/cidadao/login';
     } catch (error: any) {
+      // pedidos em andamento: avisa que serão cancelados e a pessoa confirma de novo
+      if (error?.code === 'OPEN_PROTOCOLS') setOpenToCancel(Number(error?.data?.openProtocols) || 1);
       setDeleteError(error?.message || 'Não foi possível excluir agora. Tente de novo.');
     } finally {
       setDeleteBusy(false);
@@ -625,6 +652,7 @@ export default function PerfilPage() {
           </Section>
         )}
 
+        <div id="meus-dados" className="scroll-mt-24">
         <Section title="Meus dados e privacidade">
           <p className="text-sm text-gray-500">Você pode baixar uma cópia de tudo o que a prefeitura guarda sobre você aqui, ou excluir a sua conta.</p>
           <div className="mt-3 flex flex-col gap-2 sm:flex-row">
@@ -660,18 +688,36 @@ export default function PerfilPage() {
                     setDeleting(false);
                     setDeletePassword('');
                     setDeleteError(null);
+                    setOpenToCancel(0);
                   }}
                 >
                   Cancelar
                 </Button>
                 <Button className="bg-red-600 hover:bg-red-700" onClick={handleDeleteAccount} disabled={deleteBusy}>
                   {deleteBusy && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                  Excluir a minha conta
+                  {openToCancel > 0 ? 'Cancelar os pedidos e excluir' : 'Excluir a minha conta'}
                 </Button>
               </div>
             </div>
           )}
+          <div className="mt-4 flex items-center justify-between gap-3 rounded-xl border px-3 py-2.5 text-sm">
+            <span>
+              <span className="block text-gray-900">Assistente com inteligência artificial</span>
+              <span className="block text-xs text-gray-500">
+                {aiConsent ? 'Ligado: mensagens vão a serviços de IA, com CPF, telefone e e-mail escondidos.' : 'Desligado: atendimento pelos menus e pela busca.'}
+              </span>
+            </span>
+            <Button variant="outline" size="sm" onClick={toggleAi}>{aiConsent ? 'Desligar' : 'Ligar'}</Button>
+          </div>
+          <p className="mt-3 text-xs text-gray-500">
+            <Link href="/privacidade" className="underline hover:text-gray-700">Política de privacidade</Link>
+            {' · '}
+            <Link href="/termos" className="underline hover:text-gray-700">Termos de uso</Link>
+            {' · '}
+            <Link href="/legal" className="underline hover:text-gray-700">Todos os documentos</Link>
+          </p>
         </Section>
+        </div>
 
         {citizen?.createdAt && (
           <p className="text-center text-xs text-gray-400">

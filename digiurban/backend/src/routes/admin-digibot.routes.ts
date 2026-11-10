@@ -33,6 +33,7 @@ import {
   searchServicesForBot,
   upsertFaq,
 } from '../services/digibot/digibot.service';
+import { listAnswerReports, markReportReviewed } from '../services/digibot/assistant-privacy.service';
 
 const router = Router();
 router.use(adminAuthMiddleware, requireMinRole(UserRole.ADMIN));
@@ -247,6 +248,26 @@ router.post('/test', async (req, res) => {
 });
 
 // ---------------------------------------------------------------- ensinar o bot
+
+// Respostas do assistente denunciadas pelos cidadãos
+router.get('/reports', async (req, res) => {
+  try {
+    const status = req.query.status === 'REVIEWED' || req.query.status === 'ALL' ? req.query.status : 'OPEN';
+    res.json({ reports: await listAnswerReports(status as any) });
+  } catch (error) {
+    fail(res, error, 'reports');
+  }
+});
+
+router.post('/reports/:id/reviewed', async (req, res) => {
+  try {
+    await markReportReviewed(req.params.id, who(req));
+    audit(req, 'DIGIBOT_REPORT_REVIEWED', { id: req.params.id });
+    res.json({ success: true });
+  } catch (error) {
+    fail(res, error, 'reports/reviewed');
+  }
+});
 
 router.get('/unanswered', async (req, res) => {
   try {

@@ -104,7 +104,7 @@ const clamp = (v: unknown) => {
 
 // ---------------------------------------------------------------- teto de usos por conversa
 
-const budgetStore = new AsyncLocalStorage<{ key: string; limit: number }>();
+const budgetStore = new AsyncLocalStorage<{ key: string; limit: number; citizenId?: string }>();
 const usage = new Map<string, number[]>();
 const WINDOW_MS = 60 * 60 * 1000;
 
@@ -145,6 +145,9 @@ export class CitizenAiClient {
     this.http.interceptors.request.use((config: any) => {
       const tenantId = getBotTenantId();
       if (tenantId) (config.headers as Record<string, string>)['X-Tenant-Id'] = tenantId;
+      // o backend confere se o cidadão autorizou a IA (sem o "sim": 403 e segue sem IA)
+      const citizenId = budgetStore.getStore()?.citizenId;
+      if (citizenId) (config.headers as Record<string, string>)['X-Citizen-Id'] = citizenId;
       return config;
     });
   }
@@ -164,8 +167,8 @@ export class CitizenAiClient {
    * Executa o turno do cidadão com um teto de usos de IA por conversa (janela de
    * 1 hora). Protege o crédito do município de conversas longas ou repetitivas.
    */
-  withBudget<T>(key: string, limit: number, fn: () => Promise<T>): Promise<T> {
-    return budgetStore.run({ key, limit }, fn);
+  withBudget<T>(key: string, limit: number, fn: () => Promise<T>, citizenId?: string): Promise<T> {
+    return budgetStore.run({ key, limit, citizenId }, fn);
   }
 
   private async call<T>(path: '/decide' | '/complete', body: Record<string, unknown>): Promise<T | null> {
@@ -178,6 +181,7 @@ export class CitizenAiClient {
     } catch (error: any) {
       const status = error?.response?.status;
       if (status === 503) this.unavailableUntil = Date.now() + 60000;
+      // 403 AI_NO_CONSENT = o cidadão escolheu o atendimento sem IA
       // 402 = município sem créditos: segue pelos menus (o painel avisa o gestor)
       logger.warn('DigiBot IA: chamada não concluída', { path, status, code: error?.response?.data?.code });
       return null;

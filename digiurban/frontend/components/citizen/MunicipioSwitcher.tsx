@@ -11,6 +11,7 @@
  */
 
 import { useEffect, useState } from 'react';
+import { nativePushToken } from '@/lib/native-app';
 import { Card, CardContent } from '@/components/ui/card';
 import { Building2, Check, Loader2, ArrowLeftRight } from 'lucide-react';
 
@@ -58,13 +59,16 @@ export function MunicipioSwitcher() {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         credentials: 'include',
-        body: JSON.stringify({ tenantId: m.tenantId }),
+        // no app: tira o celular dos avisos do município antigo (o novo registra de novo em seguida)
+        body: JSON.stringify({ tenantId: m.tenantId, nativePushToken: nativePushToken() }),
       });
       if (res.ok) {
         const data = await res.json();
-        // Se cada município tem subdomínio próprio, ir para ele; senão recarrega.
+        // Já num subdomínio de município → vai para o subdomínio do outro. No domínio raiz
+        // (app nativo, PWA de digiurban.com.br) fica nele: a sessão nova é do host atual.
         const base = process.env.NEXT_PUBLIC_TENANT_BASE_DOMAIN;
-        if (data.slug && base && typeof window !== 'undefined') {
+        const onTenantSubdomain = !!base && typeof window !== 'undefined' && window.location.hostname.endsWith(`.${base}`) && !window.location.hostname.startsWith('www.');
+        if (data.slug && onTenantSubdomain) {
           const proto = window.location.protocol;
           window.location.href = `${proto}//${data.slug}.${base}/cidadao`;
         } else if (typeof window !== 'undefined') {
