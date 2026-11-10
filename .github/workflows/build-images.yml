@@ -18,6 +18,11 @@ name: Build and Push Images (GHCR)
   push:
     branches:
       - main
+    # Só app nativo / documentação: não reconstrói nem reimplanta a produção
+    paths-ignore:
+      - 'digiurban/mobile/**'
+      - 'docs/**'
+      - '.github/workflows/apps-nativos.yml'
   workflow_dispatch:
 
 permissions:

@@ -1,0 +1,10 @@
+node_modules/
+www/
+# assinatura (nunca no git)
+*.jks
+*.keystore
+keystore.properties
+android/keystore.properties
+# Firebase (cada dono põe o seu)
+android/app/google-services.json
+ios/App/App/GoogleService-Info.plist

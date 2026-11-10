@@ -1,0 +1,55 @@
+{
+  "appId": "br.com.digiurban.app",
+  "appName": "DigiUrban",
+  "webDir": "www",
+  "loggingBehavior": "none",
+  "server": {
+    "url": "https://digiurban.com.br/cidadao",
+    "cleartext": false,
+    "allowNavigation": [
+      "digiurban.com.br",
+      "*.digiurban.com.br"
+    ],
+    "errorPath": "offline.html"
+  },
+  "android": {
+    "backgroundColor": "#0f6fbe",
+    "allowMixedContent": false
+  },
+  "ios": {
+    "contentInset": "never",
+    "limitsNavigationsToAppBoundDomains": false,
+    "backgroundColor": "#0f6fbe"
+  },
+  "plugins": {
+    "SplashScreen": {
+      "launchShowDuration": 2000,
+      "launchAutoHide": true,
+      "backgroundColor": "#0f6fbe",
+      "showSpinner": false,
+      "androidScaleType": "CENTER_CROP"
+    },
+    "StatusBar": {
+      "overlaysWebView": false,
+      "style": "DARK",
+      "backgroundColor": "#0f6fbe"
+    },
+    "SystemBars": {
+      "insetsHandling": "css"
+    },
+    "PushNotifications": {
+      "presentationOptions": [
+        "badge",
+        "sound",
+        "alert"
+      ]
+    },
+    "Keyboard": {
+      "resize": "native",
+      "resizeOnFullScreen": true
+    },
+    "App": {
+      "disableBackButtonHandler": true
+    }
+  }
+}

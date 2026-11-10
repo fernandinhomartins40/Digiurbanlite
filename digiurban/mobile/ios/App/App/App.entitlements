@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<!-- Push (APNs). Ao arquivar para a App Store o Xcode troca para "production" sozinho -->
+	<key>aps-environment</key>
+	<string>development</string>
+	<!-- Links universais: conferido em https://digiurban.com.br/.well-known/apple-app-site-association -->
+	<key>com.apple.developer.associated-domains</key>
+	<array>
+		<string>applinks:digiurban.com.br</string>
+	</array>
+</dict>
+</plist>

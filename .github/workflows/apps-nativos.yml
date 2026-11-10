@@ -1,0 +1,151 @@
+# Compila os apps nativos (digiurban/mobile) nas máquinas do GitHub — sem Mac.
+# Só roda quando alguém aperta "Run workflow" em Actions › Apps nativos.
+# Segredos (Settings › Secrets and variables › Actions) — ver docs/apps-nativos/COMPILAR-SEM-MAC.md
+name: Apps nativos
+
+on:
+  workflow_dispatch:
+    inputs:
+      plataforma:
+        description: 'Qual app compilar'
+        type: choice
+        options: [ambos, android, ios]
+        default: ambos
+      versao:
+        description: 'Versão que aparece na loja (ex.: 1.0.0)'
+        default: '1.0.0'
+
+concurrency:
+  group: apps-nativos
+  cancel-in-progress: false
+
+env:
+  APP_VERSION: ${{ inputs.versao }}
+  # Número do envio: sempre maior que o anterior (exigência das duas lojas)
+  APP_BUILD_NUMBER: ${{ github.run_number }}
+
+jobs:
+  android:
+    if: inputs.plataforma != 'ios'
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: digiurban/mobile
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 21
+      - run: npm ci
+      - run: npm run web && npx cap sync android
+      - name: Chaves (Firebase e assinatura)
+        env:
+          GOOGLE_SERVICES_JSON: ${{ secrets.ANDROID_GOOGLE_SERVICES_JSON }}
+          KEYSTORE_B64: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
+        run: |
+          if [ -n "$GOOGLE_SERVICES_JSON" ]; then printf '%s' "$GOOGLE_SERVICES_JSON" > android/app/google-services.json; else echo "::warning::Sem ANDROID_GOOGLE_SERVICES_JSON: o app não vai receber avisos push"; fi
+          if [ -z "$KEYSTORE_B64" ]; then echo "::warning::Sem ANDROID_KEYSTORE_BASE64: AAB SEM assinatura (só teste — a Play não aceita)"; exit 0; fi
+          echo "$KEYSTORE_B64" | base64 -d > "$RUNNER_TEMP/upload.jks"
+          echo "DIGIURBAN_KEYSTORE_FILE=$RUNNER_TEMP/upload.jks" >> "$GITHUB_ENV"
+      - name: Gerar AAB assinado
+        env:
+          DIGIURBAN_KEYSTORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
+          DIGIURBAN_KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
+          DIGIURBAN_KEY_PASSWORD: ${{ secrets.ANDROID_KEY_PASSWORD }}
+        working-directory: digiurban/mobile/android
+        run: ./gradlew --no-daemon bundleRelease
+      - uses: actions/upload-artifact@v4
+        with:
+          name: digiurban-android-${{ inputs.versao }}-${{ github.run_number }}
+          path: digiurban/mobile/android/app/build/outputs/bundle/release/app-release.aab
+          retention-days: 30
+
+  ios:
+    if: inputs.plataforma != 'android'
+    # macOS 26 com Xcode 26+ (exigido pela Apple desde 28/04/2026)
+    runs-on: macos-26
+    defaults:
+      run:
+        working-directory: digiurban/mobile
+    steps:
+      - uses: actions/checkout@v4
+      - uses: maxim-lobanov/setup-xcode@v1
+        with:
+          xcode-version: latest-stable
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - run: npm ci
+      - run: npm run web && npx cap sync ios
+      # Assinatura manual: certificado de distribuição (.p12) e perfil "App Store" criados UMA vez no site da
+      # Apple (sem Mac) e guardados como segredos. Assinatura automática na nuvem criaria um certificado novo a
+      # cada execução (a máquina do GitHub começa vazia) até estourar o limite da conta.
+      - name: Certificado e perfil de distribuição
+        env:
+          P12_B64: ${{ secrets.IOS_DIST_CERT_P12_BASE64 }}
+          P12_PASSWORD: ${{ secrets.IOS_DIST_CERT_PASSWORD }}
+          PROFILE_B64: ${{ secrets.IOS_PROFILE_BASE64 }}
+          ASC_KEY_P8: ${{ secrets.ASC_API_KEY_P8 }}
+        run: |
+          for v in P12_B64 P12_PASSWORD PROFILE_B64 ASC_KEY_P8; do
+            if [ -z "${!v}" ]; then
+              echo "::warning::Falta o segredo $v — compilando SEM assinatura só para conferir o projeto (nada vai para a Apple). Ver docs/apps-nativos/COMPILAR-SEM-MAC.md"
+              echo "SIGNED=false" >> "$GITHUB_ENV"; exit 0
+            fi
+          done
+          echo "SIGNED=true" >> "$GITHUB_ENV"
+          KEYCHAIN="$RUNNER_TEMP/assinatura.keychain-db"
+          KEYCHAIN_PASSWORD="$(openssl rand -hex 16)"
+          echo "$P12_B64" | base64 --decode > "$RUNNER_TEMP/dist.p12"
+          security create-keychain -p "$KEYCHAIN_PASSWORD" "$KEYCHAIN"
+          security set-keychain-settings -lut 21600 "$KEYCHAIN"
+          security unlock-keychain -p "$KEYCHAIN_PASSWORD" "$KEYCHAIN"
+          security import "$RUNNER_TEMP/dist.p12" -P "$P12_PASSWORD" -A -t cert -f pkcs12 -k "$KEYCHAIN"
+          security set-key-partition-list -S apple-tool:,apple: -k "$KEYCHAIN_PASSWORD" "$KEYCHAIN"
+          security list-keychain -d user -s "$KEYCHAIN"
+          mkdir -p "$HOME/Library/MobileDevice/Provisioning Profiles"
+          echo "$PROFILE_B64" | base64 --decode > "$RUNNER_TEMP/app.mobileprovision"
+          PROFILE_UUID=$(security cms -D -i "$RUNNER_TEMP/app.mobileprovision" | plutil -extract UUID raw -)
+          cp "$RUNNER_TEMP/app.mobileprovision" "$HOME/Library/MobileDevice/Provisioning Profiles/$PROFILE_UUID.mobileprovision"
+          echo "PROFILE_UUID=$PROFILE_UUID" >> "$GITHUB_ENV"
+          printf '%s' "$ASC_KEY_P8" > "$RUNNER_TEMP/asc_key.p8"
+      - name: Compilar sem assinatura (teste do projeto)
+        if: env.SIGNED != 'true'
+        run: |
+          xcodebuild -project ios/App/App.xcodeproj -scheme App -configuration Release             -destination 'generic/platform=iOS' CODE_SIGNING_ALLOWED=NO build
+      - name: Compilar (archive)
+        if: env.SIGNED == 'true'
+        env:
+          TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
+        run: |
+          xcodebuild -project ios/App/App.xcodeproj -scheme App -configuration Release             -destination 'generic/platform=iOS' -archivePath "$RUNNER_TEMP/App.xcarchive"             DEVELOPMENT_TEAM="$TEAM_ID" CODE_SIGN_STYLE=Manual CODE_SIGN_IDENTITY="Apple Distribution"             PROVISIONING_PROFILE_SPECIFIER="$PROFILE_UUID"             MARKETING_VERSION="$APP_VERSION" CURRENT_PROJECT_VERSION="$APP_BUILD_NUMBER"             archive
+      - name: Enviar ao App Store Connect (TestFlight)
+        if: env.SIGNED == 'true'
+        env:
+          TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
+          ASC_KEY_ID: ${{ secrets.ASC_API_KEY_ID }}
+          ASC_ISSUER_ID: ${{ secrets.ASC_API_ISSUER_ID }}
+        run: |
+          cat > "$RUNNER_TEMP/ExportOptions.plist" <<EOF
+          <?xml version="1.0" encoding="UTF-8"?>
+          <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+          <plist version="1.0"><dict>
+            <key>method</key><string>app-store-connect</string>
+            <key>destination</key><string>upload</string>
+            <key>signingStyle</key><string>manual</string>
+            <key>teamID</key><string>${TEAM_ID}</string>
+            <key>signingCertificate</key><string>Apple Distribution</string>
+            <key>provisioningProfiles</key><dict><key>br.com.digiurban.app</key><string>${PROFILE_UUID}</string></dict>
+            <key>manageAppVersionAndBuildNumber</key><false/>
+          </dict></plist>
+          EOF
+          xcodebuild -exportArchive -archivePath "$RUNNER_TEMP/App.xcarchive"             -exportOptionsPlist "$RUNNER_TEMP/ExportOptions.plist" -exportPath "$RUNNER_TEMP/export"             -authenticationKeyPath "$RUNNER_TEMP/asc_key.p8" -authenticationKeyID "$ASC_KEY_ID" -authenticationKeyIssuerID "$ASC_ISSUER_ID"
+      - name: Apagar chaves da máquina
+        if: always()
+        run: |
+          rm -f "$RUNNER_TEMP/asc_key.p8" "$RUNNER_TEMP/dist.p12" "$RUNNER_TEMP/app.mobileprovision"
+          security delete-keychain "$RUNNER_TEMP/assinatura.keychain-db" || true
