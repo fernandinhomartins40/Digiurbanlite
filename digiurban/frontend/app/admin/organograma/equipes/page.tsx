@@ -86,10 +86,10 @@ interface Team {
 
 const TIPO_TEAM: Record<string, string> = {
   PERMANENTE: 'Permanente',
-  TEMPORARIA: 'Temporaria',
+  TEMPORARIA: 'Temporária',
   PROJETO: 'Projeto',
   GRUPO_TRABALHO: 'Grupo de Trabalho',
-  COMISSAO: 'Comissao',
+  COMISSAO: 'Comissão',
   CONSELHO: 'Conselho',
 };
 
@@ -449,7 +449,7 @@ export default function EquipesPage() {
                 Equipes e Grupos de Trabalho
               </h1>
               <p className="text-gray-600 mt-1 text-sm md:text-base">
-                Gerencie equipes, comissoes, conselhos e grupos de trabalho
+                Gerencie equipes, comissões, conselhos e grupos de trabalho
               </p>
             </div>
             <Button onClick={openCreateTeamDialog}>
@@ -978,7 +978,7 @@ export default function EquipesPage() {
                 </Select>
               </div>
               <div>
-                <Label>Papel / Funcao</Label>
+                <Label>Papel / Função</Label>
                 <Input
                   value={addMemberForm.papel}
                   onChange={(e) => setAddMemberForm({ ...addMemberForm, papel: e.target.value })}
@@ -986,13 +986,13 @@ export default function EquipesPage() {
                 />
               </div>
               <div>
-                <Label>Atribuicoes</Label>
+                <Label>Atribuições</Label>
                 <Textarea
                   value={addMemberForm.atribuicoes}
                   onChange={(e) =>
                     setAddMemberForm({ ...addMemberForm, atribuicoes: e.target.value })
                   }
-                  placeholder="Descreva as atribuicoes do membro (opcional)"
+                  placeholder="Descreva as atribuições do membro (opcional)"
                   rows={3}
                 />
               </div>
@@ -1042,7 +1042,7 @@ export default function EquipesPage() {
             </DialogHeader>
             <p className="text-gray-600">
               Tem certeza que deseja excluir a equipe <strong>&quot;{teamToDelete?.nome}&quot;</strong>?
-              Esta acao nao pode ser desfeita.
+              Esta ação não pode ser desfeita.
             </p>
             <DialogFooter>
               <Button variant="outline" onClick={() => setDeleteConfirmOpen(false)}>

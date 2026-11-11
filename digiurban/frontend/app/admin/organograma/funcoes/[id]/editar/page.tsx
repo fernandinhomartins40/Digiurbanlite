@@ -52,7 +52,7 @@ export default function EditarFuncaoPage() {
         isActive: response.isActive !== false,
       });
     } catch (loadError) {
-      setError(loadError instanceof Error ? loadError.message : 'Erro ao carregar funcao');
+      setError(loadError instanceof Error ? loadError.message : 'Erro ao carregar função');
     } finally {
       setLoading(false);
     }
@@ -71,10 +71,10 @@ export default function EditarFuncaoPage() {
           <div>
             <h1 className="flex items-center gap-3 text-2xl font-bold text-gray-900">
               <BarChart3 className="h-7 w-7 text-pink-600" />
-              Editar funcao
+              Editar função
             </h1>
             <p className="mt-1 text-sm text-gray-600">
-              Atualize a funcao mantendo o cargo vinculado como referencia central.
+              Atualize a função mantendo o cargo vinculado como referência central.
             </p>
           </div>
         </div>
@@ -82,7 +82,7 @@ export default function EditarFuncaoPage() {
         {loading ? (
           <div className="flex items-center justify-center py-16">
             <Loader2 className="h-8 w-8 animate-spin text-pink-600" />
-            <span className="ml-3 text-gray-600">Carregando funcao...</span>
+            <span className="ml-3 text-gray-600">Carregando função...</span>
           </div>
         ) : error ? (
           <Card className="border-red-200 bg-red-50 p-6 text-red-700">{error}</Card>

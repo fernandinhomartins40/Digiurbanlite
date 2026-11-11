@@ -293,28 +293,28 @@ export function ServerManagementForm({
 
   const validateForm = () => {
     const normalizedRole = normalizeTeamRoleInput(formData.role)
-    if (!formData.name?.trim()) return 'Nome e obrigatorio'
-    if (!formData.email?.trim()) return 'Email e obrigatorio'
-    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email)) return 'Email invalido'
+    if (!formData.name?.trim()) return 'Nome é obrigatório'
+    if (!formData.email?.trim()) return 'Email é obrigatório'
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email)) return 'Email inválido'
     if (!formData.departmentIds?.length) return 'Selecione ao menos um departamento'
     if (!primaryDepartmentId) return 'Defina um departamento principal'
-    if (formData.cpf && formData.cpf.replace(/\D/g, '').length !== 11) return 'CPF deve ter 11 digitos'
-    if (!normalizedRole && !isEditMode) return 'Perfil de acesso invalido'
+    if (formData.cpf && formData.cpf.replace(/\D/g, '').length !== 11) return 'CPF deve ter 11 dígitos'
+    if (!normalizedRole && !isEditMode) return 'Perfil de acesso inválido'
     if (
       normalizedRole &&
       (ROLE_HIERARCHY[normalizedRole as keyof typeof ROLE_HIERARCHY] || 0) >= currentUserLevel
     ) {
-      return 'Voce nao pode criar usuarios com role igual ou superior ao seu'
+      return 'Você não pode criar usuários com role igual ou superior ao seu'
     }
     if (!isEditMode) {
-      if (!password) return 'Senha e obrigatoria'
+      if (!password) return 'Senha é obrigatória'
       if (password.length < 8 || !/[A-Z]/.test(password) || !/[a-z]/.test(password) || !/\d/.test(password) || !/[!@#$%^&*(),.?":{}|<>]/.test(password)) {
-        return 'Senha nao atende aos requisitos minimos'
+        return 'Senha não atende aos requisitos mínimos'
       }
-      if (password !== confirmPassword) return 'As senhas nao coincidem'
-      if (!initialAssignment.organizationalUnitId) return 'A lotacao inicial no organograma e obrigatoria'
+      if (password !== confirmPassword) return 'As senhas não coincidem'
+      if (!initialAssignment.organizationalUnitId) return 'A lotação inicial no organograma é obrigatória'
       if (initialAssignment.percentualDedicacao && (Number(initialAssignment.percentualDedicacao) <= 0 || Number(initialAssignment.percentualDedicacao) > 100)) {
-        return 'Percentual de dedicacao deve estar entre 1 e 100'
+        return 'Percentual de dedicação deve estar entre 1 e 100'
       }
     }
     return null
@@ -342,7 +342,7 @@ export function ServerManagementForm({
       const cleanCpf = formData.cpf ? formData.cpf.replace(/\D/g, '') : null
       const normalizedRole = normalizeTeamRoleInput(formData.role)
       if (!normalizedRole && !isEditMode) {
-        throw new Error('Perfil de acesso invalido')
+        throw new Error('Perfil de acesso inválido')
       }
       const body = isEditMode ? {
         name: formData.name.trim(), email: formData.email.trim(),
@@ -393,8 +393,8 @@ export function ServerManagementForm({
         <CardTitle>{isEditMode ? 'Editar servidor' : 'Novo servidor'}</CardTitle>
         <CardDescription>
           {isEditMode
-            ? 'Atualize o cadastro administrativo. A lotacao operacional e gerenciada no organograma.'
-            : 'Cadastre o servidor e defina a lotacao inicial no organograma.'}
+            ? 'Atualize o cadastro administrativo. A lotação operacional é gerenciada no organograma.'
+            : 'Cadastre o servidor e defina a lotação inicial no organograma.'}
         </CardDescription>
       </CardHeader>
       <CardContent>
@@ -403,7 +403,7 @@ export function ServerManagementForm({
 
           <Tabs defaultValue="basico" className="w-full">
             <TabsList className="grid w-full grid-cols-4">
-              <TabsTrigger value="basico">Basico</TabsTrigger>
+              <TabsTrigger value="basico">Básico</TabsTrigger>
               <TabsTrigger value="pessoal">Pessoal</TabsTrigger>
               <TabsTrigger value="organograma">Organograma</TabsTrigger>
               <TabsTrigger value="funcional">Funcional</TabsTrigger>
@@ -449,7 +449,7 @@ export function ServerManagementForm({
               <div className="space-y-2">
                 <Label>Escopo administrativo (departamentos)</Label>
                 <div className="border rounded-md p-3 max-h-[200px] overflow-y-auto space-y-2">
-                  {loadingDepartments ? <p className="text-sm text-muted-foreground">Carregando...</p> : departments.length === 0 ? <p className="text-sm text-muted-foreground">Nenhum departamento disponivel</p> : departments.map((department) => {
+                  {loadingDepartments ? <p className="text-sm text-muted-foreground">Carregando...</p> : departments.length === 0 ? <p className="text-sm text-muted-foreground">Nenhum departamento disponível</p> : departments.map((department) => {
                     const isSelected = formData.departmentIds?.includes(department.id) || false
                     const isPrimary = primaryDepartmentId === department.id
                     return (
@@ -463,7 +463,7 @@ export function ServerManagementForm({
                     )
                   })}
                 </div>
-                <p className="text-xs text-muted-foreground">O departamento controla o escopo administrativo do usuario. O setor, cargo e funcao operacionais ficam no organograma.</p>
+                <p className="text-xs text-muted-foreground">O departamento controla o escopo administrativo do usuário. O setor, cargo e função operacionais ficam no organograma.</p>
               </div>
 
               {isEditMode && <div className="flex items-center space-x-2"><input type="checkbox" id="isActive" checked={formData.isActive} onChange={(event) => setFormData({ ...formData, isActive: event.target.checked })} disabled={loading} className="h-4 w-4" /><Label htmlFor="isActive" className="cursor-pointer">Servidor ativo</Label></div>}
@@ -489,7 +489,7 @@ export function ServerManagementForm({
               </div>
               <div className="grid grid-cols-2 gap-3">
                 <div className="space-y-2"><Label htmlFor="telefone">Telefone</Label><Input id="telefone" value={formData.telefone} onChange={(event) => setFormData({ ...formData, telefone: event.target.value })} disabled={loading} /></div>
-                <div className="space-y-2"><Label htmlFor="telefoneSecundario">Telefone secundario</Label><Input id="telefoneSecundario" value={formData.telefoneSecundario} onChange={(event) => setFormData({ ...formData, telefoneSecundario: event.target.value })} disabled={loading} /></div>
+                <div className="space-y-2"><Label htmlFor="telefoneSecundario">Telefone secundário</Label><Input id="telefoneSecundario" value={formData.telefoneSecundario} onChange={(event) => setFormData({ ...formData, telefoneSecundario: event.target.value })} disabled={loading} /></div>
               </div>
             </TabsContent>
 
@@ -497,24 +497,24 @@ export function ServerManagementForm({
               {isEditMode ? (
                 <>
                   <div className="rounded-lg border bg-slate-50 p-4 space-y-2">
-                    <h3 className="text-sm font-semibold text-slate-900">Lotacao operacional atual</h3>
+                    <h3 className="text-sm font-semibold text-slate-900">Lotação operacional atual</h3>
                     {primaryAssignment ? (
                       <>
                         <div className="flex items-center gap-2 text-sm text-slate-700"><Building2 className="h-4 w-4" />{primaryAssignment.organizationalUnit?.nome || 'Sem unidade organizacional definida'}</div>
                         <div className="flex items-center gap-2 text-sm text-slate-700"><Briefcase className="h-4 w-4" />{primaryAssignment.position?.nome || 'Sem cargo operacional definido'}</div>
-                        {primaryAssignment.function?.nome && <p className="text-sm text-slate-600">Funcao: {primaryAssignment.function.nome}</p>}
-                        <p className="text-sm text-slate-600">Situacao: {primaryAssignment.situacao}</p>
+                        {primaryAssignment.function?.nome && <p className="text-sm text-slate-600">Função: {primaryAssignment.function.nome}</p>}
+                        <p className="text-sm text-slate-600">Situação: {primaryAssignment.situacao}</p>
                       </>
                     ) : (
-                        <p className="text-sm text-amber-700">Este servidor ainda nao possui lotacao operacional registrada no organograma.</p>
+                        <p className="text-sm text-amber-700">Este servidor ainda não possui lotação operacional registrada no organograma.</p>
                       )}
                   </div>
-                  {initialUser?.id && <Button type="button" variant="outline" onClick={() => router.push(`/admin/organograma/lotacoes?userId=${initialUser.id}`)}><ArrowRightLeft className="mr-2 h-4 w-4" />Gerenciar lotacoes</Button>}
+                  {initialUser?.id && <Button type="button" variant="outline" onClick={() => router.push(`/admin/organograma/lotacoes?userId=${initialUser.id}`)}><ArrowRightLeft className="mr-2 h-4 w-4" />Gerenciar lotações</Button>}
                 </>
               ) : (
                 <>
-                  <div className="rounded-lg border bg-blue-50 p-4"><h3 className="text-sm font-semibold text-blue-900">Lotacao inicial obrigatoria</h3><p className="mt-1 text-sm text-blue-800">O servidor sera criado ja alinhado ao organograma usando o departamento principal selecionado.</p></div>
-                  <div className="space-y-2"><Label>Departamento principal da lotacao</Label><div className="rounded-md border px-3 py-2 text-sm">{primaryDepartment ? primaryDepartment.name : 'Selecione um departamento principal na aba Basico'}</div></div>
+                  <div className="rounded-lg border bg-blue-50 p-4"><h3 className="text-sm font-semibold text-blue-900">Lotação inicial obrigatória</h3><p className="mt-1 text-sm text-blue-800">O servidor será criado já alinhado ao organograma usando o departamento principal selecionado.</p></div>
+                  <div className="space-y-2"><Label>Departamento principal da lotação</Label><div className="rounded-md border px-3 py-2 text-sm">{primaryDepartment ? primaryDepartment.name : 'Selecione um departamento principal na aba Básico'}</div></div>
                   <div className="space-y-2">
                     <Label htmlFor="organizationalUnitId">Setor / unidade organizacional *</Label>
                     <Select value={initialAssignment.organizationalUnitId} onValueChange={(value) => setInitialAssignment({ ...initialAssignment, organizationalUnitId: value, positionId: '', functionId: '' })} disabled={loading || !primaryDepartmentId || loadingOrganogram}>
@@ -531,42 +531,42 @@ export function ServerManagementForm({
                       </Select>
                     </div>
                     <div className="space-y-2">
-                      <Label htmlFor="functionId">Funcao</Label>
+                      <Label htmlFor="functionId">Função</Label>
                       <Select value={initialAssignment.functionId} onValueChange={(value) => setInitialAssignment({ ...initialAssignment, functionId: value })} disabled={loading || !primaryDepartmentId || loadingOrganogram || !initialAssignment.positionId}>
-                        <SelectTrigger id="functionId"><SelectValue placeholder="Selecione uma funcao" /></SelectTrigger>
+                        <SelectTrigger id="functionId"><SelectValue placeholder="Selecione uma função" /></SelectTrigger>
                         <SelectContent>{filteredFunctions.map((func) => <SelectItem key={func.id} value={func.id}>{func.nome}</SelectItem>)}</SelectContent>
                       </Select>
                     </div>
                   </div>
                   <div className="grid grid-cols-3 gap-3">
-                    <div className="space-y-2"><Label htmlFor="assignmentStart">Inicio da lotacao</Label><Input id="assignmentStart" type="date" value={initialAssignment.dataInicio} onChange={(event) => setInitialAssignment({ ...initialAssignment, dataInicio: event.target.value })} disabled={loading} /></div>
-                    <div className="space-y-2"><Label htmlFor="assignmentHours">Carga horaria</Label><Input id="assignmentHours" type="number" min="1" value={initialAssignment.cargaHoraria} onChange={(event) => setInitialAssignment({ ...initialAssignment, cargaHoraria: event.target.value })} disabled={loading} /></div>
-                    <div className="space-y-2"><Label htmlFor="assignmentDedication">% dedicacao</Label><Input id="assignmentDedication" type="number" min="1" max="100" value={initialAssignment.percentualDedicacao} onChange={(event) => setInitialAssignment({ ...initialAssignment, percentualDedicacao: event.target.value })} disabled={loading} /></div>
+                    <div className="space-y-2"><Label htmlFor="assignmentStart">Início da lotação</Label><Input id="assignmentStart" type="date" value={initialAssignment.dataInicio} onChange={(event) => setInitialAssignment({ ...initialAssignment, dataInicio: event.target.value })} disabled={loading} /></div>
+                    <div className="space-y-2"><Label htmlFor="assignmentHours">Carga horária</Label><Input id="assignmentHours" type="number" min="1" value={initialAssignment.cargaHoraria} onChange={(event) => setInitialAssignment({ ...initialAssignment, cargaHoraria: event.target.value })} disabled={loading} /></div>
+                    <div className="space-y-2"><Label htmlFor="assignmentDedication">% dedicação</Label><Input id="assignmentDedication" type="number" min="1" max="100" value={initialAssignment.percentualDedicacao} onChange={(event) => setInitialAssignment({ ...initialAssignment, percentualDedicacao: event.target.value })} disabled={loading} /></div>
                   </div>
-                  <div className="space-y-2"><Label htmlFor="assignmentNotes">Observacoes da lotacao inicial</Label><Textarea id="assignmentNotes" value={initialAssignment.observacoes} onChange={(event) => setInitialAssignment({ ...initialAssignment, observacoes: event.target.value })} rows={3} disabled={loading} /></div>
+                  <div className="space-y-2"><Label htmlFor="assignmentNotes">Observações da lotação inicial</Label><Textarea id="assignmentNotes" value={initialAssignment.observacoes} onChange={(event) => setInitialAssignment({ ...initialAssignment, observacoes: event.target.value })} rows={3} disabled={loading} /></div>
                 </>
               )}
             </TabsContent>
 
             <TabsContent value="funcional" className="space-y-3">
-              <div className="space-y-2"><Label htmlFor="cargoEfetivo">Cargo efetivo (informativo)</Label><Input id="cargoEfetivo" value={formData.cargoEfetivo} onChange={(event) => setFormData({ ...formData, cargoEfetivo: event.target.value })} disabled={loading} /><p className="text-xs text-muted-foreground">Campo legado apenas para referencia. O cargo operacional atual vem do vinculo funcional centralizado.</p></div>
+              <div className="space-y-2"><Label htmlFor="cargoEfetivo">Cargo efetivo (informativo)</Label><Input id="cargoEfetivo" value={formData.cargoEfetivo} onChange={(event) => setFormData({ ...formData, cargoEfetivo: event.target.value })} disabled={loading} /><p className="text-xs text-muted-foreground">Campo legado apenas para referência. O cargo operacional atual vem do vínculo funcional centralizado.</p></div>
               <div className="grid grid-cols-2 gap-3">
                 <div className="space-y-2">
-                  <Label htmlFor="situacaoFuncional">Situacao funcional</Label>
+                  <Label htmlFor="situacaoFuncional">Situação funcional</Label>
                   <Select value={formData.situacaoFuncional} onValueChange={(value) => setFormData({ ...formData, situacaoFuncional: value })} disabled={loading}>
                     <SelectTrigger id="situacaoFuncional"><SelectValue /></SelectTrigger>
-                    <SelectContent><SelectItem value="ATIVO">Ativo</SelectItem><SelectItem value="APOSENTADO">Aposentado</SelectItem><SelectItem value="EXONERADO">Exonerado</SelectItem><SelectItem value="LICENCA">Em licenca</SelectItem><SelectItem value="AFASTADO">Afastado</SelectItem></SelectContent>
+                    <SelectContent><SelectItem value="ATIVO">Ativo</SelectItem><SelectItem value="APOSENTADO">Aposentado</SelectItem><SelectItem value="EXONERADO">Exonerado</SelectItem><SelectItem value="LICENCA">Em licença</SelectItem><SelectItem value="AFASTADO">Afastado</SelectItem></SelectContent>
                   </Select>
                 </div>
-                <div className="space-y-2"><Label htmlFor="dataAdmissao">Data de admissao</Label><Input id="dataAdmissao" type="date" value={formData.dataAdmissao} onChange={(event) => setFormData({ ...formData, dataAdmissao: event.target.value })} disabled={loading} /></div>
+                <div className="space-y-2"><Label htmlFor="dataAdmissao">Data de admissão</Label><Input id="dataAdmissao" type="date" value={formData.dataAdmissao} onChange={(event) => setFormData({ ...formData, dataAdmissao: event.target.value })} disabled={loading} /></div>
               </div>
-              <div className="space-y-2"><Label htmlFor="observacoes">Observacoes administrativas</Label><Textarea id="observacoes" value={formData.observacoes} onChange={(event) => setFormData({ ...formData, observacoes: event.target.value })} rows={4} disabled={loading} /></div>
+              <div className="space-y-2"><Label htmlFor="observacoes">Observações administrativas</Label><Textarea id="observacoes" value={formData.observacoes} onChange={(event) => setFormData({ ...formData, observacoes: event.target.value })} rows={4} disabled={loading} /></div>
             </TabsContent>
           </Tabs>
 
           <div className="flex flex-col sm:flex-row gap-2 sm:justify-end">
             <Button type="button" variant="outline" onClick={() => router.push(cancelHref)} disabled={loading} className="w-full sm:w-auto">Cancelar</Button>
-            <Button type="submit" disabled={loading || availableRoles.length === 0} className="w-full sm:w-auto">{loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}{isEditMode ? 'Salvar alteracoes' : 'Criar servidor'}</Button>
+            <Button type="submit" disabled={loading || availableRoles.length === 0} className="w-full sm:w-auto">{loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}{isEditMode ? 'Salvar alterações' : 'Criar servidor'}</Button>
           </div>
         </form>
       </CardContent>

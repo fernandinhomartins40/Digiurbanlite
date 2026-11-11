@@ -94,7 +94,7 @@ export default function FuncoesPage() {
       const list = Array.isArray(response) ? response : response?.data ?? [];
       setFuncoes(list);
     } catch (loadError) {
-      setError(loadError instanceof Error ? loadError.message : 'Erro ao carregar funcoes');
+      setError(loadError instanceof Error ? loadError.message : 'Erro ao carregar funções');
       setFuncoes([]);
     } finally {
       setLoading(false);
@@ -134,7 +134,7 @@ export default function FuncoesPage() {
       setSelectedFuncao(null);
       void loadFuncoes();
     } catch (deleteError) {
-      alert(deleteError instanceof Error ? deleteError.message : 'Erro ao desativar funcao');
+      alert(deleteError instanceof Error ? deleteError.message : 'Erro ao desativar função');
     } finally {
       setSaving(false);
     }
@@ -154,17 +154,17 @@ export default function FuncoesPage() {
             <div>
               <h1 className="flex items-center gap-3 text-2xl font-bold text-gray-900 md:text-3xl">
                 <BarChart3 className="h-7 w-7 text-pink-600 md:h-8 md:w-8" />
-                Funcoes
+                Funções
               </h1>
               <p className="mt-1 text-sm text-gray-600 md:text-base">
-                Cada funcao deve estar vinculada a um cargo especifico do organograma.
+                Cada função deve estar vinculada a um cargo específico do organograma.
               </p>
             </div>
           </div>
           <Link href={createHref}>
             <Button>
               <Plus className="mr-2 h-4 w-4" />
-              Nova funcao
+              Nova função
             </Button>
           </Link>
         </div>
@@ -232,7 +232,7 @@ export default function FuncoesPage() {
               <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
               <Input
                 className="pl-9"
-                placeholder="Buscar funcao"
+                placeholder="Buscar função"
                 value={searchTerm}
                 onChange={(event) => setSearchTerm(event.target.value)}
               />
@@ -243,7 +243,7 @@ export default function FuncoesPage() {
         {loading && (
           <div className="flex items-center justify-center py-16">
             <Loader2 className="h-8 w-8 animate-spin text-pink-600" />
-            <span className="ml-3 text-gray-600">Carregando funcoes...</span>
+            <span className="ml-3 text-gray-600">Carregando funções...</span>
           </div>
         )}
 
@@ -252,14 +252,14 @@ export default function FuncoesPage() {
         {!loading && !error && funcoes.length === 0 && (
           <Card className="p-8 text-center">
             <BarChart3 className="mx-auto mb-4 h-16 w-16 text-gray-400" />
-            <h3 className="mb-2 text-lg font-medium text-gray-900">Nenhuma funcao encontrada</h3>
+            <h3 className="mb-2 text-lg font-medium text-gray-900">Nenhuma função encontrada</h3>
             <p className="mb-4 text-gray-600">
-              Ajuste os filtros ou cadastre a primeira funcao vinculada a um cargo.
+              Ajuste os filtros ou cadastre a primeira função vinculada a um cargo.
             </p>
             <Link href={createHref}>
               <Button>
                 <Plus className="mr-2 h-4 w-4" />
-                Nova funcao
+                Nova função
               </Button>
             </Link>
           </Card>
@@ -323,7 +323,7 @@ export default function FuncoesPage() {
                 </div>
 
                 <div className="mt-3 border-t pt-3 text-xs text-gray-500">
-                  {funcao._count?.assignments ?? 0} lotacoes vinculadas
+                  {funcao._count?.assignments ?? 0} lotações vinculadas
                 </div>
               </Card>
             ))}
@@ -333,7 +333,7 @@ export default function FuncoesPage() {
         <Dialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
           <DialogContent>
             <DialogHeader>
-              <DialogTitle>Desativar funcao</DialogTitle>
+              <DialogTitle>Desativar função</DialogTitle>
             </DialogHeader>
             <p className="text-gray-600">
               Tem certeza que deseja desativar <strong>{selectedFuncao?.nome}</strong>?

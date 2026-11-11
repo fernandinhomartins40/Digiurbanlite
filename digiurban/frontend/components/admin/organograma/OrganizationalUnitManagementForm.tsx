@@ -127,7 +127,7 @@ export function OrganizationalUnitManagementForm({
         email: member.email,
       })));
     } catch (loadError) {
-      setError(loadError instanceof Error ? loadError.message : 'Erro ao carregar referencias');
+      setError(loadError instanceof Error ? loadError.message : 'Erro ao carregar referências');
     } finally {
       setLoadingReferences(false);
     }
@@ -172,12 +172,12 @@ export function OrganizationalUnitManagementForm({
     event.preventDefault();
 
     if (!formData.nome.trim()) {
-      setError('Nome da unidade e obrigatorio');
+      setError('Nome da unidade é obrigatório');
       return;
     }
 
     if (!formData.departmentId) {
-      setError('Selecione a secretaria responsavel');
+      setError('Selecione a secretaria responsável');
       return;
     }
 
@@ -226,8 +226,8 @@ export function OrganizationalUnitManagementForm({
         <CardTitle>{isEditMode ? 'Editar unidade organizacional' : 'Nova unidade organizacional'}</CardTitle>
         <CardDescription>
           {isEditMode
-            ? 'Atualize a unidade dentro da secretaria responsavel.'
-            : 'Cadastre a unidade ja vinculada a uma secretaria do organograma.'}
+            ? 'Atualize a unidade dentro da secretaria responsável.'
+            : 'Cadastre a unidade já vinculada a uma secretaria do organograma.'}
         </CardDescription>
       </CardHeader>
       <CardContent>
@@ -248,7 +248,7 @@ export function OrganizationalUnitManagementForm({
                 onChange={(event) =>
                   setFormData((current) => ({ ...current, nome: event.target.value }))
                 }
-                placeholder="Ex: Diretoria de Fiscalizacao"
+                placeholder="Ex: Diretoria de Fiscalização"
                 disabled={loading || loadingReferences}
               />
             </div>
@@ -327,7 +327,7 @@ export function OrganizationalUnitManagementForm({
                 <SelectValue placeholder="Usar a raiz da secretaria" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="_none_">Raiz da secretaria ({currentDepartmentName || 'automatica'})</SelectItem>
+                <SelectItem value="_none_">Raiz da secretaria ({currentDepartmentName || 'automática'})</SelectItem>
                 {parentUnits.map((unit) => (
                   <SelectItem key={unit.id} value={unit.id}>
                     {unit.sigla ? `${unit.sigla} - ${unit.nome}` : unit.nome}
@@ -337,13 +337,13 @@ export function OrganizationalUnitManagementForm({
             </Select>
             {!formData.parentId && rootDepartmentUnit && (
               <p className="text-xs text-muted-foreground">
-                Sem unidade superior informada, a unidade sera vinculada automaticamente a {rootDepartmentUnit.nome}.
+                Sem unidade superior informada, a unidade será vinculada automaticamente a {rootDepartmentUnit.nome}.
               </p>
             )}
           </div>
 
           <div className="space-y-2">
-            <Label>Responsavel</Label>
+            <Label>Responsável</Label>
             <Select
               value={formData.responsavelId || '_none_'}
               onValueChange={(value) =>
@@ -355,10 +355,10 @@ export function OrganizationalUnitManagementForm({
               disabled={loading || loadingReferences}
             >
               <SelectTrigger>
-                <SelectValue placeholder="Nenhum responsavel definido" />
+                <SelectValue placeholder="Nenhum responsável definido" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="_none_">Nenhum responsavel</SelectItem>
+                <SelectItem value="_none_">Nenhum responsável</SelectItem>
                 {users.map((user) => (
                   <SelectItem key={user.id} value={user.id}>
                     {user.name}
@@ -369,7 +369,7 @@ export function OrganizationalUnitManagementForm({
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="unit-description">Descricao</Label>
+            <Label htmlFor="unit-description">Descrição</Label>
             <Textarea
               id="unit-description"
               value={formData.descricao}
@@ -419,7 +419,7 @@ export function OrganizationalUnitManagementForm({
               className="w-full sm:w-auto"
             >
               {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-              {isEditMode ? 'Salvar alteracoes' : 'Criar unidade'}
+              {isEditMode ? 'Salvar alterações' : 'Criar unidade'}
             </Button>
           </div>
         </form>

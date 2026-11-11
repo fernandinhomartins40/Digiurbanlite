@@ -1,5 +1,6 @@
 'use client'
 
+import { Skeleton } from '@/components/ui/skeleton'
 import { useState, useEffect } from 'react'
 import { FEATURE_FLAGS } from '@/lib/feature-flags'
 import { useRouter, useParams } from 'next/navigation'
@@ -344,11 +345,10 @@ export default function EditServicePage() {
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center min-h-screen">
-        <div className="text-center">
-          <Loader2 className="h-8 w-8 animate-spin text-primary mx-auto mb-4" />
-          <p className="text-gray-600">Carregando serviço...</p>
-        </div>
+      <div className="space-y-4 p-6" aria-busy="true" aria-label="Carregando">
+        <Skeleton className="h-8 w-1/3" />
+        <Skeleton className="h-32 w-full" />
+        <Skeleton className="h-32 w-full" />
       </div>
     )
   }

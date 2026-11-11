@@ -141,7 +141,7 @@ export default function UnidadesPage() {
                 Unidades organizacionais
               </h1>
               <p className="mt-1 text-sm text-gray-600 md:text-base">
-                Gerencie diretorias, divisioes, setores e demais subunidades. Secretarias sao geridas em cadastro proprio.
+                Gerencie diretorias, divisões, setores e demais subunidades. Secretarias são geridas em cadastro próprio.
               </p>
             </div>
           </div>
@@ -200,7 +200,7 @@ export default function UnidadesPage() {
                 className="pl-9"
                 value={searchQuery}
                 onChange={(event) => setSearchQuery(event.target.value)}
-                placeholder="Buscar por nome, sigla ou responsavel"
+                placeholder="Buscar por nome, sigla ou responsável"
               />
             </div>
 
@@ -231,7 +231,7 @@ export default function UnidadesPage() {
             <p className="mb-4 text-gray-600">
               {searchQuery.trim()
                 ? 'Nenhuma unidade corresponde aos filtros aplicados.'
-                : 'Ainda nao existem unidades cadastradas.'}
+                : 'Ainda não existem unidades cadastradas.'}
             </p>
             <Link href={newUnitHref}>
               <Button>
@@ -254,11 +254,11 @@ export default function UnidadesPage() {
                         <th className="p-3 text-left font-semibold text-gray-700">Sigla</th>
                         <th className="p-3 text-left font-semibold text-gray-700">Tipo</th>
                         <th className="p-3 text-left font-semibold text-gray-700">Secretaria</th>
-                        <th className="p-3 text-left font-semibold text-gray-700">Responsavel</th>
+                        <th className="p-3 text-left font-semibold text-gray-700">Responsável</th>
                         <th className="p-3 text-center font-semibold text-gray-700">Servidores</th>
                         <th className="p-3 text-center font-semibold text-gray-700">Cargos</th>
                         <th className="p-3 text-center font-semibold text-gray-700">Status</th>
-                        <th className="p-3 text-right font-semibold text-gray-700">Acoes</th>
+                        <th className="p-3 text-right font-semibold text-gray-700">Ações</th>
                       </tr>
                     </thead>
                     <tbody>
@@ -350,7 +350,7 @@ export default function UnidadesPage() {
                     </div>
 
                     <div className="mb-3 text-xs text-gray-600">
-                      <p>Responsavel: {unit.responsavel?.name || '-'}</p>
+                      <p>Responsável: {unit.responsavel?.name || '-'}</p>
                       <p>{unit._count?.assignments ?? 0} servidores</p>
                       <p>{unit._count?.positions ?? 0} cargos</p>
                     </div>

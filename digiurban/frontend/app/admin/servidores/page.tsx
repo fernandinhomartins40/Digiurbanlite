@@ -217,7 +217,7 @@ export default function ServidoresPage() {
       console.error('Erro ao carregar servidores:', error)
       toast({
         title: 'Erro',
-        description: 'Nao foi possivel carregar os servidores',
+        description: 'Não foi possível carregar os servidores',
         variant: 'destructive',
       })
     } finally {
@@ -257,7 +257,7 @@ export default function ServidoresPage() {
 
       toast({
         title: 'Sucesso',
-        description: data.message || 'Servidor excluido com sucesso',
+        description: data.message || 'Servidor excluído com sucesso',
       })
 
       loadTeamMembers()
@@ -265,7 +265,7 @@ export default function ServidoresPage() {
       console.error('Erro ao excluir servidor:', error)
       toast({
         title: 'Erro',
-        description: error instanceof Error ? error.message : 'Nao foi possivel excluir o servidor',
+        description: error instanceof Error ? error.message : 'Não foi possível excluir o servidor',
         variant: 'destructive',
       })
     } finally {
@@ -358,10 +358,10 @@ export default function ServidoresPage() {
         <div className="w-full sm:w-auto">
           <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 flex items-center">
             <Users className="h-6 w-6 sm:h-8 sm:w-8 text-blue-600 mr-2 sm:mr-3" />
-            Gestao de Servidores
+            Gestão de Servidores
           </h1>
           <p className="text-sm sm:text-base text-gray-600 mt-1 sm:mt-2">
-            Diretorio administrativo com lotacao operacional vinculada ao organograma
+            Diretório administrativo com lotação operacional vinculada ao organograma
           </p>
         </div>
         <Button className="w-full sm:w-auto flex items-center justify-center" onClick={handleCreateUser}>
@@ -396,12 +396,12 @@ export default function ServidoresPage() {
 
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-xs sm:text-sm font-medium">Com Lotacao</CardTitle>
+            <CardTitle className="text-xs sm:text-sm font-medium">Com Lotação</CardTitle>
             <Briefcase className="h-3 w-3 sm:h-4 sm:w-4 text-blue-600" />
           </CardHeader>
           <CardContent>
             <div className="text-xl sm:text-2xl font-bold text-blue-600">{withAssignments}</div>
-            <p className="text-xs text-muted-foreground">Lotacoes funcionais registradas</p>
+            <p className="text-xs text-muted-foreground">Lotações funcionais registradas</p>
           </CardContent>
         </Card>
 
@@ -412,7 +412,7 @@ export default function ServidoresPage() {
           </CardHeader>
           <CardContent>
             <div className="text-xl sm:text-2xl font-bold text-purple-600">{adminCount}</div>
-            <p className="text-xs text-muted-foreground">Permissoes elevadas</p>
+            <p className="text-xs text-muted-foreground">Permissões elevadas</p>
           </CardContent>
         </Card>
       </div>
@@ -421,9 +421,9 @@ export default function ServidoresPage() {
         <CardHeader>
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
             <div>
-              <CardTitle className="text-lg sm:text-xl">Servidores Publicos</CardTitle>
+              <CardTitle className="text-lg sm:text-xl">Servidores Públicos</CardTitle>
               <CardDescription className="text-xs sm:text-sm">
-                Cadastro administrativo com leitura da lotacao operacional centralizada
+                Cadastro administrativo com leitura da lotação operacional centralizada
               </CardDescription>
             </div>
             <div className="flex items-center space-x-2">
@@ -445,10 +445,10 @@ export default function ServidoresPage() {
               <TableRow>
                 <TableHead className="min-w-[180px]">Servidor</TableHead>
                 <TableHead className="hidden md:table-cell min-w-[120px]">CPF / Matricula</TableHead>
-                <TableHead className="hidden lg:table-cell min-w-[240px]">Lotacao Atual</TableHead>
+                <TableHead className="hidden lg:table-cell min-w-[240px]">Lotação Atual</TableHead>
                 <TableHead className="min-w-[140px]">Perfil de Acesso</TableHead>
                 <TableHead className="hidden lg:table-cell min-w-[80px]">Status</TableHead>
-                <TableHead className="text-right min-w-[80px]">Acoes</TableHead>
+                <TableHead className="text-right min-w-[80px]">Ações</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -513,7 +513,7 @@ export default function ServidoresPage() {
                             )}
                             {primaryAssignment.function && (
                               <span className="text-xs text-muted-foreground">
-                                Funcao: {primaryAssignment.function.nome}
+                                Função: {primaryAssignment.function.nome}
                               </span>
                             )}
                           </div>
@@ -522,10 +522,10 @@ export default function ServidoresPage() {
                             <Badge variant="outline" className="bg-amber-100 text-amber-800 text-xs">
                               Escopo administrativo apenas
                             </Badge>
-                            <span className="text-xs text-muted-foreground">Sem lotacao operacional ativa</span>
+                            <span className="text-xs text-muted-foreground">Sem lotação operacional ativa</span>
                           </div>
                         ) : (
-                          <span className="text-xs text-muted-foreground">Sem lotacao operacional</span>
+                          <span className="text-xs text-muted-foreground">Sem lotação operacional</span>
                         )}
                       </TableCell>
                       <TableCell onClick={(event) => event.stopPropagation()}>{getRoleBadge(member.role)}</TableCell>
@@ -551,7 +551,7 @@ export default function ServidoresPage() {
                             </Button>
                           </DropdownMenuTrigger>
                           <DropdownMenuContent align="end" className="w-48">
-                            <DropdownMenuLabel>Acoes</DropdownMenuLabel>
+                            <DropdownMenuLabel>Ações</DropdownMenuLabel>
                             <DropdownMenuSeparator />
                             <DropdownMenuItem onClick={() => handleViewProfile(member)}>
                               <Eye className="h-4 w-4 mr-2" />
@@ -563,7 +563,7 @@ export default function ServidoresPage() {
                             </DropdownMenuItem>
                             <DropdownMenuItem onClick={() => handleManageAssignments(member)}>
                               <ArrowRightLeft className="h-4 w-4 mr-2" />
-                              Gerenciar Lotacoes
+                              Gerenciar Lotações
                             </DropdownMenuItem>
                             <DropdownMenuSeparator />
                             <DropdownMenuItem
@@ -588,10 +588,10 @@ export default function ServidoresPage() {
       <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Confirmar Exclusao</AlertDialogTitle>
+            <AlertDialogTitle>Confirmar Exclusão</AlertDialogTitle>
             <AlertDialogDescription>
               Tem certeza que deseja excluir o servidor <strong>{userToDelete?.name}</strong>?
-              Esta acao nao pode ser desfeita.
+              Esta ação não pode ser desfeita.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>

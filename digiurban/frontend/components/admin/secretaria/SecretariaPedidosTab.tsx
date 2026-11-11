@@ -26,7 +26,7 @@ interface ServiceOption {
 }
 
 const VIEWS: { view: keyof QueueCounts; label: string; hint: string; icon: LucideIcon; tone?: string }[] = [
-  { view: 'active', label: 'Em aberto', hint: 'pedidos em andamento', icon: Inbox },
+  { view: 'active', label: 'Em aberto', hint: 'protocolos em andamento', icon: Inbox },
   { view: 'overdue', label: 'Atrasados', hint: 'fora do prazo', icon: AlertTriangle, tone: 'text-red-600' },
   { view: 'due_soon', label: 'Vencendo', hint: 'prazo nos próximos dias', icon: Clock, tone: 'text-amber-600' },
   { view: 'unassigned', label: 'Sem responsável', hint: 'aguardando alguém assumir', icon: UserX },
@@ -91,13 +91,13 @@ export function SecretariaPedidosTab({ slug, code }: { slug: string; code: strin
             Gestão de Protocolos
           </CardTitle>
           <CardDescription>
-            Fila, prazos, responsáveis e os dados dos formulários de todos os pedidos da secretaria.
+            Fila, prazos, responsáveis e os dados dos formulários de todos os protocolos da secretaria.
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
           <Button asChild>
             <Link href={queueHref} className="inline-flex items-center whitespace-nowrap">
-              Abrir os pedidos da secretaria
+              Abrir os protocolos da secretaria
               <ArrowRight className="ml-2 h-4 w-4 shrink-0" />
             </Link>
           </Button>

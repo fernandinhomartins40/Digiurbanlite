@@ -60,12 +60,12 @@ const EXPERIENCE_OPTIONS: Array<{
   {
     value: 'fast',
     label: 'Livre',
-    description: 'Chat livre usando o perfil rapido configurado centralmente no Super Admin.',
+    description: 'Chat livre usando o perfil rápido configurado centralmente no Super Admin.',
   },
   {
     value: 'contextual',
     label: 'Contextual',
-    description: 'Consulta dados, fluxos e contexto da aplicacao com o perfil contextual configurado no Super Admin.',
+    description: 'Consulta dados, fluxos e contexto da aplicação com o perfil contextual configurado no Super Admin.',
   },
   {
     value: 'quality',
@@ -74,7 +74,7 @@ const EXPERIENCE_OPTIONS: Array<{
   },
 ];
 const QUICK_PROMPTS = [
-  'Crie um modelo de oficio para solicitar manutencao de equipamento.',
+  'Crie um modelo de ofício para solicitar manutenção de equipamento.',
   'Me ajude a revisar este texto para um tom mais formal.',
   'Estruture um comunicado interno claro e objetivo.',
   'Transforme este rascunho em uma resposta institucional.',
@@ -457,7 +457,7 @@ export default function AdminAiPage() {
       setLoadingMessages(false);
       toast({
         title: 'Erro ao carregar conversas',
-        description: error instanceof Error ? error.message : 'Falha ao carregar o historico.',
+        description: error instanceof Error ? error.message : 'Falha ao carregar o histórico.',
         variant: 'destructive',
       });
     } finally {
@@ -479,7 +479,7 @@ export default function AdminAiPage() {
     } catch (error) {
       toast({
         title: 'Erro ao criar conversa',
-        description: error instanceof Error ? error.message : 'Nao foi possivel criar uma conversa.',
+        description: error instanceof Error ? error.message : 'Não foi possível criar uma conversa.',
         variant: 'destructive',
       });
     }
@@ -508,8 +508,8 @@ export default function AdminAiPage() {
     const title = editingTitle.trim();
     if (!title) {
       toast({
-        title: 'Titulo invalido',
-        description: 'Informe um titulo para a conversa.',
+        title: 'Título inválido',
+        description: 'Informe um título para a conversa.',
         variant: 'destructive',
       });
       return;
@@ -528,7 +528,7 @@ export default function AdminAiPage() {
       setEditingTitle('');
     } catch (error) {
       toast({
-        title: 'Erro ao atualizar titulo',
+        title: 'Erro ao atualizar título',
         description: error instanceof Error ? error.message : 'Falha ao atualizar a conversa.',
         variant: 'destructive',
       });
@@ -586,7 +586,7 @@ export default function AdminAiPage() {
     if (attachments.length + selected.length > MAX_ATTACHMENTS) {
       toast({
         title: 'Limite de anexos',
-        description: `Voce pode anexar no maximo ${MAX_ATTACHMENTS} arquivos por mensagem.`,
+        description: `Você pode anexar no máximo ${MAX_ATTACHMENTS} arquivos por mensagem.`,
         variant: 'destructive',
       });
       event.target.value = '';
@@ -798,7 +798,7 @@ export default function AdminAiPage() {
           <DropdownMenuContent align="end" className="w-44">
             <DropdownMenuItem onClick={() => startEditingConversation(conversation)}>
               <Edit3 className="mr-2 h-4 w-4" />
-              Editar titulo
+              Editar título
             </DropdownMenuItem>
             <DropdownMenuItem onClick={() => void archiveConversation(conversation.id)}>
               <Archive className="mr-2 h-4 w-4" />
@@ -913,7 +913,7 @@ export default function AdminAiPage() {
                     {EXPERIENCE_OPTIONS.find((option) => option.value === experienceMode)?.description}
                   </p>
                   <p className="text-[11px] text-slate-400">
-                    Provider e modelos sao aplicados pela configuracao central do Super Admin.
+                    Provider e modelos são aplicados pela configuração central do Super Admin.
                   </p>
                 </div>
               </div>
@@ -943,13 +943,13 @@ export default function AdminAiPage() {
                   <Sparkles className="h-3.5 w-3.5" />
                   IA Centralizada
                 </span>
-                <h2 className="font-serif text-3xl tracking-tight text-slate-900 sm:text-5xl">Por onde comecamos?</h2>
+                <h2 className="font-serif text-3xl tracking-tight text-slate-900 sm:text-5xl">Por onde começamos?</h2>
                 <p className="mt-4 max-w-xl text-sm text-slate-600">
                   {experienceMode === 'contextual'
-                    ? 'Consultas contextuais usam dados, fluxos e contexto da aplicacao antes de responder.'
+                    ? 'Consultas contextuais usam dados, fluxos e contexto da aplicação antes de responder.'
                     : experienceMode === 'quality'
-                      ? 'Use o modo Qualidade quando quiser mais acabamento em redacoes, pareceres e textos institucionais.'
-                      : 'Modo livre para escrita, revisao e produtividade. Use Contextual quando precisar de dados e fluxos da aplicacao.'}
+                      ? 'Use o modo Qualidade quando quiser mais acabamento em redações, pareceres e textos institucionais.'
+                      : 'Modo livre para escrita, revisão e produtividade. Use Contextual quando precisar de dados e fluxos da aplicação.'}
                 </p>
                 <div className="mt-6 flex flex-wrap justify-center gap-2">
                   {QUICK_PROMPTS.map((prompt) => (
@@ -1010,7 +1010,7 @@ export default function AdminAiPage() {
                         }`}
                       >
                         <div className={`mb-2 flex items-center gap-2 text-[11px] ${isUser ? 'text-cyan-700' : 'text-slate-500'}`}>
-                          <span className="font-semibold uppercase tracking-wide">{isUser ? 'Voce' : 'DigiUrban IA'}</span>
+                          <span className="font-semibold uppercase tracking-wide">{isUser ? 'Você' : 'DigiUrban IA'}</span>
                           <span>{formatDate(message.createdAt)}</span>
                         </div>
 
@@ -1022,7 +1022,7 @@ export default function AdminAiPage() {
                                 {isThinkingNow ? 'IA pensando...' : 'Raciocinio'}
                               </span>
                             </summary>
-                            <div className="whitespace-pre-wrap px-3 pb-3 text-xs text-slate-600">{thinkingText || 'Processando raciocinio...'}</div>
+                            <div className="whitespace-pre-wrap px-3 pb-3 text-xs text-slate-600">{thinkingText || 'Processando raciocínio...'}</div>
                           </details>
                         ) : null}
 
@@ -1079,7 +1079,7 @@ export default function AdminAiPage() {
                               {internalSources.slice(0, 6).map((source, index) => (
                                 <li key={`${message.id}-internal-${index}`} className="truncate">
                                   {source.startsWith('app:')
-                                    ? `Aplicacao: ${source.slice(4)}`
+                                    ? `Aplicação: ${source.slice(4)}`
                                     : source.startsWith('data:')
                                       ? `Dados internos: ${source.slice(5)}`
                                       : source}
@@ -1118,7 +1118,7 @@ export default function AdminAiPage() {
                         ? 'Descreva o que precisa considerando o contexto do sistema.'
                         : experienceMode === 'quality'
                           ? 'Peça um texto mais elaborado, uma revisão refinada ou uma redação longa.'
-                          : 'Escreva livremente... ex: crie um oficio, revise um texto, estruture um comunicado.'
+                          : 'Escreva livremente... ex: crie um ofício, revise um texto, estruture um comunicado.'
                     }
                   />
 
@@ -1209,7 +1209,7 @@ export default function AdminAiPage() {
       >
         <DialogContent className="max-w-md">
           <DialogHeader>
-            <DialogTitle>Editar titulo</DialogTitle>
+            <DialogTitle>Editar título</DialogTitle>
             <DialogDescription>Ajuste o nome da conversa para identifica-la com mais facilidade.</DialogDescription>
           </DialogHeader>
           <div className="space-y-3">
@@ -1218,7 +1218,7 @@ export default function AdminAiPage() {
               onChange={(event) => setEditingTitle(event.target.value)}
               maxLength={120}
               className="h-11 w-full rounded-lg border border-slate-300 px-3 text-sm text-slate-800 outline-none ring-0 transition focus:border-cyan-400"
-              placeholder="Titulo da conversa"
+              placeholder="Título da conversa"
             />
             <div className="flex justify-end gap-2">
               <Button

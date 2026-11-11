@@ -73,15 +73,15 @@ interface Hierarchy {
 // ---------------------------------------------------------------------------
 
 const TIPO_HIERARQUIA: Record<string, string> = {
-  HIERARQUICO: 'Hierarquico',
+  HIERARQUICO: 'Hierárquico',
   FUNCIONAL: 'Funcional',
-  TECNICO: 'Tecnico',
+  TECNICO: 'Técnico',
 };
 
 const TIPO_HIERARQUIA_LABELS: Record<string, string> = {
-  HIERARQUICO: 'Hierarquico',
+  HIERARQUICO: 'Hierárquico',
   FUNCIONAL: 'Funcional',
-  TECNICO: 'Tecnico',
+  TECNICO: 'Técnico',
 };
 
 const TIPO_BADGE_COLORS: Record<string, string> = {
@@ -244,7 +244,7 @@ export default function HierarquiasPage() {
     setCreateError(null);
 
     if (!createForm.subordinadoId || !createForm.supervisorId || !createForm.tipo) {
-      setCreateError('Preencha todos os campos obrigatorios.');
+      setCreateError('Preencha todos os campos obrigatórios.');
       return;
     }
 
@@ -382,7 +382,7 @@ export default function HierarquiasPage() {
                 Hierarquias Organizacionais
               </h1>
               <p className="text-gray-600 mt-1 text-sm md:text-base">
-                Gerencie as relacoes de supervisao entre servidores
+                Gerencie as relações de supervisão entre servidores
               </p>
             </div>
             <Button onClick={openCreateDialog}>
@@ -404,9 +404,9 @@ export default function HierarquiasPage() {
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="TODOS">Todos os tipos</SelectItem>
-                  <SelectItem value="HIERARQUICO">Hierarquico</SelectItem>
+                  <SelectItem value="HIERARQUICO">Hierárquico</SelectItem>
                   <SelectItem value="FUNCIONAL">Funcional</SelectItem>
-                  <SelectItem value="TECNICO">Tecnico</SelectItem>
+                  <SelectItem value="TECNICO">Técnico</SelectItem>
                 </SelectContent>
               </Select>
             </div>
@@ -480,7 +480,7 @@ export default function HierarquiasPage() {
             <p className="text-gray-600 mb-4">
               {searchTerm
                 ? 'Nenhum resultado para a busca realizada.'
-                : 'Ainda nao existem hierarquias cadastradas. Crie a primeira!'}
+                : 'Ainda não existem hierarquias cadastradas. Crie a primeira!'}
             </p>
             {!searchTerm && (
               <Button onClick={openCreateDialog}>
@@ -558,7 +558,7 @@ export default function HierarquiasPage() {
 
                       {/* Bottom info */}
                       <div className="flex items-center gap-4 mt-2 text-xs text-gray-500">
-                        <span>Inicio: {formatDate(h.dataInicio)}</span>
+                        <span>Início: {formatDate(h.dataInicio)}</span>
                         {h.dataFim && <span>Fim: {formatDate(h.dataFim)}</span>}
                         {h.observacoes && (
                           <span className="truncate max-w-[200px]" title={h.observacoes}>
@@ -685,16 +685,16 @@ export default function HierarquiasPage() {
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="HIERARQUICO">Hierarquico</SelectItem>
+                    <SelectItem value="HIERARQUICO">Hierárquico</SelectItem>
                     <SelectItem value="FUNCIONAL">Funcional</SelectItem>
-                    <SelectItem value="TECNICO">Tecnico</SelectItem>
+                    <SelectItem value="TECNICO">Técnico</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
 
               {/* Data Inicio */}
               <div>
-                <Label>Data de Inicio</Label>
+                <Label>Data de Início</Label>
                 <Input
                   type="date"
                   value={createForm.dataInicio}
@@ -706,13 +706,13 @@ export default function HierarquiasPage() {
 
               {/* Observacoes */}
               <div>
-                <Label>Observacoes</Label>
+                <Label>Observações</Label>
                 <Textarea
                   value={createForm.observacoes}
                   onChange={(e) =>
                     setCreateForm((prev) => ({ ...prev, observacoes: e.target.value }))
                   }
-                  placeholder="Observacoes adicionais (opcional)"
+                  placeholder="Observações adicionais (opcional)"
                   rows={3}
                 />
               </div>
@@ -782,9 +782,9 @@ export default function HierarquiasPage() {
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="HIERARQUICO">Hierarquico</SelectItem>
+                      <SelectItem value="HIERARQUICO">Hierárquico</SelectItem>
                       <SelectItem value="FUNCIONAL">Funcional</SelectItem>
-                      <SelectItem value="TECNICO">Tecnico</SelectItem>
+                      <SelectItem value="TECNICO">Técnico</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
@@ -828,20 +828,20 @@ export default function HierarquiasPage() {
                       }`}
                       onClick={() => setEditForm((prev) => ({ ...prev, ativo: false }))}
                     >
-                      Nao
+                      Não
                     </button>
                   </div>
                 </div>
 
                 {/* Observacoes */}
                 <div>
-                  <Label>Observacoes</Label>
+                  <Label>Observações</Label>
                   <Textarea
                     value={editForm.observacoes}
                     onChange={(e) =>
                       setEditForm((prev) => ({ ...prev, observacoes: e.target.value }))
                     }
-                    placeholder="Observacoes adicionais (opcional)"
+                    placeholder="Observações adicionais (opcional)"
                     rows={3}
                   />
                 </div>
@@ -887,7 +887,7 @@ export default function HierarquiasPage() {
                   </p>
                 </div>
                 <p className="text-sm text-gray-500">
-                  Esta acao nao pode ser desfeita.
+                  Esta ação não pode ser desfeita.
                 </p>
               </div>
             )}

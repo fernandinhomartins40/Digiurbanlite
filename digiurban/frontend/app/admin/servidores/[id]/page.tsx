@@ -193,7 +193,7 @@ function getPrimaryAssignment(assignments: AssignmentSummary[]): AssignmentSumma
 function formatRelatedAssignment(employee?: RelatedEmployee | null): string {
   const assignment = getPrimaryAssignment(employee?.assignments || []);
   if (!assignment) {
-    return 'Sem lotacao ativa';
+    return 'Sem lotação ativa';
   }
 
   return (
@@ -201,7 +201,7 @@ function formatRelatedAssignment(employee?: RelatedEmployee | null): string {
     assignment.organizationalUnit?.nome ||
     assignment.position?.nome ||
     assignment.department?.name ||
-    'Sem lotacao ativa'
+    'Sem lotação ativa'
   );
 }
 
@@ -273,7 +273,7 @@ export default function PerfilServidorPage() {
     return (
       <div className="flex items-center justify-center min-h-screen p-6">
         <Card className="p-8 max-w-lg w-full">
-          <p className="text-gray-700">{error || 'Servidor nao encontrado'}</p>
+          <p className="text-gray-700">{error || 'Servidor não encontrado'}</p>
           <Button asChild variant="outline" className="mt-4">
             <Link href="/admin/servidores">Voltar para servidores</Link>
           </Button>
@@ -310,7 +310,7 @@ export default function PerfilServidorPage() {
             <Button asChild variant="outline">
               <Link href={`/admin/organograma/lotacoes?userId=${user.id}`}>
                 <ArrowRightLeft className="mr-2 h-4 w-4" />
-                Gerenciar lotacoes
+                Gerenciar lotações
               </Link>
             </Button>
           </div>
@@ -353,7 +353,7 @@ export default function PerfilServidorPage() {
                       <span>
                         {primaryAssignment?.position?.nome ||
                           primaryAssignment?.organizationalUnit?.nome ||
-                          'Sem lotacao operacional ativa'}
+                          'Sem lotação operacional ativa'}
                       </span>
                     </div>
                   </div>
@@ -363,7 +363,7 @@ export default function PerfilServidorPage() {
               <div className="grid grid-cols-2 md:grid-cols-4 gap-3 min-w-[280px]">
                 <Card className="shadow-none border">
                   <CardContent className="p-4">
-                    <div className="text-xs text-gray-500">Lotacoes ativas</div>
+                    <div className="text-xs text-gray-500">Lotações ativas</div>
                     <div className="text-2xl font-bold text-blue-600">{activeAssignments.length}</div>
                   </CardContent>
                 </Card>
@@ -383,7 +383,7 @@ export default function PerfilServidorPage() {
                 </Card>
                 <Card className="shadow-none border">
                   <CardContent className="p-4">
-                    <div className="text-xs text-gray-500">Tempo de servico</div>
+                    <div className="text-xs text-gray-500">Tempo de serviço</div>
                     <div className="text-2xl font-bold text-orange-600">
                       {getYearsSince(user.dataAdmissao || user.createdAt)} anos
                     </div>
@@ -397,7 +397,7 @@ export default function PerfilServidorPage() {
         <Tabs defaultValue="resumo">
           <TabsList className="mb-4 flex flex-wrap h-auto">
             <TabsTrigger value="resumo">Resumo</TabsTrigger>
-            <TabsTrigger value="lotacoes">Lotacoes</TabsTrigger>
+            <TabsTrigger value="lotacoes">Lotações</TabsTrigger>
             <TabsTrigger value="hierarquia">Hierarquia</TabsTrigger>
             <TabsTrigger value="profissional">Dados Profissionais</TabsTrigger>
           </TabsList>
@@ -423,7 +423,7 @@ export default function PerfilServidorPage() {
                     <div className="font-medium">{user.rg || '-'}</div>
                   </div>
                   <div>
-                    <div className="text-gray-500">Situacao funcional</div>
+                    <div className="text-gray-500">Situação funcional</div>
                     <div className="font-medium">{user.situacaoFuncional || '-'}</div>
                   </div>
                   <div>
@@ -431,7 +431,7 @@ export default function PerfilServidorPage() {
                     <div className="font-medium">{formatDateSafe(user.dataNascimento)}</div>
                   </div>
                   <div>
-                    <div className="text-gray-500">Admissao</div>
+                    <div className="text-gray-500">Admissão</div>
                     <div className="font-medium">{formatDateSafe(user.dataAdmissao)}</div>
                   </div>
                   <div>
@@ -439,7 +439,7 @@ export default function PerfilServidorPage() {
                     <div className="font-medium">{formatDateSafe(user.createdAt, "dd 'de' MMMM 'de' yyyy")}</div>
                   </div>
                   <div>
-                    <div className="text-gray-500">Ultimo login</div>
+                    <div className="text-gray-500">Último login</div>
                     <div className="font-medium">{formatDateSafe(user.lastLogin, "dd/MM/yyyy HH:mm")}</div>
                   </div>
                   <div className="sm:col-span-2">
@@ -447,7 +447,7 @@ export default function PerfilServidorPage() {
                     <div className="font-medium">{user.cargoEfetivo || '-'}</div>
                   </div>
                   <div className="sm:col-span-2">
-                    <div className="text-gray-500">Observacoes</div>
+                    <div className="text-gray-500">Observações</div>
                     <div className="font-medium whitespace-pre-wrap">{user.observacoes || '-'}</div>
                   </div>
                 </CardContent>
@@ -456,7 +456,7 @@ export default function PerfilServidorPage() {
               <Card>
                 <CardHeader>
                   <CardTitle>Organograma Centralizado</CardTitle>
-                  <CardDescription>Departamento, lotacao principal e escopo operacional atual</CardDescription>
+                  <CardDescription>Departamento, lotação principal e escopo operacional atual</CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-4">
                   <div>
@@ -480,7 +480,7 @@ export default function PerfilServidorPage() {
                   <div className="rounded-lg border bg-slate-50 p-4 space-y-2">
                     <div className="flex items-center gap-2 text-sm font-medium text-slate-900">
                       <BadgeCheck className="h-4 w-4 text-green-600" />
-                      Lotacao principal atual
+                      Lotação principal atual
                     </div>
                     <div className="text-sm text-slate-700">
                       Setor: {primaryAssignment?.organizationalUnit?.nome || '-'}
@@ -489,13 +489,13 @@ export default function PerfilServidorPage() {
                       Cargo: {primaryAssignment?.position?.nome || '-'}
                     </div>
                     <div className="text-sm text-slate-700">
-                      Funcao: {primaryAssignment?.function?.nome || '-'}
+                      Função: {primaryAssignment?.function?.nome || '-'}
                     </div>
                     <div className="text-sm text-slate-700">
-                      Tipo e situacao: {primaryAssignment?.tipo || '-'} / {primaryAssignment?.situacao || '-'}
+                      Tipo e situação: {primaryAssignment?.tipo || '-'} / {primaryAssignment?.situacao || '-'}
                     </div>
                     <div className="text-sm text-slate-700">
-                      Inicio: {formatDateSafe(primaryAssignment?.dataInicio)}
+                      Início: {formatDateSafe(primaryAssignment?.dataInicio)}
                     </div>
                   </div>
                 </CardContent>
@@ -506,12 +506,12 @@ export default function PerfilServidorPage() {
           <TabsContent value="lotacoes">
             <Card>
               <CardHeader>
-                <CardTitle>Historico de Lotacoes</CardTitle>
-                <CardDescription>Todas as lotacoes funcionais do servidor no organograma</CardDescription>
+                <CardTitle>Histórico de Lotações</CardTitle>
+                <CardDescription>Todas as lotações funcionais do servidor no organograma</CardDescription>
               </CardHeader>
               <CardContent className="space-y-4">
                 {sortedAssignments.length === 0 ? (
-                  <p className="text-sm text-gray-600">Nenhuma lotacao registrada.</p>
+                  <p className="text-sm text-gray-600">Nenhuma lotação registrada.</p>
                 ) : (
                   sortedAssignments.map((assignment) => (
                     <Card key={assignment.id} className="border-l-4 border-l-blue-600 shadow-none">
@@ -530,7 +530,7 @@ export default function PerfilServidorPage() {
                             <div className="text-sm text-gray-600">
                               <div>Departamento: {assignment.department?.name || '-'}</div>
                               <div>Setor: {assignment.organizationalUnit?.nome || '-'}</div>
-                              <div>Funcao: {assignment.function?.nome || '-'}</div>
+                              <div>Função: {assignment.function?.nome || '-'}</div>
                               <div>Tipo: {assignment.tipo || '-'}</div>
                             </div>
                           </div>
@@ -538,7 +538,7 @@ export default function PerfilServidorPage() {
                             <div className="flex items-center gap-2">
                               <Calendar className="h-4 w-4" />
                               <span>
-                                {formatDateSafe(assignment.dataInicio)} ate {formatDateSafe(assignment.dataFim)}
+                                {formatDateSafe(assignment.dataInicio)} até {formatDateSafe(assignment.dataFim)}
                               </span>
                             </div>
                             {assignment.cargaHoraria ? (
@@ -548,7 +548,7 @@ export default function PerfilServidorPage() {
                               </div>
                             ) : null}
                             {assignment.percentualDedicacao ? (
-                              <div>{assignment.percentualDedicacao}% de dedicacao</div>
+                              <div>{assignment.percentualDedicacao}% de dedicação</div>
                             ) : null}
                           </div>
                         </div>
@@ -570,7 +570,7 @@ export default function PerfilServidorPage() {
               <Card>
                 <CardHeader>
                   <CardTitle>Supervisores</CardTitle>
-                  <CardDescription>Relacoes hierarquicas ativas acima do servidor</CardDescription>
+                  <CardDescription>Relações hierárquicas ativas acima do servidor</CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-3">
                   {user.supervisores.length === 0 ? (
@@ -598,7 +598,7 @@ export default function PerfilServidorPage() {
               <Card>
                 <CardHeader>
                   <CardTitle>Subordinados</CardTitle>
-                  <CardDescription>Relacoes hierarquicas ativas abaixo do servidor</CardDescription>
+                  <CardDescription>Relações hierárquicas ativas abaixo do servidor</CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-3">
                   {user.subordinados.length === 0 ? (
@@ -629,8 +629,8 @@ export default function PerfilServidorPage() {
             <div className="grid lg:grid-cols-2 gap-6">
               <Card>
                 <CardHeader>
-                  <CardTitle>Saude</CardTitle>
-                  <CardDescription>Dados profissionais especificos, quando aplicavel</CardDescription>
+                  <CardTitle>Saúde</CardTitle>
+                  <CardDescription>Dados profissionais específicos, quando aplicável</CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-2 text-sm">
                   <div>Categoria: {user.healthData?.categoria || '-'}</div>
@@ -646,14 +646,14 @@ export default function PerfilServidorPage() {
 
               <Card>
                 <CardHeader>
-                  <CardTitle>Outros Modulos</CardTitle>
-                  <CardDescription>Convergencia dos dados profissionais setoriais</CardDescription>
+                  <CardTitle>Outros Módulos</CardTitle>
+                  <CardDescription>Convergência dos dados profissionais setoriais</CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-4 text-sm">
                   <div>
-                    <div className="font-medium text-gray-900">Educacao</div>
+                    <div className="font-medium text-gray-900">Educação</div>
                     <div className="text-gray-600">
-                      Categoria: {user.educationData?.categoria || '-'} • Formacao: {user.educationData?.formacao || '-'}
+                      Categoria: {user.educationData?.categoria || '-'} • Formação: {user.educationData?.formacao || '-'}
                     </div>
                   </div>
                   <div>
@@ -663,7 +663,7 @@ export default function PerfilServidorPage() {
                     </div>
                   </div>
                   <div>
-                    <div className="font-medium text-gray-900">Assistencia Social</div>
+                    <div className="font-medium text-gray-900">Assistência Social</div>
                     <div className="text-gray-600">
                       Categoria: {user.socialAssistanceData?.categoria || '-'} • Registro: {user.socialAssistanceData?.registroProfissional || '-'}
                     </div>

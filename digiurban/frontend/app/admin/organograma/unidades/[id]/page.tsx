@@ -96,10 +96,10 @@ const TIPO_LABELS: Record<string, string> = {
   SECRETARIA: 'Secretaria',
   DIRETORIA: 'Diretoria',
   COORDENADORIA: 'Coordenadoria',
-  DIVISAO: 'Divisao',
+  DIVISAO: 'Divisão',
   SETOR: 'Setor',
-  NUCLEO: 'Nucleo',
-  GERENCIA: 'Gerencia',
+  NUCLEO: 'Núcleo',
+  GERENCIA: 'Gerência',
   UNIDADE_ESPECIAL: 'Unidade Especial',
   DEPARTAMENTO: 'Departamento',
   ASSESSORIA: 'Assessoria',
@@ -199,7 +199,7 @@ export default function UnitDetailPage() {
             Voltar ao Organograma
           </Button>
           <Card className="p-6">
-            <p className="text-gray-600">Unidade nao encontrada.</p>
+            <p className="text-gray-600">Unidade não encontrada.</p>
           </Card>
         </div>
       </div>
@@ -257,7 +257,7 @@ export default function UnitDetailPage() {
                 {unit.responsavel && (
                   <p className="text-gray-600 mt-1 flex items-center gap-1">
                     <Users className="h-4 w-4" />
-                    Responsavel: <span className="font-medium">{unit.responsavel.name}</span>
+                    Responsável: <span className="font-medium">{unit.responsavel.name}</span>
                   </p>
                 )}
               </div>
@@ -286,7 +286,7 @@ export default function UnitDetailPage() {
           <TabsList className="mb-4">
             <TabsTrigger value="informacoes">
               <Building2 className="h-4 w-4 mr-2" />
-              Informacoes
+              Informações
             </TabsTrigger>
             <TabsTrigger value="subunidades">
               <Building2 className="h-4 w-4 mr-2" />
@@ -305,7 +305,7 @@ export default function UnitDetailPage() {
           {/* Tab: Informacoes */}
           <TabsContent value="informacoes">
             <Card className="p-6">
-              <h2 className="text-lg font-semibold text-gray-900 mb-4">Informacoes da Unidade</h2>
+              <h2 className="text-lg font-semibold text-gray-900 mb-4">Informações da Unidade</h2>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div>
                   <label className="text-sm font-medium text-gray-500">Nome</label>
@@ -324,7 +324,7 @@ export default function UnitDetailPage() {
                   </div>
                 </div>
                 <div>
-                  <label className="text-sm font-medium text-gray-500">Nivel</label>
+                  <label className="text-sm font-medium text-gray-500">Nível</label>
                   <p className="text-gray-900 mt-0.5">{unit.nivel}</p>
                 </div>
                 <div>
@@ -352,11 +352,11 @@ export default function UnitDetailPage() {
                   </p>
                 </div>
                 <div className="md:col-span-2">
-                  <label className="text-sm font-medium text-gray-500">Descricao</label>
+                  <label className="text-sm font-medium text-gray-500">Descrição</label>
                   <p className="text-gray-900 mt-0.5">{unit.descricao || '-'}</p>
                 </div>
                 <div>
-                  <label className="text-sm font-medium text-gray-500">Responsavel</label>
+                  <label className="text-sm font-medium text-gray-500">Responsável</label>
                   <p className="text-gray-900 mt-0.5">
                     {unit.responsavel ? (
                       <span>
@@ -466,9 +466,9 @@ export default function UnitDetailPage() {
                       <tr className="border-b border-gray-200">
                         <th className="text-left py-3 px-4 font-medium text-gray-600">Servidor</th>
                         <th className="text-left py-3 px-4 font-medium text-gray-600">Cargo</th>
-                        <th className="text-left py-3 px-4 font-medium text-gray-600">Funcao</th>
+                        <th className="text-left py-3 px-4 font-medium text-gray-600">Função</th>
                         <th className="text-center py-3 px-4 font-medium text-gray-600">Principal</th>
-                        <th className="text-left py-3 px-4 font-medium text-gray-600">Data Inicio</th>
+                        <th className="text-left py-3 px-4 font-medium text-gray-600">Data Início</th>
                       </tr>
                     </thead>
                     <tbody>
@@ -494,7 +494,7 @@ export default function UnitDetailPage() {
                             {assignment.isPrimary ? (
                               <Badge className="bg-green-100 text-green-800 border border-green-300">Sim</Badge>
                             ) : (
-                              <Badge variant="outline" className="text-gray-500">Nao</Badge>
+                              <Badge variant="outline" className="text-gray-500">Não</Badge>
                             )}
                           </td>
                           <td className="py-3 px-4 text-gray-700">
@@ -547,7 +547,7 @@ export default function UnitDetailPage() {
                                 <Badge variant="outline" className="text-[10px]">{position.tipo}</Badge>
                               )}
                               {position.nivel && (
-                                <span className="text-xs text-gray-500">Nivel: {position.nivel}</span>
+                                <span className="text-xs text-gray-500">Nível: {position.nivel}</span>
                               )}
                             </div>
                           </div>
@@ -556,7 +556,7 @@ export default function UnitDetailPage() {
                           <p className="text-lg font-bold text-gray-900">
                             {position._count?.assignments || 0}
                           </p>
-                          <p className="text-xs text-gray-500">lotacoes</p>
+                          <p className="text-xs text-gray-500">lotações</p>
                         </div>
                       </div>
                       <div className="mt-3 flex items-center justify-end gap-2">
@@ -572,7 +572,7 @@ export default function UnitDetailPage() {
                           >
                             <Button size="sm">
                               <Plus className="h-4 w-4 mr-2" />
-                              Nova funcao deste cargo
+                              Nova função deste cargo
                             </Button>
                           </Link>
                         )}

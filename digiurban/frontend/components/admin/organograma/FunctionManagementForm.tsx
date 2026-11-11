@@ -141,15 +141,15 @@ export function FunctionManagementForm({
     event.preventDefault();
 
     if (!formData.nome.trim()) {
-      setError('Nome da funcao e obrigatorio');
+      setError('Nome da função é obrigatório');
       return;
     }
     if (!formData.departmentId) {
-      setError('Selecione a secretaria da funcao');
+      setError('Selecione a secretaria da função');
       return;
     }
     if (!formData.positionId) {
-      setError('Selecione o cargo ao qual a funcao pertence');
+      setError('Selecione o cargo ao qual a função pertence');
       return;
     }
 
@@ -185,7 +185,7 @@ export function FunctionManagementForm({
       router.push(successHref || '/admin/organograma/funcoes');
       router.refresh();
     } catch (submitError) {
-      setError(submitError instanceof Error ? submitError.message : 'Erro ao salvar funcao');
+      setError(submitError instanceof Error ? submitError.message : 'Erro ao salvar função');
     } finally {
       setLoading(false);
     }
@@ -194,11 +194,11 @@ export function FunctionManagementForm({
   return (
     <Card>
       <CardHeader>
-        <CardTitle>{isEditMode ? 'Editar funcao' : 'Nova funcao'}</CardTitle>
+        <CardTitle>{isEditMode ? 'Editar função' : 'Nova função'}</CardTitle>
         <CardDescription>
           {isEditMode
-            ? 'Atualize a funcao mantendo o cargo como dependencia central.'
-            : 'Cadastre a funcao a partir de um cargo ja existente no organograma.'}
+            ? 'Atualize a função mantendo o cargo como dependência central.'
+            : 'Cadastre a função a partir de um cargo já existente no organograma.'}
         </CardDescription>
       </CardHeader>
       <CardContent>
@@ -219,7 +219,7 @@ export function FunctionManagementForm({
                 onChange={(event) =>
                   setFormData((current) => ({ ...current, nome: event.target.value }))
                 }
-                placeholder="Ex: Funcao gratificada de coordenacao"
+                placeholder="Ex: Função gratificada de coordenação"
                 disabled={loading || loadingReferences}
               />
             </div>
@@ -337,7 +337,7 @@ export function FunctionManagementForm({
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="function-description">Descricao</Label>
+            <Label htmlFor="function-description">Descrição</Label>
             <Textarea
               id="function-description"
               value={formData.descricao}
@@ -345,7 +345,7 @@ export function FunctionManagementForm({
                 setFormData((current) => ({ ...current, descricao: event.target.value }))
               }
               rows={4}
-              placeholder="Detalhe o objetivo da funcao"
+              placeholder="Detalhe o objetivo da função"
               disabled={loading}
             />
           </div>
@@ -393,7 +393,7 @@ export function FunctionManagementForm({
               className="w-full sm:w-auto"
             >
               {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-              {isEditMode ? 'Salvar alteracoes' : 'Criar funcao'}
+              {isEditMode ? 'Salvar alterações' : 'Criar função'}
             </Button>
           </div>
         </form>

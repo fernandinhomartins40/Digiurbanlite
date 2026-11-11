@@ -141,7 +141,7 @@ export function DemandasEnviadas() {
     try {
       setRequestingTicketId(ticket.id)
       await api.post(`/admin/chamados/${ticket.id}/request-update`, {})
-      toast.success('Cobranca de agilidade enviada ao servidor responsavel')
+      toast.success('Cobrança de agilidade enviada ao servidor responsável')
       await loadTickets()
     } catch (error: any) {
       console.error('Erro ao cobrar agilidade do chamado:', error)
@@ -153,7 +153,7 @@ export function DemandasEnviadas() {
 
   const handleCancelTicket = async (ticket: AdminTicket) => {
     const confirmed = window.confirm(
-      `Deseja cancelar o chamado ${ticket.number}? Esta acao so pode ser feita enquanto ele estiver pendente.`
+      `Deseja cancelar o chamado ${ticket.number}? Esta ação só pode ser feita enquanto ele estiver pendente.`
     )
 
     if (!confirmed) {

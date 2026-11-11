@@ -121,7 +121,7 @@ export default function AdminPage() {
   const [loadingShortcuts, setLoadingShortcuts] = useState(false)
   const [secretaryUsage, setSecretaryUsage] = useState<ShortcutUsage[]>([])
 
-  usePageTracking('Admin Inicio')
+  usePageTracking('Admin Início')
 
   useEffect(() => {
     if (loading || !user) return

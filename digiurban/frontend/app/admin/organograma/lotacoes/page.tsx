@@ -100,23 +100,23 @@ interface Assignment {
 // ---------------------------------------------------------------------------
 
 const TIPO_VINCULO: Record<string, string> = {
-  LOTACAO: 'Lotacao',
-  CEDENCIA: 'Cedencia',
-  REQUISICAO: 'Requisicao',
-  REMOCAO: 'Remocao',
+  LOTACAO: 'Lotação',
+  CEDENCIA: 'Cedência',
+  REQUISICAO: 'Requisição',
+  REMOCAO: 'Remoção',
 };
 
 const TIPO_VINCULO_LABEL: Record<string, string> = {
-  LOTACAO: 'Lotacao',
-  CEDENCIA: 'Cedencia',
-  REQUISICAO: 'Requisicao',
-  REMOCAO: 'Remocao',
+  LOTACAO: 'Lotação',
+  CEDENCIA: 'Cedência',
+  REQUISICAO: 'Requisição',
+  REMOCAO: 'Remoção',
 };
 
 const SITUACAO_VINCULO: Record<string, string> = {
   ATIVO: 'Ativo',
   AFASTADO: 'Afastado',
-  LICENCA: 'Licenca',
+  LICENCA: 'Licença',
   SUSPENSO: 'Suspenso',
   CEDIDO: 'Cedido',
   INATIVO: 'Inativo',
@@ -226,7 +226,7 @@ export default function LotacoesPage() {
         })),
       );
     } catch (err: any) {
-      setError(err.message || 'Erro ao carregar lotacoes');
+      setError(err.message || 'Erro ao carregar lotações');
     } finally {
       setLoading(false);
     }
@@ -437,7 +437,7 @@ export default function LotacoesPage() {
       setCreateOpen(false);
       fetchAssignments();
     } catch (err: any) {
-      alert(err.message || 'Erro ao criar lotacao');
+      alert(err.message || 'Erro ao criar lotação');
     } finally {
       setSaving(false);
     }
@@ -457,7 +457,7 @@ export default function LotacoesPage() {
       setEditOpen(false);
       fetchAssignments();
     } catch (err: any) {
-      alert(err.message || 'Erro ao atualizar lotacao');
+      alert(err.message || 'Erro ao atualizar lotação');
     } finally {
       setSaving(false);
     }
@@ -473,7 +473,7 @@ export default function LotacoesPage() {
       setDeleteOpen(false);
       fetchAssignments();
     } catch (err: any) {
-      alert(err.message || 'Erro ao encerrar vinculo');
+      alert(err.message || 'Erro ao encerrar vínculo');
     } finally {
       setSaving(false);
     }
@@ -621,7 +621,7 @@ export default function LotacoesPage() {
 
       {/* Function */}
       <div>
-        <Label>Funcao</Label>
+        <Label>Função</Label>
         <Select
           value={formData.functionId}
           onValueChange={(v) =>
@@ -646,7 +646,7 @@ export default function LotacoesPage() {
       {/* Tipo + Situacao */}
       <div className="grid grid-cols-2 gap-4">
         <div>
-          <Label>Tipo de Vinculo *</Label>
+          <Label>Tipo de Vínculo *</Label>
           <Select
             value={formData.tipo}
             onValueChange={(v) => setFormData({ ...formData, tipo: v })}
@@ -664,7 +664,7 @@ export default function LotacoesPage() {
           </Select>
         </div>
         <div>
-          <Label>Situacao *</Label>
+          <Label>Situação *</Label>
           <Select
             value={formData.situacao}
             onValueChange={(v) => setFormData({ ...formData, situacao: v })}
@@ -693,13 +693,13 @@ export default function LotacoesPage() {
           }
         />
         <Label htmlFor="isPrimary" className="cursor-pointer">
-          Lotacao principal
+          Lotação principal
         </Label>
       </div>
 
       {/* Data Inicio */}
       <div>
-        <Label>Data de Inicio *</Label>
+        <Label>Data de Início *</Label>
         <Input
           type="date"
           value={formData.dataInicio}
@@ -710,7 +710,7 @@ export default function LotacoesPage() {
       {/* Carga Horaria + Percentual */}
       <div className="grid grid-cols-2 gap-4">
         <div>
-          <Label>Carga Horaria (h/semana)</Label>
+          <Label>Carga Horária (h/semana)</Label>
           <Input
             type="number"
             min={0}
@@ -720,7 +720,7 @@ export default function LotacoesPage() {
           />
         </div>
         <div>
-          <Label>Dedicacao (%)</Label>
+          <Label>Dedicação (%)</Label>
           <Input
             type="number"
             min={0}
@@ -736,11 +736,11 @@ export default function LotacoesPage() {
 
       {/* Observacoes */}
       <div>
-        <Label>Observacoes</Label>
+        <Label>Observações</Label>
         <Textarea
           value={formData.observacoes}
           onChange={(e) => setFormData({ ...formData, observacoes: e.target.value })}
-          placeholder="Observacoes (opcional)"
+          placeholder="Observações (opcional)"
           rows={3}
         />
       </div>
@@ -767,16 +767,16 @@ export default function LotacoesPage() {
               <div>
                 <h1 className="text-2xl md:text-3xl font-bold text-gray-900 flex items-center gap-3">
                   <UserCog className="h-7 w-7 md:h-8 md:w-8 text-green-600" />
-                  Lotacoes e Vinculos
+                  Lotações e Vínculos
                 </h1>
                 <p className="text-gray-600 mt-1 text-sm md:text-base">
-                  Gerencie as lotacoes e vinculos funcionais dos servidores
+                  Gerencie as lotações e vínculos funcionais dos servidores
                 </p>
               </div>
             </div>
             <Button onClick={openCreate}>
               <Plus className="h-4 w-4 mr-2" />
-              Nova Lotacao
+              Nova Lotação
             </Button>
           </div>
         </div>
@@ -788,8 +788,8 @@ export default function LotacoesPage() {
                 <p className="text-sm font-medium text-blue-900">Filtro por servidor ativo</p>
                 <p className="text-sm text-blue-800">
                   {filteredUser
-                    ? `Mostrando lotacoes de ${filteredUser.name}.`
-                    : 'Mostrando lotacoes do servidor selecionado.'}
+                    ? `Mostrando lotações de ${filteredUser.name}.`
+                    : 'Mostrando lotações do servidor selecionado.'}
                 </p>
               </div>
               <Link href="/admin/organograma/lotacoes" className="text-sm font-medium text-blue-700 hover:text-blue-900">
@@ -846,7 +846,7 @@ export default function LotacoesPage() {
 
             {/* Situacao filter */}
             <div className="w-full sm:w-40">
-              <Label className="text-xs text-gray-500 mb-1 block">Situacao</Label>
+              <Label className="text-xs text-gray-500 mb-1 block">Situação</Label>
               <Select
                 value={filterSituacao || '_all_'}
                 onValueChange={(v) => setFilterSituacao(v === '_all_' ? '' : v)}
@@ -892,7 +892,7 @@ export default function LotacoesPage() {
         {loading && (
           <div className="flex items-center justify-center py-16">
             <Loader2 className="h-8 w-8 animate-spin text-green-600" />
-            <span className="ml-3 text-gray-600">Carregando lotacoes...</span>
+            <span className="ml-3 text-gray-600">Carregando lotações...</span>
           </div>
         )}
 
@@ -901,16 +901,16 @@ export default function LotacoesPage() {
           <Card className="p-8 text-center">
             <Users className="h-16 w-16 mx-auto text-gray-400 mb-4" />
             <h3 className="text-lg font-medium text-gray-900 mb-2">
-              Nenhuma lotacao encontrada
+              Nenhuma lotação encontrada
             </h3>
             <p className="text-gray-600 mb-4">
               {searchTerm
                 ? 'Nenhum resultado para a busca informada.'
-                : 'Cadastre a primeira lotacao clicando no botao acima.'}
+                : 'Cadastre a primeira lotação clicando no botão acima.'}
             </p>
             {!searchTerm && (
               <Button onClick={openCreate}>
-                <Plus className="h-4 w-4 mr-2" /> Nova Lotacao
+                <Plus className="h-4 w-4 mr-2" /> Nova Lotação
               </Button>
             )}
           </Card>
@@ -957,11 +957,11 @@ export default function LotacoesPage() {
                       )}
                       {a.function && (
                         <span>
-                          <strong>Funcao:</strong> {a.function.nome}
+                          <strong>Função:</strong> {a.function.nome}
                         </span>
                       )}
                       <span>
-                        <strong>Inicio:</strong> {formatDate(a.dataInicio)}
+                        <strong>Início:</strong> {formatDate(a.dataInicio)}
                       </span>
                       {a.cargaHoraria != null && (
                         <span>
@@ -986,7 +986,7 @@ export default function LotacoesPage() {
                       variant="ghost"
                       size="sm"
                       className="h-8 w-8 p-0 text-red-600 hover:text-red-700"
-                      title="Encerrar vinculo"
+                      title="Encerrar vínculo"
                       onClick={() => openDelete(a)}
                     >
                       <Trash2 className="h-4 w-4" />
@@ -1002,7 +1002,7 @@ export default function LotacoesPage() {
         <Dialog open={createOpen} onOpenChange={setCreateOpen}>
           <DialogContent className="max-w-lg">
             <DialogHeader>
-              <DialogTitle>Nova Lotacao</DialogTitle>
+              <DialogTitle>Nova Lotação</DialogTitle>
             </DialogHeader>
             {renderFormFields(false)}
             <DialogFooter>
@@ -1036,7 +1036,7 @@ export default function LotacoesPage() {
           <DialogContent className="max-w-lg">
             <DialogHeader>
               <DialogTitle>
-                Editar Lotacao{' '}
+                Editar Lotação{' '}
                 {selectedAssignment?.user?.name
                   ? `- ${selectedAssignment.user.name}`
                   : ''}
@@ -1068,16 +1068,16 @@ export default function LotacoesPage() {
         <Dialog open={deleteOpen} onOpenChange={setDeleteOpen}>
           <DialogContent>
             <DialogHeader>
-              <DialogTitle>Encerrar Vinculo</DialogTitle>
+              <DialogTitle>Encerrar Vínculo</DialogTitle>
             </DialogHeader>
             <p className="text-gray-600">
-              Tem certeza que deseja encerrar o vinculo de{' '}
+              Tem certeza que deseja encerrar o vínculo de{' '}
               <strong>{selectedAssignment?.user?.name || 'este servidor'}</strong> com o
               departamento{' '}
               <strong>{selectedAssignment?.department?.name || ''}</strong>?
             </p>
             <p className="text-sm text-gray-500 mt-2">
-              Esta acao ira remover a lotacao permanentemente.
+              Esta ação irá remover a lotação permanentemente.
             </p>
             <DialogFooter>
               <Button variant="outline" onClick={() => setDeleteOpen(false)}>
@@ -1085,7 +1085,7 @@ export default function LotacoesPage() {
               </Button>
               <Button variant="destructive" onClick={handleDelete} disabled={saving}>
                 {saving && <Loader2 className="h-4 w-4 animate-spin mr-2" />}
-                Encerrar Vinculo
+                Encerrar Vínculo
               </Button>
             </DialogFooter>
           </DialogContent>

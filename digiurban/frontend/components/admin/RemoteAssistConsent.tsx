@@ -308,16 +308,16 @@ export function RemoteAssistConsent() {
     const ehUpload = alvo.tagName === 'INPUT' && (alvo as HTMLInputElement).type === 'file'
     if (ehSelectNativo || ehUpload) {
       const aviso = ehUpload
-        ? 'O suporte tentou abrir a selecao de arquivo. Por seguranca do navegador, so voce pode escolher o arquivo — clique no botao e selecione.'
-        : 'O suporte tentou abrir esta lista. Por seguranca do navegador, so voce pode escolher a opcao — clique na lista e selecione.'
+        ? 'O suporte tentou abrir a seleção de arquivo. Por segurança do navegador, só você pode escolher o arquivo — clique no botão e selecione.'
+        : 'O suporte tentou abrir esta lista. Por segurança do navegador, só você pode escolher a opção — clique na lista e selecione.'
       setAvisoLimite(aviso)
       const socket = getMessagesSocket()
       if (socket && sessionRef.current) {
         socket.emit('assist:chat', {
           sessionId: sessionRef.current,
           texto: ehUpload
-            ? '[sistema] Nao consigo abrir a selecao de arquivo daqui — peca para a pessoa escolher.'
-            : '[sistema] Nao consigo abrir esta lista suspensa daqui — peca para a pessoa escolher.',
+            ? '[sistema] Não consigo abrir a seleção de arquivo daqui — peça para a pessoa escolher.'
+            : '[sistema] Não consigo abrir esta lista suspensa daqui — peça para a pessoa escolher.',
         })
       }
       return

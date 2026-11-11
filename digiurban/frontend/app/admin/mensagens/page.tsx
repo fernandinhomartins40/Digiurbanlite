@@ -1,5 +1,6 @@
 'use client';
 
+import { Skeleton } from '@/components/ui/skeleton'
 import { useState, useEffect, useRef } from 'react';
 import {
   MessageCircle,
@@ -453,11 +454,10 @@ export default function AdminMessagesPage() {
 
   if (loading && conversations.length === 0) {
     return (
-      <div className="flex min-h-[50vh] items-center justify-center rounded-3xl border border-slate-200 bg-white shadow-sm">
-        <div className="flex flex-col items-center gap-3">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
-          <p className="text-sm text-gray-600">Carregando...</p>
-        </div>
+      <div className="space-y-4 p-6" aria-busy="true" aria-label="Carregando">
+        <Skeleton className="h-8 w-1/3" />
+        <Skeleton className="h-32 w-full" />
+        <Skeleton className="h-32 w-full" />
       </div>
     );
   }

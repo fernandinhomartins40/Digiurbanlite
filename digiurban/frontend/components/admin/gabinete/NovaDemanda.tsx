@@ -201,7 +201,7 @@ export function NovaDemanda({ onCreated }: { onCreated?: () => void }) {
         setFormData((prev) => ({ ...prev, assignedUserId: '' }))
       } catch (error) {
         if (!cancelled) {
-          console.error('[Chamados] Erro ao carregar responsaveis:', error)
+          console.error('[Chamados] Erro ao carregar responsáveis:', error)
           setAssignees([])
           setDefaultAssignee(null)
           setFormData((prev) => ({ ...prev, assignedUserId: '' }))
@@ -533,9 +533,9 @@ export function NovaDemanda({ onCreated }: { onCreated?: () => void }) {
 
                   <div className="space-y-3 rounded-lg border border-blue-200 bg-blue-50/60 p-4">
                     <div className="space-y-1">
-                      <Label htmlFor="assignedUserId">Servidor responsavel</Label>
+                      <Label htmlFor="assignedUserId">Servidor responsável</Label>
                       <p className="text-xs text-muted-foreground">
-                        Se nao escolher um servidor, o chamado vai automaticamente para o topo da hierarquia da secretaria.
+                        Se não escolher um servidor, o chamado vai automaticamente para o topo da hierarquia da secretaria.
                       </p>
                     </div>
 
@@ -546,13 +546,13 @@ export function NovaDemanda({ onCreated }: { onCreated?: () => void }) {
                       }
                     >
                       <SelectTrigger id="assignedUserId">
-                        <SelectValue placeholder="Selecionar servidor responsavel" />
+                        <SelectValue placeholder="Selecionar servidor responsável" />
                       </SelectTrigger>
                       <SelectContent>
                         <SelectItem value="__AUTO__">
                           {defaultAssignee
-                            ? `Automatico - ${defaultAssignee.name}`
-                            : 'Automatico - topo da hierarquia'}
+                            ? `Automático - ${defaultAssignee.name}`
+                            : 'Automático - topo da hierarquia'}
                         </SelectItem>
                         {assignees.map((assignee) => (
                           <SelectItem key={assignee.id} value={assignee.id}>
@@ -567,12 +567,12 @@ export function NovaDemanda({ onCreated }: { onCreated?: () => void }) {
                       <p className="text-xs text-muted-foreground">Carregando servidores da secretaria...</p>
                     ) : defaultAssignee ? (
                       <p className="text-xs text-blue-700">
-                        Responsavel padrao: {defaultAssignee.name}
+                        Responsável padrão: {defaultAssignee.name}
                         {defaultAssignee.positionName ? ` (${defaultAssignee.positionName})` : ''}
                       </p>
                     ) : (
                       <p className="text-xs text-amber-700">
-                        Nenhum responsavel padrao identificado. O chamado sera criado sem atribuicao direta.
+                        Nenhum responsável padrão identificado. O chamado será criado sem atribuição direta.
                       </p>
                     )}
                   </div>

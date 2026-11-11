@@ -21,7 +21,7 @@ export default function NovoServidorPage() {
           <div>
             <h1 className="text-2xl md:text-3xl font-bold text-gray-900">Novo Servidor</h1>
             <p className="text-sm md:text-base text-gray-600">
-              Cadastro administrativo com lotacao inicial obrigatoria no organograma
+              Cadastro administrativo com lotação inicial obrigatória no organograma
             </p>
           </div>
         </div>

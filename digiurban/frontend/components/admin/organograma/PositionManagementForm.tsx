@@ -146,7 +146,7 @@ export function PositionManagementForm({
     event.preventDefault();
 
     if (!formData.nome.trim()) {
-      setError('Nome do cargo e obrigatorio');
+      setError('Nome do cargo é obrigatório');
       return;
     }
     if (!formData.departmentId) {
@@ -229,7 +229,7 @@ export function PositionManagementForm({
                 onChange={(event) =>
                   setFormData((current) => ({ ...current, nome: event.target.value }))
                 }
-                placeholder="Ex: Analista de Fiscalizacao"
+                placeholder="Ex: Analista de Fiscalização"
                 disabled={loading || loadingReferences}
               />
             </div>
@@ -315,7 +315,7 @@ export function PositionManagementForm({
             </div>
 
             <div className="space-y-2">
-              <Label>Nivel</Label>
+              <Label>Nível</Label>
               <Select
                 value={formData.nivel || '_none_'}
                 onValueChange={(value) =>
@@ -327,10 +327,10 @@ export function PositionManagementForm({
                 disabled={loading}
               >
                 <SelectTrigger>
-                  <SelectValue placeholder="Selecione o nivel" />
+                  <SelectValue placeholder="Selecione o nível" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="_none_">Sem nivel definido</SelectItem>
+                  <SelectItem value="_none_">Sem nível definido</SelectItem>
                   {NIVEL_CARGO_OPTIONS.map((nivel) => (
                     <SelectItem key={nivel} value={nivel}>
                       {NIVEL_CARGO_LABELS[nivel]}
@@ -355,7 +355,7 @@ export function PositionManagementForm({
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="position-description">Descricao</Label>
+            <Label htmlFor="position-description">Descrição</Label>
             <Textarea
               id="position-description"
               value={formData.descricao}
@@ -363,14 +363,14 @@ export function PositionManagementForm({
                 setFormData((current) => ({ ...current, descricao: event.target.value }))
               }
               rows={4}
-              placeholder="Resumo das atribuicoes do cargo"
+              placeholder="Resumo das atribuições do cargo"
               disabled={loading}
             />
           </div>
 
           <div className="grid gap-4 md:grid-cols-2">
             <div className="space-y-2">
-              <Label htmlFor="position-hours">Carga horaria padrao</Label>
+              <Label htmlFor="position-hours">Carga horária padrão</Label>
               <Input
                 id="position-hours"
                 type="number"
@@ -387,7 +387,7 @@ export function PositionManagementForm({
               />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="position-salary">Salario base</Label>
+              <Label htmlFor="position-salary">Salário base</Label>
               <Input
                 id="position-salary"
                 type="number"
@@ -446,7 +446,7 @@ export function PositionManagementForm({
               className="w-full sm:w-auto"
             >
               {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-              {isEditMode ? 'Salvar alteracoes' : 'Criar cargo'}
+              {isEditMode ? 'Salvar alterações' : 'Criar cargo'}
             </Button>
           </div>
         </form>

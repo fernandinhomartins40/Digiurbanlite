@@ -33,7 +33,7 @@ export default function EditarServidorPage() {
       const payload = response?.data?.user || response?.user || response?.data || response
       setServer(payload)
     } catch (loadError) {
-      console.error('Erro ao carregar servidor para edicao:', loadError)
+      console.error('Erro ao carregar servidor para edição:', loadError)
       setError(loadError instanceof Error ? loadError.message : 'Erro ao carregar servidor')
     } finally {
       setLoading(false)
@@ -53,7 +53,7 @@ export default function EditarServidorPage() {
           <div>
             <h1 className="text-2xl md:text-3xl font-bold text-gray-900">Editar Servidor</h1>
             <p className="text-sm md:text-base text-gray-600">
-              Edicao administrativa com organograma centralizado preservado
+              Edição administrativa com organograma centralizado preservado
             </p>
           </div>
         </div>
@@ -64,7 +64,7 @@ export default function EditarServidorPage() {
           </div>
         ) : error || !server ? (
           <Card className="p-8 text-gray-700">
-            {error || 'Servidor nao encontrado'}
+            {error || 'Servidor não encontrado'}
           </Card>
         ) : (
           <ServerManagementForm

@@ -63,7 +63,7 @@ const roleLabels = {
   USER: 'Funcionário',
   COORDINATOR: 'Coordenador',
   MANAGER: 'Secretário',
-  ADMIN: 'Prefeito',
+  ADMIN: 'Administrador',
   SUPER_ADMIN: 'Super Admin',
   GUEST: 'Convidado'
 }

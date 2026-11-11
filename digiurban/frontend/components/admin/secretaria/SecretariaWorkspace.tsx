@@ -97,7 +97,7 @@ export function SecretariaWorkspace({ config }: { config: DepartmentConfig }) {
             </Button>
             <Button variant="outline" onClick={() => changeTab('protocolos')}>
               <FileText className="h-4 w-4 mr-2" />
-              Pedidos da secretaria
+              Protocolos da secretaria
             </Button>
             <Button variant="outline" onClick={() => changeTab('apps')}>
               <LayoutGrid className="h-4 w-4 mr-2" />

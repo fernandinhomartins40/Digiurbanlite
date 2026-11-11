@@ -1,5 +1,6 @@
 'use client'
 
+import { Skeleton } from '@/components/ui/skeleton'
 import { Suspense, useCallback, useEffect, useState } from 'react'
 import { usePathname, useRouter, useSearchParams } from 'next/navigation'
 import { useAdminAuth, useAdminPermissions } from '@/contexts/AdminAuthContext'
@@ -268,11 +269,10 @@ function ProtocolsQueue() {
 
   if (authLoading || !user) {
     return (
-      <div className="flex items-center justify-center min-h-96">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto mb-4"></div>
-          <p className="text-muted-foreground">Carregando...</p>
-        </div>
+      <div className="space-y-4 p-6" aria-busy="true" aria-label="Carregando">
+        <Skeleton className="h-8 w-1/3" />
+        <Skeleton className="h-32 w-full" />
+        <Skeleton className="h-32 w-full" />
       </div>
     )
   }
@@ -400,7 +400,7 @@ function ProtocolsQueue() {
             <div className="mb-3 sm:mb-4 flex flex-wrap items-center gap-2" role="tablist" aria-label="Forma de visualizar">
               <span className="text-sm text-gray-600">Ver como:</span>
               {[
-                { id: 'fila', label: 'Fila de pedidos' },
+                { id: 'fila', label: 'Fila de protocolos' },
                 { id: 'dados', label: 'Dados dos formulários' },
               ].map((opt) => {
                 const selected = (opt.id === 'dados') === wantsDataView

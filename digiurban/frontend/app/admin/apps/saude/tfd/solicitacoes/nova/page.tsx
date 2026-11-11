@@ -100,7 +100,7 @@ export default function NovaSolicitacaoTFDPage() {
       const destinoSelecionado = destinos.find((item) => item.id === formData.destinoId);
 
       if (!especialidadeSelecionada || !destinoSelecionado) {
-        throw new Error('Especialidade e destino sao obrigatorios');
+        throw new Error('Especialidade e destino são obrigatórios');
       }
 
       const response = await fetch('/api/saude/tfd/solicitacao', {

@@ -938,15 +938,15 @@ export default function EnfermagemPage() {
                     </div>
                     <div className="flex items-start gap-2">
                       <span className="text-orange-600 font-bold shrink-0">LARANJA:</span>
-                      <span className="text-gray-600">Comportamento ameaçador, dor intensa, vomito persistente, desidratação, erupção generalizada</span>
+                      <span className="text-gray-600">Comportamento ameaçador, dor intensa, vômito persistente, desidratação, erupção generalizada</span>
                     </div>
                     <div className="flex items-start gap-2">
                       <span className="text-yellow-600 font-bold shrink-0">AMARELO:</span>
-                      <span className="text-gray-600">Dor moderada, febre alta, vomito, diarréia, infecção urinária, gravidez com sangramento</span>
+                      <span className="text-gray-600">Dor moderada, febre alta, vômito, diarréia, infecção urinária, gravidez com sangramento</span>
                     </div>
                     <div className="flex items-start gap-2">
                       <span className="text-green-600 font-bold shrink-0">VERDE:</span>
-                      <span className="text-gray-600">Dor leve, náusea sem vomito, rash localizado, infecção leve</span>
+                      <span className="text-gray-600">Dor leve, náusea sem vômito, rash localizado, infecção leve</span>
                     </div>
                     <div className="flex items-start gap-2">
                       <span className="text-blue-600 font-bold shrink-0">AZUL:</span>

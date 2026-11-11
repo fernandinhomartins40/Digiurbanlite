@@ -1,5 +1,6 @@
 'use client';
 
+import { Skeleton } from '@/components/ui/skeleton'
 import { useEffect, useMemo, useState } from 'react';
 import { Calendar as BigCalendar, dateFnsLocalizer, type Event as CalendarEvent, type View } from 'react-big-calendar';
 import { addMinutes, endOfDay, format, getDay, parse, startOfDay, startOfWeek } from 'date-fns';
@@ -86,7 +87,7 @@ const PROTOCOL_DEADLINE_LEGEND = [
   { label: 'Prazo futuro', background: '#dbeafe', color: '#1d4ed8' },
   { label: 'Vence hoje', background: '#ffedd5', color: '#9a3412' },
   { label: 'Prazo vencido', background: '#fee2e2', color: '#991b1b' },
-  { label: 'Prazo concluido', background: '#dcfce7', color: '#166534' },
+  { label: 'Prazo concluído', background: '#dcfce7', color: '#166534' },
 ];
 
 function mapStatusLabel(status: CentralCalendarEventStatus) {
@@ -155,7 +156,7 @@ function getProtocolDeadlineTone(event: CentralAgendaEvent) {
       background: '#dcfce7',
       color: '#166534',
       border: '#22c55e',
-      accent: 'Prazo concluido',
+      accent: 'Prazo concluído',
     };
   }
 
@@ -461,7 +462,13 @@ export default function AdminCentralAgendaPage() {
   };
 
   if (loading) {
-    return <div className="flex items-center justify-center min-h-[50vh]">Carregando agenda...</div>;
+    return (
+      <div className="space-y-4 p-6" aria-busy="true" aria-label="Carregando">
+        <Skeleton className="h-8 w-1/3" />
+        <Skeleton className="h-32 w-full" />
+        <Skeleton className="h-32 w-full" />
+      </div>
+    );
   }
 
   return (

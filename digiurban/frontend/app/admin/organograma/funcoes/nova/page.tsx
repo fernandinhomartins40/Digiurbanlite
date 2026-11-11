@@ -25,10 +25,10 @@ export default function NovaFuncaoPage() {
           <div>
             <h1 className="flex items-center gap-3 text-2xl font-bold text-gray-900">
               <BarChart3 className="h-7 w-7 text-pink-600" />
-              Nova funcao
+              Nova função
             </h1>
             <p className="mt-1 text-sm text-gray-600">
-              Cadastre a funcao vinculada diretamente a um cargo existente.
+              Cadastre a função vinculada diretamente a um cargo existente.
             </p>
           </div>
         </div>

@@ -85,7 +85,7 @@ export default function EditarCargoPage() {
               Editar cargo
             </h1>
             <p className="mt-1 text-sm text-gray-600">
-              Atualize o cargo mantendo a vinculacao com a unidade organizacional.
+              Atualize o cargo mantendo a vinculação com a unidade organizacional.
             </p>
           </div>
         </div>

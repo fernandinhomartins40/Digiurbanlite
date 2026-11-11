@@ -163,7 +163,7 @@ export default function CargosPage() {
                 Cargos
               </h1>
               <p className="mt-1 text-sm text-gray-600 md:text-base">
-                Cada cargo deve estar vinculado a uma unidade organizacional especifica.
+                Cada cargo deve estar vinculado a uma unidade organizacional específica.
               </p>
             </div>
           </div>
@@ -233,13 +233,13 @@ export default function CargosPage() {
             </div>
 
             <div>
-              <Label className="sr-only">Nivel</Label>
+              <Label className="sr-only">Nível</Label>
               <Select value={filterNivel} onValueChange={setFilterNivel}>
                 <SelectTrigger>
-                  <SelectValue placeholder="Nivel" />
+                  <SelectValue placeholder="Nível" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="all">Todos os niveis</SelectItem>
+                  <SelectItem value="all">Todos os níveis</SelectItem>
                   {NIVEL_CARGO_OPTIONS.map((nivel) => (
                     <SelectItem key={nivel} value={nivel}>
                       {NIVEL_CARGO_LABELS[nivel]}
@@ -353,7 +353,7 @@ export default function CargosPage() {
                   )}
                   {position.cargaHorariaPadrao != null && (
                     <p>
-                      <strong>Carga horaria:</strong> {position.cargaHorariaPadrao}h
+                      <strong>Carga horária:</strong> {position.cargaHorariaPadrao}h
                     </p>
                   )}
                 </div>
@@ -361,13 +361,13 @@ export default function CargosPage() {
                 <div className="mt-3 flex items-center justify-between border-t pt-3 text-xs text-gray-500">
                   <span className="flex items-center gap-1.5">
                     <Users className="h-3.5 w-3.5" />
-                    {position._count?.assignments ?? 0} lotacoes
+                    {position._count?.assignments ?? 0} lotações
                   </span>
                   <Link
                     href={`/admin/organograma/funcoes/nova?departmentId=${position.departmentId}&positionId=${position.id}&returnTo=/admin/organograma/cargos`}
                     className="font-medium text-purple-700 hover:text-purple-900"
                   >
-                    Nova funcao
+                    Nova função
                   </Link>
                 </div>
               </Card>

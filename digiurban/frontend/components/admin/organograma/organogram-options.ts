@@ -14,10 +14,10 @@ export const TIPO_UNIDADE_LABELS: Record<string, string> = {
   SECRETARIA: 'Secretaria',
   DIRETORIA: 'Diretoria',
   COORDENADORIA: 'Coordenadoria',
-  DIVISAO: 'Divisao',
+  DIVISAO: 'Divisão',
   SETOR: 'Setor',
-  NUCLEO: 'Nucleo',
-  GERENCIA: 'Gerencia',
+  NUCLEO: 'Núcleo',
+  GERENCIA: 'Gerência',
   UNIDADE_ESPECIAL: 'Unidade especial',
   DEPARTAMENTO: 'Departamento',
   ASSESSORIA: 'Assessoria',
@@ -61,10 +61,10 @@ export const TIPO_CARGO_OPTIONS = [
 export const TIPO_CARGO_LABELS: Record<string, string> = {
   EFETIVO: 'Efetivo',
   COMISSIONADO: 'Comissionado',
-  TEMPORARIO: 'Temporario',
+  TEMPORARIO: 'Temporário',
   CONTRATADO: 'Contratado',
-  ESTAGIARIO: 'Estagiario',
-  VOLUNTARIO: 'Voluntario',
+  ESTAGIARIO: 'Estagiário',
+  VOLUNTARIO: 'Voluntário',
 };
 
 export const TIPO_CARGO_COLORS: Record<string, string> = {
@@ -89,12 +89,12 @@ export const NIVEL_CARGO_OPTIONS = [
 
 export const NIVEL_CARGO_LABELS: Record<string, string> = {
   OPERACIONAL: 'Operacional',
-  TECNICO: 'Tecnico',
+  TECNICO: 'Técnico',
   ANALISTA: 'Analista',
   ESPECIALISTA: 'Especialista',
-  COORDENACAO: 'Coordenacao',
-  GERENCIA: 'Gerencia',
-  DIRECAO: 'Direcao',
+  COORDENACAO: 'Coordenação',
+  GERENCIA: 'Gerência',
+  DIRECAO: 'Direção',
   SECRETARIADO: 'Secretariado',
 };
 
@@ -119,8 +119,8 @@ export const TIPO_FUNCAO_OPTIONS = [
 export const TIPO_FUNCAO_LABELS: Record<string, string> = {
   GRATIFICADA: 'Gratificada',
   COMISSIONADA: 'Comissionada',
-  DESIGNACAO: 'Designacao',
-  REPRESENTACAO: 'Representacao',
+  DESIGNACAO: 'Designação',
+  REPRESENTACAO: 'Representação',
 };
 
 export const TIPO_FUNCAO_COLORS: Record<string, string> = {

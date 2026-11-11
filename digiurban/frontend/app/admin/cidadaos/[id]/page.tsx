@@ -1,5 +1,6 @@
 'use client'
 
+import { Skeleton } from '@/components/ui/skeleton'
 import { useState, useEffect } from 'react'
 import { useParams, useRouter } from 'next/navigation'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
@@ -464,10 +465,10 @@ export default function CitizenDetailsPage() {
 
   if (loading) {
     return (
-      <div className="p-8">
-        <div className="text-center py-12">
-          <div className="text-gray-500">Carregando...</div>
-        </div>
+      <div className="space-y-4 p-6" aria-busy="true" aria-label="Carregando">
+        <Skeleton className="h-8 w-1/3" />
+        <Skeleton className="h-32 w-full" />
+        <Skeleton className="h-32 w-full" />
       </div>
     )
   }
@@ -864,7 +865,7 @@ export default function CitizenDetailsPage() {
                 <Badge variant="secondary" className="ml-2">{citizen.generatedDocuments?.length || 0}</Badge>
               </CardTitle>
               <p className="text-sm text-gray-500">
-                Documentos gerados por protocolos nao entram em fluxo de aprovacao de documentos pessoais.
+                Documentos gerados por protocolos não entram em fluxo de aprovação de documentos pessoais.
               </p>
             </CardHeader>
             <CardContent>
