@@ -2,31 +2,21 @@
 
 import { useEffect, useMemo, useState } from 'react'
 import Link from 'next/link'
-import { FEATURE_FLAGS } from '@/lib/feature-flags'
 import { useAdminAuth, useAdminPermissions } from '@/contexts/AdminAuthContext'
-import { SearchBar } from '@/components/admin/SearchBar'
 import { useAnalytics, usePageTracking } from '@/hooks/useAnalytics'
 import { Badge } from '@/components/ui/badge'
-import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
-import { Progress } from '@/components/ui/progress'
-import {
-  getProtocolStatusClass,
-  getProtocolStatusLabel,
-  getSlaInfo,
-  ProtocolSlaSnapshot,
-} from '@/lib/protocol-helpers'
+import { Skeleton } from '@/components/ui/skeleton'
+import { WelcomeCard } from '@/components/admin/activation/WelcomeCard'
+import { ActivationCard } from '@/components/admin/activation/ActivationCard'
+import { WorkbenchHeader, WorkbenchList, useWorkbench } from '@/components/admin/workbench/Workbench'
 import {
   AlertCircle,
-  Award,
   BarChart3,
   Bot,
   Building2,
   Calendar,
-  CheckCircle2,
-  Clock,
   Cpu,
-  ExternalLink,
   FileSignature,
   FileText,
   GraduationCap,
@@ -35,43 +25,23 @@ import {
   Mail,
   Map,
   MessageCircle,
-  Network,
   ScrollText,
-  Search,
   Settings,
   Sparkles,
   Sprout,
   TrendingUp,
-  UserCheck,
-  UserCircle,
   UserPlus,
-  Users,
   Zap,
 } from 'lucide-react'
 
-const roleLabels = {
-  USER: 'Funcionario',
+const roleLabels: Record<string, string> = {
+  USER: 'Servidor',
   COORDINATOR: 'Coordenador',
-  MANAGER: 'Secretario',
-  ADMIN: 'Prefeito',
-  SUPER_ADMIN: 'Super Admin',
+  MANAGER: 'Secretário',
+  ADMIN: 'Administrador',
+  SUPER_ADMIN: 'Super-admin',
   GUEST: 'Visitante',
 }
-
-interface PendingProtocol {
-  id: string
-  number: string
-  title: string
-  status: string
-  priority: number
-  createdAt: string
-  citizen?: { name?: string }
-  department?: { name?: string }
-  assignedUser?: { name?: string }
-  sla?: ProtocolSlaSnapshot | null
-}
-
-type QueueSummary = Partial<Record<'active' | 'mine' | 'unassigned' | 'overdue' | 'due_soon', number>>
 
 interface ShortcutUsage {
   title: string
@@ -140,91 +110,18 @@ function applyShortcutUsage(prev: ShortcutUsage[], action: TrackableShortcut) {
   return sortShortcutUsage(next).slice(0, 30)
 }
 
-const getSearchItems = () => [
-  { title: 'Inicio', description: 'Metricas, atalhos e pendencias', href: '/admin', category: 'Principal', keywords: ['inicio', 'dashboard', 'painel'] },
-  { title: 'Protocolos', description: 'Gestao de protocolos', href: '/admin/protocolos', category: 'Atendimento', keywords: ['protocolo', 'solicitacao', 'atendimento'] },
-  { title: 'Cidadaos', description: 'Base de cidadaos', href: '/admin/cidadaos', category: 'Atendimento', keywords: ['cidadao', 'municipes', 'cadastro'] },
-  { title: 'Cidadaos Pendentes', description: 'Validacoes aguardando analise', href: '/admin/cidadaos/pendentes', category: 'Atendimento', keywords: ['pendente', 'validacao', 'aprovacao'] },
-  { title: 'Catalogo de Servicos', description: 'Configurar servicos municipais', href: '/admin/servicos', category: 'Servicos', keywords: ['servico', 'catalogo', 'configuracao'] },
-  { title: 'Desempenho dos serviços', description: 'Indicadores dos serviços municipais', href: '/admin/gerenciamento-servicos', category: 'Servicos', keywords: ['gestao', 'servicos', 'indicadores'] },
-  { title: 'Mensagens', description: 'Central de mensagens', href: '/admin/mensagens', category: 'Comunicacao', keywords: ['mensagem', 'chat', 'notificacao'] },
-  { title: 'E-mails do sistema', description: 'Avisos enviados por e-mail', href: '/admin/email', category: 'Comunicacao', keywords: ['email', 'e-mail', 'avisos'] },
-  { title: 'Relatorios', description: 'Relatorios e BI', href: '/admin/relatorios', category: 'Analise', keywords: ['relatorio', 'bi', 'analytics'] },
-  { title: 'Analytics', description: 'Analise avancada de dados', href: '/admin/analytics', category: 'Analise', keywords: ['analytics', 'dados', 'metricas'] },
-  { title: 'IA Centralizada', description: 'Chat operacional e API de IA', href: '/admin/ia', category: 'Automacao', keywords: ['ia', 'chat', 'api'] },
-  { title: 'DigiBot', description: 'Assistente do cidadão: mensagens, menu, perguntas', href: '/admin/digibot', category: 'Automacao', keywords: ['bot', 'digibot', 'assistente', 'chatbot', 'fluxos'] },
-  { title: 'Meus Documentos', description: 'Documentos pessoais e assinados', href: '/admin/meus-documentos', category: 'Documentos', keywords: ['documentos', 'assinatura'] },
-  { title: 'Templates de Documentos', description: 'Modelos oficiais', href: '/admin/templates-documentos', category: 'Documentos', keywords: ['template', 'modelo'] },
-  { title: 'Assinaturas Digitais', description: 'Assinatura eletronica de documentos', href: '/admin/assinaturas-digitais', category: 'Documentos', keywords: ['assinatura', 'digital'] },
-  { title: 'Painel do Prefeito', description: 'Visao executiva municipal', href: '/admin/gabinete/painel-prefeito', category: 'Gabinete', keywords: ['prefeito', 'executivo'] },
-  { title: 'Demandas do Gabinete', description: 'Enviar e acompanhar demandas às secretarias', href: '/admin/gabinete/painel-prefeito?aba=demandas', category: 'Gabinete', keywords: ['chamado', 'demanda', 'gabinete'] },
-  { title: 'Agenda', description: 'Minha agenda, da unidade e da secretaria', href: '/admin/agenda', category: 'Atendimento', keywords: ['agenda', 'calendario', 'compromisso'] },
-  { title: 'Mapa dos pedidos', description: 'Pedidos no mapa', href: '/admin/mapa', category: 'Atendimento', keywords: ['mapa', 'demandas', 'territorio', 'bairro'] },
-  { title: 'Equipe', description: 'Equipe e permissoes', href: '/admin/servidores/equipe', category: 'Sistema', keywords: ['equipe', 'servidores'] },
-  { title: 'Organograma', description: 'Estrutura administrativa', href: '/admin/organograma', category: 'Sistema', keywords: ['organograma', 'estrutura'] },
-  { title: 'Configuracoes', description: 'Configuracoes do sistema', href: '/admin/configuracoes', category: 'Sistema', keywords: ['configuracao', 'sistema'] },
-  { title: 'Integracoes', description: 'APIs e integracoes externas', href: '/admin/integracoes', category: 'Sistema', keywords: ['integracao', 'api'] },
-]
-
 export default function AdminPage() {
   const { user, stats, loading, apiRequest } = useAdminAuth()
   const { hasPermission, hasMinRole } = useAdminPermissions()
   // perfil Gabinete do Prefeito (o Super-admin sempre pode)
   const hasGabinete = user?.role === 'SUPER_ADMIN' || user?.gabineteAccess === true
   const { trackCardClick } = useAnalytics()
-  const [mounted, setMounted] = useState(false)
-  const [pendingProtocols, setPendingProtocols] = useState<PendingProtocol[]>([])
-  const [loadingProtocols, setLoadingProtocols] = useState(false)
-  const [queueSummary, setQueueSummary] = useState<QueueSummary | null>(null)
+  const workbench = useWorkbench()
   const [shortcutUsage, setShortcutUsage] = useState<ShortcutUsage[]>([])
   const [loadingShortcuts, setLoadingShortcuts] = useState(false)
   const [secretaryUsage, setSecretaryUsage] = useState<ShortcutUsage[]>([])
-  const [loadingSecretaries, setLoadingSecretaries] = useState(false)
 
   usePageTracking('Admin Inicio')
-
-  useEffect(() => {
-    setMounted(true)
-  }, [])
-
-  useEffect(() => {
-    if (loading || !user || !hasPermission('protocols:read')) return
-
-    let active = true
-
-    // "Sua fila hoje": contadores + os 5 em aberto com prazo mais próximo,
-    // no escopo do servidor (o backend aplica a regra de acesso por role)
-    async function loadPendingProtocols() {
-      try {
-        setLoadingProtocols(true)
-        const [listResponse, summaryResponse] = await Promise.all([
-          apiRequest('/protocols?view=active&sort=due&limit=5'),
-          apiRequest('/protocols/queue-summary').catch(() => null),
-        ])
-        const protocols = listResponse?.protocols || listResponse?.data?.protocols || []
-
-        if (!active) return
-
-        setPendingProtocols(Array.isArray(protocols) ? protocols : [])
-        if (summaryResponse?.success) setQueueSummary(summaryResponse.data || null)
-      } catch (error: any) {
-        if (!error?.message?.includes('autenticado')) {
-          console.error('Erro ao carregar protocolos pendentes:', error)
-        }
-        if (active) setPendingProtocols([])
-      } finally {
-        if (active) setLoadingProtocols(false)
-      }
-    }
-
-    loadPendingProtocols()
-
-    return () => {
-      active = false
-    }
-    // apiRequest is intentionally omitted because the auth context exposes it as a new function each render.
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [loading, user?.id, user?.role])
 
   useEffect(() => {
     if (loading || !user) return
@@ -266,7 +163,6 @@ export default function AdminPage() {
 
     async function loadSecretaryUsage() {
       try {
-        setLoadingSecretaries(true)
         const response = await apiRequest('/admin/preferences/shortcuts?section=Secretarias')
         const usage = response?.data || []
 
@@ -278,8 +174,6 @@ export default function AdminPage() {
           console.error('Erro ao carregar secretarias dinamicas:', error)
         }
         if (active) setSecretaryUsage([])
-      } finally {
-        if (active) setLoadingSecretaries(false)
       }
     }
 
@@ -305,8 +199,6 @@ export default function AdminPage() {
     ? Math.round((safeStats.completedProtocols / safeStats.totalProtocols) * 100)
     : 0
 
-  const statusRows = safeStats.protocolsByStatus || []
-
   const availableQuickActions = useMemo(() => {
     const actions = [
       hasPermission('protocols:read') && {
@@ -320,8 +212,8 @@ export default function AdminPage() {
         section: 'Atalhos',
       },
       hasPermission('citizens:read') && {
-        title: 'Cidadaos',
-        description: safeStats.pendingCitizens > 0 ? `${safeStats.pendingCitizens} aguardando validacao` : 'Base municipal',
+        title: 'Cidadãos',
+        description: safeStats.pendingCitizens > 0 ? `${safeStats.pendingCitizens} aguardando conferência` : 'Cadastro do município',
         href: safeStats.pendingCitizens > 0 ? '/admin/cidadaos/pendentes' : '/admin/cidadaos',
         icon: UserPlus,
         color: 'text-green-600',
@@ -330,8 +222,8 @@ export default function AdminPage() {
         section: 'Atalhos',
       },
       (hasPermission('services:create') || hasPermission('services:update')) && {
-        title: 'Servicos',
-        description: 'Catalogo e regras',
+        title: 'Serviços',
+        description: 'Catálogo e regras',
         href: '/admin/servicos',
         icon: Settings,
         color: 'text-purple-600',
@@ -341,7 +233,7 @@ export default function AdminPage() {
       },
       hasPermission('messages:read') && {
         title: 'Mensagens',
-        description: safeStats.unreadMessages ? `${safeStats.unreadMessages} nao lidas` : 'Central de atendimento',
+        description: safeStats.unreadMessages ? `${safeStats.unreadMessages} não lidas` : 'Central de atendimento',
         href: '/admin/mensagens',
         icon: MessageCircle,
         color: 'text-sky-600',
@@ -360,8 +252,8 @@ export default function AdminPage() {
         section: 'Atalhos',
       },
       (hasPermission('reports:department') || hasPermission('reports:full')) && {
-        title: 'Relatorios',
-        description: 'Indicadores e exportacoes',
+        title: 'Relatórios',
+        description: 'Indicadores e exportações',
         href: '/admin/relatorios',
         icon: BarChart3,
         color: 'text-pink-600',
@@ -370,8 +262,8 @@ export default function AdminPage() {
         section: 'Atalhos',
       },
       hasMinRole('COORDINATOR') && {
-        title: 'Analytics',
-        description: 'Leitura avancada',
+        title: 'Análises',
+        description: 'Leitura avançada',
         href: '/admin/analytics',
         icon: TrendingUp,
         color: 'text-indigo-600',
@@ -390,7 +282,7 @@ export default function AdminPage() {
         section: 'Atalhos',
       },
       {
-        title: 'Meus Documentos',
+        title: 'Meus documentos',
         description: 'Arquivos e assinaturas',
         href: '/admin/meus-documentos',
         icon: FileText,
@@ -401,7 +293,7 @@ export default function AdminPage() {
       },
       hasMinRole('COORDINATOR') && {
         title: 'Assinaturas',
-        description: 'Assinatura digital',
+        description: 'Assinatura de documentos',
         href: '/admin/assinaturas-digitais',
         icon: FileSignature,
         color: 'text-violet-600',
@@ -421,7 +313,7 @@ export default function AdminPage() {
       },
       hasGabinete && {
         title: 'Painel do Prefeito',
-        description: 'KPIs executivos',
+        description: 'Hoje, secretarias, território',
         href: '/admin/gabinete/painel-prefeito',
         icon: Building2,
         color: 'text-yellow-600',
@@ -431,7 +323,7 @@ export default function AdminPage() {
       },
       hasPermission('protocols:read') && {
         title: 'Mapa dos pedidos',
-        description: 'Visao territorial',
+        description: 'Pedidos no território',
         href: '/admin/mapa',
         icon: Map,
         color: 'text-emerald-600',
@@ -440,8 +332,8 @@ export default function AdminPage() {
         section: 'Atalhos',
       },
       hasMinRole('ADMIN') && {
-        title: 'IA Centralizada',
-        description: 'Chat operacional',
+        title: 'IA',
+        description: 'Assistente dos servidores',
         href: '/admin/ia',
         icon: Bot,
         color: 'text-fuchsia-600',
@@ -460,7 +352,7 @@ export default function AdminPage() {
         section: 'Atalhos',
       },
       hasMinRole('ADMIN') && {
-        title: 'Templates',
+        title: 'Modelos de documento',
         description: 'Modelos oficiais',
         href: '/admin/templates-documentos',
         icon: ScrollText,
@@ -470,8 +362,8 @@ export default function AdminPage() {
         section: 'Atalhos',
       },
       hasMinRole('ADMIN') && {
-        title: 'Configuracoes',
-        description: 'Preferencias do sistema',
+        title: 'Configurações',
+        description: 'Preferências do sistema',
         href: '/admin/configuracoes',
         icon: Settings,
         color: 'text-slate-600',
@@ -480,8 +372,8 @@ export default function AdminPage() {
         section: 'Atalhos',
       },
       hasMinRole('ADMIN') && {
-        title: 'Integracoes',
-        description: 'APIs e canais',
+        title: 'Integrações',
+        description: 'Ligações com outros sistemas',
         href: '/admin/integracoes',
         icon: Zap,
         color: 'text-lime-700',
@@ -492,7 +384,7 @@ export default function AdminPage() {
     ]
 
     return actions.filter(Boolean) as QuickAction[]
-  }, [hasMinRole, hasPermission, safeStats.pendingCitizens, safeStats.pendingProtocols, safeStats.unreadMessages])
+  }, [hasGabinete, hasMinRole, hasPermission, safeStats.pendingCitizens, safeStats.pendingProtocols, safeStats.unreadMessages])
 
   const quickActionMap = useMemo(() => {
     return new globalThis.Map(availableQuickActions.map((action) => [action.href, action]))
@@ -509,11 +401,11 @@ export default function AdminPage() {
   }, [availableQuickActions, quickActionMap, shortcutUsage])
 
   const availableSecretaries = useMemo<SecretaryShortcut[]>(() => [
-    { title: 'Saude', href: '/admin/secretarias/saude', icon: Heart, category: 'Secretarias', section: 'Secretarias' },
-    { title: 'Educacao', href: '/admin/secretarias/educacao', icon: GraduationCap, category: 'Secretarias', section: 'Secretarias' },
-    { title: 'Assistencia Social', href: '/admin/secretarias/assistencia-social', icon: HandHeart, category: 'Secretarias', section: 'Secretarias' },
+    { title: 'Saúde', href: '/admin/secretarias/saude', icon: Heart, category: 'Secretarias', section: 'Secretarias' },
+    { title: 'Educação', href: '/admin/secretarias/educacao', icon: GraduationCap, category: 'Secretarias', section: 'Secretarias' },
+    { title: 'Assistência Social', href: '/admin/secretarias/assistencia-social', icon: HandHeart, category: 'Secretarias', section: 'Secretarias' },
     { title: 'Agricultura', href: '/admin/secretarias/agricultura', icon: Sprout, category: 'Secretarias', section: 'Secretarias' },
-    { title: 'Administracao', href: '/admin/secretarias/administracao', icon: Building2, category: 'Secretarias', section: 'Secretarias' },
+    { title: 'Administração', href: '/admin/secretarias/administracao', icon: Building2, category: 'Secretarias', section: 'Secretarias' },
     { title: 'Tecnologia', href: '/admin/secretarias/tecnologia-inovacao', icon: Cpu, category: 'Secretarias', section: 'Secretarias' },
   ], [])
 
@@ -531,22 +423,22 @@ export default function AdminPage() {
     return [...usedSecretaries, ...fallbackSecretaries].slice(0, 6)
   }, [availableSecretaries, secretaryMap, secretaryUsage])
 
-  const handleShortcutClick = (action: QuickAction) => {
-    trackCardClick(action.title, action.href, action.category)
-    setShortcutUsage((prev) => applyShortcutUsage(prev, action))
+  const trackShortcut = (item: TrackableShortcut, setUsage: typeof setShortcutUsage) => {
+    trackCardClick(item.title, item.href, item.category)
+    setUsage((prev) => applyShortcutUsage(prev, item))
 
     apiRequest('/admin/preferences/shortcuts/track', {
       method: 'POST',
       body: JSON.stringify({
-        title: action.title,
-        href: action.href,
-        category: action.category,
-        section: action.section,
+        title: item.title,
+        href: item.href,
+        category: item.category,
+        section: item.section,
       }),
     })
       .then((response) => {
         if (Array.isArray(response?.data)) {
-          setShortcutUsage(response.data)
+          setUsage(response.data)
         }
       })
       .catch((error: any) => {
@@ -556,310 +448,78 @@ export default function AdminPage() {
       })
   }
 
-  const handleSecretaryClick = (secretary: SecretaryShortcut) => {
-    trackCardClick(secretary.title, secretary.href, secretary.category)
-    setSecretaryUsage((prev) => applyShortcutUsage(prev, secretary))
-
-    apiRequest('/admin/preferences/shortcuts/track', {
-      method: 'POST',
-      body: JSON.stringify({
-        title: secretary.title,
-        href: secretary.href,
-        category: secretary.category,
-        section: secretary.section,
-      }),
-    })
-      .then((response) => {
-        if (Array.isArray(response?.data)) {
-          setSecretaryUsage(response.data)
-        }
-      })
-      .catch((error: any) => {
-        if (!error?.message?.includes('autenticado')) {
-          console.error('Erro ao registrar secretaria dinamica:', error)
-        }
-      })
-  }
-
   if (loading || !user) {
     return (
-      <div className="flex min-h-[60vh] items-center justify-center">
-        <div className="text-center">
-          <div className="mx-auto mb-4 h-12 w-12 animate-spin rounded-full border-b-2 border-primary" />
-          <p className="text-muted-foreground">Carregando painel administrativo...</p>
-        </div>
-      </div>
+      <main className="space-y-4">
+        <Skeleton className="h-9 w-72" />
+        <Skeleton className="h-5 w-56" />
+        <Skeleton className="h-11 w-full rounded-full" />
+        {[0, 1, 2, 3].map((i) => (
+          <Skeleton key={i} className="h-16 w-full" />
+        ))}
+      </main>
     )
   }
 
+  const emptySuggestion = hasPermission('protocols:read')
+    ? { label: 'Ver todos os pedidos em aberto', href: '/admin/protocolos?view=active' }
+    : { label: 'Ver a agenda', href: '/admin/agenda' }
+
   return (
-    <main className={`min-h-screen space-y-6 ${mounted ? 'animate-in fade-in-0 duration-500' : 'opacity-0'}`}>
-      <section className="space-y-4">
-        <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
-          <div className="min-w-0">
-            <div className="flex flex-wrap items-center gap-2">
-              <h1 className="text-2xl font-bold tracking-tight text-foreground sm:text-3xl">
-                Inicio
-              </h1>
-              <Badge variant="outline">{roleLabels[user.role]}</Badge>
-              {user.department && <Badge variant="secondary">{user.department.name}</Badge>}
-            </div>
-            <p className="mt-2 max-w-2xl text-sm text-muted-foreground">
-              Visao operacional do municipio com metricas, pendencias e atalhos para as tarefas mais usadas.
-            </p>
-          </div>
+    <main className="min-h-screen space-y-6">
+      <WelcomeCard />
+      <ActivationCard />
 
-          <div className="grid grid-cols-2 gap-2 sm:flex">
-            {hasPermission('protocols:read') && (
-              <Button asChild>
-                <Link href="/admin/protocolos">
-                  <FileText className="mr-2 h-4 w-4" />
-                  Protocolos
-                </Link>
-              </Button>
-            )}
-            {hasMinRole('ADMIN') && (
-              <Button asChild variant="outline">
-                <Link href="/admin/agenda">
-                  <Calendar className="mr-2 h-4 w-4" />
-                  Agenda
-                </Link>
-              </Button>
-            )}
-          </div>
+      <section className="space-y-2">
+        <div className="flex flex-wrap items-center gap-2">
+          <Badge variant="outline">{roleLabels[user.role] || user.role}</Badge>
+          {user.department && <Badge variant="secondary">{user.department.name}</Badge>}
         </div>
-
-        <SearchBar items={getSearchItems()} />
+        <WorkbenchHeader data={workbench.data} loading={workbench.isLoading} />
       </section>
 
-      <section className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
-        <MetricCard
-          title="Protocolos"
-          value={safeStats.totalProtocols}
-          description={user.role === 'USER' ? 'Atribuidos a voce' : user.role === 'ADMIN' ? 'Todo o municipio' : 'Do seu setor'}
-          icon={FileText}
-          href="/admin/protocolos"
-        />
-        <MetricCard
-          title="Pendentes"
-          value={safeStats.pendingProtocols}
-          description="Requerem atencao"
-          icon={Clock}
-          href="/admin/protocolos?view=active"
-          accent="text-orange-600"
-        />
-        <MetricCard
-          title="Concluidos"
-          value={safeStats.completedProtocols}
-          description={`Taxa de conclusao: ${completionRate}%`}
-          icon={CheckCircle2}
-          href="/admin/protocolos?view=all&status=CONCLUIDO"
-          accent="text-green-600"
-        />
-        <MetricCard
-          title="Eficiencia"
-          value={`${completionRate}%`}
-          description="Protocolos finalizados"
-          icon={TrendingUp}
-          progress={completionRate}
-        />
-      </section>
-
-      <section className="grid gap-4 xl:grid-cols-[minmax(0,1.35fr)_minmax(320px,0.65fr)]">
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2 text-lg">
-              <Sparkles className="h-5 w-5 text-primary" />
-              Atalhos do dia
-            </CardTitle>
-            <CardDescription>
-              {loadingShortcuts && shortcutUsage.length === 0
-                ? 'Carregando atalhos personalizados...'
-                : 'Acesso rapido adaptado aos atalhos mais usados por voce.'}
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-            {quickActions.map((action) => (
-              <ActionCard
-                key={action.href}
-                {...action}
-                onClick={() => handleShortcutClick(action)}
-              />
-            ))}
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2 text-lg">
-              <BarChart3 className="h-5 w-5 text-primary" />
-              Status dos protocolos
-            </CardTitle>
-            <CardDescription>Distribuicao atual da fila de atendimento.</CardDescription>
-          </CardHeader>
-          <CardContent>
-            {statusRows.length > 0 ? (
-              <div className="space-y-3">
-                {statusRows.map((item) => {
-                  const count = item._count?._all || 0
-                  const percentage = safeStats.totalProtocols > 0
-                    ? Math.round((count / safeStats.totalProtocols) * 100)
-                    : 0
-
-                  return (
-                    <div key={item.status} className="space-y-1.5">
-                      <div className="flex items-center justify-between gap-3 text-sm">
-                        <div className="flex min-w-0 items-center gap-2">
-                          <Badge variant="secondary" className={getProtocolStatusClass(item.status)}>
-                            {getProtocolStatusLabel(item.status)}
-                          </Badge>
-                          <span className="text-muted-foreground">{count}</span>
-                        </div>
-                        <span className="font-medium">{percentage}%</span>
-                      </div>
-                      <Progress value={percentage} className="h-2" />
-                    </div>
-                  )
-                })}
-              </div>
-            ) : (
-              <div className="rounded-md border border-dashed p-6 text-center text-sm text-muted-foreground">
-                Sem dados de status no momento.
-              </div>
-            )}
-          </CardContent>
-        </Card>
-      </section>
+      <WorkbenchList
+        data={workbench.data}
+        loading={workbench.isLoading}
+        error={workbench.isError}
+        emptySuggestion={emptySuggestion}
+      />
 
       {hasPermission('protocols:read') && (
-        <Card>
-          <CardHeader>
-            <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
-              <div>
-                <CardTitle className="flex items-center gap-2 text-lg">
-                  <AlertCircle className="h-5 w-5 text-red-600" />
-                  Sua fila hoje
-                </CardTitle>
-                <CardDescription>Protocolos em aberto com o prazo mais próximo primeiro.</CardDescription>
-              </div>
-              <Button asChild variant="outline" size="sm">
-                <Link href="/admin/protocolos">
-                  Abrir fila
-                  <ExternalLink className="ml-2 h-4 w-4" />
-                </Link>
-              </Button>
-            </div>
-            {queueSummary && (
-              <div className="grid grid-cols-2 gap-2 pt-2 sm:grid-cols-4">
-                {[
-                  { key: 'overdue', label: 'Atrasados', className: 'border-red-200 bg-red-50 text-red-800' },
-                  { key: 'due_soon', label: 'Vencem em 48h', className: 'border-amber-200 bg-amber-50 text-amber-800' },
-                  { key: 'mine', label: 'Comigo', className: 'border-blue-200 bg-blue-50 text-blue-800' },
-                  hasPermission('protocols:assign')
-                    ? { key: 'unassigned', label: 'Sem responsável', className: 'border-slate-200 bg-slate-50 text-slate-800' }
-                    : { key: 'active', label: 'Em aberto', className: 'border-slate-200 bg-slate-50 text-slate-800' },
-                ].map((item) => (
-                  <Link
-                    key={item.key}
-                    href={`/admin/protocolos?view=${item.key}`}
-                    className={`rounded-md border px-3 py-2 transition-opacity hover:opacity-80 ${item.className}`}
-                  >
-                    <div className="text-2xl font-bold">{queueSummary[item.key as keyof QueueSummary] ?? 0}</div>
-                    <div className="text-xs font-medium">{item.label}</div>
-                  </Link>
-                ))}
-              </div>
-            )}
-          </CardHeader>
-          <CardContent>
-            {loadingProtocols ? (
-              <div className="flex items-center justify-center py-8">
-                <div className="h-6 w-6 animate-spin rounded-full border-b-2 border-primary" />
-              </div>
-            ) : pendingProtocols.length === 0 ? (
-              <div className="rounded-md border border-dashed p-8 text-center text-sm text-muted-foreground">
-                <CheckCircle2 className="mx-auto mb-2 h-10 w-10 text-green-500" />
-                Nenhum protocolo em aberto no momento.
-              </div>
-            ) : (
-              <div className="space-y-3">
-                {pendingProtocols.map((protocol) => {
-                  const slaInfo = getSlaInfo(protocol.sla, protocol.status)
-                  return (
-                    <Link
-                      key={protocol.id}
-                      href={`/admin/protocolos/${protocol.id}`}
-                      className="flex flex-col gap-2 rounded-md border p-3 transition-colors hover:bg-muted/50 sm:flex-row sm:items-center sm:justify-between"
-                    >
-                      <div className="min-w-0">
-                        <div className="mb-1 flex flex-wrap items-center gap-2">
-                          <span className="font-semibold text-primary">#{protocol.number}</span>
-                          <Badge variant="secondary" className={getProtocolStatusClass(protocol.status)}>
-                            {getProtocolStatusLabel(protocol.status)}
-                          </Badge>
-                          {slaInfo && (
-                            <Badge variant="outline" className={`border ${slaInfo.className}`}>
-                              {slaInfo.label}
-                            </Badge>
-                          )}
-                        </div>
-                        <p className="truncate text-sm font-medium">{protocol.title}</p>
-                        <p className="truncate text-xs text-muted-foreground">
-                          {protocol.citizen?.name || 'Cidadao nao informado'} - {protocol.department?.name || 'Setor nao definido'}
-                        </p>
-                      </div>
-                      <ExternalLink className="h-4 w-4 shrink-0 text-muted-foreground" />
-                    </Link>
-                  )
-                })}
-              </div>
-            )}
-          </CardContent>
-        </Card>
+        <p className="flex flex-wrap gap-x-4 gap-y-1 text-xs text-muted-foreground">
+          <Link href="/admin/protocolos" className="hover:underline">
+            {safeStats.totalProtocols} protocolos
+          </Link>
+          <Link href="/admin/protocolos?view=active" className="hover:underline">
+            {safeStats.pendingProtocols} pendentes
+          </Link>
+          <Link href="/admin/protocolos?view=all&status=CONCLUIDO" className="hover:underline">
+            {safeStats.completedProtocols} concluídos
+          </Link>
+          <span>{completionRate}% de conclusão</span>
+        </p>
       )}
 
-      <section className="grid gap-4 lg:grid-cols-3">
-        <FeatureGroup
-          title="Gestao municipal"
-          description="Operacao diaria e atendimento ao cidadao."
-          items={[
-            hasPermission('protocols:read') && { title: 'Protocolos', href: '/admin/protocolos', icon: FileText },
-            hasPermission('citizens:read') && { title: 'Cidadaos', href: '/admin/cidadaos', icon: Users },
-            (hasPermission('services:create') || hasPermission('services:update')) && { title: 'Catalogo de servicos', href: '/admin/servicos', icon: Settings },
-            hasMinRole('COORDINATOR') && { title: 'Equipe', href: '/admin/servidores/equipe', icon: UserCheck },
-          ]}
-        />
-        <FeatureGroup
-          title="Documentos e automacao"
-          description="Documentos, IA e fluxos digitais."
-          items={[
-            { title: 'Meus documentos', href: '/admin/meus-documentos', icon: FileText },
-            hasMinRole('COORDINATOR') && { title: 'Assinaturas digitais', href: '/admin/assinaturas-digitais', icon: FileSignature },
-            hasMinRole('ADMIN') && { title: 'Templates', href: '/admin/templates-documentos', icon: ScrollText },
-            hasMinRole('ADMIN') && { title: 'IA centralizada', href: '/admin/ia', icon: Bot },
-            FEATURE_FLAGS.WORKFLOWS && hasMinRole('ADMIN') && { title: 'Workflows', href: '/admin/workflows', icon: Network },
-          ]}
-        />
-        <FeatureGroup
-          title="Comunicacao e sistema"
-          description="Canais, analises e administracao."
-          items={[
-            hasPermission('messages:read') && { title: 'Mensagens', href: '/admin/mensagens', icon: MessageCircle },
-            hasMinRole('MANAGER') && { title: 'E-mails do sistema', href: '/admin/email', icon: Mail },
-            (hasPermission('reports:department') || hasPermission('reports:full')) && { title: 'Relatorios', href: '/admin/relatorios', icon: BarChart3 },
-            hasMinRole('ADMIN') && { title: 'Integracoes', href: '/admin/integracoes', icon: Zap },
-          ]}
-        />
-      </section>
-
-      {(hasGabinete || hasMinRole('ADMIN')) && (
-        <section className="grid gap-4 lg:grid-cols-4">
-          {hasGabinete && <ActionCard title="Painel do Prefeito" description="Hoje, secretarias, território" href="/admin/gabinete/painel-prefeito" icon={Building2} color="text-yellow-600" bg="bg-yellow-50" />}
-          <ActionCard title="Agenda" description="Compromissos e reunioes" href="/admin/agenda" icon={Calendar} color="text-blue-600" bg="bg-blue-50" />
-          <ActionCard title="Mapa dos pedidos" description="Pedidos no territorio" href="/admin/mapa" icon={Map} color="text-green-600" bg="bg-green-50" />
-          {hasMinRole('ADMIN') && <ActionCard title="DigiBot" description="Assistente do cidadão" href="/admin/digibot" icon={Cpu} color="text-cyan-600" bg="bg-cyan-50" />}
-        </section>
-      )}
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2 text-lg">
+            <Sparkles className="h-5 w-5 text-primary" />
+            Atalhos mais usados
+          </CardTitle>
+          <CardDescription>As telas que você mais abre aparecem primeiro.</CardDescription>
+        </CardHeader>
+        <CardContent className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+          {loadingShortcuts && shortcutUsage.length === 0
+            ? [0, 1, 2].map((i) => <Skeleton key={i} className="h-24 w-full" />)
+            : quickActions.map((action) => (
+                <ActionCard
+                  key={action.href}
+                  {...action}
+                  onClick={() => trackShortcut(action, setShortcutUsage)}
+                />
+              ))}
+        </CardContent>
+      </Card>
 
       {hasMinRole('COORDINATOR') && (
         <Card>
@@ -868,11 +528,7 @@ export default function AdminPage() {
               <Building2 className="h-5 w-5 text-primary" />
               Secretarias
             </CardTitle>
-            <CardDescription>
-              {loadingSecretaries && secretaryUsage.length === 0
-                ? 'Carregando secretarias personalizadas...'
-                : 'Modulos setoriais ordenados pelo seu uso mais frequente.'}
-            </CardDescription>
+            <CardDescription>Ordenadas pelo seu uso.</CardDescription>
           </CardHeader>
           <CardContent className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-6">
             {secretaries.map((secretary) => (
@@ -881,7 +537,7 @@ export default function AdminPage() {
                 title={secretary.title}
                 href={secretary.href}
                 icon={secretary.icon}
-                onClick={() => handleSecretaryClick(secretary)}
+                onClick={() => trackShortcut(secretary, setSecretaryUsage)}
               />
             ))}
           </CardContent>
@@ -889,44 +545,6 @@ export default function AdminPage() {
       )}
     </main>
   )
-}
-
-function MetricCard({
-  title,
-  value,
-  description,
-  icon: Icon,
-  href,
-  accent = 'text-foreground',
-  progress,
-}: {
-  title: string
-  value: string | number
-  description: string
-  icon: typeof FileText
-  href?: string
-  accent?: string
-  progress?: number
-}) {
-  const content = (
-    <Card className={href ? 'transition-colors hover:border-primary/50 hover:bg-muted/30' : undefined}>
-      <CardContent className="p-5">
-        <div className="flex items-start justify-between gap-4">
-          <div>
-            <p className="text-sm font-medium text-muted-foreground">{title}</p>
-            <p className={`mt-2 text-3xl font-bold ${accent}`}>{value}</p>
-            <p className="mt-1 text-xs text-muted-foreground">{description}</p>
-          </div>
-          <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-md bg-primary/10">
-            <Icon className="h-5 w-5 text-primary" />
-          </div>
-        </div>
-        {progress !== undefined && <Progress value={progress} className="mt-4 h-2" />}
-      </CardContent>
-    </Card>
-  )
-
-  return href ? <Link href={href}>{content}</Link> : content
 }
 
 function ActionCard({
@@ -960,41 +578,6 @@ function ActionCard({
         <p className="mt-1 line-clamp-2 text-xs text-muted-foreground">{description}</p>
       </div>
     </Link>
-  )
-}
-
-function FeatureGroup({
-  title,
-  description,
-  items,
-}: {
-  title: string
-  description: string
-  items: Array<false | { title: string; href: string; icon: typeof FileText }>
-}) {
-  const visibleItems = items.filter(Boolean) as Array<{ title: string; href: string; icon: typeof FileText }>
-
-  if (visibleItems.length === 0) return null
-
-  return (
-    <Card>
-      <CardHeader>
-        <CardTitle className="text-lg">{title}</CardTitle>
-        <CardDescription>{description}</CardDescription>
-      </CardHeader>
-      <CardContent className="space-y-2">
-        {visibleItems.map((item) => (
-          <Link
-            key={item.href}
-            href={item.href}
-            className="flex items-center gap-3 rounded-md px-2 py-2 text-sm transition-colors hover:bg-muted"
-          >
-            <item.icon className="h-4 w-4 text-muted-foreground" />
-            <span className="font-medium">{item.title}</span>
-          </Link>
-        ))}
-      </CardContent>
-    </Card>
   )
 }
 
