@@ -9,7 +9,8 @@ import { Badge } from '@/components/ui/badge';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { TabsContent } from '@/components/ui/tabs';
+import { AppShell, AppState } from '@/components/apps/AppShell';
 import { useToast } from '@/components/ui/use-toast';
 import { MotivoDialog, PedidoCard, StatusBadge, portalApi as api } from '@/components/apps/portal-requests/shared';
 import { Numeros, SecretariaSelect, fmtDataHora, hojeBrasilia, nomeSecretaria, paraCampoDataHora } from '@/components/apps/apps-gerais/shared';
@@ -35,6 +36,7 @@ export default function AgendaAtendimentosPage() {
   const [filtroSecretaria, setFiltroSecretaria] = useState('TODAS');
   const [dia, setDia] = useState(hojeBrasilia());
   const [loading, setLoading] = useState(true);
+  const [erro, setErro] = useState('');
   const [salvando, setSalvando] = useState(false);
   const [marcar, setMarcar] = useState<any>(null);
   const [form, setForm] = useState({ dataHora: '', duracaoMin: '30', local: '', profissionalId: SEM_PROFISSIONAL, observacoes: '' });
@@ -45,12 +47,14 @@ export default function AgendaAtendimentosPage() {
 
   const carregar = useCallback(async () => {
     setLoading(true);
+    setErro('');
     try {
       const [lista, numeros] = await Promise.all([api(`${BASE}/atendimentos?abertos=true`), api(`${BASE}/stats`).catch(() => null)]);
       setItens(Array.isArray(lista) ? lista : []);
       setStats(numeros);
-    } catch {
+    } catch (error: any) {
       setItens([]);
+      setErro(String(error?.message || error));
     } finally {
       setLoading(false);
     }
@@ -143,26 +147,20 @@ export default function AgendaAtendimentosPage() {
     />
   );
 
-  const lista = (itensLista: any[], vazio: string) =>
-    loading ? (
-      <div className="text-center py-8 text-gray-500">Carregando...</div>
-    ) : itensLista.length === 0 ? (
-      <div className="text-center py-8 text-gray-500">{vazio}</div>
-    ) : (
+  const lista = (itensLista: any[], vazio: string) => (
+    <AppState loading={loading} error={erro} onRetry={carregar} isEmpty={itensLista.length === 0} empty={vazio}>
       <div className="space-y-3">{itensLista.map(cartao)}</div>
-    );
+    </AppState>
+  );
 
   return (
-    <div className="p-6 space-y-6">
-      <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
-        <div>
-          <h1 className="text-3xl font-bold text-gray-900 flex items-center gap-3">
-            <CalendarClock className="h-8 w-8 text-indigo-600" />
-            Agenda de Atendimentos
-          </h1>
-          <p className="text-gray-500 mt-1">Pedidos de atendimento, orientação e visita: marque o dia, a hora e o local. O cidadão recebe no pedido.</p>
-        </div>
-        <div className="flex gap-2">
+    <AppShell
+      title="Agenda de Atendimentos"
+      icon={CalendarClock}
+      iconClassName="text-indigo-600"
+      description="Pedidos de atendimento, orientação e visita: marque o dia, a hora e o local. O cidadão recebe no pedido."
+      actions={
+        <>
           {secretarias.length > 1 && (
             <Select value={filtroSecretaria} onValueChange={setFiltroSecretaria}>
               <SelectTrigger className="w-56">
@@ -186,9 +184,9 @@ export default function AgendaAtendimentosPage() {
           >
             <Plus className="h-4 w-4 mr-2" /> Atendimento no balcão
           </Button>
-        </div>
-      </div>
-
+        </>
+      }
+      summary={
       <Numeros
         itens={[
           ['Aguardando horário', stats?.aguardando],
@@ -197,14 +195,13 @@ export default function AgendaAtendimentosPage() {
           ['Faltas no mês', stats?.faltasNoMes],
         ]}
       />
-
-      <Tabs defaultValue="aguardando">
-        <TabsList>
-          <TabsTrigger value="aguardando">Aguardando horário ({aguardando.length})</TabsTrigger>
-          <TabsTrigger value="dia">Agenda do dia</TabsTrigger>
-          <TabsTrigger value="marcados">Todos os marcados ({marcados.length})</TabsTrigger>
-        </TabsList>
-
+      }
+      tabs={[
+        { value: 'aguardando', label: `Aguardando horário (${aguardando.length})` },
+        { value: 'dia', label: 'Agenda do dia' },
+        { value: 'marcados', label: `Todos os marcados (${marcados.length})` },
+      ]}
+    >
         <TabsContent value="aguardando">
           <Card>
             <CardHeader>
@@ -232,7 +229,6 @@ export default function AgendaAtendimentosPage() {
             <CardContent>{lista(marcados, 'Nenhum atendimento marcado')}</CardContent>
           </Card>
         </TabsContent>
-      </Tabs>
 
       {/* Marcar / remarcar */}
       <Dialog open={!!marcar} onOpenChange={(open) => !open && setMarcar(null)}>
@@ -392,6 +388,6 @@ export default function AgendaAtendimentosPage() {
           if (await executar(() => post(`/atendimentos/${cancelar.id}/cancelar`, { motivo }), 'Cancelado. O cidadão foi avisado.')) setCancelar(null);
         }}
       />
-    </div>
+    </AppShell>
   );
 }

@@ -8,7 +8,8 @@ import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { TabsContent } from '@/components/ui/tabs';
+import { AppShell, AppEmpty, AppState } from '@/components/apps/AppShell';
 import { useToast } from '@/components/ui/use-toast';
 import { MotivoDialog, PedidoCard, StatusBadge, portalApi as api } from '@/components/apps/portal-requests/shared';
 import { Numeros, SecretariaSelect, fmtDia, nomeSecretaria, paraCampoData } from '@/components/apps/apps-gerais/shared';
@@ -41,6 +42,7 @@ export default function FeirasMercadosPage() {
   const [stats, setStats] = useState<any>(null);
   const [secretarias, setSecretarias] = useState<string[]>([]);
   const [loading, setLoading] = useState(true);
+  const [erro, setErro] = useState('');
   const [salvando, setSalvando] = useState(false);
   const [conceder, setConceder] = useState<{ pedido: any; espacoId: string; validade: string } | null>(null);
   const [recusar, setRecusar] = useState<any>(null);
@@ -50,12 +52,14 @@ export default function FeirasMercadosPage() {
 
   const carregar = useCallback(async () => {
     setLoading(true);
+    setErro('');
     try {
       const [lista, listaEspacos, numeros] = await Promise.all([api(`${BASE}/permissoes`), api(`${BASE}/espacos`), api(`${BASE}/stats`).catch(() => null)]);
       setPermissoes(Array.isArray(lista) ? lista : []);
       setEspacos(Array.isArray(listaEspacos) ? listaEspacos : []);
       setStats(numeros);
-    } catch {
+    } catch (error: any) {
+      setErro(String(error?.message || error));
       setPermissoes([]);
     } finally {
       setLoading(false);
@@ -96,20 +100,17 @@ export default function FeirasMercadosPage() {
   const post = (caminho: string, body: unknown = {}) => api(`${BASE}${caminho}`, { method: 'POST', body: JSON.stringify(body) });
 
   return (
-    <div className="p-6 space-y-6">
-      <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
-        <div>
-          <h1 className="text-3xl font-bold text-gray-900 flex items-center gap-3">
-            <Store className="h-8 w-8 text-emerald-600" />
-            Feiras e Mercados
-          </h1>
-          <p className="text-gray-500 mt-1">Boxes, bancas e pontos: conceda a permissão com validade e acompanhe as vencidas.</p>
-        </div>
+    <AppShell
+      title="Feiras e Mercados"
+      icon={Store}
+      iconClassName="text-emerald-600"
+      description="Boxes, bancas e pontos: conceda a permissão com validade e acompanhe as vencidas."
+      actions={
         <Button onClick={() => setEspacoForm({ ...ESPACO_VAZIO, departmentCode: secretarias[0] || '' })}>
           <Plus className="h-4 w-4 mr-2" /> Cadastrar box/banca
         </Button>
-      </div>
-
+      }
+      summary={
       <Numeros
         itens={[
           ['Pedidos aguardando', stats?.aguardando],
@@ -118,13 +119,14 @@ export default function FeirasMercadosPage() {
           ['Espaços livres', stats?.espacosLivres],
         ]}
       />
-
-      <Tabs defaultValue="pedidos">
-        <TabsList>
-          <TabsTrigger value="pedidos">Pedidos ({pedidos.length})</TabsTrigger>
-          <TabsTrigger value="permissoes">Permissões ({ativas.length})</TabsTrigger>
-          <TabsTrigger value="espacos">Boxes e bancas ({espacos.length})</TabsTrigger>
-        </TabsList>
+      }
+      defaultTab="pedidos"
+      tabs={[
+        { value: 'pedidos', label: `Pedidos (${pedidos.length})` },
+        { value: 'permissoes', label: `Permissões (${ativas.length})` },
+        { value: 'espacos', label: `Boxes e bancas (${espacos.length})` },
+      ]}
+    >
 
         <TabsContent value="pedidos">
           <Card>
@@ -132,11 +134,7 @@ export default function FeirasMercadosPage() {
               <CardTitle>Por ordem de chegada</CardTitle>
             </CardHeader>
             <CardContent>
-              {loading ? (
-                <div className="text-center py-8 text-gray-500">Carregando...</div>
-              ) : pedidos.length === 0 ? (
-                <div className="text-center py-8 text-gray-500">Nenhum pedido aguardando</div>
-              ) : (
+              <AppState loading={loading} error={erro} onRetry={carregar} isEmpty={pedidos.length === 0} empty="Nenhum pedido aguardando">
                 <div className="space-y-3">
                   {[...pedidos].reverse().map((p) => (
                     <PedidoCard
@@ -167,7 +165,7 @@ export default function FeirasMercadosPage() {
                     />
                   ))}
                 </div>
-              )}
+              </AppState>
             </CardContent>
           </Card>
         </TabsContent>
@@ -179,7 +177,7 @@ export default function FeirasMercadosPage() {
             </CardHeader>
             <CardContent>
               {ativas.length === 0 ? (
-                <div className="text-center py-8 text-gray-500">Nenhuma permissão ativa</div>
+                <AppEmpty title="Nenhuma permissão ativa" />
               ) : (
                 <div className="space-y-3">
                   {ativas.map((p) => (
@@ -245,7 +243,6 @@ export default function FeirasMercadosPage() {
             </div>
           )}
         </TabsContent>
-      </Tabs>
 
       {/* Conceder */}
       <Dialog open={!!conceder} onOpenChange={(open) => !open && setConceder(null)}>
@@ -412,6 +409,6 @@ export default function FeirasMercadosPage() {
           if (await executar(() => post(`/permissoes/${revogar.id}/revogar`, { motivo }), 'Revogada. O espaço está livre.')) setRevogar(null);
         }}
       />
-    </div>
+    </AppShell>
   );
 }

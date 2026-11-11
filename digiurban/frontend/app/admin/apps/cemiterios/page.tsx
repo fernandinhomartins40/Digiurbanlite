@@ -9,7 +9,8 @@ import { Badge } from '@/components/ui/badge';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { TabsContent } from '@/components/ui/tabs';
+import { AppShell, AppEmpty, AppState } from '@/components/apps/AppShell';
 import { useToast } from '@/components/ui/use-toast';
 import { MotivoDialog, PedidoCard, StatusBadge, portalApi as api } from '@/components/apps/portal-requests/shared';
 import { Numeros, fmtDataHora, fmtDia, paraCampoData } from '@/components/apps/apps-gerais/shared';
@@ -47,6 +48,7 @@ export default function CemiteriosPage() {
   const [stats, setStats] = useState<any>(null);
   const [busca, setBusca] = useState('');
   const [loading, setLoading] = useState(true);
+  const [erro, setErro] = useState('');
   const [salvando, setSalvando] = useState(false);
   const [atender, setAtender] = useState<any>(null);
   const [form, setForm] = useState<any>({});
@@ -62,12 +64,14 @@ export default function CemiteriosPage() {
 
   const carregar = useCallback(async () => {
     setLoading(true);
+    setErro('');
     try {
       const [lista, numeros] = await Promise.all([api(`${BASE}/pedidos?pendentes=true`), api(`${BASE}/stats`).catch(() => null)]);
       setPedidos(Array.isArray(lista) ? lista : []);
       setStats(numeros);
       await carregarJazigos(busca);
-    } catch {
+    } catch (error: any) {
+      setErro(String(error?.message || error));
       setPedidos([]);
     } finally {
       setLoading(false);
@@ -114,20 +118,17 @@ export default function CemiteriosPage() {
   const exumacaoParaMarcar = atender?.tipo === 'EXUMACAO' && atender?.status === 'AGUARDANDO';
 
   return (
-    <div className="p-6 space-y-6">
-      <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
-        <div>
-          <h1 className="text-3xl font-bold text-gray-900 flex items-center gap-3">
-            <Cross className="h-8 w-8 text-slate-600" />
-            Cemitérios
-          </h1>
-          <p className="text-gray-500 mt-1">Sepulturas e jazigos, concessões, sepultamentos e exumações.</p>
-        </div>
+    <AppShell
+      title="Cemitérios"
+      icon={Cross}
+      iconClassName="text-slate-600"
+      description="Sepulturas e jazigos, concessões, sepultamentos e exumações."
+      actions={
         <Button onClick={() => setJazigoForm({ ...JAZIGO_VAZIO, cemiterio: cemiterios[0] || '' })}>
           <Plus className="h-4 w-4 mr-2" /> Cadastrar sepultura
         </Button>
-      </div>
-
+      }
+      summary={
       <Numeros
         itens={[
           ['Pedidos em aberto', stats?.pendentes],
@@ -136,12 +137,13 @@ export default function CemiteriosPage() {
           ['Concessões vencendo (90 dias)', stats?.concessoesVencendo],
         ]}
       />
-
-      <Tabs defaultValue="pedidos">
-        <TabsList>
-          <TabsTrigger value="pedidos">Pedidos ({pedidos.length})</TabsTrigger>
-          <TabsTrigger value="jazigos">Sepulturas e jazigos</TabsTrigger>
-        </TabsList>
+      }
+      defaultTab="pedidos"
+      tabs={[
+        { value: 'pedidos', label: `Pedidos (${pedidos.length})` },
+        { value: 'jazigos', label: 'Sepulturas e jazigos' },
+      ]}
+    >
 
         <TabsContent value="pedidos">
           <Card>
@@ -149,11 +151,7 @@ export default function CemiteriosPage() {
               <CardTitle>Por ordem de chegada</CardTitle>
             </CardHeader>
             <CardContent>
-              {loading ? (
-                <div className="text-center py-8 text-gray-500">Carregando...</div>
-              ) : pedidos.length === 0 ? (
-                <div className="text-center py-8 text-gray-500">Nenhum pedido em aberto</div>
-              ) : (
+              <AppState loading={loading} error={erro} onRetry={carregar} isEmpty={pedidos.length === 0} empty="Nenhum pedido em aberto">
                 <div className="space-y-3">
                   {pedidos.map((p) => (
                     <PedidoCard
@@ -197,7 +195,7 @@ export default function CemiteriosPage() {
                     />
                   ))}
                 </div>
-              )}
+              </AppState>
             </CardContent>
           </Card>
         </TabsContent>
@@ -221,7 +219,7 @@ export default function CemiteriosPage() {
             </CardHeader>
             <CardContent>
               {jazigos.length === 0 ? (
-                <div className="text-center py-8 text-gray-500">{busca ? 'Nada encontrado' : 'Nenhuma sepultura cadastrada. Clique em "Cadastrar sepultura".'}</div>
+                <AppEmpty title={busca ? 'Nada encontrado' : 'Nenhuma sepultura cadastrada. Clique em "Cadastrar sepultura".'} />
               ) : (
                 <div className="space-y-2">
                   {jazigos.map((j) => (
@@ -278,7 +276,6 @@ export default function CemiteriosPage() {
             </CardContent>
           </Card>
         </TabsContent>
-      </Tabs>
 
       {/* Atender / marcar exumação */}
       <Dialog open={!!atender} onOpenChange={(open) => !open && setAtender(null)}>
@@ -505,6 +502,6 @@ export default function CemiteriosPage() {
           if (await executar(() => enviar(`/pedidos/${recusar.id}/recusar`, { mensagem }), 'Recusado. O cidadão foi avisado.')) setRecusar(null);
         }}
       />
-    </div>
+    </AppShell>
   );
 }

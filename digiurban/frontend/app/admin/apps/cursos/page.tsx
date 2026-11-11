@@ -9,7 +9,8 @@ import { Badge } from '@/components/ui/badge';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { TabsContent } from '@/components/ui/tabs';
+import { AppShell, AppEmpty, AppState } from '@/components/apps/AppShell';
 import { useToast } from '@/components/ui/use-toast';
 import { MotivoDialog, PedidoCard, StatusBadge, portalApi as api } from '@/components/apps/portal-requests/shared';
 import { Numeros, SecretariaSelect, fmtDia, nomeSecretaria, paraCampoData } from '@/components/apps/apps-gerais/shared';
@@ -44,6 +45,7 @@ export default function CursosPage() {
   const [stats, setStats] = useState<any>(null);
   const [secretarias, setSecretarias] = useState<string[]>([]);
   const [loading, setLoading] = useState(true);
+  const [erro, setErro] = useState('');
   const [salvando, setSalvando] = useState(false);
   const [cursoForm, setCursoForm] = useState<typeof CURSO_VAZIO | null>(null);
   const [turma, setTurma] = useState<{ inscricao: any; cursoId: string } | null>(null);
@@ -53,12 +55,14 @@ export default function CursosPage() {
 
   const carregar = useCallback(async () => {
     setLoading(true);
+    setErro('');
     try {
       const [listaCursos, listaInscricoes, numeros] = await Promise.all([api(`${BASE}/cursos`), api(`${BASE}/inscricoes`), api(`${BASE}/stats`).catch(() => null)]);
       setCursos(Array.isArray(listaCursos) ? listaCursos : []);
       setInscricoes(Array.isArray(listaInscricoes) ? listaInscricoes : []);
       setStats(numeros);
-    } catch {
+    } catch (error: any) {
+      setErro(String(error?.message || error));
       setCursos([]);
       setInscricoes([]);
     } finally {
@@ -147,20 +151,17 @@ export default function CursosPage() {
   );
 
   return (
-    <div className="p-6 space-y-6">
-      <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
-        <div>
-          <h1 className="text-3xl font-bold text-gray-900 flex items-center gap-3">
-            <GraduationCap className="h-8 w-8 text-blue-600" />
-            Cursos e Capacitações
-          </h1>
-          <p className="text-gray-500 mt-1">Cadastre o curso, coloque os inscritos na turma, lance a frequência e conclua. Cada pessoa recebe o resultado no pedido.</p>
-        </div>
+    <AppShell
+      title="Cursos e Capacitações"
+      icon={GraduationCap}
+      iconClassName="text-blue-600"
+      description="Cadastre o curso, coloque os inscritos na turma, lance a frequência e conclua. Cada pessoa recebe o resultado no pedido."
+      actions={
         <Button onClick={() => setCursoForm({ ...CURSO_VAZIO, departmentCode: secretarias[0] || '' })}>
           <Plus className="h-4 w-4 mr-2" /> Novo curso
         </Button>
-      </div>
-
+      }
+      summary={
       <Numeros
         itens={[
           ['Aguardando turma', stats?.aguardando],
@@ -169,13 +170,14 @@ export default function CursosPage() {
           ['Já concluíram', stats?.concluiram],
         ]}
       />
-
-      <Tabs defaultValue="inscricoes">
-        <TabsList>
-          <TabsTrigger value="inscricoes">Inscrições aguardando ({esperando.length})</TabsTrigger>
-          <TabsTrigger value="cursos">Cursos ({cursos.length})</TabsTrigger>
-          <TabsTrigger value="espera">Lista de espera ({listaEspera.length})</TabsTrigger>
-        </TabsList>
+      }
+      defaultTab="inscricoes"
+      tabs={[
+        { value: 'inscricoes', label: `Inscrições aguardando (${esperando.length})` },
+        { value: 'cursos', label: `Cursos (${cursos.length})` },
+        { value: 'espera', label: `Lista de espera (${listaEspera.length})` },
+      ]}
+    >
 
         <TabsContent value="inscricoes">
           <Card>
@@ -183,13 +185,9 @@ export default function CursosPage() {
               <CardTitle>Pedidos de inscrição</CardTitle>
             </CardHeader>
             <CardContent>
-              {loading ? (
-                <div className="text-center py-8 text-gray-500">Carregando...</div>
-              ) : esperando.length === 0 ? (
-                <div className="text-center py-8 text-gray-500">Nenhuma inscrição esperando turma</div>
-              ) : (
+              <AppState loading={loading} error={erro} onRetry={carregar} isEmpty={esperando.length === 0} empty="Nenhuma inscrição esperando turma">
                 <div className="space-y-3">{esperando.map((i) => cartaoInscricao(i))}</div>
-              )}
+              </AppState>
             </CardContent>
           </Card>
         </TabsContent>
@@ -279,11 +277,10 @@ export default function CursosPage() {
               <CardTitle>Esperando vaga (por ordem de chegada)</CardTitle>
             </CardHeader>
             <CardContent>
-              {listaEspera.length === 0 ? <div className="text-center py-8 text-gray-500">Ninguém na lista de espera</div> : <div className="space-y-3">{listaEspera.map((i) => cartaoInscricao(i))}</div>}
+              {listaEspera.length === 0 ? <AppEmpty title="Ninguém na lista de espera" /> : <div className="space-y-3">{listaEspera.map((i) => cartaoInscricao(i))}</div>}
             </CardContent>
           </Card>
         </TabsContent>
-      </Tabs>
 
       {/* Turma de um curso */}
       <Dialog open={!!cursoAberto} onOpenChange={(open) => !open && setCursoAberto(null)}>
@@ -454,6 +451,6 @@ export default function CursosPage() {
           if (await executar(() => enviar(`/cursos/${cancelarCurso.id}/cancelar`, { motivo }), 'Turma cancelada. Os inscritos foram avisados.')) setCancelarCurso(null);
         }}
       />
-    </div>
+    </AppShell>
   );
 }

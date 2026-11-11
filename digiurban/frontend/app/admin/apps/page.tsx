@@ -16,6 +16,7 @@ import { getDepartmentConfig } from '@/lib/department-config'
 import { departmentSlugFromCode } from '@/lib/app-catalog-client'
 import { useMyApps, type MyApp } from '@/lib/hooks/use-my-apps'
 import { PIN_DRAG_TYPE, usePinnedShortcuts } from '@/components/admin/navigation/PinnedShortcuts'
+import { AppEmpty } from '@/components/apps/AppShell'
 
 const semAcento = (texto: string) => texto.toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '')
 const nomeSecretaria = (code: string) =>
@@ -135,15 +136,13 @@ export default function AppsPage() {
           ))}
         </div>
       ) : apps.length === 0 ? (
-        <div className="flex flex-col items-center justify-center rounded-2xl border border-dashed border-[var(--lg-sep)] p-10 text-center">
-          <LayoutGrid className="h-10 w-10 text-[var(--lg-ink3)] mb-3" />
-          <p className="font-medium">Nenhum app disponível para você</p>
-          <p className="text-sm text-[var(--lg-ink3)] mt-1 max-w-md">
-            Os apps aparecem aqui para a equipe da secretaria dona de cada um. Os seus pedidos estão na Gestão de Protocolos.
-          </p>
-        </div>
+        <AppEmpty
+          icon={LayoutGrid}
+          title="Nenhum app disponível para você"
+          hint="Os apps aparecem aqui para a equipe da secretaria dona de cada um. Os seus pedidos estão na Gestão de Protocolos."
+        />
       ) : visiveis.length === 0 ? (
-        <p className="py-10 text-center text-[var(--lg-ink3)]">Nenhum app encontrado.</p>
+        <AppEmpty icon={Search} title="Nenhum app encontrado." />
       ) : (
         <div className="grid grid-cols-3 gap-x-2 gap-y-5 sm:grid-cols-4 md:grid-cols-6 lg:grid-cols-8">
           {visiveis.map((app) => (
