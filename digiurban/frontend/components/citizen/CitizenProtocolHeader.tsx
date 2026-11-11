@@ -36,7 +36,15 @@ interface CitizenProtocolHeaderProps {
   onViewMessages?: () => void
   onDownloadDocument?: () => void
   onRefresh: () => void
+  /** data prevista (ProtocolSLA.expectedEndDate), vem da API do pedido */
+  expectedEndDate?: string | null
+  isLate?: boolean
+  slaPaused?: boolean
+  concludedAt?: string | null
 }
+
+const brDate = (value: string) =>
+  new Date(value).toLocaleDateString('pt-BR', { timeZone: 'America/Sao_Paulo' })
 
 export function CitizenProtocolHeader({
   protocolId,
@@ -54,7 +62,11 @@ export function CitizenProtocolHeader({
   onUploadDocuments,
   onViewMessages,
   onDownloadDocument,
-  onRefresh
+  onRefresh,
+  expectedEndDate,
+  isLate = false,
+  slaPaused = false,
+  concludedAt
 }: CitizenProtocolHeaderProps) {
   const [cancelDialogOpen, setCancelDialogOpen] = useState(false)
 
@@ -140,24 +152,46 @@ export function CitizenProtocolHeader({
             </div>
           </div>
 
-          {/* Linha 2: Etapa Atual (se houver) */}
-          {currentStage && mode !== CitizenProtocolViewMode.ARCHIVED && (
-            <div className="mb-4 p-3 bg-blue-50 rounded-lg border border-blue-200">
-              <div className="flex items-center gap-2">
-                <Clock className="h-4 w-4 text-blue-600 shrink-0" />
-                <div className="min-w-0 flex-1">
-                  <p className="text-sm font-medium text-blue-900 truncate">
-                    Etapa Atual: {currentStage.stageName}
-                  </p>
-                </div>
-                {mode === CitizenProtocolViewMode.WAITING && (
-                  <Badge variant="destructive" className="shrink-0">
-                    Ação Necessária
-                  </Badge>
+          {/* Linha 2: onde está e quando sai — uma frase só (nunca o nome do servidor) */}
+          {(() => {
+            if (status === 'CANCELADO') return null
+            if (status === 'CONCLUIDO') {
+              return (
+                <p className="mb-4 rounded-lg border border-green-200 bg-green-50 p-3 text-sm font-medium text-green-900">
+                  Pedido concluído{concludedAt ? ` em ${brDate(concludedAt)}` : ''}.
+                </p>
+              )
+            }
+            const waitingYou = slaPaused || mode === CitizenProtocolViewMode.WAITING
+            const where = `${departmentName} está com o seu pedido${currentStage ? `, na etapa “${currentStage.stageName}”` : ''}.`
+            const when = waitingYou
+              ? ' Falta uma resposta sua; o prazo volta a contar quando você responder.'
+              : isLate && expectedEndDate
+                ? ` Era para ficar pronto até ${brDate(expectedEndDate)} e está atrasado.`
+                : expectedEndDate
+                  ? ` Previsão: até ${brDate(expectedEndDate)}.`
+                  : ''
+            const tone = waitingYou
+              ? 'border-orange-200 bg-orange-50 text-orange-900'
+              : isLate
+                ? 'border-red-200 bg-red-50 text-red-900'
+                : 'border-blue-200 bg-blue-50 text-blue-900'
+            return (
+              <div className={`mb-4 flex flex-col gap-2 rounded-lg border p-3 sm:flex-row sm:items-center ${tone}`}>
+                <p className="flex-1 text-sm font-medium">
+                  <Clock className="mr-1.5 inline h-4 w-4 align-[-2px]" />
+                  {where}
+                  {when}
+                </p>
+                {isLate && !waitingYou && onViewMessages && (
+                  <Button size="sm" variant="outline" onClick={onViewMessages} className="shrink-0 bg-white">
+                    <MessageSquare className="mr-2 h-4 w-4" />
+                    Falar com a prefeitura
+                  </Button>
                 )}
               </div>
-            </div>
-          )}
+            )
+          })()}
 
           {/* Linha 3: Ações do Cidadão */}
           <div className="flex flex-wrap gap-2">

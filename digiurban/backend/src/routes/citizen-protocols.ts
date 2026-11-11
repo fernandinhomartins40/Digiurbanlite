@@ -14,6 +14,7 @@ import { protocolStatusEngine } from '../services/protocol-status.engine';
 import { protocolModuleService } from '../services/protocol-module.service';
 import { DocumentStatus, ProtocolStatus } from '@prisma/client';
 import { createProtocolSLA } from '../services/protocol-sla.service';
+import { citizenProtocolEta } from '../services/citizen-protocol-eta';
 import { sanitizeDocumentId, mapUploadedFilesToDocuments } from '../utils/document-mapping';
 import messageNotificationService from '../lib/messages/MessageNotificationService';
 import { validateProtocolUniqueness } from '../services/protocol-uniqueness.service';
@@ -441,6 +442,7 @@ router.get('/', async (req, res) => {
               name: true
             }
           },
+          sla: { select: { expectedEndDate: true, isPaused: true } },
           _count: {
             select: {
               pendings: {
@@ -458,8 +460,9 @@ router.get('/', async (req, res) => {
       prisma.protocolSimplified.count({ where }),
     ]);
 
-    const normalizedProtocols = protocols.map((protocol: any) => ({
+    const normalizedProtocols = protocols.map(({ sla, ...protocol }: any) => ({
       ...protocol,
+      ...citizenProtocolEta(protocol.status, sla),
       openCitizenPendingsCount: protocol._count?.pendings || 0
     }));
 
@@ -518,12 +521,7 @@ router.get('/:id', async (req, res) => {
             cpf: true
         }
       },
-        assignedUser: {
-          select: {
-            id: true,
-            name: true
-          }
-        },
+        sla: { select: { expectedEndDate: true, isPaused: true } },
         _count: {
           select: {
             pendings: {
@@ -551,9 +549,11 @@ router.get('/:id', async (req, res) => {
         }
         });
 
+    const { sla, ...protocolData } = protocol as any;
     return res.json({
       protocol: {
-        ...protocol,
+        ...protocolData,
+        ...citizenProtocolEta(protocol.status, sla),
         openCitizenPendingsCount: protocol._count?.pendings || 0
       },
       history

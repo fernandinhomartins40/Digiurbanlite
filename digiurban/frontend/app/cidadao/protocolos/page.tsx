@@ -311,6 +311,22 @@ export default function ProtocolosPage() {
                             {protocol.number}
                           </h3>
                           {getStatusBadge(protocol.status)}
+                          {(() => {
+                            // data prevista ao lado da situação (mesma regra da tela do pedido)
+                            const p = protocol as typeof protocol & { expectedEndDate?: string | null; isLate?: boolean; slaPaused?: boolean };
+                            if (!p.expectedEndDate || p.slaPaused) return null;
+                            const date = new Date(p.expectedEndDate).toLocaleDateString('pt-BR', { timeZone: 'America/Sao_Paulo' });
+                            return p.isLate ? (
+                              <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-700">
+                                Atrasado (era até {date})
+                              </span>
+                            ) : (
+                              <span className="inline-flex items-center gap-1 text-xs text-gray-600">
+                                <Clock className="h-3.5 w-3.5" />
+                                Previsão: até {date}
+                              </span>
+                            );
+                          })()}
                           {!!protocol.openCitizenPendingsCount && protocol.openCitizenPendingsCount > 0 && (
                             <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-orange-100 text-orange-700">
                               {protocol.openCitizenPendingsCount} pendência(s)

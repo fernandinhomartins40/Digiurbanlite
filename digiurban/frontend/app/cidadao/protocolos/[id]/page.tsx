@@ -195,6 +195,7 @@ export default function ProtocolDetailsPage() {
 
   const handleViewMessages = () => {
     setActiveTab('messages');
+    document.getElementById('protocol-tabs')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
   };
 
   const handleGoToGenerated = () => {
@@ -351,6 +352,10 @@ export default function ProtocolDetailsPage() {
           onViewMessages={handleViewMessages}
           onDownloadDocument={handleGoToGenerated}
           onRefresh={fetchProtocolDetails}
+          expectedEndDate={(protocol as any).expectedEndDate}
+          isLate={(protocol as any).isLate}
+          slaPaused={(protocol as any).slaPaused}
+          concludedAt={(protocol as any).concludedAt}
         />
 
         {/* Progresso do Workflow */}
@@ -371,7 +376,7 @@ export default function ProtocolDetailsPage() {
             p => ['OPEN', 'IN_PROGRESS'].includes(p.status) && p.requiresCitizenAction === true
           )}
           estimatedDays={protocol.service.estimatedDays || undefined}
-          completedAt={protocol.status === 'CONCLUIDO' ? protocol.updatedAt : undefined}
+          completedAt={protocol.status === 'CONCLUIDO' ? ((protocol as any).concludedAt || protocol.updatedAt) : undefined}
           onGoToPendings={handleGoToPendings}
           onDownloadDocument={handleGoToGenerated}
         />
@@ -379,7 +384,7 @@ export default function ProtocolDetailsPage() {
         {/* Layout Principal: Tabs (70%) + Sidebar (30%) */}
         <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
           {/* Coluna Principal - Tabs (3/4) */}
-          <div className="lg:col-span-3">
+          <div id="protocol-tabs" className="lg:col-span-3 scroll-mt-24">
             <CitizenProtocolTabs
               activeTab={activeTab}
               onTabChange={setActiveTab}

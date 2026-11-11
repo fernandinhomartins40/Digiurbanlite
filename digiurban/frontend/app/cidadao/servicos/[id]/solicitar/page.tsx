@@ -22,6 +22,8 @@ import { ServiceFormRenderer } from '@/components/forms/ServiceFormRenderer';
 import { extractFieldsFromSchema, extractCitizenFields } from '@/lib/schema-field-extractor';
 import { LocationPicker, type LocationData } from '@/components/common/LocationPicker';
 import { getFullApiUrl } from '@/lib/api-config';
+import { DOCUMENT_CATALOG } from '@/shared/constants/required-documents';
+import { pickReusableDocument, type PersonalDocumentLite } from '@/components/citizen/protocol/reuse-documents';
 
 interface Service {
   id: string;
@@ -74,6 +76,15 @@ export default function SolicitarServicoPage() {
     apiRequest('/citizen/auth/my-tags')
       .then((response: any) => setMyTagIds((response?.data?.tags || []).map((tag: any) => tag.id)))
       .catch(() => setMyTagIds([]));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+  // Meus documentos (para "Usar o que já enviei": só aprovado, só do próprio cidadão)
+  const [myDocuments, setMyDocuments] = useState<PersonalDocumentLite[]>([]);
+  const [reusingDocId, setReusingDocId] = useState<string | null>(null);
+  useEffect(() => {
+    apiRequest('/citizen/personal-documents')
+      .then((response: any) => setMyDocuments(response?.documents || []))
+      .catch(() => setMyDocuments([]));
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
   const [loading, setLoading] = useState(true);
@@ -181,6 +192,21 @@ export default function SolicitarServicoPage() {
       [documentId]: file
     }));
     toast.success(`Arquivo "${file.name}" adicionado`);
+  };
+
+  // copia o arquivo aprovado de Meus documentos para este pedido (vai no envio como os demais)
+  const handleReuseDocument = async (documentId: string, mine: PersonalDocumentLite) => {
+    setReusingDocId(documentId);
+    try {
+      const response = await fetch(getFullApiUrl(`/citizen/personal-documents/${mine.id}/download`), { credentials: 'include' });
+      if (!response.ok) throw new Error();
+      const blob = await response.blob();
+      handleFileUpload(documentId, new window.File([blob], mine.fileName || 'documento', { type: mine.mimeType || blob.type }));
+    } catch {
+      toast.error('Não foi possível usar o documento salvo. Envie a foto ou o arquivo.');
+    } finally {
+      setReusingDocId(null);
+    }
   };
 
   const handleRemoveFile = (documentId: string) => {
@@ -567,13 +593,31 @@ export default function SolicitarServicoPage() {
                 </div>
                 {docsToSend.map((doc: any, index: number) => {
                   const docId = typeof doc === 'string' ? doc : doc.id || doc.name || `doc-${index}`;
+                  const code = typeof doc === 'string' ? undefined : doc.code;
+                  const reusable = !uploadedFiles[docId] && typeof doc !== 'string'
+                    ? pickReusableDocument(doc, (DOCUMENT_CATALOG as Record<string, { name: string }>)[code]?.name, myDocuments)
+                    : null;
                   return (
-                    <DocumentUpload
-                      key={docId}
-                      documentConfig={normalizeDocumentConfig(doc)}
-                      value={uploadedFiles[docId] || null}
-                      onChange={(file) => (file ? handleFileUpload(docId, file) : handleRemoveFile(docId))}
-                    />
+                    <div key={docId} className="space-y-2">
+                      <DocumentUpload
+                        documentConfig={normalizeDocumentConfig(doc)}
+                        value={uploadedFiles[docId] || null}
+                        onChange={(file) => (file ? handleFileUpload(docId, file) : handleRemoveFile(docId))}
+                      />
+                      {reusable && (
+                        <Button
+                          type="button"
+                          variant="outline"
+                          size="sm"
+                          disabled={reusingDocId === docId}
+                          onClick={() => handleReuseDocument(docId, reusable)}
+                          className="w-full"
+                        >
+                          {reusingDocId === docId ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <FileCheck className="mr-2 h-4 w-4" />}
+                          Usar o que já enviei (enviado em {new Date(reusable.uploadedAt).toLocaleDateString('pt-BR')})
+                        </Button>
+                      )}
+                    </div>
                   );
                 })}
               </div>
