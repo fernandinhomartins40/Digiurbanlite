@@ -228,6 +228,8 @@ loadRoute('/api/admin/ai-credits', './routes/admin-ai-credits.routes');
 loadRoute('/api/admin/activation', './routes/activation.routes');
 // Busca do painel (Ctrl+K): cidadão, pedido e processo interno no escopo da pessoa
 loadRoute('/api/admin/search', './routes/admin-search.routes');
+// Minha mesa (Início do servidor): tudo que espera pela pessoa, no escopo dela
+loadRoute('/api/admin/workbench', './routes/workbench.routes');
 
 // Registry — motor de dados orientado a metadados (F2: query + schema)
 loadRoute('/api/registry', './routes/registry.routes');
