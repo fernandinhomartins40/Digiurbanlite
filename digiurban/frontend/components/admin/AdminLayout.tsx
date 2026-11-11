@@ -22,6 +22,8 @@ import { ThemeToggleButton } from '@/components/liquid-glass/ThemeToggleButton'
 import { AdminMoreSheet } from './navigation/AdminMoreSheet'
 import { AdminDock } from './navigation/AdminDock'
 import { PinnedShortcutsProvider } from './navigation/PinnedShortcuts'
+import { CommandPalette, openCommandPalette } from './command/CommandPalette'
+import { CommandPaletteButton } from './command/CommandPaletteButton'
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -113,6 +115,7 @@ export function AdminLayout({ children }: AdminLayoutProps) {
         </Link>
 
         <div className="pointer-events-auto lg-glass lg-bar rounded-full p-1 flex items-center gap-0.5">
+          <CommandPaletteButton />
           {hasPermission('protocols:read') && (
             <Link
               href="/admin/protocolos"
@@ -183,11 +186,12 @@ export function AdminLayout({ children }: AdminLayoutProps) {
       <AdminDock
         badges={pending ? { '/admin/protocolos': pending } : {}}
         moreOpen={more.open && !more.search}
-        searchOpen={more.open && more.search}
+        searchOpen={false}
         onToggleMore={() => setMore((m) => ({ open: !m.open || m.search, search: false }))}
-        onToggleSearch={() => setMore((m) => ({ open: !(m.open && m.search), search: true }))}
+        onToggleSearch={openCommandPalette}
         organizeSignal={organizeSignal}
       />
+      <CommandPalette />
     </div>
     </PinnedShortcutsProvider>
   )
