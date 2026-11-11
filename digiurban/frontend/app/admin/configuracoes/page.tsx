@@ -4,6 +4,7 @@ import { useState, useRef, useEffect } from 'react'
 import { useAdminAuth } from '@/contexts/AdminAuthContext'
 import { useAdminPreferences } from '@/hooks/useAdminPreferences'
 import { TabPerfil, TabAparencia } from './tabs'
+import { CityNumbersToggle } from '@/components/admin/city-numbers/CityNumbersToggle'
 import {
   TabNotificacoes,
   TabPrivacidade,
@@ -351,6 +352,7 @@ export default function ConfiguracoesPage() {
         {/* ABA: Sistema */}
         {(user.role === 'ADMIN' || user.role === 'SUPER_ADMIN' || user.role === 'MANAGER') && (
           <TabsContent value="sistema">
+            <CityNumbersToggle />
             <TabSistema
               localPrefs={localPrefs}
               setLocalPrefs={setLocalPrefs}

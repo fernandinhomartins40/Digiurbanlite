@@ -230,6 +230,8 @@ loadRoute('/api/admin/activation', './routes/activation.routes');
 loadRoute('/api/admin/search', './routes/admin-search.routes');
 // Minha mesa (Início do servidor): tudo que espera pela pessoa, no escopo dela
 loadRoute('/api/admin/workbench', './routes/workbench.routes');
+// Liga/desliga da página Prefeitura em números
+try { app.use('/api/admin/city-numbers', require('./routes/public-city-numbers.routes').adminCityNumbersRouter); } catch (error) { logger.error('Failed to load city-numbers admin routes', { error }); }
 
 // Registry — motor de dados orientado a metadados (F2: query + schema)
 loadRoute('/api/registry', './routes/registry.routes');
@@ -260,6 +262,8 @@ loadRoute('/api/avatar', './routes/avatar.routes');
 
 // Rotas públicas (sem autenticação)
 loadRoute('/api/public/validate', './routes/public-validation.routes');
+// Prefeitura em números (página pública, só agregados; desligada = 404)
+loadRoute('/api/public/city-numbers', './routes/public-city-numbers.routes');
 
 // Certificados e assinaturas digitais
 try {
@@ -432,6 +436,7 @@ try { require('./jobs/protocol-geocoding.job').initProtocolGeocodingJob(); } cat
 try { require('./jobs/document-templates-startup.job').initDocumentTemplatesStartup(); } catch (e) { logger.error('Failed to start document templates catalog', { error: e }); }
 try { require('./jobs/required-documents-startup.job').initRequiredDocumentsStartup(); } catch (e) { logger.error('Failed to start required documents standardization', { error: e }); }
 try { require('./jobs/internal-process-deadlines.job').initInternalProcessDeadlinesJob(); } catch (e) { logger.error('Failed to start internal process deadlines job', { error: e }); }
+try { require('./jobs/weekly-summary.job').initWeeklySummaryJob(); } catch (e) { logger.error('Failed to start weekly summary job', { error: e }); }
 try { require('./jobs/prices.job').initPricesJob(); } catch (e) { logger.error('Failed to start price research jobs', { error: e }); }
 
 // Saúde - Apps integrados

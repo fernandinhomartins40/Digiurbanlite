@@ -45,7 +45,7 @@ const AUTH_ENTRY_PATH =
  * config pública). É igual para todos e não usa a sessão: uma sessão guardada
  * de outro município não pode esvaziar o seletor do portal do cidadão.
  */
-const PUBLIC_CATALOG_PATH = /^\/api\/public\/(municipios|tenant-config)\/?$/;
+const PUBLIC_CATALOG_PATH = /^\/api\/public\/(municipios|tenant-config|city-numbers)\/?$/;
 
 /** Município gravado na própria sessão (JWT válido), para quando o navegador perdeu a seleção */
 function sessionTenantClaim(req: Request): string | null {
