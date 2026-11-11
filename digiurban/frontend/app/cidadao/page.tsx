@@ -3,7 +3,8 @@
 /**
  * Início do portal do cidadão (ARQUITETURA-DE-PRODUTO.md 5.3).
  *
- *  1. "Do que você precisa?"  → busca direto nos serviços
+ *  1. "Do que você precisa?"  → busca tolerante nos serviços (a mesma do DigiBot)
+ *     "O que está acontecendo?" e "Para você" (Plano de Produto M3)
  *  2. "Aguardando você"       → pedidos em que a prefeitura pediu algo ao cidadão
  *  3. "Seus pedidos"          → situação dos pedidos mais recentes
  *
@@ -23,6 +24,9 @@ import { useCitizenAuth } from '@/contexts/CitizenAuthContext';
 import { useCitizenServices } from '@/hooks/useCitizenServices';
 import { useCitizenProtocols } from '@/hooks/useCitizenProtocols';
 import { citizenStatusInfo } from '@/lib/citizen-protocol-status';
+import { isInformationOnly, useServiceSearch } from '@/components/citizen/home/hooks';
+import { LifeSituationsStrip } from '@/components/citizen/home/LifeSituationsStrip';
+import { ForYouBlock } from '@/components/citizen/home/ForYouBlock';
 
 
 const normalize = (text: string) => text.toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '');
@@ -39,13 +43,17 @@ export default function CitizenHomePage() {
 
   const firstName = citizen?.name?.split(' ')[0];
 
-  const results = useMemo(() => {
+  const remoteResults = useServiceSearch(query);
+  // reserva enquanto a busca do servidor não responde (ou se falhar)
+  const localResults = useMemo(() => {
     const term = normalize(query.trim());
     if (term.length < 2) return [];
     return services
       .filter((s) => normalize(`${s.name} ${s.description || ''} ${s.department?.name || ''}`).includes(term))
       .slice(0, 6);
   }, [services, query]);
+  const results: Array<{ id: string; name: string; serviceSubtype?: string | null; department?: { name: string } | null }> =
+    remoteResults ?? localResults;
 
   const awaitingCount = awaiting.summary?.awaitingCitizen ?? awaiting.protocols.length;
 
@@ -99,7 +107,9 @@ export default function CitizenHomePage() {
                           <span className="block text-xs text-muted-foreground">{service.department.name}</span>
                         )}
                       </span>
-                      <span className="shrink-0 text-sm font-medium text-blue-600">Pedir</span>
+                      <span className="shrink-0 text-sm font-medium text-blue-600">
+                        {isInformationOnly(service.serviceSubtype) ? 'Ver' : 'Pedir'}
+                      </span>
                     </Link>
                   ))}
                 </div>
@@ -124,6 +134,10 @@ export default function CitizenHomePage() {
             </Link>
           </CardContent>
         </Card>
+
+        <LifeSituationsStrip />
+
+        <ForYouBlock />
 
         {/* 2. Aguardando você */}
         {!awaiting.loading && awaitingCount > 0 && (
@@ -182,6 +196,18 @@ export default function CitizenHomePage() {
               <div className="divide-y rounded-lg border">
                 {recent.protocols.map((protocol) => {
                   const status = citizenStatusInfo(protocol.status, protocol.openCitizenPendingsCount || 0);
+                  // data prevista vinda de citizen-protocols (Plano M4); prazo parado = espera o cidadão
+                  const p = protocol as typeof protocol & { expectedEndDate?: string | null; isLate?: boolean; slaPaused?: boolean };
+                  const open = !['CONCLUIDO', 'CANCELADO'].includes(protocol.status);
+                  const forecast = !open
+                    ? null
+                    : p.slaPaused
+                      ? 'Espera resposta sua'
+                      : p.isLate
+                        ? 'Atrasado'
+                        : p.expectedEndDate
+                          ? `Previsão: até ${new Date(p.expectedEndDate).toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' })}`
+                          : null;
                   return (
                     <Link
                       key={protocol.id}
@@ -194,6 +220,9 @@ export default function CitizenHomePage() {
                           <span className="block font-medium text-gray-900 truncate">{protocol.service?.name || protocol.title}</span>
                           <span className="block text-xs text-muted-foreground">
                             Nº {protocol.number} · {formatDate(protocol.createdAt)}
+                            {forecast && (
+                              <span className={p.isLate && !p.slaPaused ? 'font-semibold text-red-600' : undefined}> · {forecast}</span>
+                            )}
                           </span>
                         </span>
                       </span>

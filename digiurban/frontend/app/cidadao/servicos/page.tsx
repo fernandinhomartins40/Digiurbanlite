@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useMemo, useRef } from 'react';
+import React, { useState, useMemo, useRef, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { CitizenLayout } from '@/components/citizen/CitizenLayout';
 import { Card, CardContent } from '@/components/ui/card';
@@ -24,6 +24,7 @@ import {
 import { useCitizenServices, CitizenService } from '@/hooks/useCitizenServices';
 import { getDepartmentTheme, getCategoryColor } from '@/lib/department-colors';
 import { Badge } from '@/components/ui/badge';
+import { useLifeSituations, useServiceSearch } from '@/components/citizen/home/hooks';
 
 export default function ServicosPage() {
   const router = useRouter();
@@ -33,6 +34,23 @@ export default function ServicosPage() {
   const scrollContainerRef = useRef<HTMLDivElement>(null);
   const popularScrollRef = useRef<HTMLDivElement>(null);
   const categoryScrollRefs = useRef<Map<string, HTMLDivElement>>(new Map());
+  const { situations } = useLifeSituations();
+  // ?situacao= (vem da faixa "O que está acontecendo?" do Início); lido da URL sem useSearchParams (sem Suspense)
+  const [situacao, setSituacao] = useState('');
+  useEffect(() => {
+    setSituacao(new URLSearchParams(window.location.search).get('situacao') || '');
+  }, []);
+  const chooseSituation = (slug: string) => {
+    setSituacao(slug);
+    const url = new URL(window.location.href);
+    if (slug) url.searchParams.set('situacao', slug);
+    else url.searchParams.delete('situacao');
+    window.history.replaceState(null, '', url.toString());
+  };
+  const selectedSituation = situations.find((s) => s.slug === situacao) || null;
+  // busca tolerante do servidor (a mesma do DigiBot); enquanto não responde, a busca local
+  const remoteResults = useServiceSearch(searchTerm);
+  const remoteIds = useMemo(() => (remoteResults ? new Set(remoteResults.map((s) => s.id)) : null), [remoteResults]);
 
   const handleSolicitar = (serviceId: string) => {
     router.push(`/cidadao/servicos/${serviceId}/solicitar`);
@@ -85,13 +103,16 @@ export default function ServicosPage() {
   // Filtrar serviços
   const filteredServices = useMemo(() => {
     return services.filter(service => {
-      const matchesSearch = service.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                           (service.description?.toLowerCase() || '').includes(searchTerm.toLowerCase()) ||
-                           service.department?.name.toLowerCase().includes(searchTerm.toLowerCase());
+      const matchesSearch = searchTerm.trim().length >= 2 && remoteIds
+        ? remoteIds.has(service.id)
+        : service.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+          (service.description?.toLowerCase() || '').includes(searchTerm.toLowerCase()) ||
+          service.department?.name.toLowerCase().includes(searchTerm.toLowerCase());
       const matchesDepartment = selectedDepartment === 'todos' || service.departmentId === selectedDepartment;
-      return matchesSearch && matchesDepartment;
+      const matchesSituation = !selectedSituation || selectedSituation.serviceIds.includes(service.id);
+      return matchesSearch && matchesDepartment && matchesSituation;
     });
-  }, [services, searchTerm, selectedDepartment]);
+  }, [services, searchTerm, selectedDepartment, remoteIds, selectedSituation]);
 
   // Agrupar serviços por categoria (para o slider)
   const servicesByCategory = useMemo(() => {
@@ -239,6 +260,44 @@ export default function ServicosPage() {
           )}
         </div>
 
+        {/* Situações de vida (Plano de Produto M3) */}
+        {situations.length > 0 && (
+          <div className="space-y-2">
+            <p className="text-sm font-medium text-gray-700">O que está acontecendo?</p>
+            <div className="flex gap-2 overflow-x-auto pb-1 scrollbar-hide">
+              {situations.map((s) => (
+                <button
+                  key={s.slug}
+                  onClick={() => chooseSituation(situacao === s.slug ? '' : s.slug)}
+                  className={cn(
+                    "px-4 py-2 rounded-full text-sm font-medium whitespace-nowrap transition-all flex-shrink-0",
+                    situacao === s.slug
+                      ? "bg-blue-600 text-white shadow-md"
+                      : "bg-white text-gray-700 border border-gray-300 hover:border-blue-300 hover:bg-blue-50"
+                  )}
+                >
+                  {s.title}
+                </button>
+              ))}
+            </div>
+            {selectedSituation && (
+              <div className="flex items-start justify-between gap-3 rounded-lg border border-blue-200 bg-blue-50 px-4 py-3">
+                <div className="min-w-0">
+                  <p className="font-semibold text-blue-900">{selectedSituation.title}</p>
+                  <p className="text-sm text-blue-800">{selectedSituation.description}</p>
+                </div>
+                <button
+                  onClick={() => chooseSituation('')}
+                  className="shrink-0 text-blue-700 hover:text-blue-900"
+                  aria-label="Tirar o filtro da situação"
+                >
+                  <X className="h-4 w-4" />
+                </button>
+              </div>
+            )}
+          </div>
+        )}
+
         {/* Chips de Departamento - Scroll Horizontal */}
         <div className="relative">
           {/* Setas de navegação - apenas desktop */}
@@ -309,7 +368,7 @@ export default function ServicosPage() {
         )}
 
         {/* Serviços Populares - Slider Horizontal */}
-        {!loading && !error && popularServices.length > 0 && searchTerm === '' && selectedDepartment === 'todos' && (
+        {!loading && !error && popularServices.length > 0 && searchTerm === '' && selectedDepartment === 'todos' && !selectedSituation && (
           <div className="space-y-3">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2">
@@ -419,6 +478,7 @@ export default function ServicosPage() {
                 onClick={() => {
                   setSearchTerm('');
                   setSelectedDepartment('todos');
+                  chooseSituation('');
                 }}
                 className="mx-auto"
               >

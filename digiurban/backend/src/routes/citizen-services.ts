@@ -8,6 +8,8 @@ import { validateServiceFormData } from '../lib/json-schema-validator';
 import { DocumentUploadService } from '../services/document-upload.service';
 import { validateProtocolUniqueness } from '../services/protocol-uniqueness.service';
 import { ensureRequiredProtocolDocuments } from '../services/required-protocol-documents.service';
+import { situationsForServices } from '../catalog/life-situations';
+import { searchServicesForBot } from '../services/digibot/digibot.service';
 
 // REMOVED: generateProtocolNumber - agora usa protocolModuleService.createProtocolWithModule
 // REMOVED: ModuleHandler - agora usa protocolModuleService.createProtocolWithModule
@@ -165,6 +167,39 @@ router.get('/popular', async (req, res) => {
   } catch (error) {
     console.error('Erro ao buscar servi+ºos populares:', error);
     return res.status(500).json({ error: 'Erro interno do servidor' });
+  }
+});
+
+// GET /api/citizen/services/situations - Situações de vida com serviço ativo no município (Plano M3)
+router.get('/situations', async (_req, res) => {
+  try {
+    const services = await prisma.serviceSimplified.findMany({
+      where: { isActive: true },
+      select: { id: true, name: true, catalogKey: true },
+    });
+    return res.json({ situations: situationsForServices(services) });
+  } catch (error) {
+    console.error('Erro ao buscar situações de vida:', error);
+    return res.status(500).json({ error: 'Erro ao buscar situações' });
+  }
+});
+
+// GET /api/citizen/services/search?q= - Busca tolerante (a mesma do DigiBot: erro de digitação, sinônimos)
+router.get('/search', async (req, res) => {
+  try {
+    const q = String(req.query.q || '').slice(0, 200);
+    if (q.trim().length < 2) return res.json({ services: [] });
+    const services = await prisma.serviceSimplified.findMany({
+      where: { isActive: true },
+      select: {
+        id: true, name: true, description: true, category: true, serviceSubtype: true,
+        department: { select: { id: true, name: true } },
+      },
+    });
+    return res.json({ services: await searchServicesForBot(q, services, 8) });
+  } catch (error) {
+    console.error('Erro na busca de serviços:', error);
+    return res.status(500).json({ error: 'Erro ao buscar serviços' });
   }
 });
 
