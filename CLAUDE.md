@@ -161,6 +161,7 @@ npm run diagnose     # teste de carregamento de rotas
 /admin/organograma/         — Unidades, cargos, funções, equipes
 /admin/certificados-digitais/— Certificados
 /admin/email/               — E-mails do sistema (remetente, respostas, enviados)
+/admin/primeiros-passos/    — Primeiros passos do município (só administrador)
 /admin/pesquisa-precos/      — Pesquisa de preços (fontes oficiais → documento do processo interno)
 /admin/digibot/             — DigiBot: mensagens, menu, perguntas, palavras, ensinar o bot (sem JSON)
 /admin/analytics/           — Dashboard analítico
@@ -436,6 +437,15 @@ JWT_SECRET=<chave-secreta-longa>
 - Município no app: domínio raiz + seletor no login (cidadão e servidor, cookie `digiurban_tenant_slug`). O app NUNCA vai para `{slug}.digiurban.com.br` (sessão é do host)
 - Push nativo: `NativePushDevice` (token único, dono = quem está logado agora; apagado ao sair/trocar município/excluir conta), `services/native-push/` (FCM HTTP v1 + APNs direto, sem dependência), rotas `/api/native-push/devices`, chaves em Super-admin › Apps nativos (`/api/platform/native-apps`). Sai junto pelo canal de push existente, filtrado pelo município do aviso
 - Lojas: páginas públicas `/privacidade` (`#ia`, `#seus-direitos`), `/termos`, `/excluir-conta`, `/suporte`, `/legal`. Excluir conta com pedidos abertos CANCELA os pedidos (motor de status) depois de confirmar — não recusar. Assistente IA só com `Citizen.aiConsent` = true (null = perguntar; internal AI responde 403 `AI_NO_CONSENT`, bot segue sem IA). Denúncia de resposta: `BotAnswerReport`, aba Denúncias do DigiBot. No app, comprar créditos de IA fica escondido (Apple 3.1.1)
+
+### Produto: mesa, busca e primeiros passos (2026-11)
+Plano em `docs/produto/PLANO-PRODUTO.md`. Nada foi removido; mudou a porta de entrada.
+- **Minha mesa** (Início do servidor, `app/admin/page.tsx` + `components/admin/workbench/`): `GET /api/admin/workbench` (`services/workbench/`) só JUNTA os serviços existentes (fila de protocolos com `buildProtocolScopeWhere`, `dashboard()` do processo interno, fila de assinaturas, cidadãos a conferir com `citizens:verify`, filas de `portal-queues`, agenda central) — nunca montar filtro de secretaria à mão; fonte que falha volta vazia; máx. 20 por fonte; ordem pura em `services/workbench/ordering.ts`. Conversas/atendimentos são consultas ESPELHADAS do messages-server (`shortcut:` no código): mudou a regra lá, muda aqui. O contador "Protocolos" do menu (`getUserStats`) ainda usa regra antiga e pode não bater com a mesa
+- **Busca Ctrl+K** (`components/admin/command/`, montada uma vez no `AdminLayout`, lupa do topo e do Dock chamam `openCommandPalette()`): telas vêm do MENU (`useAdminNavigation`, mesmas permissões) — não criar lista própria; pessoas/pedidos/processos em `GET /api/admin/search` (`services/admin-search.service.ts`, regras puras em `admin-search-rules.ts`), CPF mascarado, mín. 3 caracteres, 5 por grupo. O `SearchBar` do Painel do Prefeito é outra coisa
+- **Primeiros passos** (`/admin/primeiros-passos`, `GET /api/admin/activation`, `services/activation/`): calculado dos dados existentes, sem tabela; cartões `ActivationCard`/`WelcomeCard` no Início; dispensa em `UserPreferences.dashboardLayout.dismissedCards` (rota própria `POST /api/admin/activation/dismiss` — o `PUT /api/admin/preferences` troca o JSON inteiro)
+- **Cidadão**: situações de vida em `backend/src/catalog/life-situations.ts` (por `catalogKey` + palavras inteiras do nome; `GET /api/citizen/services/situations` só devolve as com serviço ativo; teste confere as chaves); busca tolerante do bot exposta em `GET /api/citizen/services/search`. Pedido traz `expectedEndDate`/`isLate`/`slaPaused` (`services/citizen-protocol-eta.ts`); NUNCA mandar nome de servidor ao cidadão
+- **Apps**: app novo (ou tela de entrada de app) usa `components/apps/AppShell.tsx` (`AppShell`, `AppState`, `AppEmpty`, `AppError`, `AppLoading`); a Saúde usa o mesmo visual pelo `HealthAppHeader`
+- **Prefeitura em números**: página pública `/prefeitura-em-numeros` (`GET /api/public/city-numbers`, só agregados, desligada = 404; opção em `Tenant.branding.cityNumbersPublic`, liga em Configurações › Sistema). Resumo da semana às segundas (`jobs/weekly-summary.job.ts`) para quem tem `gabineteAccess`, aviso `WEEKLY_SUMMARY` só no app (sem e-mail), não repete na semana
 
 ### Registry — Motor de Dados Orientado a Metadados (plano F0–F7)
 Substitui o padrão "módulo-por-serviço" (metadados hardcoded em `MANAGEMENT_CONFIGS` + `switch` em `analyzeCustomData`). **Serviço estruturado novo = `EntityType` + `FieldDefinition` no banco, NÃO um módulo em código.**
