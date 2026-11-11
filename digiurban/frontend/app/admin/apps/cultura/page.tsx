@@ -7,7 +7,8 @@ import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { TabsContent } from '@/components/ui/tabs';
+import { AppShell, AppEmpty, AppLoading } from '@/components/apps/AppShell';
 import {
   Select,
   SelectContent,
@@ -496,22 +497,13 @@ export default function CulturaAppPage() {
     });
 
   return (
-    <div className="p-6 space-y-6">
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-3">
-          <div className="h-12 w-12 rounded-lg bg-purple-100 flex items-center justify-center">
-            <Palette className="h-7 w-7 text-purple-700" />
-          </div>
-          <div>
-            <h1 className="text-3xl font-bold text-gray-900">Espaços & Oficinas Culturais</h1>
-            <p className="text-gray-500">
-              Oficinas com vagas e frequência, reservas de espaços sem conflito, editais com
-              projetos e empréstimo de equipamento
-            </p>
-          </div>
-        </div>
-      </div>
-
+    <AppShell
+      title="Espaços e Oficinas Culturais"
+      icon={Palette}
+      iconClassName="text-purple-700"
+      description="Oficinas, reservas de espaços, editais com projetos e empréstimo de equipamento"
+      summary={
+        <>
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
         <Card>
           <CardHeader className="pb-2">
@@ -552,15 +544,17 @@ export default function CulturaAppPage() {
           </CardContent>
         </Card>
       </div>
-
-      <Tabs defaultValue="matriculas">
-        <TabsList>
-          <TabsTrigger value="matriculas">Matrículas</TabsTrigger>
-          <TabsTrigger value="oficinas">Oficinas ({oficinas.length})</TabsTrigger>
-          <TabsTrigger value="reservas">Reservas</TabsTrigger>
-          <TabsTrigger value="editais">Editais & Projetos</TabsTrigger>
-          <TabsTrigger value="emprestimos">Empréstimos</TabsTrigger>
-        </TabsList>
+        </>
+      }
+      tabs={[
+        { value: 'matriculas', label: 'Matrículas' },
+        { value: 'oficinas', label: `Oficinas (${oficinas.length})` },
+        { value: 'reservas', label: 'Reservas' },
+        { value: 'editais', label: 'Editais & Projetos' },
+        { value: 'emprestimos', label: 'Empréstimos' },
+      ]}
+      defaultTab="matriculas"
+    >
 
         {/* ------------------------------------------------------ matrículas */}
         <TabsContent value="matriculas" className="space-y-4 mt-4">
@@ -619,9 +613,9 @@ export default function CulturaAppPage() {
             </CardHeader>
             <CardContent>
               {loading ? (
-                <div className="text-center py-8 text-gray-500">Carregando...</div>
+                <AppLoading />
               ) : matriculasFiltradas.length === 0 ? (
-                <div className="text-center py-8 text-gray-500">Nenhuma inscrição encontrada</div>
+                <AppEmpty title="Nenhuma inscrição encontrada" />
               ) : (
                 <div className="space-y-3">
                   {matriculasFiltradas.map((m: any) => {
@@ -726,9 +720,7 @@ export default function CulturaAppPage() {
               </Card>
             ))}
             {oficinas.length === 0 && !loading && (
-              <p className="text-gray-500 col-span-2 text-center py-8">
-                Nenhuma oficina cadastrada — crie a primeira para matricular participantes
-              </p>
+              <div className="col-span-2"><AppEmpty title="Nenhuma oficina cadastrada — crie a primeira para matricular participantes" /></div>
             )}
           </div>
         </TabsContent>
@@ -778,9 +770,9 @@ export default function CulturaAppPage() {
             </CardHeader>
             <CardContent>
               {loading ? (
-                <div className="text-center py-8 text-gray-500">Carregando...</div>
+                <AppLoading />
               ) : reservasFiltradas.length === 0 ? (
-                <div className="text-center py-8 text-gray-500">Nenhuma reserva encontrada</div>
+                <AppEmpty title="Nenhuma reserva encontrada" />
               ) : (
                 <div className="space-y-3">
                   {reservasFiltradas.map((r: any) => {
@@ -902,7 +894,7 @@ export default function CulturaAppPage() {
               </Card>
             ))}
             {editais.length === 0 && !loading && (
-              <p className="text-gray-500 col-span-2 text-center py-8">Nenhum edital cadastrado</p>
+              <div className="col-span-2"><AppEmpty title="Nenhum edital cadastrado" /></div>
             )}
           </div>
 
@@ -932,7 +924,7 @@ export default function CulturaAppPage() {
             </CardHeader>
             <CardContent>
               {projetosFiltrados.length === 0 ? (
-                <div className="text-center py-8 text-gray-500">Nenhum projeto encontrado</div>
+                <AppEmpty title="Nenhum projeto encontrado" />
               ) : (
                 <div className="space-y-3">
                   {projetosFiltrados.map((p: any) => {
@@ -1052,9 +1044,9 @@ export default function CulturaAppPage() {
             </CardHeader>
             <CardContent>
               {loading ? (
-                <div className="text-center py-8 text-gray-500">Carregando...</div>
+                <AppLoading />
               ) : emprestimosFiltrados.length === 0 ? (
-                <div className="text-center py-8 text-gray-500">Nenhum empréstimo encontrado</div>
+                <AppEmpty title="Nenhum empréstimo encontrado" />
               ) : (
                 <div className="space-y-3">
                   {emprestimosFiltrados.map((e: any) => {
@@ -1136,7 +1128,6 @@ export default function CulturaAppPage() {
             </CardContent>
           </Card>
         </TabsContent>
-      </Tabs>
 
       {/* Dialog nova oficina */}
       <Dialog open={novaOficinaAberta} onOpenChange={setNovaOficinaAberta}>
@@ -1864,6 +1855,6 @@ export default function CulturaAppPage() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
-    </div>
+    </AppShell>
   );
 }

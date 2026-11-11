@@ -2,7 +2,8 @@
 
 import Link from 'next/link';
 import { Card, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { ArrowRight, Leaf, MapPinned, Sprout, Tractor, Users } from 'lucide-react';
+import { AppShell } from '@/components/apps/AppShell';
+import { ArrowRight, Leaf, MapPinned, Sprout, Tractor, Users, Wheat } from 'lucide-react';
 
 /**
  * App de Agricultura — mesa de trabalho da Secretaria de Agricultura.
@@ -19,11 +20,7 @@ const AREAS = [
 
 export default function AgriculturaAppPage() {
   return (
-    <div className="space-y-6">
-      <div>
-        <h1 className="text-2xl sm:text-3xl font-bold">Agricultura</h1>
-        <p className="text-muted-foreground mt-1">Gestão dos produtores, propriedades e serviços rurais do município.</p>
-      </div>
+    <AppShell title="Agricultura" icon={Wheat} iconClassName="text-green-600" description="Gestão dos produtores, propriedades e serviços rurais do município.">
       <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4">
         {AREAS.map((area) => (
           <Link key={area.href} href={area.href} className="group">
@@ -40,6 +37,6 @@ export default function AgriculturaAppPage() {
           </Link>
         ))}
       </div>
-    </div>
+    </AppShell>
   );
 }

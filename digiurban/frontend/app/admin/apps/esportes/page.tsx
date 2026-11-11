@@ -7,7 +7,8 @@ import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { TabsContent } from '@/components/ui/tabs';
+import { AppShell, AppEmpty, AppLoading } from '@/components/apps/AppShell';
 import {
   Select,
   SelectContent,
@@ -410,22 +411,13 @@ export default function EsportesAppPage() {
     });
 
   return (
-    <div className="p-6 space-y-6">
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-3">
-          <div className="h-12 w-12 rounded-lg bg-emerald-100 flex items-center justify-center">
-            <Trophy className="h-7 w-7 text-emerald-700" />
-          </div>
-          <div>
-            <h1 className="text-3xl font-bold text-gray-900">Escolinhas & Espaços Esportivos</h1>
-            <p className="text-gray-500">
-              Turmas com vagas e frequência, reservas de espaços sem conflito, competições e
-              empréstimo de material
-            </p>
-          </div>
-        </div>
-      </div>
-
+    <AppShell
+      title="Escolinhas e Espaços Esportivos"
+      icon={Trophy}
+      iconClassName="text-emerald-700"
+      description="Turmas, reservas de espaços, competições e empréstimo de material"
+      summary={
+        <>
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
         <Card>
           <CardHeader className="pb-2">
@@ -464,15 +456,17 @@ export default function EsportesAppPage() {
           </CardContent>
         </Card>
       </div>
-
-      <Tabs defaultValue="matriculas">
-        <TabsList>
-          <TabsTrigger value="matriculas">Matrículas</TabsTrigger>
-          <TabsTrigger value="turmas">Turmas ({turmas.length})</TabsTrigger>
-          <TabsTrigger value="reservas">Reservas</TabsTrigger>
-          <TabsTrigger value="competicoes">Competições</TabsTrigger>
-          <TabsTrigger value="emprestimos">Empréstimos</TabsTrigger>
-        </TabsList>
+        </>
+      }
+      tabs={[
+        { value: 'matriculas', label: 'Matrículas' },
+        { value: 'turmas', label: `Turmas (${turmas.length})` },
+        { value: 'reservas', label: 'Reservas' },
+        { value: 'competicoes', label: 'Competições' },
+        { value: 'emprestimos', label: 'Empréstimos' },
+      ]}
+      defaultTab="matriculas"
+    >
 
         {/* ------------------------------------------------------ matrículas */}
         <TabsContent value="matriculas" className="space-y-4 mt-4">
@@ -531,9 +525,9 @@ export default function EsportesAppPage() {
             </CardHeader>
             <CardContent>
               {loading ? (
-                <div className="text-center py-8 text-gray-500">Carregando...</div>
+                <AppLoading />
               ) : matriculasFiltradas.length === 0 ? (
-                <div className="text-center py-8 text-gray-500">Nenhuma inscrição encontrada</div>
+                <AppEmpty title="Nenhuma inscrição encontrada" />
               ) : (
                 <div className="space-y-3">
                   {matriculasFiltradas.map((m: any) => {
@@ -635,9 +629,7 @@ export default function EsportesAppPage() {
               </Card>
             ))}
             {turmas.length === 0 && !loading && (
-              <p className="text-gray-500 col-span-2 text-center py-8">
-                Nenhuma turma cadastrada — crie a primeira para matricular alunos
-              </p>
+              <div className="col-span-2"><AppEmpty title="Nenhuma turma cadastrada — crie a primeira para matricular alunos" /></div>
             )}
           </div>
         </TabsContent>
@@ -687,9 +679,9 @@ export default function EsportesAppPage() {
             </CardHeader>
             <CardContent>
               {loading ? (
-                <div className="text-center py-8 text-gray-500">Carregando...</div>
+                <AppLoading />
               ) : reservasFiltradas.length === 0 ? (
-                <div className="text-center py-8 text-gray-500">Nenhuma reserva encontrada</div>
+                <AppEmpty title="Nenhuma reserva encontrada" />
               ) : (
                 <div className="space-y-3">
                   {reservasFiltradas.map((r: any) => {
@@ -808,9 +800,7 @@ export default function EsportesAppPage() {
               </Card>
             ))}
             {competicoes.length === 0 && !loading && (
-              <p className="text-gray-500 col-span-2 text-center py-8">
-                Nenhuma competição cadastrada
-              </p>
+              <div className="col-span-2"><AppEmpty title="Nenhuma competição cadastrada" /></div>
             )}
           </div>
 
@@ -824,7 +814,7 @@ export default function EsportesAppPage() {
             </CardHeader>
             <CardContent>
               {inscricoes.length === 0 ? (
-                <div className="text-center py-8 text-gray-500">Nenhuma inscrição</div>
+                <AppEmpty title="Nenhuma inscrição" />
               ) : (
                 <div className="space-y-3">
                   {inscricoes.map((i: any) => {
@@ -914,9 +904,9 @@ export default function EsportesAppPage() {
             </CardHeader>
             <CardContent>
               {loading ? (
-                <div className="text-center py-8 text-gray-500">Carregando...</div>
+                <AppLoading />
               ) : emprestimosFiltrados.length === 0 ? (
-                <div className="text-center py-8 text-gray-500">Nenhum empréstimo encontrado</div>
+                <AppEmpty title="Nenhum empréstimo encontrado" />
               ) : (
                 <div className="space-y-3">
                   {emprestimosFiltrados.map((e: any) => {
@@ -998,7 +988,6 @@ export default function EsportesAppPage() {
             </CardContent>
           </Card>
         </TabsContent>
-      </Tabs>
 
       {/* Dialog nova turma */}
       <Dialog open={novaTurmaAberta} onOpenChange={setNovaTurmaAberta}>
@@ -1594,6 +1583,6 @@ export default function EsportesAppPage() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
-    </div>
+    </AppShell>
   );
 }

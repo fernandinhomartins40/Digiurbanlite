@@ -9,7 +9,8 @@ import { Badge } from '@/components/ui/badge';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { TabsContent } from '@/components/ui/tabs';
+import { AppShell, AppState } from '@/components/apps/AppShell';
 import { useToast } from '@/components/ui/use-toast';
 import { FiltroPendentes, MotivoDialog, PedidoCard, StatusBadge, portalApi as api } from '@/components/apps/portal-requests/shared';
 import { Archive, Check, EyeOff, HandMetal, Map as MapIcon, NotebookPen, Plus, Shield } from 'lucide-react';
@@ -48,6 +49,7 @@ export default function SegurancaPublicaPage() {
   const [stats, setStats] = useState<any>(null);
   const [somenteAbertas, setSomenteAbertas] = useState(true);
   const [loading, setLoading] = useState(true);
+  const [erro, setErro] = useState('');
   const [salvando, setSalvando] = useState(false);
   const [novaAberta, setNovaAberta] = useState(false);
   const [nova, setNova] = useState(NOVA);
@@ -58,13 +60,15 @@ export default function SegurancaPublicaPage() {
 
   const carregar = useCallback(async () => {
     setLoading(true);
+    setErro('');
     try {
       const [lista, mapa, numeros] = await Promise.all([api(`${BASE}/ocorrencias`), api(`${BASE}/ocorrencias/mapa`).catch(() => []), api(`${BASE}/stats`).catch(() => null)]);
       setItens(Array.isArray(lista) ? lista : []);
       setPontos(Array.isArray(mapa) ? mapa : []);
       setStats(numeros);
-    } catch {
+    } catch (error: any) {
       setItens([]);
+      setErro(String(error?.message || error));
     } finally {
       setLoading(false);
     }
@@ -110,20 +114,17 @@ export default function SegurancaPublicaPage() {
   const post = (caminho: string, body: unknown = {}) => api(`${BASE}${caminho}`, { method: 'POST', body: JSON.stringify(body) });
 
   return (
-    <div className="p-6 space-y-6">
-      <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
-        <div>
-          <h1 className="text-3xl font-bold text-gray-900 flex items-center gap-3">
-            <Shield className="h-8 w-8 text-slate-700" />
-            Ocorrências de Segurança
-          </h1>
-          <p className="text-gray-500 mt-1">Ocorrências, denúncias, pedidos de patrulhamento e pontos críticos</p>
-        </div>
+    <AppShell
+      title="Ocorrências de Segurança"
+      icon={Shield}
+      iconClassName="text-slate-700"
+      description="Ocorrências, denúncias, pedidos de patrulhamento e pontos críticos"
+      actions={
         <Button onClick={() => setNovaAberta(true)}>
           <Plus className="h-4 w-4 mr-2" /> Registrar
         </Button>
-      </div>
-
+      }
+      summary={
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
         {[
           ['Abertas', stats?.abertas],
@@ -139,12 +140,13 @@ export default function SegurancaPublicaPage() {
           </Card>
         ))}
       </div>
-
-      <Tabs defaultValue="fila">
-        <TabsList>
-          <TabsTrigger value="fila">Fila</TabsTrigger>
-          <TabsTrigger value="mapa">Mapa ({pontos.length})</TabsTrigger>
-        </TabsList>
+      }
+      tabs={[
+        { value: 'fila', label: 'Fila' },
+        { value: 'mapa', label: `Mapa (${pontos.length})` },
+      ]}
+      defaultTab="fila"
+    >
 
         <TabsContent value="fila">
           <Card>
@@ -153,11 +155,7 @@ export default function SegurancaPublicaPage() {
               <FiltroPendentes somentePendentes={somenteAbertas} onChange={setSomenteAbertas} total={visiveis.length} />
             </CardHeader>
             <CardContent>
-              {loading ? (
-                <div className="text-center py-8 text-gray-500">Carregando...</div>
-              ) : visiveis.length === 0 ? (
-                <div className="text-center py-8 text-gray-500">Nenhum registro {somenteAbertas ? 'em aberto' : 'encontrado'}</div>
-              ) : (
+              <AppState loading={loading} error={erro} onRetry={carregar} isEmpty={visiveis.length === 0} empty={`Nenhum registro ${somenteAbertas ? 'em aberto' : 'encontrado'}`}>
                 <div className="space-y-3">
                   {visiveis.map((i) => (
                     <PedidoCard
@@ -224,7 +222,7 @@ export default function SegurancaPublicaPage() {
                     />
                   ))}
                 </div>
-              )}
+              </AppState>
             </CardContent>
           </Card>
         </TabsContent>
@@ -255,7 +253,6 @@ export default function SegurancaPublicaPage() {
             </CardContent>
           </Card>
         </TabsContent>
-      </Tabs>
 
       {/* Registrar */}
       <Dialog open={novaAberta} onOpenChange={setNovaAberta}>
@@ -397,6 +394,6 @@ export default function SegurancaPublicaPage() {
           if (encerrar && (await executar(() => post(`/ocorrencias/${encerrar.item.id}/encerrar`, { resultado: encerrar.resultado, mensagem }), 'Encerrado. O cidadão foi avisado.'))) setEncerrar(null);
         }}
       />
-    </div>
+    </AppShell>
   );
 }

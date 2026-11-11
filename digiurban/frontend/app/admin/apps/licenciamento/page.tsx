@@ -22,6 +22,7 @@ import {
   DialogTitle,
 } from '@/components/ui/dialog';
 import { useToast } from '@/components/ui/use-toast';
+import { AppShell, AppEmpty, AppLoading } from '@/components/apps/AppShell';
 import {
   Building,
   Plus,
@@ -301,25 +302,18 @@ export default function LicenciamentoPage() {
   };
 
   return (
-    <div className="p-6 space-y-6">
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-3">
-          <div className="h-12 w-12 rounded-lg bg-cyan-100 flex items-center justify-center">
-            <Building className="h-7 w-7 text-cyan-700" />
-          </div>
-          <div>
-            <h1 className="text-3xl font-bold text-gray-900">Licenciamento Urbano</h1>
-            <p className="text-gray-500">
-              Análise de projetos, alvarás e licenças — Obras Públicas + Planejamento Urbano
-            </p>
-          </div>
-        </div>
+    <AppShell
+      title="Licenciamento Urbano"
+      icon={Building}
+      iconClassName="text-cyan-700"
+      description="Análise de projetos, alvarás e licenças: Obras Públicas e Planejamento Urbano"
+      actions={
         <Button onClick={() => setNovoAberto(true)}>
           <Plus className="h-4 w-4 mr-2" />
           Novo processo
         </Button>
-      </div>
-
+      }
+    >
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
         <Card>
           <CardHeader className="pb-2">
@@ -396,9 +390,9 @@ export default function LicenciamentoPage() {
         </CardHeader>
         <CardContent>
           {loading ? (
-            <div className="text-center py-8 text-gray-500">Carregando...</div>
+            <AppLoading />
           ) : filtrados.length === 0 ? (
-            <div className="text-center py-8 text-gray-500">Nenhum processo encontrado</div>
+            <AppEmpty title="Nenhum processo encontrado" />
           ) : (
             <div className="space-y-3">
               {filtrados.map((p: any) => {
@@ -712,6 +706,6 @@ export default function LicenciamentoPage() {
           </div>
         </DialogContent>
       </Dialog>
-    </div>
+    </AppShell>
   );
 }

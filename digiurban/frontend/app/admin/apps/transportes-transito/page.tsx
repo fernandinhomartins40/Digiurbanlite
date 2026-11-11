@@ -7,7 +7,8 @@ import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { TabsContent } from '@/components/ui/tabs';
+import { AppShell, AppState } from '@/components/apps/AppShell';
 import {
   Select,
   SelectContent,
@@ -105,6 +106,7 @@ export default function TransitoAppPage() {
       .catch(() => undefined);
   }, []);
   const [loading, setLoading] = useState(true);
+  const [erro, setErro] = useState('');
   const [salvando, setSalvando] = useState(false);
 
   // filtros
@@ -168,6 +170,7 @@ export default function TransitoAppPage() {
 
   const loadData = async () => {
     setLoading(true);
+    setErro('');
     try {
       const [statsData, credenciaisData, vistoriasData, defesasData] = await Promise.all([
         api('/api/apps/transportes-transito/stats').catch(() => null),
@@ -179,8 +182,9 @@ export default function TransitoAppPage() {
       setCredenciais(Array.isArray(credenciaisData) ? credenciaisData : []);
       setVistorias(Array.isArray(vistoriasData) ? vistoriasData : []);
       setDefesas(Array.isArray(defesasData) ? defesasData : []);
-    } catch (error) {
+    } catch (error: any) {
       console.error('Erro ao carregar dados:', error);
+      setErro(String(error?.message || error));
     } finally {
       setLoading(false);
     }
@@ -432,22 +436,12 @@ export default function TransitoAppPage() {
   };
 
   return (
-    <div className="p-6 space-y-6">
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-3">
-          <div className="h-12 w-12 rounded-lg bg-sky-100 flex items-center justify-center">
-            <Car className="h-7 w-7 text-sky-700" />
-          </div>
-          <div>
-            <h1 className="text-3xl font-bold text-gray-900">Credenciamentos & Vistorias</h1>
-            <p className="text-gray-500">
-              Credenciais de táxi, mototáxi e transporte escolar com validade, vistorias veiculares
-              e defesas de autuação (JARI)
-            </p>
-          </div>
-        </div>
-      </div>
-
+    <AppShell
+      title="Credenciamentos e Vistorias"
+      icon={Car}
+      iconClassName="text-sky-700"
+      description="Credenciais de táxi, mototáxi e transporte escolar, vistorias de veículos e defesas de autuação (JARI)"
+      summary={
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
         <Card>
           <CardHeader className="pb-2">
@@ -486,14 +480,15 @@ export default function TransitoAppPage() {
           </CardContent>
         </Card>
       </div>
-
-      <Tabs defaultValue="credenciais">
-        <TabsList>
-          <TabsTrigger value="credenciais">Credenciais</TabsTrigger>
-          <TabsTrigger value="vistorias">Vistorias</TabsTrigger>
-          <TabsTrigger value="defesas">Defesas (JARI)</TabsTrigger>
-          <TabsTrigger value="alteracoes">Renovações e pontos ({alteracoesPendentes})</TabsTrigger>
-        </TabsList>
+      }
+      tabs={[
+        { value: 'credenciais', label: 'Credenciais' },
+        { value: 'vistorias', label: 'Vistorias' },
+        { value: 'defesas', label: 'Defesas (JARI)' },
+        { value: 'alteracoes', label: `Renovações e pontos (${alteracoesPendentes})` },
+      ]}
+      defaultTab="credenciais"
+    >
 
         <TabsContent value="alteracoes" className="mt-4">
           <AlteracoesCredencialPedidos credenciais={credenciais} onChanged={loadData} onCount={setAlteracoesPendentes} />
@@ -554,11 +549,7 @@ export default function TransitoAppPage() {
               </CardTitle>
             </CardHeader>
             <CardContent>
-              {loading ? (
-                <div className="text-center py-8 text-gray-500">Carregando...</div>
-              ) : credenciaisFiltradas.length === 0 ? (
-                <div className="text-center py-8 text-gray-500">Nenhuma credencial encontrada</div>
-              ) : (
+              <AppState loading={loading} error={erro} onRetry={loadData} isEmpty={credenciaisFiltradas.length === 0} empty="Nenhuma credencial encontrada">
                 <div className="space-y-3">
                   {credenciaisFiltradas.map((c: any) => {
                     const badge = STATUS_CREDENCIAL[c.status] || { label: c.status };
@@ -602,7 +593,7 @@ export default function TransitoAppPage() {
                     );
                   })}
                 </div>
-              )}
+              </AppState>
             </CardContent>
           </Card>
         </TabsContent>
@@ -639,11 +630,7 @@ export default function TransitoAppPage() {
               </CardTitle>
             </CardHeader>
             <CardContent>
-              {loading ? (
-                <div className="text-center py-8 text-gray-500">Carregando...</div>
-              ) : vistoriasFiltradas.length === 0 ? (
-                <div className="text-center py-8 text-gray-500">Nenhuma vistoria encontrada</div>
-              ) : (
+              <AppState loading={loading} error={erro} onRetry={loadData} isEmpty={vistoriasFiltradas.length === 0} empty="Nenhuma vistoria encontrada">
                 <div className="space-y-3">
                   {vistoriasFiltradas.map((v: any) => {
                     const badge = STATUS_VISTORIA[v.status] || { label: v.status };
@@ -718,7 +705,7 @@ export default function TransitoAppPage() {
                     );
                   })}
                 </div>
-              )}
+              </AppState>
             </CardContent>
           </Card>
         </TabsContent>
@@ -755,11 +742,7 @@ export default function TransitoAppPage() {
               </CardTitle>
             </CardHeader>
             <CardContent>
-              {loading ? (
-                <div className="text-center py-8 text-gray-500">Carregando...</div>
-              ) : defesasFiltradas.length === 0 ? (
-                <div className="text-center py-8 text-gray-500">Nenhuma defesa encontrada</div>
-              ) : (
+              <AppState loading={loading} error={erro} onRetry={loadData} isEmpty={defesasFiltradas.length === 0} empty="Nenhuma defesa encontrada">
                 <div className="space-y-3">
                   {defesasFiltradas.map((d: any) => {
                     const badge = STATUS_DEFESA[d.status] || { label: d.status };
@@ -816,11 +799,10 @@ export default function TransitoAppPage() {
                     );
                   })}
                 </div>
-              )}
+              </AppState>
             </CardContent>
           </Card>
         </TabsContent>
-      </Tabs>
 
       {/* Dialog nova credencial */}
       <Dialog open={novaCredencialAberta} onOpenChange={setNovaCredencialAberta}>
@@ -1238,6 +1220,6 @@ export default function TransitoAppPage() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
-    </div>
+    </AppShell>
   );
 }

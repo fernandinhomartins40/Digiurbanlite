@@ -9,7 +9,8 @@ import { Badge } from '@/components/ui/badge';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { TabsContent } from '@/components/ui/tabs';
+import { AppShell, AppState } from '@/components/apps/AppShell';
 import { useToast } from '@/components/ui/use-toast';
 import { CidadaoSelector } from '@/components/apps/saude/CidadaoSelector';
 import { StatusBadge, fmtData, portalApi as api } from '@/components/apps/portal-requests/shared';
@@ -42,6 +43,7 @@ export default function BalcaoEmpregosPage() {
   const [stats, setStats] = useState<any>(null);
   const [busca, setBusca] = useState('');
   const [loading, setLoading] = useState(true);
+  const [erro, setErro] = useState('');
   const [salvando, setSalvando] = useState(false);
 
   const [vagaAberta, setVagaAberta] = useState(false);
@@ -53,6 +55,7 @@ export default function BalcaoEmpregosPage() {
 
   const carregar = useCallback(async () => {
     setLoading(true);
+    setErro('');
     try {
       const [listaVagas, listaCurriculos, numeros] = await Promise.all([
         api(`${BASE}/vagas`),
@@ -62,7 +65,8 @@ export default function BalcaoEmpregosPage() {
       setVagas(Array.isArray(listaVagas) ? listaVagas : []);
       setCurriculos(Array.isArray(listaCurriculos) ? listaCurriculos : []);
       setStats(numeros);
-    } catch {
+    } catch (error: any) {
+      setErro(String(error?.message || error));
       setVagas([]);
     } finally {
       setLoading(false);
@@ -110,25 +114,22 @@ export default function BalcaoEmpregosPage() {
   const escolaridades: string[] = stats?.escolaridades || [];
 
   return (
-    <div className="p-6 space-y-6">
-      <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
-        <div>
-          <h1 className="text-3xl font-bold text-gray-900 flex items-center gap-3">
-            <Briefcase className="h-8 w-8 text-blue-600" />
-            Balcão de Empregos
-          </h1>
-          <p className="text-gray-500 mt-1">Vagas das empresas, currículos dos trabalhadores e encaminhamentos</p>
-        </div>
-        <div className="flex gap-2">
+    <AppShell
+      title="Balcão de Empregos"
+      icon={Briefcase}
+      iconClassName="text-blue-600"
+      description="Vagas das empresas, currículos dos trabalhadores e encaminhamentos"
+      actions={
+        <>
           <Button variant="outline" onClick={() => setCurriculoAberto(true)}>
             <Plus className="h-4 w-4 mr-2" /> Novo currículo
           </Button>
           <Button onClick={() => setVagaAberta(true)}>
             <Plus className="h-4 w-4 mr-2" /> Nova vaga
           </Button>
-        </div>
-      </div>
-
+        </>
+      }
+      summary={
       <div className="grid grid-cols-2 lg:grid-cols-5 gap-4">
         {[
           ['Vagas abertas', stats?.vagasAbertas],
@@ -145,21 +146,18 @@ export default function BalcaoEmpregosPage() {
           </Card>
         ))}
       </div>
-
-      <Tabs defaultValue="vagas">
-        <TabsList>
-          <TabsTrigger value="vagas">Vagas ({vagas.length})</TabsTrigger>
-          <TabsTrigger value="curriculos">Currículos ({curriculos.length})</TabsTrigger>
-        </TabsList>
+      }
+      tabs={[
+        { value: 'vagas', label: `Vagas (${vagas.length})` },
+        { value: 'curriculos', label: `Currículos (${curriculos.length})` },
+      ]}
+      defaultTab="vagas"
+    >
 
         <TabsContent value="vagas">
           <Card>
             <CardContent className="pt-6">
-              {loading ? (
-                <div className="text-center py-8 text-gray-500">Carregando...</div>
-              ) : vagas.length === 0 ? (
-                <div className="text-center py-8 text-gray-500">Nenhuma vaga cadastrada. Cadastre a primeira em &quot;Nova vaga&quot;.</div>
-              ) : (
+              <AppState loading={loading} error={erro} onRetry={carregar} isEmpty={vagas.length === 0} empty='Nenhuma vaga cadastrada. Cadastre a primeira em "Nova vaga".'>
                 <div className="space-y-3">
                   {vagas.map((v) => (
                     <div key={v.id} className="flex flex-col gap-3 p-4 border rounded-lg hover:bg-gray-50 md:flex-row md:items-center md:justify-between">
@@ -188,7 +186,7 @@ export default function BalcaoEmpregosPage() {
                     </div>
                   ))}
                 </div>
-              )}
+              </AppState>
             </CardContent>
           </Card>
         </TabsContent>
@@ -237,7 +235,6 @@ export default function BalcaoEmpregosPage() {
             </CardContent>
           </Card>
         </TabsContent>
-      </Tabs>
 
       {/* Nova vaga */}
       <Dialog open={vagaAberta} onOpenChange={setVagaAberta}>
@@ -471,6 +468,6 @@ export default function BalcaoEmpregosPage() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
-    </div>
+    </AppShell>
   );
 }

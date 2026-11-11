@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { AppShell, AppState } from '@/components/apps/AppShell';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
@@ -96,6 +97,7 @@ export default function PoliticasMulheresAppPage() {
   const [casos, setCasos] = useState<any[]>([]);
   const [stats, setStats] = useState<any>(null);
   const [loading, setLoading] = useState(true);
+  const [erro, setErro] = useState('');
   const [salvando, setSalvando] = useState(false);
   const [filtroStatus, setFiltroStatus] = useState('ATIVOS');
   const [busca, setBusca] = useState('');
@@ -139,6 +141,7 @@ export default function PoliticasMulheresAppPage() {
 
   const loadData = async () => {
     setLoading(true);
+    setErro('');
     try {
       const [casosData, statsData] = await Promise.all([
         api('/api/apps/politicas-mulheres/casos'),
@@ -146,8 +149,9 @@ export default function PoliticasMulheresAppPage() {
       ]);
       setCasos(Array.isArray(casosData) ? casosData : []);
       setStats(statsData);
-    } catch (error) {
+    } catch (error: any) {
       console.error('Erro ao carregar casos:', error);
+      setErro(String(error?.message || error));
     } finally {
       setLoading(false);
     }
@@ -364,25 +368,23 @@ export default function PoliticasMulheresAppPage() {
   };
 
   return (
-    <div className="p-6 space-y-6">
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-3">
-          <div className="h-12 w-12 rounded-lg bg-purple-100 flex items-center justify-center">
-            <HeartHandshake className="h-7 w-7 text-purple-700" />
-          </div>
-          <div>
-            <h1 className="text-3xl font-bold text-gray-900">Rede de Atendimento à Mulher</h1>
-            <p className="text-gray-500 flex items-center gap-1">
-              <Lock className="h-4 w-4" />
-              Casos sigilosos — ficha visível apenas à equipe do caso; toda leitura é auditada
-            </p>
-          </div>
-        </div>
+    <AppShell
+      title="Rede de Atendimento à Mulher"
+      icon={HeartHandshake}
+      iconClassName="text-purple-700"
+      description={
+        <span className="inline-flex items-center gap-1">
+          <Lock className="h-4 w-4 shrink-0" />
+          Casos sigilosos: ficha visível só à equipe do caso, e toda leitura fica registrada
+        </span>
+      }
+      actions={
         <Button onClick={() => setNovoAberto(true)}>
           <Plus className="h-4 w-4 mr-2" />
           Novo caso
         </Button>
-      </div>
+      }
+    >
 
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
         <Card>
@@ -459,11 +461,7 @@ export default function PoliticasMulheresAppPage() {
           </CardTitle>
         </CardHeader>
         <CardContent>
-          {loading ? (
-            <div className="text-center py-8 text-gray-500">Carregando...</div>
-          ) : filtrados.length === 0 ? (
-            <div className="text-center py-8 text-gray-500">Nenhum caso encontrado</div>
-          ) : (
+          <AppState loading={loading} error={erro} onRetry={loadData} isEmpty={filtrados.length === 0} empty="Nenhum caso encontrado">
             <div className="space-y-3">
               {filtrados.map((c: any) => {
                 const badge = STATUS_LABEL[c.status] || { label: c.status };
@@ -515,7 +513,7 @@ export default function PoliticasMulheresAppPage() {
                 );
               })}
             </div>
-          )}
+          </AppState>
         </CardContent>
       </Card>
 
@@ -879,6 +877,6 @@ export default function PoliticasMulheresAppPage() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
-    </div>
+    </AppShell>
   );
 }

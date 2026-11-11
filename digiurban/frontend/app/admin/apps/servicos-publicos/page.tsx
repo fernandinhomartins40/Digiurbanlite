@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { AppShell, AppState } from '@/components/apps/AppShell';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
@@ -95,6 +96,7 @@ export default function OrdensServicoPage() {
   const [equipes, setEquipes] = useState<any[]>([]);
   const [stats, setStats] = useState<any>(null);
   const [loading, setLoading] = useState(true);
+  const [erro, setErro] = useState('');
   const [salvando, setSalvando] = useState(false);
 
   const [filtroStatus, setFiltroStatus] = useState('ATIVAS');
@@ -136,6 +138,7 @@ export default function OrdensServicoPage() {
 
   const loadData = async () => {
     setLoading(true);
+    setErro('');
     try {
       const [ordensData, statsData, equipesData] = await Promise.all([
         api('/api/apps/servicos-publicos/os'),
@@ -148,8 +151,9 @@ export default function OrdensServicoPage() {
       setOrdens(Array.isArray(ordensData) ? ordensData : []);
       setStats(statsData);
       setEquipes(Array.isArray(equipesData) ? equipesData : []);
-    } catch (error) {
+    } catch (error: any) {
       console.error('Erro ao carregar OS:', error);
+      setErro(String(error?.message || error));
     } finally {
       setLoading(false);
     }
@@ -322,20 +326,13 @@ export default function OrdensServicoPage() {
   };
 
   return (
-    <div className="p-6 space-y-6">
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-3">
-          <div className="h-12 w-12 rounded-lg bg-orange-100 flex items-center justify-center">
-            <Wrench className="h-7 w-7 text-orange-600" />
-          </div>
-          <div>
-            <h1 className="text-3xl font-bold text-gray-900">Ordens de Serviço</h1>
-            <p className="text-gray-500">
-              Triagem → despacho para equipe → execução → conclusão
-            </p>
-          </div>
-        </div>
-        <div className="flex items-center gap-2">
+    <AppShell
+      title="Ordens de Serviço"
+      icon={Wrench}
+      iconClassName="text-orange-600"
+      description="Triagem, despacho para a equipe, execução e conclusão"
+      actions={
+        <>
           <Link href="/admin/apps/servicos-publicos/mapa">
             <Button variant="outline">
               <MapIcon className="h-4 w-4 mr-2" />
@@ -346,8 +343,9 @@ export default function OrdensServicoPage() {
             <Plus className="h-4 w-4 mr-2" />
             Nova OS
           </Button>
-        </div>
-      </div>
+        </>
+      }
+    >
 
       <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
         <Card>
@@ -464,11 +462,7 @@ export default function OrdensServicoPage() {
           </CardTitle>
         </CardHeader>
         <CardContent>
-          {loading ? (
-            <div className="text-center py-8 text-gray-500">Carregando...</div>
-          ) : filtradas.length === 0 ? (
-            <div className="text-center py-8 text-gray-500">Nenhuma ordem de serviço</div>
-          ) : (
+          <AppState loading={loading} error={erro} onRetry={loadData} isEmpty={filtradas.length === 0} empty="Nenhuma ordem de serviço">
             <div className="space-y-3">
               {filtradas.map((os: any) => {
                 const statusBadge = STATUS_LABEL[os.status] || { label: os.status };
@@ -511,7 +505,7 @@ export default function OrdensServicoPage() {
                 );
               })}
             </div>
-          )}
+          </AppState>
         </CardContent>
       </Card>
 
@@ -795,6 +789,6 @@ export default function OrdensServicoPage() {
           </div>
         </DialogContent>
       </Dialog>
-    </div>
+    </AppShell>
   );
 }

@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
+import { AppShell } from '@/components/apps/AppShell';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import {
@@ -67,18 +68,7 @@ export default function EducacaoAppPage() {
   ];
 
   return (
-    <div className="p-6 space-y-6">
-      <div className="flex items-center gap-3">
-        <div className="h-12 w-12 rounded-lg bg-indigo-100 flex items-center justify-center">
-          <GraduationCap className="h-7 w-7 text-indigo-600" />
-        </div>
-        <div>
-          <h1 className="text-3xl font-bold text-gray-900">Gestão Escolar</h1>
-          <p className="text-gray-500">
-            Matrículas, turmas, unidades e transporte escolar do município
-          </p>
-        </div>
-      </div>
+    <AppShell title="Gestão Escolar" icon={GraduationCap} iconClassName="text-indigo-600" description="Matrículas, turmas, unidades e transporte escolar do município">
 
       {/* KPIs */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
@@ -146,6 +136,6 @@ export default function EducacaoAppPage() {
           </Link>
         ))}
       </div>
-    </div>
+    </AppShell>
   );
 }

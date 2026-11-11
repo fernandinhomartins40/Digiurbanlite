@@ -7,7 +7,8 @@ import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { TabsContent } from '@/components/ui/tabs';
+import { AppShell, AppEmpty, AppLoading } from '@/components/apps/AppShell';
 import {
   Select,
   SelectContent,
@@ -424,31 +425,25 @@ export default function HabitacaoAppPage() {
   };
 
   return (
-    <div className="p-6 space-y-6">
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-3">
-          <div className="h-12 w-12 rounded-lg bg-amber-100 flex items-center justify-center">
-            <Home className="h-7 w-7 text-amber-700" />
-          </div>
-          <div>
-            <h1 className="text-3xl font-bold text-gray-900">Programas Habitacionais</h1>
-            <p className="text-gray-500">
-              Inscrições, pontuação por critérios, fila, sorteio e contemplação de unidades
-            </p>
-          </div>
-        </div>
-        <div className="flex gap-2">
-          <Button variant="outline" onClick={() => setSorteioAberto(true)}>
-            <Dices className="h-4 w-4 mr-2" />
-            Sorteio
-          </Button>
-          <Button onClick={() => setNovaAberta(true)}>
-            <Plus className="h-4 w-4 mr-2" />
-            Nova inscrição
-          </Button>
-        </div>
-      </div>
-
+    <AppShell
+      title="Programas Habitacionais"
+      icon={Home}
+      iconClassName="text-amber-700"
+      description="Inscrições, pontuação por critérios, fila, sorteio e contemplação de unidades"
+      actions={
+        <>
+        <Button variant="outline" onClick={() => setSorteioAberto(true)}>
+          <Dices className="h-4 w-4 mr-2" />
+          Sorteio
+        </Button>
+        <Button onClick={() => setNovaAberta(true)}>
+          <Plus className="h-4 w-4 mr-2" />
+          Nova inscrição
+        </Button>
+        </>
+      }
+      summary={
+        <>
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
         <Card>
           <CardHeader className="pb-2">
@@ -489,13 +484,15 @@ export default function HabitacaoAppPage() {
           </CardContent>
         </Card>
       </div>
-
-      <Tabs defaultValue="inscricoes">
-        <TabsList>
-          <TabsTrigger value="inscricoes">Inscrições & Fila</TabsTrigger>
-          <TabsTrigger value="programas">Programas ({programas.length})</TabsTrigger>
-          <TabsTrigger value="conjuntos">Conjuntos ({conjuntos.length})</TabsTrigger>
-        </TabsList>
+        </>
+      }
+      tabs={[
+        { value: 'inscricoes', label: 'Inscrições & Fila' },
+        { value: 'programas', label: `Programas (${programas.length})` },
+        { value: 'conjuntos', label: `Conjuntos (${conjuntos.length})` },
+      ]}
+      defaultTab="inscricoes"
+    >
 
         <TabsContent value="inscricoes" className="space-y-4 mt-4">
           <Card>
@@ -549,9 +546,9 @@ export default function HabitacaoAppPage() {
             </CardHeader>
             <CardContent>
               {loading ? (
-                <div className="text-center py-8 text-gray-500">Carregando...</div>
+                <AppLoading />
               ) : filtradas.length === 0 ? (
-                <div className="text-center py-8 text-gray-500">Nenhuma inscrição encontrada</div>
+                <AppEmpty title="Nenhuma inscrição encontrada" />
               ) : (
                 <div className="space-y-3">
                   {filtradas.map((i: any) => {
@@ -638,9 +635,7 @@ export default function HabitacaoAppPage() {
               </Card>
             ))}
             {programas.length === 0 && !loading && (
-              <p className="text-gray-500 col-span-2 text-center py-8">
-                Nenhum programa cadastrado — crie o primeiro para montar a fila
-              </p>
+              <div className="col-span-2"><AppEmpty title="Nenhum programa cadastrado — crie o primeiro para montar a fila" /></div>
             )}
           </div>
         </TabsContent>
@@ -673,13 +668,10 @@ export default function HabitacaoAppPage() {
               </Card>
             ))}
             {conjuntos.length === 0 && !loading && (
-              <p className="text-gray-500 col-span-2 text-center py-8">
-                Nenhum conjunto habitacional cadastrado
-              </p>
+              <div className="col-span-2"><AppEmpty title="Nenhum conjunto habitacional cadastrado" /></div>
             )}
           </div>
         </TabsContent>
-      </Tabs>
 
       {/* Dialog nova inscrição */}
       <Dialog open={novaAberta} onOpenChange={setNovaAberta}>
@@ -981,6 +973,6 @@ export default function HabitacaoAppPage() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
-    </div>
+    </AppShell>
   );
 }

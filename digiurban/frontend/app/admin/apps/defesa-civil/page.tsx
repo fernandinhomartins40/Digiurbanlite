@@ -7,7 +7,8 @@ import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { TabsContent } from '@/components/ui/tabs';
+import { AppShell, AppEmpty, AppLoading } from '@/components/apps/AppShell';
 import {
   Select,
   SelectContent,
@@ -411,26 +412,19 @@ export default function DefesaCivilAppPage() {
   };
 
   return (
-    <div className="p-6 space-y-6">
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-3">
-          <div className="h-12 w-12 rounded-lg bg-orange-100 flex items-center justify-center">
-            <Siren className="h-7 w-7 text-orange-700" />
-          </div>
-          <div>
-            <h1 className="text-3xl font-bold text-gray-900">Ocorrências & Áreas de Risco</h1>
-            <p className="text-gray-500">
-              Defesa Civil — ocorrências georreferenciadas, vistorias, interdições, abrigos e
-              famílias atingidas
-            </p>
-          </div>
-        </div>
+    <AppShell
+      title="Ocorrências e Áreas de Risco"
+      icon={Siren}
+      iconClassName="text-orange-700"
+      description="Defesa Civil: ocorrências, vistorias, interdições, abrigos e famílias atingidas"
+      actions={
         <Button onClick={() => setNovaAberta(true)}>
           <Plus className="h-4 w-4 mr-2" />
           Nova ocorrência
         </Button>
-      </div>
-
+      }
+      summary={
+        <>
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
         <Card>
           <CardHeader className="pb-2">
@@ -467,13 +461,15 @@ export default function DefesaCivilAppPage() {
           </CardContent>
         </Card>
       </div>
-
-      <Tabs defaultValue="ocorrencias">
-        <TabsList>
-          <TabsTrigger value="ocorrencias">Ocorrências</TabsTrigger>
-          <TabsTrigger value="abrigos">Abrigos ({abrigos.length})</TabsTrigger>
-          <TabsTrigger value="familias">Famílias atingidas ({familias.length})</TabsTrigger>
-        </TabsList>
+        </>
+      }
+      tabs={[
+        { value: 'ocorrencias', label: 'Ocorrências' },
+        { value: 'abrigos', label: `Abrigos (${abrigos.length})` },
+        { value: 'familias', label: `Famílias atingidas (${familias.length})` },
+      ]}
+      defaultTab="ocorrencias"
+    >
 
         <TabsContent value="ocorrencias" className="space-y-4 mt-4">
           <Card>
@@ -513,9 +509,9 @@ export default function DefesaCivilAppPage() {
             </CardHeader>
             <CardContent>
               {loading ? (
-                <div className="text-center py-8 text-gray-500">Carregando...</div>
+                <AppLoading />
               ) : filtradas.length === 0 ? (
-                <div className="text-center py-8 text-gray-500">Nenhuma ocorrência encontrada</div>
+                <AppEmpty title="Nenhuma ocorrência encontrada" />
               ) : (
                 <div className="space-y-3">
                   {filtradas.map((o: any) => {
@@ -592,7 +588,7 @@ export default function DefesaCivilAppPage() {
               );
             })}
             {abrigos.length === 0 && !loading && (
-              <p className="text-gray-500 col-span-2 text-center py-8">Nenhum abrigo cadastrado</p>
+              <div className="col-span-2"><AppEmpty title="Nenhum abrigo cadastrado" /></div>
             )}
           </div>
         </TabsContent>
@@ -607,7 +603,7 @@ export default function DefesaCivilAppPage() {
           <Card>
             <CardContent className="pt-6">
               {familias.length === 0 && !loading ? (
-                <p className="text-gray-500 text-center py-8">Nenhuma família registrada</p>
+                <AppEmpty title="Nenhuma família registrada" />
               ) : (
                 <div className="space-y-3">
                   {familias.map((f: any) => {
@@ -666,7 +662,6 @@ export default function DefesaCivilAppPage() {
             </CardContent>
           </Card>
         </TabsContent>
-      </Tabs>
 
       {/* Dialog nova ocorrência */}
       <Dialog open={novaAberta} onOpenChange={setNovaAberta}>
@@ -1101,6 +1096,6 @@ export default function DefesaCivilAppPage() {
           </div>
         </DialogContent>
       </Dialog>
-    </div>
+    </AppShell>
   );
 }

@@ -9,7 +9,8 @@ import { Badge } from '@/components/ui/badge';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { TabsContent } from '@/components/ui/tabs';
+import { AppShell, AppState } from '@/components/apps/AppShell';
 import { useToast } from '@/components/ui/use-toast';
 import { MotivoDialog, PedidoCard, StatusBadge, fmtData, portalApi as api } from '@/components/apps/portal-requests/shared';
 import { Ban, CalendarDays, Check, Eye, EyeOff, MapPinned, Plus, RefreshCw } from 'lucide-react';
@@ -48,6 +49,7 @@ export default function TurismoPage() {
   const [filtroTipo, setFiltroTipo] = useState('TODOS');
   const [busca, setBusca] = useState('');
   const [loading, setLoading] = useState(true);
+  const [erro, setErro] = useState('');
   const [salvando, setSalvando] = useState(false);
   const [prestadorAberto, setPrestadorAberto] = useState(false);
   const [prestador, setPrestador] = useState(PRESTADOR);
@@ -59,13 +61,15 @@ export default function TurismoPage() {
 
   const carregar = useCallback(async () => {
     setLoading(true);
+    setErro('');
     try {
       const [lista, agenda, numeros] = await Promise.all([api(`${BASE}/prestadores`), api(`${BASE}/eventos`), api(`${BASE}/stats`).catch(() => null)]);
       setPrestadores(Array.isArray(lista) ? lista : []);
       setEventos(Array.isArray(agenda) ? agenda : []);
       setStats(numeros);
-    } catch {
+    } catch (error: any) {
       setPrestadores([]);
+      setErro(String(error?.message || error));
     } finally {
       setLoading(false);
     }
@@ -99,25 +103,22 @@ export default function TurismoPage() {
   const post = (caminho: string, body: unknown = {}) => api(`${BASE}${caminho}`, { method: 'POST', body: JSON.stringify(body) });
 
   return (
-    <div className="p-6 space-y-6">
-      <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
-        <div>
-          <h1 className="text-3xl font-bold text-gray-900 flex items-center gap-3">
-            <MapPinned className="h-8 w-8 text-teal-600" />
-            Cadastro do Turismo
-          </h1>
-          <p className="text-gray-500 mt-1">Prestadores de serviço turístico e calendário de eventos da cidade</p>
-        </div>
-        <div className="flex gap-2">
+    <AppShell
+      title="Cadastro do Turismo"
+      icon={MapPinned}
+      iconClassName="text-teal-600"
+      description="Prestadores de serviço turístico e calendário de eventos da cidade"
+      actions={
+        <>
           <Button variant="outline" onClick={() => setEventoAberto(true)}>
             <Plus className="h-4 w-4 mr-2" /> Novo evento
           </Button>
           <Button onClick={() => setPrestadorAberto(true)}>
             <Plus className="h-4 w-4 mr-2" /> Novo cadastro
           </Button>
-        </div>
-      </div>
-
+        </>
+      }
+      summary={
       <div className="grid grid-cols-2 lg:grid-cols-5 gap-4">
         {[
           ['Cadastros aguardando', stats?.aguardando],
@@ -134,12 +135,13 @@ export default function TurismoPage() {
           </Card>
         ))}
       </div>
-
-      <Tabs defaultValue="prestadores">
-        <TabsList>
-          <TabsTrigger value="prestadores">Prestadores ({prestadores.length})</TabsTrigger>
-          <TabsTrigger value="eventos">Eventos ({eventos.length})</TabsTrigger>
-        </TabsList>
+      }
+      tabs={[
+        { value: 'prestadores', label: `Prestadores (${prestadores.length})` },
+        { value: 'eventos', label: `Eventos (${eventos.length})` },
+      ]}
+      defaultTab="prestadores"
+    >
 
         <TabsContent value="prestadores">
           <Card>
@@ -162,11 +164,7 @@ export default function TurismoPage() {
               </CardTitle>
             </CardHeader>
             <CardContent>
-              {loading ? (
-                <div className="text-center py-8 text-gray-500">Carregando...</div>
-              ) : filtrados.length === 0 ? (
-                <div className="text-center py-8 text-gray-500">Nenhum cadastro encontrado</div>
-              ) : (
+              <AppState loading={loading} error={erro} onRetry={carregar} isEmpty={filtrados.length === 0} empty="Nenhum cadastro encontrado">
                 <div className="space-y-3">
                   {filtrados.map((p) => (
                     <PedidoCard
@@ -244,7 +242,7 @@ export default function TurismoPage() {
                     />
                   ))}
                 </div>
-              )}
+              </AppState>
             </CardContent>
           </Card>
         </TabsContent>
@@ -257,9 +255,7 @@ export default function TurismoPage() {
               </CardTitle>
             </CardHeader>
             <CardContent>
-              {eventos.length === 0 ? (
-                <div className="text-center py-8 text-gray-500">Nenhum evento registrado</div>
-              ) : (
+              <AppState loading={loading} error={erro} onRetry={carregar} isEmpty={eventos.length === 0} empty="Nenhum evento registrado">
                 <div className="space-y-3">
                   {eventos.map((e) => (
                     <PedidoCard
@@ -312,11 +308,10 @@ export default function TurismoPage() {
                     />
                   ))}
                 </div>
-              )}
+              </AppState>
             </CardContent>
           </Card>
         </TabsContent>
-      </Tabs>
 
       {/* Novo cadastro */}
       <Dialog open={prestadorAberto} onOpenChange={setPrestadorAberto}>
@@ -480,6 +475,6 @@ export default function TurismoPage() {
           if (await executar(() => post(caminho, { motivo }), recusar.tipo === 'suspender' ? 'Cadastro suspenso' : 'Pedido encerrado. O solicitante foi avisado.')) setRecusar(null);
         }}
       />
-    </div>
+    </AppShell>
   );
 }

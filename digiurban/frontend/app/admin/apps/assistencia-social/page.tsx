@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
+import { AppShell } from '@/components/apps/AppShell';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { HeartHandshake, Users, HandCoins, Building2, ArrowRight } from 'lucide-react';
 
@@ -52,16 +53,7 @@ export default function AssistenciaSocialAppPage() {
   ];
 
   return (
-    <div className="p-6 space-y-6">
-      <div className="flex items-center gap-3">
-        <div className="h-12 w-12 rounded-lg bg-rose-100 flex items-center justify-center">
-          <HeartHandshake className="h-7 w-7 text-rose-600" />
-        </div>
-        <div>
-          <h1 className="text-3xl font-bold text-gray-900">Assistência Social</h1>
-          <p className="text-gray-500">CadÚnico municipal, programas sociais e benefícios</p>
-        </div>
-      </div>
+    <AppShell title="Assistência Social" icon={HeartHandshake} iconClassName="text-rose-600" description="CadÚnico municipal, programas sociais e benefícios">
 
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
         <Card>
@@ -124,6 +116,6 @@ export default function AssistenciaSocialAppPage() {
           </Link>
         ))}
       </div>
-    </div>
+    </AppShell>
   );
 }

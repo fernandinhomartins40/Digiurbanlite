@@ -7,7 +7,8 @@ import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { TabsContent } from '@/components/ui/tabs';
+import { AppShell, AppState } from '@/components/apps/AppShell';
 import {
   Select,
   SelectContent,
@@ -76,6 +77,7 @@ export default function MobilidadeAppPage() {
   const [stats, setStats] = useState<any>(null);
   const [carteiras, setCarteiras] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const [erro, setErro] = useState('');
   const [salvando, setSalvando] = useState(false);
 
   // filtros
@@ -115,6 +117,7 @@ export default function MobilidadeAppPage() {
 
   const loadData = async () => {
     setLoading(true);
+    setErro('');
     try {
       const [statsData, carteirasData] = await Promise.all([
         api('/api/apps/mobilidade-urbana/stats').catch(() => null),
@@ -122,8 +125,9 @@ export default function MobilidadeAppPage() {
       ]);
       setStats(statsData);
       setCarteiras(Array.isArray(carteirasData) ? carteirasData : []);
-    } catch (error) {
+    } catch (error: any) {
       console.error('Erro ao carregar dados:', error);
+      setErro(String(error?.message || error));
     } finally {
       setLoading(false);
     }
@@ -353,22 +357,12 @@ export default function MobilidadeAppPage() {
   };
 
   return (
-    <div className="p-6 space-y-6">
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-3">
-          <div className="h-12 w-12 rounded-lg bg-emerald-100 flex items-center justify-center">
-            <IdCard className="h-7 w-7 text-emerald-700" />
-          </div>
-          <div>
-            <h1 className="text-3xl font-bold text-gray-900">Carteiras & Gratuidades</h1>
-            <p className="text-gray-500">
-              Cartão de estudante, gratuidades de idoso e PcD, passe livre e vaga especial —
-              emissão, renovação, 2ª via e validação pública por QR
-            </p>
-          </div>
-        </div>
-      </div>
-
+    <AppShell
+      title="Carteiras e Gratuidades"
+      icon={IdCard}
+      iconClassName="text-emerald-700"
+      description="Cartão de estudante, gratuidades de idoso e PcD, passe livre e vaga especial, com validação por QR"
+      summary={
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
         <Card>
           <CardHeader className="pb-2">
@@ -417,12 +411,13 @@ export default function MobilidadeAppPage() {
           </CardContent>
         </Card>
       </div>
-
-      <Tabs defaultValue="carteiras">
-        <TabsList>
-          <TabsTrigger value="carteiras">Carteiras</TabsTrigger>
-          <TabsTrigger value="validar">Validar carteira</TabsTrigger>
-        </TabsList>
+      }
+      tabs={[
+        { value: 'carteiras', label: 'Carteiras' },
+        { value: 'validar', label: 'Validar carteira' },
+      ]}
+      defaultTab="carteiras"
+    >
 
         {/* ------------------------------------------------------- carteiras */}
         <TabsContent value="carteiras" className="space-y-4 mt-4">
@@ -479,11 +474,7 @@ export default function MobilidadeAppPage() {
               </CardTitle>
             </CardHeader>
             <CardContent>
-              {loading ? (
-                <div className="text-center py-8 text-gray-500">Carregando...</div>
-              ) : carteirasFiltradas.length === 0 ? (
-                <div className="text-center py-8 text-gray-500">Nenhuma carteira encontrada</div>
-              ) : (
+              <AppState loading={loading} error={erro} onRetry={loadData} isEmpty={carteirasFiltradas.length === 0} empty="Nenhuma carteira encontrada">
                 <div className="space-y-3">
                   {carteirasFiltradas.map((c: any) => {
                     const badge = STATUS_CARTEIRA[c.status] || { label: c.status };
@@ -544,7 +535,7 @@ export default function MobilidadeAppPage() {
                     );
                   })}
                 </div>
-              )}
+              </AppState>
             </CardContent>
           </Card>
         </TabsContent>
@@ -627,7 +618,6 @@ export default function MobilidadeAppPage() {
             </CardContent>
           </Card>
         </TabsContent>
-      </Tabs>
 
       {/* Dialog nova solicitação */}
       <Dialog open={novaAberta} onOpenChange={setNovaAberta}>
@@ -776,6 +766,6 @@ export default function MobilidadeAppPage() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
-    </div>
+    </AppShell>
   );
 }
