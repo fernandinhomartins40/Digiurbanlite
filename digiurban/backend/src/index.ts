@@ -224,6 +224,8 @@ import { requireFeature, requireAnyFeature } from './middleware/require-feature'
 loadRoute('/api/internal', './routes/internal.routes');
 // Créditos de IA do município (painel do servidor)
 loadRoute('/api/admin/ai-credits', './routes/admin-ai-credits.routes');
+// Primeiros passos do município (lista de ativação + cartões do Início)
+loadRoute('/api/admin/activation', './routes/activation.routes');
 
 // Registry — motor de dados orientado a metadados (F2: query + schema)
 loadRoute('/api/registry', './routes/registry.routes');
