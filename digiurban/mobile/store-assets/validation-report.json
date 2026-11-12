@@ -1,0 +1,315 @@
+{
+  "sourceFilesUnchanged": true,
+  "protectedAssetsUnchanged": true,
+  "notes": "Play screenshot width 72% to fit full capture plus compact heading; iOS 78%. Existing icon has an entirely opaque alpha channel. Feature graphic is exempt from screenshot ratio rule.",
+  "compositions": [
+    {
+      "file": "play-01-entrada.png",
+      "headline": "Escolha sua cidade e entre com seu CPF",
+      "source": "capturas\\android\\01-entrada.png",
+      "sourceSha256": "78abd2857844517a13cc063a67f4caa7b45e706c50815c3ef05bcc3937dc15e7",
+      "screenshotBounds": {
+        "left": 151,
+        "top": 167,
+        "width": 778,
+        "height": 1729
+      },
+      "screenshotWidthPercent": 72.04,
+      "screenshotInteriorMatchesResizedSource": true,
+      "support": "support\\play-01-entrada-background.png"
+    },
+    {
+      "file": "play-02-cadastro.png",
+      "headline": "Crie sua conta em poucos minutos",
+      "source": "capturas\\android\\02-cadastro.png",
+      "sourceSha256": "12444630b978d97047b0470204a5f98f60c91ecd4d673c5a1a0bf11e6b9152de",
+      "screenshotBounds": {
+        "left": 151,
+        "top": 167,
+        "width": 778,
+        "height": 1729
+      },
+      "screenshotWidthPercent": 72.04,
+      "screenshotInteriorMatchesResizedSource": true,
+      "support": "support\\play-02-cadastro-background.png"
+    },
+    {
+      "file": "play-03-conferir-documento.png",
+      "headline": "Confira se um documento é autêntico",
+      "source": "capturas\\android\\03-conferir-documento.png",
+      "sourceSha256": "33a1c7cb1a47e7f3de4f4acc73c26f971b8f0b55c2ed0c2ed5a59a745b7b66f9",
+      "screenshotBounds": {
+        "left": 151,
+        "top": 167,
+        "width": 778,
+        "height": 1729
+      },
+      "screenshotWidthPercent": 72.04,
+      "screenshotInteriorMatchesResizedSource": true,
+      "support": "support\\play-03-conferir-documento-background.png"
+    },
+    {
+      "file": "play-04-esqueci-senha.png",
+      "headline": "Recupere o acesso pelo seu e-mail",
+      "source": "capturas\\android\\04-esqueci-senha.png",
+      "sourceSha256": "ed6578dedc80fb86c932b14deffa7bf6540adccef6d598455af765069e7ab1d6",
+      "screenshotBounds": {
+        "left": 151,
+        "top": 167,
+        "width": 778,
+        "height": 1729
+      },
+      "screenshotWidthPercent": 72.04,
+      "screenshotInteriorMatchesResizedSource": true,
+      "support": "support\\play-04-esqueci-senha-background.png"
+    },
+    {
+      "file": "play-05-ajuda.png",
+      "headline": "Ajuda sempre à mão",
+      "source": "capturas\\android\\05-ajuda.png",
+      "sourceSha256": "acda9b8f6040143786540c6cc2d91d4e4e4042101322fc498c5e9933d4439c00",
+      "screenshotBounds": {
+        "left": 151,
+        "top": 167,
+        "width": 778,
+        "height": 1729
+      },
+      "screenshotWidthPercent": 72.04,
+      "screenshotInteriorMatchesResizedSource": true,
+      "support": "support\\play-05-ajuda-background.png"
+    },
+    {
+      "file": "play-06-excluir-conta.png",
+      "headline": "Seus dados, suas regras",
+      "source": "capturas\\android\\06-excluir-conta.png",
+      "sourceSha256": "ea2dda871cc589dc12967037b9dd8ac6b67045e30a1576a1805531ef040667f3",
+      "screenshotBounds": {
+        "left": 151,
+        "top": 167,
+        "width": 778,
+        "height": 1729
+      },
+      "screenshotWidthPercent": 72.04,
+      "screenshotInteriorMatchesResizedSource": true,
+      "support": "support\\play-06-excluir-conta-background.png"
+    },
+    {
+      "file": "play-07-sem-internet.png",
+      "headline": "Avisa quando você fica sem internet",
+      "source": "capturas\\android\\07-sem-internet.png",
+      "sourceSha256": "6b50b97d46f8be02f94002cbe622699d443dfa5839a45c5e26565fcc047f3463",
+      "screenshotBounds": {
+        "left": 151,
+        "top": 167,
+        "width": 778,
+        "height": 1729
+      },
+      "screenshotWidthPercent": 72.04,
+      "screenshotInteriorMatchesResizedSource": true,
+      "support": "support\\play-07-sem-internet-background.png"
+    },
+    {
+      "file": "ios-01-entrada.png",
+      "headline": "Escolha sua cidade e entre com seu CPF",
+      "source": "capturas\\ios\\01-entrada.png",
+      "sourceSha256": "fc1a837e1cafea5c5730e5ac6b6d8b0af7cfd2d7510015f8695d3340bb5be6f7",
+      "screenshotBounds": {
+        "left": 145,
+        "top": 570,
+        "width": 1030,
+        "height": 2238
+      },
+      "screenshotWidthPercent": 78.03,
+      "screenshotInteriorMatchesResizedSource": true,
+      "support": "support\\ios-01-entrada-background.png"
+    },
+    {
+      "file": "ios-03-conferir-documento.png",
+      "headline": "Confira se um documento é autêntico",
+      "source": "capturas\\ios\\03-conferir-documento.png",
+      "sourceSha256": "24665c587335cfa935d9256eab16b0faed77633271f69145239e6c5bc45eb777",
+      "screenshotBounds": {
+        "left": 145,
+        "top": 570,
+        "width": 1030,
+        "height": 2238
+      },
+      "screenshotWidthPercent": 78.03,
+      "screenshotInteriorMatchesResizedSource": true,
+      "support": "support\\ios-03-conferir-documento-background.png"
+    },
+    {
+      "file": "ios-04-esqueci-senha.png",
+      "headline": "Recupere o acesso pelo seu e-mail",
+      "source": "capturas\\ios\\04-esqueci-senha.png",
+      "sourceSha256": "2273a11033888e7e4c4767665abb9277995f69239f4f0cc8d6985c8311c32302",
+      "screenshotBounds": {
+        "left": 145,
+        "top": 570,
+        "width": 1030,
+        "height": 2238
+      },
+      "screenshotWidthPercent": 78.03,
+      "screenshotInteriorMatchesResizedSource": true,
+      "support": "support\\ios-04-esqueci-senha-background.png"
+    },
+    {
+      "file": "ios-05-ajuda.png",
+      "headline": "Ajuda sempre à mão",
+      "source": "capturas\\ios\\05-ajuda.png",
+      "sourceSha256": "dcb51cf6fdc155e290b34642dd12e5994375b27db9c060dcc271d82b55e32b1c",
+      "screenshotBounds": {
+        "left": 145,
+        "top": 570,
+        "width": 1030,
+        "height": 2238
+      },
+      "screenshotWidthPercent": 78.03,
+      "screenshotInteriorMatchesResizedSource": true,
+      "support": "support\\ios-05-ajuda-background.png"
+    },
+    {
+      "file": "ios-06-excluir-conta.png",
+      "headline": "Seus dados, suas regras",
+      "source": "capturas\\ios\\06-excluir-conta.png",
+      "sourceSha256": "6e9e84eea26dca0ed3b1d80780e84e46db24ef0329f860dd527f99d7f044ece9",
+      "screenshotBounds": {
+        "left": 145,
+        "top": 570,
+        "width": 1030,
+        "height": 2238
+      },
+      "screenshotWidthPercent": 78.03,
+      "screenshotInteriorMatchesResizedSource": true,
+      "support": "support\\ios-06-excluir-conta-background.png"
+    }
+  ],
+  "files": [
+    {
+      "file": "ios-01-entrada.png",
+      "width": 1320,
+      "height": 2868,
+      "channels": 3,
+      "hasAlphaChannel": false,
+      "transparentPixels": false,
+      "playScreenshotRatioOK": null
+    },
+    {
+      "file": "ios-03-conferir-documento.png",
+      "width": 1320,
+      "height": 2868,
+      "channels": 3,
+      "hasAlphaChannel": false,
+      "transparentPixels": false,
+      "playScreenshotRatioOK": null
+    },
+    {
+      "file": "ios-04-esqueci-senha.png",
+      "width": 1320,
+      "height": 2868,
+      "channels": 3,
+      "hasAlphaChannel": false,
+      "transparentPixels": false,
+      "playScreenshotRatioOK": null
+    },
+    {
+      "file": "ios-05-ajuda.png",
+      "width": 1320,
+      "height": 2868,
+      "channels": 3,
+      "hasAlphaChannel": false,
+      "transparentPixels": false,
+      "playScreenshotRatioOK": null
+    },
+    {
+      "file": "ios-06-excluir-conta.png",
+      "width": 1320,
+      "height": 2868,
+      "channels": 3,
+      "hasAlphaChannel": false,
+      "transparentPixels": false,
+      "playScreenshotRatioOK": null
+    },
+    {
+      "file": "play-01-entrada.png",
+      "width": 1080,
+      "height": 1920,
+      "channels": 3,
+      "hasAlphaChannel": false,
+      "transparentPixels": false,
+      "playScreenshotRatioOK": true
+    },
+    {
+      "file": "play-02-cadastro.png",
+      "width": 1080,
+      "height": 1920,
+      "channels": 3,
+      "hasAlphaChannel": false,
+      "transparentPixels": false,
+      "playScreenshotRatioOK": true
+    },
+    {
+      "file": "play-03-conferir-documento.png",
+      "width": 1080,
+      "height": 1920,
+      "channels": 3,
+      "hasAlphaChannel": false,
+      "transparentPixels": false,
+      "playScreenshotRatioOK": true
+    },
+    {
+      "file": "play-04-esqueci-senha.png",
+      "width": 1080,
+      "height": 1920,
+      "channels": 3,
+      "hasAlphaChannel": false,
+      "transparentPixels": false,
+      "playScreenshotRatioOK": true
+    },
+    {
+      "file": "play-05-ajuda.png",
+      "width": 1080,
+      "height": 1920,
+      "channels": 3,
+      "hasAlphaChannel": false,
+      "transparentPixels": false,
+      "playScreenshotRatioOK": true
+    },
+    {
+      "file": "play-06-excluir-conta.png",
+      "width": 1080,
+      "height": 1920,
+      "channels": 3,
+      "hasAlphaChannel": false,
+      "transparentPixels": false,
+      "playScreenshotRatioOK": true
+    },
+    {
+      "file": "play-07-sem-internet.png",
+      "width": 1080,
+      "height": 1920,
+      "channels": 3,
+      "hasAlphaChannel": false,
+      "transparentPixels": false,
+      "playScreenshotRatioOK": true
+    },
+    {
+      "file": "play-feature-1024x500.png",
+      "width": 1024,
+      "height": 500,
+      "channels": 3,
+      "hasAlphaChannel": false,
+      "transparentPixels": false,
+      "playScreenshotRatioOK": null
+    },
+    {
+      "file": "play-icon-512.png",
+      "width": 512,
+      "height": 512,
+      "channels": 4,
+      "hasAlphaChannel": true,
+      "transparentPixels": false,
+      "playScreenshotRatioOK": true
+    }
+  ]
+}

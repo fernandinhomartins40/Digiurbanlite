@@ -38,8 +38,10 @@ Em "Informações para a revisão": CPF e senha do 1º cidadão. Nas notas, troc
 Claude faz pela API assim que as contas existirem.
 
 ### 3. Mais capturas de tela (recomendado)
-Hoje há **2** (entrada e conferir documento), 1320×2868. O mínimo da Apple é 1, então já dá para
-enviar, mas para a revisão (4.2) é melhor mostrar o app de verdade, de 6 a 8 telas: início, serviços,
+Hoje há **5** na ficha, 1320×2868, com fundo e frase (entrada, conferir documento, esqueci a senha,
+ajuda, excluir conta), montadas por `digiurban/mobile/scripts/make-store-images.js` (só telas sem login).
+O mínimo da Apple é 1, então já dá para
+enviar, mas para a revisão (4.2) é melhor mostrar o app por dentro: início, serviços,
 novo pedido com mapa, câmera de documento, lista de pedidos, conversa, documento assinado.
 Depende do item 1. Claude tira e envia.
 As capturas são do WebKit (o mesmo motor do iPhone), não do simulador da Apple.

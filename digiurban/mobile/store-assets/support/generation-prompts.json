@@ -1,0 +1,48 @@
+{
+  "tool": "image_gen built-in",
+  "note": "Generated backgrounds only. Headlines and REAL screenshots are composed using Sharp. Screenshots never submitted to image generation.",
+  "assets": [
+    {
+      "name": "01-entrada",
+      "headline": "Escolha sua cidade e entre com seu CPF",
+      "prompt": "Use case ads-marketing. Generate a premium portrait abstract background artwork for DigiUrban mobile app store screenshot campaign. 1440x2880 portrait canvas. Brand palette: deep navy #011552 dominant, electric royal blue #0755ff, luminous cyan #00d9ef and turquoise #00efcf. Scene: broad luminous electric-blue arc rises from bottom-left to lower-right, subtle cyan corner glow. Sophisticated smooth softly lit gradients, polished curved light ribbons, refined depth, professional public-service technology visual identity. Top 30% quiet very dark navy with ample blank space for later large headline. Central lower 65% clear calm blue for later insertion of a real screenshot. Decoration restricted to far side edges and bottom; readable dark top. Full bleed opaque. NO TEXT, NO letters, NO logo, NO mascot, NO devices, NO screenshot, NO interface, NO cards, NO badges, NO city names, NO seals, NO flags, NO watermarks. Produce only background art.",
+      "master": "masters/01-entrada.png"
+    },
+    {
+      "name": "02-cadastro",
+      "headline": "Crie sua conta em poucos minutos",
+      "prompt": "Use case ads-marketing. Generate a premium portrait abstract background artwork for DigiUrban mobile app store screenshot campaign. 1440x2880 portrait canvas. Brand palette: deep navy #011552 dominant, electric royal blue #0755ff, luminous cyan #00d9ef and turquoise #00efcf. Scene: soft layered cobalt-blue satin waves flow along lower left edge, turquoise glow at bottom. Sophisticated smooth softly lit gradients, polished curved light ribbons, refined depth, professional public-service technology visual identity. Top 30% quiet very dark navy with ample blank space for later large headline. Central lower 65% clear calm blue for later insertion of a real screenshot. Decoration restricted to far side edges and bottom; readable dark top. Full bleed opaque. NO TEXT, NO letters, NO logo, NO mascot, NO devices, NO screenshot, NO interface, NO cards, NO badges, NO city names, NO seals, NO flags, NO watermarks. Produce only background art.",
+      "master": "masters/02-cadastro.png"
+    },
+    {
+      "name": "03-conferir-documento",
+      "headline": "Confira se um documento é autêntico",
+      "prompt": "Use case ads-marketing. Generate a premium portrait abstract background artwork for DigiUrban mobile app store screenshot campaign. 1440x2880 portrait canvas. Brand palette: deep navy #011552 dominant, electric royal blue #0755ff, luminous cyan #00d9ef and turquoise #00efcf. Scene: elegant thin intersecting cyan orbital curves along right edge, blue atmospheric gradient. Sophisticated smooth softly lit gradients, polished curved light ribbons, refined depth, professional public-service technology visual identity. Top 30% quiet very dark navy with ample blank space for later large headline. Central lower 65% clear calm blue for later insertion of a real screenshot. Decoration restricted to far side edges and bottom; readable dark top. Full bleed opaque. NO TEXT, NO letters, NO logo, NO mascot, NO devices, NO screenshot, NO interface, NO cards, NO badges, NO city names, NO seals, NO flags, NO watermarks. Produce only background art.",
+      "master": "masters/03-conferir-documento.png"
+    },
+    {
+      "name": "04-esqueci-senha",
+      "headline": "Recupere o acesso pelo seu e-mail",
+      "prompt": "Use case ads-marketing. Generate a premium portrait abstract background artwork for DigiUrban mobile app store screenshot campaign. 1440x2880 portrait canvas. Brand palette: deep navy #011552 dominant, electric royal blue #0755ff, luminous cyan #00d9ef and turquoise #00efcf. Scene: smooth diagonal electric-blue light ribbon through lower third, cyan illumination in bottom-left corner. Sophisticated smooth softly lit gradients, polished curved light ribbons, refined depth, professional public-service technology visual identity. Top 30% quiet very dark navy with ample blank space for later large headline. Central lower 65% clear calm blue for later insertion of a real screenshot. Decoration restricted to far side edges and bottom; readable dark top. Full bleed opaque. NO TEXT, NO letters, NO logo, NO mascot, NO devices, NO screenshot, NO interface, NO cards, NO badges, NO city names, NO seals, NO flags, NO watermarks. Produce only background art.",
+      "master": "masters/04-esqueci-senha.png"
+    },
+    {
+      "name": "05-ajuda",
+      "headline": "Ajuda sempre à mão",
+      "prompt": "Use case ads-marketing. Generate a premium portrait abstract background artwork for DigiUrban mobile app store screenshot campaign. 1440x2880 portrait canvas. Brand palette: deep navy #011552 dominant, electric royal blue #0755ff, luminous cyan #00d9ef and turquoise #00efcf. Scene: gentle concentric blue cyan arcs emerge from bottom-right, friendly luminous ambience. Sophisticated smooth softly lit gradients, polished curved light ribbons, refined depth, professional public-service technology visual identity. Top 30% quiet very dark navy with ample blank space for later large headline. Central lower 65% clear calm blue for later insertion of a real screenshot. Decoration restricted to far side edges and bottom; readable dark top. Full bleed opaque. NO TEXT, NO letters, NO logo, NO mascot, NO devices, NO screenshot, NO interface, NO cards, NO badges, NO city names, NO seals, NO flags, NO watermarks. Produce only background art.",
+      "master": "masters/05-ajuda.png"
+    },
+    {
+      "name": "06-excluir-conta",
+      "headline": "Seus dados, suas regras",
+      "prompt": "Use case ads-marketing. Generate a premium portrait abstract background artwork for DigiUrban mobile app store screenshot campaign. 1440x2880 portrait canvas. Brand palette: deep navy #011552 dominant, electric royal blue #0755ff, luminous cyan #00d9ef and turquoise #00efcf. Scene: restrained dark navy with blue glass-like curved panels only at far side edges, turquoise lower edge. Sophisticated smooth softly lit gradients, polished curved light ribbons, refined depth, professional public-service technology visual identity. Top 30% quiet very dark navy with ample blank space for later large headline. Central lower 65% clear calm blue for later insertion of a real screenshot. Decoration restricted to far side edges and bottom; readable dark top. Full bleed opaque. NO TEXT, NO letters, NO logo, NO mascot, NO devices, NO screenshot, NO interface, NO cards, NO badges, NO city names, NO seals, NO flags, NO watermarks. Produce only background art.",
+      "master": "masters/06-excluir-conta.png"
+    },
+    {
+      "name": "07-sem-internet",
+      "headline": "Avisa quando você fica sem internet",
+      "prompt": "Use case ads-marketing. Generate a premium portrait abstract background artwork for DigiUrban mobile app store screenshot campaign. 1440x2880 portrait canvas. Brand palette: deep navy #011552 dominant, electric royal blue #0755ff, luminous cyan #00d9ef and turquoise #00efcf. Scene: soft blue luminous horizon curves near bottom with tiny quiet cyan light particles only at edges. Sophisticated smooth softly lit gradients, polished curved light ribbons, refined depth, professional public-service technology visual identity. Top 30% quiet very dark navy with ample blank space for later large headline. Central lower 65% clear calm blue for later insertion of a real screenshot. Decoration restricted to far side edges and bottom; readable dark top. Full bleed opaque. NO TEXT, NO letters, NO logo, NO mascot, NO devices, NO screenshot, NO interface, NO cards, NO badges, NO city names, NO seals, NO flags, NO watermarks. Produce only background art.",
+      "master": "masters/07-sem-internet.png"
+    }
+  ]
+}
