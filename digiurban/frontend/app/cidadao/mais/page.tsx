@@ -21,6 +21,7 @@ import {
 import { useRouter } from 'next/navigation';
 import { MunicipioSwitcher } from '@/components/citizen/MunicipioSwitcher';
 import { AppearanceSetting } from '@/components/liquid-glass/AppearanceSetting';
+import { SUPPORT_EMAIL } from '@/components/legal/LegalPage';
 
 interface MenuItem {
   id: string;
@@ -226,7 +227,7 @@ export default function MaisPage() {
               O DigiUrban é a plataforma digital usada pela sua prefeitura. Não é um órgão de governo.
             </p>
             <p className="text-xs text-gray-500 mt-1">
-              Suporte: <a href="mailto:contato@digiurban.com.br" className="underline">contato@digiurban.com.br</a>
+              Suporte: <a href={`mailto:${SUPPORT_EMAIL}`} className="underline">{SUPPORT_EMAIL}</a>
             </p>
             <p className="text-xs text-gray-400 mt-1">
               © {new Date().getFullYear()} - Todos os direitos reservados

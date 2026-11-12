@@ -1,6 +1,6 @@
 import type { Metadata } from 'next'
 import Link from 'next/link'
-import { LegalPage, NOT_GOVERNMENT, SUPPORT_EMAIL } from '@/components/legal/LegalPage'
+import { COMPANY, LegalPage, NOT_GOVERNMENT, SUPPORT_EMAIL } from '@/components/legal/LegalPage'
 
 export const metadata: Metadata = {
   title: 'Política de privacidade - DigiUrban',
@@ -26,7 +26,8 @@ export default function PrivacidadePage() {
           servem, atende os seus pedidos e presta os serviços públicos.
         </li>
         <li>
-          <strong>O DigiUrban é o operador</strong> (art. 5º, VII): fornece a plataforma e guarda os dados seguindo as instruções da prefeitura. Cada
+          <strong>O DigiUrban é o operador</strong> (art. 5º, VII), mantido pela empresa {COMPANY.name}, CNPJ {COMPANY.cnpj}, com sede na{' '}
+          {COMPANY.address}. Contato: <a href={`mailto:${SUPPORT_EMAIL}`}>{SUPPORT_EMAIL}</a>. Fornece a plataforma e guarda os dados seguindo as instruções da prefeitura. Cada
           prefeitura só vê os dados do próprio município.
         </li>
       </ul>

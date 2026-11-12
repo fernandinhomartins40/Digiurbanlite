@@ -5,8 +5,15 @@ import Link from 'next/link'
  * excluir conta, suporte, documentos legais). Sem login, no visual do portal.
  */
 
-export const SUPPORT_EMAIL = 'contato@digiurban.com.br'
-export const LEGAL_UPDATED_AT = '10 de novembro de 2026'
+export const SUPPORT_EMAIL = 'fuseagencia10@gmail.com'
+export const LEGAL_UPDATED_AT = '11 de novembro de 2026'
+
+// Empresa responsável pelo DigiUrban (dados do cartão CNPJ) — as lojas exigem o responsável identificado
+export const COMPANY = {
+  name: 'FUSE AGENCIA LTDA',
+  cnpj: '42.761.086/0001-15',
+  address: 'Rua Antonio Gregorio Ferreira, 298, Conradinho, Guarapuava/PR, CEP 85055-270',
+}
 
 export const LEGAL_LINKS = [
   { href: '/privacidade', label: 'Política de privacidade' },
@@ -47,6 +54,9 @@ export function LegalPage({ title, intro, children, updated = true }: { title: s
                 {link.label}
               </Link>
             ))}
+          </p>
+          <p>
+            DigiUrban é mantido por {COMPANY.name} — CNPJ {COMPANY.cnpj} — {COMPANY.address}
           </p>
           <p>
             Contato: <a href={`mailto:${SUPPORT_EMAIL}`} className="underline">{SUPPORT_EMAIL}</a>
