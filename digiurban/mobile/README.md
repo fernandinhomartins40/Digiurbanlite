@@ -17,32 +17,34 @@ npm run sync         # gera www/ e copia configuração/plugins para android/ e 
 npm run assets       # (só se o ícone mudar) refaz ícones e abertura a partir de frontend/public/icon.svg
 ```
 
-Precisa de **Node 22+** e, para Android, **JDK 21** (o Capacitor 8 compila com Java 21) e Android SDK 36.
+Precisa de **Node 22+** (só para esses comandos).
 
-### Android — gerar o AAB da Play Store
+⚠️ `npm run assets` regrava `android/app/src/main/res/mipmap-anydpi-v26/ic_launcher*.xml` e **apaga o
+`<monochrome>`** (ícone de uma cor, Android 13+). Depois de rodar, recoloque a linha `<monochrome>` nos
+dois arquivos (confira com `git diff`).
 
-```bash
-npm run sync
-cd android
-./gradlew bundleRelease          # Windows: gradlew bundleRelease
-# saída: android/app/build/outputs/bundle/release/app-release.aab
-./gradlew assembleDebug          # APK de teste: app/build/outputs/apk/debug/app-debug.apk
-```
+## Compilar: sempre no GitHub Actions
 
-**Chave de assinatura (upload key)** — nunca vai para o git:
+O app **não é compilado na máquina** (nem Android, nem iOS). Quem compila, assina e envia é o workflow
+`.github/workflows/apps-nativos.yml`. Passo a passo e segredos: `docs/apps-nativos/COMPILAR-SEM-MAC.md`.
 
-1. Criar uma vez: `keytool -genkeypair -v -keystore android/digiurban-upload.jks -alias digiurban -keyalg RSA -keysize 2048 -validity 10000`
-2. Copiar `android/keystore.properties.example` para `android/keystore.properties` e preencher as senhas.
-   (Ou usar variáveis de ambiente: `DIGIURBAN_KEYSTORE_FILE`, `DIGIURBAN_KEYSTORE_PASSWORD`,
-   `DIGIURBAN_KEY_ALIAS`, `DIGIURBAN_KEY_PASSWORD`.)
-3. Guardar o `.jks` e as senhas em local seguro (sem eles não dá para atualizar o app).
-   Sem `keystore.properties` o `bundleRelease` gera um AAB **sem assinatura** (a Play recusa).
+### Android
 
-**Versão:** a cada envio, aumentar `versionCode` (e `versionName`) em `android/app/build.gradle`.
+**Chave de assinatura (chave de envio)** — nunca vai para o git:
 
-**Push (Firebase):** baixe o `google-services.json` do projeto Firebase (app Android
-`br.com.digiurban.app`) e coloque em `android/app/google-services.json` (fica fora do git).
-Sem o arquivo o app compila e funciona, só não recebe avisos. O token que o site recebe no
+1. Criar uma vez: `keytool -genkeypair -v -keystore digiurban-upload.jks -alias digiurban-upload -keyalg RSA -keysize 2048 -validity 10000`
+   O alias é sempre **`digiurban-upload`**.
+2. Guardar o `.jks` e as senhas em local seguro (sem eles não dá para atualizar o app) e cadastrar os
+   segredos no GitHub. O `android/app/build.gradle` lê `DIGIURBAN_KEYSTORE_FILE`,
+   `DIGIURBAN_KEYSTORE_PASSWORD`, `DIGIURBAN_KEY_ALIAS` e `DIGIURBAN_KEY_PASSWORD`, que o workflow preenche.
+   Sem a chave sai um AAB **sem assinatura** (a Play recusa).
+
+**Versão:** o workflow manda `APP_VERSION` (campo `versao`) e `APP_BUILD_NUMBER` (número do envio);
+o `build.gradle` lê os dois. Não mexer à mão.
+
+**Push (Firebase):** o `google-services.json` do projeto Firebase (app Android
+`br.com.digiurban.app`) entra pelo segredo `ANDROID_GOOGLE_SERVICES_JSON` (fica fora do git).
+Sem ele o app compila e funciona, só não recebe avisos. O token que o site recebe no
 Android é um token **FCM**.
 
 **App Links:** depois do 1º envio, copie no Play Console › Integridade do app › Assinatura de
@@ -51,22 +53,12 @@ apps a **impressão digital SHA-256** da chave de assinatura do app e cole em
 (pode deixar também a da upload key, separadas por vírgula). Publicar o site. Conferir:
 `https://digiurban.com.br/.well-known/assetlinks.json`.
 
-### iOS — gerar o IPA (precisa de Mac)
+### iOS
 
-Requisitos: **Mac com Xcode 26** (o envio à App Store exige o SDK do iOS 26; o Capacitor 8 é
-feito para Xcode 26). O projeto usa **Swift Package Manager** (sem CocoaPods). No Windows o
-projeto foi gerado, mas não compilado.
-
-```bash
-npm install && npm run sync
-npx cap open ios                  # abre o Xcode
-```
-
-No Xcode, alvo **App** › Signing & Capabilities:
-1. Escolher o **Team** (Apple Developer da empresa). O bundle id já é `br.com.digiurban.app`.
-2. Conferir que aparecem **Push Notifications**, **Background Modes › Remote notifications** e
-   **Associated Domains** (`applinks:digiurban.com.br`) — já estão no `App/App.entitlements`.
-3. Product › Archive › Distribute App › App Store Connect.
+Compila no GitHub Actions (`macos-26`, Xcode 26), com assinatura manual pelos segredos, e vai direto
+para o TestFlight. O projeto usa **Swift Package Manager** (sem CocoaPods). O bundle id é
+`br.com.digiurban.app`. **Push Notifications**, **Background Modes › Remote notifications** e
+**Associated Domains** (`applinks:digiurban.com.br`) já estão no `App/App.entitlements`.
 
 **Team ID:** em `frontend/public/.well-known/apple-app-site-association` trocar `TEAMID` pelo
 Team ID (10 letras/números, em developer.apple.com › Membership). Publicar o site. Conferir:
@@ -75,7 +67,7 @@ Team ID (10 letras/números, em developer.apple.com › Membership). Publicar o 
 **Push no iOS:** criar a chave APNs (.p8) em developer.apple.com › Keys. O app entrega ao site o
 token **APNs cru** (sem Firebase no iOS); o servidor envia direto para a Apple com a chave .p8.
 
-**Versão:** aumentar `MARKETING_VERSION`/`CURRENT_PROJECT_VERSION` no Xcode (General).
+**Versão:** o workflow preenche `MARKETING_VERSION`/`CURRENT_PROJECT_VERSION`.
 
 ## O que está configurado
 

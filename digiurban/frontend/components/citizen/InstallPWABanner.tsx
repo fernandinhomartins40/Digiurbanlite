@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import { Download, X, Share, Smartphone } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
+import { isNativeApp } from '@/lib/native-app';
 
 interface BeforeInstallPromptEvent extends Event {
   prompt: () => Promise<void>;
@@ -22,7 +23,8 @@ export function InstallPWABanner() {
     setIsIOS(iOS);
 
     // Detectar se já está instalado (modo standalone)
-    const standalone = window.matchMedia('(display-mode: standalone)').matches ||
+    // dentro do app nativo (Capacitor) já está "instalado": nunca convidar a instalar
+    const standalone = isNativeApp() || window.matchMedia('(display-mode: standalone)').matches ||
                       (window.navigator as any).standalone === true;
     setIsStandalone(standalone);
 

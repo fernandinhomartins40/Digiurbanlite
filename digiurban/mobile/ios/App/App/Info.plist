@@ -66,6 +66,8 @@
 	<string>A câmera é usada para fotografar documentos que você envia nos pedidos e, se você autorizar, para a biometria facial que confirma a sua identidade.</string>
 	<key>NSLocationWhenInUseUsageDescription</key>
 	<string>A localização é usada só quando você marca no mapa o local de um pedido (por exemplo, um buraco na rua ou uma lâmpada queimada).</string>
+	<key>NSMicrophoneUsageDescription</key>
+	<string>O microfone só é usado se você escolher gravar um vídeo para anexar a um pedido.</string>
 	<key>NSPhotoLibraryUsageDescription</key>
 	<string>O acesso às fotos é usado para você escolher a foto de um documento ou do local do pedido que quer enviar à prefeitura.</string>
 	<key>ITSAppUsesNonExemptEncryption</key>

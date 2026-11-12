@@ -1,9 +1,21 @@
 # Compila os apps nativos (digiurban/mobile) nas máquinas do GitHub — sem Mac.
-# Só roda quando alguém aperta "Run workflow" em Actions › Apps nativos.
+# NÃO renomeie nem recrie este arquivo: o número do envio vem do número da execução (github.run_number),
+# que volta para 1 se o arquivo mudar de nome/for recriado — e as lojas recusam número menor que o anterior.
+# Se acontecer, use a entrada "numero_base" para passar do último número enviado.
+#
+# Dois jeitos de rodar:
+# - Sozinho, a cada push na main que mexe em digiurban/mobile/** ou neste arquivo: compila SEM assinatura,
+#   não lê nenhum segredo e não envia nada (só confere que o app continua compilando).
+# - Pelo botão (Actions › Apps nativos › Run workflow): assina e envia, se os segredos existirem.
 # Segredos (Settings › Secrets and variables › Actions) — ver docs/apps-nativos/COMPILAR-SEM-MAC.md
 name: Apps nativos
 
 on:
+  push:
+    branches: [main]
+    paths:
+      - 'digiurban/mobile/**'
+      - '.github/workflows/apps-nativos.yml'
   workflow_dispatch:
     inputs:
       plataforma:
@@ -14,35 +26,51 @@ on:
       versao:
         description: 'Versão que aparece na loja (ex.: 1.0.0)'
         default: '1.0.0'
+      numero_base:
+        description: 'Somado ao número do envio (só mexa se a loja recusar por número menor)'
+        type: number
+        default: 0
+      enviar_play:
+        description: 'Enviar o AAB assinado à faixa de teste interno da Play (só depois do 1º envio manual)'
+        type: boolean
+        default: false
 
 concurrency:
-  group: apps-nativos
+  group: apps-nativos-${{ github.event_name }}
   cancel-in-progress: false
 
 env:
-  APP_VERSION: ${{ inputs.versao }}
-  # Número do envio: sempre maior que o anterior (exigência das duas lojas)
-  APP_BUILD_NUMBER: ${{ github.run_number }}
+  # No push as entradas vêm vazias: valem os padrões
+  APP_VERSION: ${{ inputs.versao || '1.0.0' }}
+  NUMERO_BASE: ${{ inputs.numero_base || 0 }}
+  SIGNING: ${{ github.event_name == 'workflow_dispatch' }}
 
 jobs:
   android:
-    if: inputs.plataforma != 'ios'
+    if: github.event_name == 'push' || inputs.plataforma != 'ios'
     runs-on: ubuntu-latest
     defaults:
       run:
         working-directory: digiurban/mobile
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
         with:
           node-version: 22
-      - uses: actions/setup-java@v4
+      - uses: actions/setup-java@v6
         with:
           distribution: temurin
           java-version: 21
+      - name: Número do envio
+        run: |
+          [[ "$NUMERO_BASE" =~ ^[0-9]+$ ]] || { echo "::error::numero_base precisa ser um número inteiro"; exit 1; }
+          echo "APP_BUILD_NUMBER=$(( ${{ github.run_number }} + NUMERO_BASE ))" >> "$GITHUB_ENV"
+          echo "SIGN_SUFFIX=-SEM-ASSINATURA" >> "$GITHUB_ENV"
       - run: npm ci
+      - run: npm test
       - run: npm run web && npx cap sync android
       - name: Chaves (Firebase e assinatura)
+        if: env.SIGNING == 'true'
         env:
           GOOGLE_SERVICES_JSON: ${{ secrets.ANDROID_GOOGLE_SERVICES_JSON }}
           KEYSTORE_B64: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
@@ -51,40 +79,79 @@ jobs:
           if [ -z "$KEYSTORE_B64" ]; then echo "::warning::Sem ANDROID_KEYSTORE_BASE64: AAB SEM assinatura (só teste — a Play não aceita)"; exit 0; fi
           echo "$KEYSTORE_B64" | base64 -d > "$RUNNER_TEMP/upload.jks"
           echo "DIGIURBAN_KEYSTORE_FILE=$RUNNER_TEMP/upload.jks" >> "$GITHUB_ENV"
-      - name: Gerar AAB assinado
+          echo "SIGN_SUFFIX=" >> "$GITHUB_ENV"
+      - name: Gerar APK de teste e AAB sem assinatura
+        if: env.DIGIURBAN_KEYSTORE_FILE == ''
+        working-directory: digiurban/mobile/android
+        run: ./gradlew --no-daemon assembleDebug bundleRelease
+      - name: Gerar APK de teste e AAB assinado
+        if: env.DIGIURBAN_KEYSTORE_FILE != ''
         env:
           DIGIURBAN_KEYSTORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
           DIGIURBAN_KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
           DIGIURBAN_KEY_PASSWORD: ${{ secrets.ANDROID_KEY_PASSWORD }}
         working-directory: digiurban/mobile/android
-        run: ./gradlew --no-daemon bundleRelease
-      - uses: actions/upload-artifact@v4
+        run: ./gradlew --no-daemon assembleDebug bundleRelease
+      - uses: actions/upload-artifact@v7
         with:
-          name: digiurban-android-${{ inputs.versao }}-${{ github.run_number }}
+          name: digiurban-android-${{ env.APP_VERSION }}-${{ env.APP_BUILD_NUMBER }}${{ env.SIGN_SUFFIX }}
           path: digiurban/mobile/android/app/build/outputs/bundle/release/app-release.aab
           retention-days: 30
+      # APK de teste (para o emulador/capturas de tela). Não vai para a loja.
+      - uses: actions/upload-artifact@v7
+        with:
+          name: digiurban-android-debug-apk
+          path: digiurban/mobile/android/app/build/outputs/apk/debug/app-debug.apk
+          retention-days: 30
+      # Envio à Play (faixa de teste interno). O 1º envio do app é sempre manual (regra do Google).
+      - name: Conferir conta da Play
+        if: env.SIGNING == 'true' && inputs.enviar_play && env.SIGN_SUFFIX == ''
+        env:
+          PLAY_JSON: ${{ secrets.PLAY_SERVICE_ACCOUNT_JSON }}
+        run: |
+          if [ -z "$PLAY_JSON" ]; then echo "::warning::Sem PLAY_SERVICE_ACCOUNT_JSON: o AAB NÃO foi enviado à Play (baixe em Artifacts)"; exit 0; fi
+          echo "PLAY_OK=true" >> "$GITHUB_ENV"
+      - name: Enviar à Play (teste interno)
+        if: env.PLAY_OK == 'true'
+        uses: r0adkll/upload-google-play@e738b9dd8f2476ea806d921b64aacd24f34515a5 # v1.1.5
+        with:
+          serviceAccountJsonPlainText: ${{ secrets.PLAY_SERVICE_ACCOUNT_JSON }}
+          packageName: br.com.digiurban.app
+          releaseFiles: digiurban/mobile/android/app/build/outputs/bundle/release/app-release.aab
+          track: internal
+          # Enquanto o app não foi publicado, a Play só aceita rascunho: liberar na Play Console
+          status: draft
+      - name: Apagar chaves da máquina
+        if: always()
+        run: rm -f "$RUNNER_TEMP/upload.jks" android/app/google-services.json
 
   ios:
-    if: inputs.plataforma != 'android'
+    if: github.event_name == 'push' || inputs.plataforma != 'android'
     # macOS 26 com Xcode 26+ (exigido pela Apple desde 28/04/2026)
     runs-on: macos-26
     defaults:
       run:
         working-directory: digiurban/mobile
     steps:
-      - uses: actions/checkout@v4
-      - uses: maxim-lobanov/setup-xcode@v1
+      - uses: actions/checkout@v7
+      - uses: maxim-lobanov/setup-xcode@ed7a3b1fda3918c0306d1b724322adc0b8cc0a90 # v1.7.0
         with:
           xcode-version: latest-stable
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@v7
         with:
           node-version: 22
+      - name: Número do envio
+        run: |
+          [[ "$NUMERO_BASE" =~ ^[0-9]+$ ]] || { echo "::error::numero_base precisa ser um número inteiro"; exit 1; }
+          echo "APP_BUILD_NUMBER=$(( ${{ github.run_number }} + NUMERO_BASE ))" >> "$GITHUB_ENV"
       - run: npm ci
+      - run: npm test
       - run: npm run web && npx cap sync ios
       # Assinatura manual: certificado de distribuição (.p12) e perfil "App Store" criados UMA vez no site da
       # Apple (sem Mac) e guardados como segredos. Assinatura automática na nuvem criaria um certificado novo a
       # cada execução (a máquina do GitHub começa vazia) até estourar o limite da conta.
       - name: Certificado e perfil de distribuição
+        if: env.SIGNING == 'true'
         env:
           P12_B64: ${{ secrets.IOS_DIST_CERT_P12_BASE64 }}
           P12_PASSWORD: ${{ secrets.IOS_DIST_CERT_PASSWORD }}
@@ -116,13 +183,19 @@ jobs:
       - name: Compilar sem assinatura (teste do projeto)
         if: env.SIGNED != 'true'
         run: |
-          xcodebuild -project ios/App/App.xcodeproj -scheme App -configuration Release             -destination 'generic/platform=iOS' CODE_SIGNING_ALLOWED=NO build
+          xcodebuild -project ios/App/App.xcodeproj -scheme App -configuration Release \
+            -destination 'generic/platform=iOS' CODE_SIGNING_ALLOWED=NO build
       - name: Compilar (archive)
         if: env.SIGNED == 'true'
         env:
           TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
         run: |
-          xcodebuild -project ios/App/App.xcodeproj -scheme App -configuration Release             -destination 'generic/platform=iOS' -archivePath "$RUNNER_TEMP/App.xcarchive"             DEVELOPMENT_TEAM="$TEAM_ID" CODE_SIGN_STYLE=Manual CODE_SIGN_IDENTITY="Apple Distribution"             PROVISIONING_PROFILE_SPECIFIER="$PROFILE_UUID"             MARKETING_VERSION="$APP_VERSION" CURRENT_PROJECT_VERSION="$APP_BUILD_NUMBER"             archive
+          xcodebuild -project ios/App/App.xcodeproj -scheme App -configuration Release \
+            -destination 'generic/platform=iOS' -archivePath "$RUNNER_TEMP/App.xcarchive" \
+            DEVELOPMENT_TEAM="$TEAM_ID" CODE_SIGN_STYLE=Manual CODE_SIGN_IDENTITY="Apple Distribution" \
+            PROVISIONING_PROFILE_SPECIFIER="$PROFILE_UUID" \
+            MARKETING_VERSION="$APP_VERSION" CURRENT_PROJECT_VERSION="$APP_BUILD_NUMBER" \
+            archive
       - name: Enviar ao App Store Connect (TestFlight)
         if: env.SIGNED == 'true'
         env:
@@ -143,7 +216,9 @@ jobs:
             <key>manageAppVersionAndBuildNumber</key><false/>
           </dict></plist>
           EOF
-          xcodebuild -exportArchive -archivePath "$RUNNER_TEMP/App.xcarchive"             -exportOptionsPlist "$RUNNER_TEMP/ExportOptions.plist" -exportPath "$RUNNER_TEMP/export"             -authenticationKeyPath "$RUNNER_TEMP/asc_key.p8" -authenticationKeyID "$ASC_KEY_ID" -authenticationKeyIssuerID "$ASC_ISSUER_ID"
+          xcodebuild -exportArchive -archivePath "$RUNNER_TEMP/App.xcarchive" \
+            -exportOptionsPlist "$RUNNER_TEMP/ExportOptions.plist" -exportPath "$RUNNER_TEMP/export" \
+            -authenticationKeyPath "$RUNNER_TEMP/asc_key.p8" -authenticationKeyID "$ASC_KEY_ID" -authenticationKeyIssuerID "$ASC_ISSUER_ID"
       - name: Apagar chaves da máquina
         if: always()
         run: |

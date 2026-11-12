@@ -54,8 +54,8 @@ Dados fixos do app (definidos em `digiurban/mobile/capacitor.config.json`):
 1. https://console.firebase.google.com → **Adicionar projeto** → nome "DigiUrban" (pode
    desligar o Google Analytics — não usamos).
 2. No projeto: **Adicionar app › Android**, pacote `br.com.digiurban.app`. Baixe o
-   **`google-services.json`** e entregue à equipe técnica (vai em
-   `digiurban/mobile/android/app/google-services.json`).
+   **`google-services.json`**. O conteúdo dele vira o segredo
+   `ANDROID_GOOGLE_SERVICES_JSON` no GitHub (ver `COMPILAR-SEM-MAC.md`). Não vai para o Git.
 3. **Configurações do projeto › Contas de serviço › Gerar nova chave privada** → baixa um
    arquivo `.json`. Esse arquivo é **segredo**: não mande por WhatsApp/e-mail, cole direto
    no painel (passo 5).
@@ -75,49 +75,29 @@ Dados fixos do app (definidos em `digiurban/mobile/capacitor.config.json`):
 
 ## Etapa 3 — Gerar o app Android (AAB)
 
-Precisa de um computador com **Android Studio** recente (ele já traz o Java certo) e Node.js.
+O app é compilado **sempre no GitHub Actions** (botão *Run workflow*). Nada é compilado no seu
+computador. Passo a passo e lista de segredos: **`COMPILAR-SEM-MAC.md`**, parte "Android".
 
 1. **Chave de envio (keystore)** — uma vez só, guarde para sempre (sem ela não dá para
-   atualizar o app):
+   atualizar o app). Se ainda não existir na pasta de chaves:
    ```
-   keytool -genkeypair -v -keystore digiurban-upload.jks -keyalg RSA -keysize 2048 -validity 10000 -alias upload
+   keytool -genkeypair -v -keystore digiurban-upload.jks -keyalg RSA -keysize 2048 -validity 10000 -alias digiurban-upload
    ```
-   Guarde o arquivo `.jks` e as senhas em dois lugares seguros (ex.: cofre de senhas + pendrive).
-2. A equipe técnica configura a assinatura no projeto (`digiurban/mobile/android`) apontando
-   para esse arquivo — o arquivo e as senhas **não** vão para o Git.
-3. Gerar:
-   ```
-   cd digiurban/mobile
-   npm install
-   npm run android:aab
-   ```
-   O arquivo sai em `digiurban/mobile/android/app/build/outputs/bundle/release/app-release.aab`.
+   O nome da chave (alias) é sempre **`digiurban-upload`**. Guarde o arquivo `.jks` e as senhas
+   em dois lugares seguros (ex.: cofre de senhas + pendrive). Eles **não** vão para o Git.
+2. Cadastre os segredos do Android no GitHub (lista em `COMPILAR-SEM-MAC.md`).
+3. GitHub › Actions › **Apps nativos** › *Run workflow* › `android`. O AAB assinado fica para
+   baixar em *Artifacts*.
 4. No Play Console o Google guarda a **chave de assinatura do app** ("Assinatura de apps do
    Google Play", ligada por padrão). A sua `.jks` é só a chave de **envio**.
 
 ## Etapa 4 — Gerar o app iOS
 
-O iPhone só compila em **Mac com Xcode 26** (exigido pela Apple desde 28/04/2026; a partir de
-abril/2027 será Xcode 27). Opções, da mais simples para quem não tem Mac:
+Também é no GitHub Actions, sem Mac: a máquina do GitHub compila, assina e envia para o
+**TestFlight**. Passo a passo (tudo pelo navegador) e lista de segredos: **`COMPILAR-SEM-MAC.md`**,
+parte "iOS".
 
-**Opção A — Codemagic (nuvem, sem Mac)** — https://codemagic.io
-- Conta pessoal tem **500 minutos grátis por mês** em Mac na nuvem (conferir o valor atual
-  em https://docs.codemagic.io/billing/pricing/). Um build leva poucos minutos.
-- Conecte o repositório, escolha o modelo **"Ionic Capacitor App"**, aponte a pasta
-  `digiurban/mobile`, ligue a **assinatura automática** (ele usa uma chave da API do App
-  Store Connect: App Store Connect › Usuários e Acesso › Integrações › **Chave da API** —
-  gere com papel "App Manager" e cole no Codemagic) e o envio automático para o **TestFlight**.
-- Não use o **Ionic Appflow**: a Ionic parou de vender em 11/02/2025 e está encerrando o serviço.
-
-**Opção B — Mac próprio ou emprestado**
-```
-cd digiurban/mobile
-npm install
-npm run sync
-npx cap open ios
-```
-No Xcode: escolha o seu Team em *Signing & Capabilities*, depois **Product › Archive ›
-Distribute App › App Store Connect**.
+Depois de cadastrar os segredos: GitHub › Actions › **Apps nativos** › *Run workflow* › `ios`.
 
 ## Etapa 5 — Links que abrem o app (domínio e `.well-known`)
 
@@ -181,7 +161,7 @@ https://appstoreconnect.apple.com
 6. **Informações para a revisão**: marque "Login necessário", informe CPF e senha do cidadão
    de teste e cole as **notas para o revisor** de FICHAS-LOJAS.md. Anexe uma carta de
    prefeitura (PDF) se quiser se adiantar.
-7. Escolha o build enviado pelo Xcode/Codemagic (aparece após ~15 min de processamento),
+7. Escolha o build enviado pelo GitHub Actions (aparece após ~15 min de processamento),
    responda "usa criptografia?" → só a padrão (HTTPS) / isenta, e **Enviar para revisão**.
 8. Revisão da Apple: em geral 1–3 dias. Se recusarem por **4.2** (funcionalidade mínima),
    responda pela Central de Resolução listando os recursos nativos (push, câmera com

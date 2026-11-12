@@ -62,11 +62,29 @@ Excluir conta: https://digiurban.com.br/excluir-conta
 | Política de privacidade | https://digiurban.com.br/privacidade | igual |
 | Termos de uso | https://digiurban.com.br/termos (no campo "EULA" ou na descrição) | na descrição |
 | Exclusão de conta | (dentro do app: Perfil › Excluir conta) | https://digiurban.com.br/excluir-conta (Segurança dos dados) |
-| Suporte | https://digiurban.com.br/suporte — ❓ página ainda não existe; até lá use https://digiurban.com.br e um e-mail de suporte (ex.: suporte@digiurban.com.br) | e-mail de contato obrigatório + site |
+| Suporte | https://digiurban.com.br/suporte (a página existe e está no ar) | e-mail de contato obrigatório + https://digiurban.com.br/suporte |
 | Site de marketing | https://digiurban.com.br | https://digiurban.com.br |
 
 Não escolher "Saúde e fitness"/"Medicina" (evita a declaração de dispositivo médico da
 Apple e a análise de app de saúde do Google).
+
+## Imagens e tamanhos
+
+Situação em 11/11/2026. **Confira os tamanhos na página oficial de cada loja antes de gerar.**
+
+| Imagem | Tamanho | Situação |
+|--------|---------|----------|
+| Ícone do app iOS (vai dentro do app) | 1024×1024, sem transparência | pronto |
+| Ícones do app Android (todos os tamanhos) | — | prontos |
+| Tela de abertura (clara e escura) | — | pronta |
+| Ícone da ficha da Play | 512×512 PNG, quadrado cheio (sem cantos redondos) | falta |
+| Banner da Play (imagem de destaque) | 1024×500, sem transparência | falta |
+| Capturas de tela Android | mínimo 2 (ideal 4 a 8). O lado maior não pode passar de 2× o menor: a foto crua de um celular atual (1080×2400) é recusada. Montar em 1080×1920, por exemplo | faltam |
+| Capturas de tela iPhone 6,9" | 1320×2868 (ou 1290×2796) | faltam |
+| Capturas de iPad | o app é só para iPhone | não precisa |
+
+As capturas só devem ser tiradas depois das correções e com o **município de demonstração**
+pronto, para não aparecer dado de pessoa real nem brasão de prefeitura.
 
 ---
 
@@ -205,7 +223,7 @@ What to try:
    explained on the screen.
 
 Native features: push notifications (APNs), camera document scanner, location, share
-sheet, file download/open, universal links from e-mails and notifications, offline screen.
+sheet, file download/open, offline screen.
 No in-app purchases. No ads. No tracking.
 
 Authorization letters from client municipalities are available on request
@@ -215,6 +233,10 @@ Contact: [nome, telefone, e-mail]
 
 (Em inglês porque a equipe de revisão é internacional; a Apple aceita português, mas inglês
 evita atraso.)
+
+A nota **não fala** dos links que abrem o app: eles ainda não funcionam (falta colocar o Team ID
+e o SHA-256 da Play nos arquivos do site — `PUBLICAR.md`, etapa 5). Só volte a citar esse recurso
+depois que os dois endereços estiverem certos no ar. Prometer o que não funciona piora a revisão.
 
 ## Google Play — Instruções de acesso (campo "Acesso ao app")
 

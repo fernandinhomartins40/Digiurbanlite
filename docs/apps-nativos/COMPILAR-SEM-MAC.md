@@ -2,11 +2,37 @@
 
 O repositório é **público**, então as máquinas do GitHub (inclusive as Mac, `macos-26` com Xcode 26)
 são **grátis e sem limite de minutos**. O workflow é `.github/workflows/apps-nativos.yml`
-(GitHub › Actions › **Apps nativos** › *Run workflow*). Ele só roda quando alguém aperta o botão.
+(GitHub › Actions › **Apps nativos** › *Run workflow*). O app é compilado **sempre** ali, nunca no seu computador.
 
-- Sem os segredos, ele compila **sem assinatura**, só para conferir que o projeto está certo.
-- Com os segredos do iOS, ele gera o app assinado e **envia direto para o App Store Connect** (TestFlight).
-- Com os segredos do Android, ele gera o **AAB assinado**, para baixar em *Artifacts* e enviar à Play.
+Ele roda de dois jeitos:
+
+- **Sozinho**, a cada mudança enviada à `main` que mexe em `digiurban/mobile/**` ou no próprio workflow.
+  Serve só para conferir que o app continua compilando. Compila **sem assinatura**, **não lê nenhum segredo**
+  e **não envia nada** para as lojas.
+- **Pelo botão** (*Run workflow*). Só assim ele assina e envia:
+  - Sem os segredos, compila **sem assinatura**, só para conferir.
+  - Com os segredos do iOS, gera o app assinado e **envia direto para o App Store Connect** (TestFlight).
+  - Com os segredos do Android, gera o **AAB assinado**, para baixar em *Artifacts* e enviar à Play.
+
+Opções do botão:
+
+| Opção | Para que serve | Padrão |
+|---|---|---|
+| `plataforma` | qual app compilar: `ambos`, `android` ou `ios` | `ambos` |
+| `versao` | versão que aparece na loja | `1.0.0` |
+| `numero_base` | número somado ao número do envio. Só mexa se a loja recusar o envio por "número menor que o anterior" | `0` |
+| `enviar_play` | manda o AAB assinado para a faixa de **teste interno** da Play (ver "Android") | desligado |
+
+O que fica para baixar em *Artifacts* (Android):
+
+- **`digiurban-android-debug-apk`**: APK de teste. Serve para instalar no emulador ou no celular e tirar as
+  capturas de tela. **Não** vai para a loja.
+- O **AAB** (o arquivo da Play). Se o nome terminar em **`-SEM-ASSINATURA`**, faltou a chave: é só teste,
+  **não envie à Play** (ela recusa).
+
+> **Não renomeie nem recrie o arquivo do workflow.** O número do envio vem do número da execução.
+> Se o arquivo for renomeado ou recriado, a contagem volta para 1 e as lojas recusam número menor que o
+> anterior. Se acontecer, use `numero_base` para passar do último número enviado.
 
 Os arquivos de chave ficam em `C:\Users\fusea\Documents\DigiUrban-chaves-apps\`. **Faça cópia dessa pasta**
 (pendrive ou cofre de senhas) e nunca coloque no git.
@@ -58,6 +84,15 @@ O certificado vale 1 ano: renove e troque o segredo.
 Na Play Console, ative a **Assinatura de apps do Google Play** (padrão): o Google guarda a chave final e esta
 é só a "chave de envio" (dá para trocar pelo suporte se perder). O SHA-256 que vai no `assetlinks.json` é o
 da chave do **Google** (Play Console › Integridade do app), não o desta.
+
+**Enviar à Play sozinho (opcional).** O **1º envio** do AAB à Play é sempre **manual** (regra do Google):
+baixe o AAB em *Artifacts* e envie na faixa de teste interno. Depois disso, dá para o workflow enviar:
+
+1. Cadastre o segredo `PLAY_SERVICE_ACCOUNT_JSON` (conteúdo do `.json` de uma conta de serviço do Google
+   com acesso ao app na Play Console).
+2. No botão, ligue `enviar_play`.
+
+O AAB vai para a faixa de **teste interno**. Sem o segredo, o workflow só avisa e não envia.
 
 ## Ferramentas de IA da Apple (MCP), pesquisado em 2026-11
 - **Xcode MCP** (`xcrun mcpbridge`, desde o Xcode 26.3) e **XcodeBuildMCP**: deixam um agente de IA compilar,
