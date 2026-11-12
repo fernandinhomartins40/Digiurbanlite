@@ -14,9 +14,6 @@ import {
   ArrowLeft,
   Check,
   CheckCheck,
-  Paperclip,
-  Smile,
-  Mic,
   Plus,
   X,
   Menu,
@@ -1288,25 +1285,6 @@ export default function CitizenAssistantPage() {
                 </div>
               )}
               <div className="flex items-center gap-2">
-                <Button
-                  type="button"
-                  variant="ghost"
-                  size="icon"
-                  className="text-gray-500"
-                  disabled={inputOffline || isBotTyping}
-                >
-                  <Smile className="w-5 h-5" />
-                </Button>
-                <Button
-                  type="button"
-                  variant="ghost"
-                  size="icon"
-                  className="text-gray-500"
-                  disabled={inputOffline}
-                >
-                  <Paperclip className="w-5 h-5" />
-                </Button>
-
                 <Input
                   type="text"
                   placeholder={botInputPlaceholder}
@@ -1316,26 +1294,15 @@ export default function CitizenAssistantPage() {
                   disabled={inputOffline}
                 />
 
-                {newMessage.trim() ? (
-                  <Button
-                    type="submit"
-                    size="icon"
-                    className="lg-tinted lg-tint-blue hover:opacity-95"
-                    disabled={inputOffline || isBotTyping}
-                  >
-                    <Send className="w-5 h-5" />
-                  </Button>
-                ) : (
-                  <Button
-                    type="button"
-                    variant="ghost"
-                    size="icon"
-                    className="text-gray-500"
-                    disabled={inputOffline}
-                  >
-                    <Mic className="w-5 h-5" />
-                  </Button>
-                )}
+                <Button
+                  type="submit"
+                  size="icon"
+                  className="lg-tinted lg-tint-blue hover:opacity-95"
+                  disabled={inputOffline || isBotTyping || !newMessage.trim()}
+                  aria-label="Enviar"
+                >
+                  <Send className="w-5 h-5" />
+                </Button>
               </div>
             </form>
             )}
