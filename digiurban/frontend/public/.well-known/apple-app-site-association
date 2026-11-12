@@ -2,7 +2,7 @@
   "applinks": {
     "details": [
       {
-        "appIDs": ["TEAMID.br.com.digiurban.app"],
+        "appIDs": ["P8XTL43RG6.br.com.digiurban.app"],
         "components": [
           { "/": "/cidadao" },
           { "/": "/cidadao/*" },
