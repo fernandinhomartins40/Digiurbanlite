@@ -5,8 +5,10 @@
  *
  * Na exclusão ficam só o nome, o CPF e os pedidos já feitos — a prefeitura
  * precisa guardar o registro do atendimento (LGPD art. 16, I: obrigação
- * legal). Todo o resto é apagado: contato, endereço, documentos pessoais,
- * biometria, família, avisos, celulares com o app e o acesso ao portal.
+ * legal). Todo o resto é apagado: contato, endereço, nascimento, documentos
+ * pessoais, biometria, família, conversas que não viraram pedido, avisos,
+ * celulares com o app e o acesso ao portal. Dependentes sem conta própria
+ * cadastrados pela pessoa saem junto (ownedDependentIds).
  */
 
 import * as fs from 'fs';
@@ -96,6 +98,16 @@ export async function countOpenProtocols(citizenId: string): Promise<number> {
 }
 
 export const ACCOUNT_DELETED_REASON = 'Conta excluída pelo cidadão';
+export const ACCOUNT_DELETED_MARK = '[mensagem apagada: conta excluída]';
+
+/** Dependentes cadastrados por esta pessoa que não têm acesso próprio (sem e-mail): são excluídos junto */
+export async function ownedDependentIds(citizenId: string): Promise<string[]> {
+  const links = await prisma.familyComposition.findMany({
+    where: { headId: citizenId, isDependent: true, member: { registrationSource: 'FAMILY', email: '' } },
+    select: { memberId: true },
+  });
+  return links.map((link) => link.memberId);
+}
 
 /**
  * Exclusão com pedido em andamento: cancela cada um pelo motor de status
@@ -142,8 +154,26 @@ export async function deleteCitizenAccount(citizenId: string, context: { ip?: st
   const documents = await prisma.citizenDocument.findMany({ where: { citizenId, ...PERSONAL_DOCUMENT_WHERE }, select: { id: true, filePath: true } });
   documents.forEach((document) => removeFile(document.filePath));
 
+  // conversas (assistente e atendente) que não viraram pedido; as de pedido ficam com o pedido.
+  // shortcut: anexos do chat ficam no disco do messages-server (só some a referência); apagar lá quando houver rota interna para isso
+  const ownConversation: Prisma.ConversationWhereInput = {
+    protocolId: null,
+    OR: [
+      { participant1Id: citizenId, participant1Type: 'CITIZEN' },
+      { participant2Id: citizenId, participant2Type: 'CITIZEN' },
+    ],
+  };
+
   // 3. banco: apaga o que é pessoal e deixa só o necessário para os pedidos já feitos
   await prisma.$transaction(async (tx) => {
+    await tx.message.updateMany({
+      where: { conversation: ownConversation, content: { not: ACCOUNT_DELETED_MARK } },
+      data: { content: ACCOUNT_DELETED_MARK, attachments: Prisma.DbNull, metadata: Prisma.DbNull, isDeleted: true, deletedAt: new Date(), deletedBy: 'account-deletion' },
+    });
+    await tx.conversation.updateMany({ where: ownConversation, data: { lastMessagePreview: null } });
+    await tx.flowExecution.updateMany({ where: { citizenId }, data: { state: {}, history: [], metadata: Prisma.DbNull } });
+    await tx.botConversation.deleteMany({ where: { citizenId } });
+    await tx.proactiveNotification.deleteMany({ where: { citizenId } });
     await tx.documentReading.deleteMany({ where: { source: 'CITIZEN_DOCUMENT', documentId: { in: documents.map((document) => document.id) } } });
     await tx.citizenDocument.deleteMany({ where: { id: { in: documents.map((document) => document.id) } } });
     await tx.familyComposition.deleteMany({ where: { OR: [{ headId: citizenId }, { memberId: citizenId }] } });
@@ -160,6 +190,9 @@ export async function deleteCitizenAccount(citizenId: string, context: { ip?: st
         email: '',
         phone: null,
         phoneSecondary: null,
+        birthDate: null,
+        aiConsent: null,
+        aiConsentAt: null,
         address: Prisma.DbNull,
         homeLatitude: null,
         homeLongitude: null,

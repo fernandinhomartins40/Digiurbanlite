@@ -38,11 +38,13 @@ export default function ExcluirContaPage() {
 
       <h2>O que é apagado</h2>
       <ul>
-        <li>Contato (e-mail e telefones), endereço e ponto da casa no mapa.</li>
+        <li>Contato (e-mail e telefones), data de nascimento, endereço e ponto da casa no mapa.</li>
         <li>RG, nome da mãe, estado civil, profissão, renda e foto de perfil.</li>
         <li>Documentos pessoais enviados e o resultado da leitura deles.</li>
         <li>Biometria facial e os consentimentos.</li>
         <li>Família e convites, etiquetas, avisos, preferências e os celulares cadastrados para notificações.</li>
+        <li>Conversas com o assistente e com atendentes que não viraram pedido, e a sua escolha sobre a inteligência artificial.</li>
+        <li>Os dependentes que você cadastrou e que não têm conta própria (com os pedidos em andamento deles, que são cancelados).</li>
         <li>O acesso: a senha é trocada e a conta fica desativada.</li>
       </ul>
 

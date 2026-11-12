@@ -25,7 +25,7 @@ async function contactEmailFor(tenantId: string | null) {
 }
 import { syncCitizenPersonIdentity } from '../services/person-identity.service';
 import { sendTemplatedMail } from '../services/mail/templated';
-import { countOpenProtocols, cancelOpenProtocols, deleteCitizenAccount, exportCitizenData } from '../services/citizen-privacy.service';
+import { countOpenProtocols, cancelOpenProtocols, deleteCitizenAccount, exportCitizenData, ownedDependentIds } from '../services/citizen-privacy.service';
 import { citizenTagsAndSuggestions } from '../services/citizen-tags.service';
 import { isCpfLike, normalizeCpf, normalizeEmail, normalizeNullableString } from '../utils/identity';
 import { citizenAuthMiddleware } from '../middleware/citizen-auth';
@@ -1221,17 +1221,23 @@ router.post(
 
     // pedidos em andamento não impedem a exclusão (regra das lojas): a tela avisa
     // que serão cancelados e a pessoa confirma (cancelOpenProtocols: true)
-    const open = await countOpenProtocols(citizenId);
+    // dependentes sem conta própria saem junto (a política promete apagar a família)
+    const dependents = await ownedDependentIds(citizenId);
+    const ids = [citizenId, ...dependents];
+    const open = (await Promise.all(ids.map(countOpenProtocols))).reduce((sum, n) => sum + n, 0);
     if (open > 0 && req.body?.cancelOpenProtocols !== true) {
+      const who = dependents.length ? ' (seus e dos seus dependentes)' : '';
       return res.status(409).json({
-        error: `Você tem ${open} pedido${open > 1 ? 's' : ''} em andamento. Ao excluir a conta, ${open > 1 ? 'eles serão cancelados' : 'ele será cancelado'}.`,
+        error: `Você tem ${open} pedido${open > 1 ? 's' : ''} em andamento${who}. Ao excluir a conta, ${open > 1 ? 'eles serão cancelados' : 'ele será cancelado'}.`,
         code: 'OPEN_PROTOCOLS',
         openProtocols: open,
       });
     }
-    if (open > 0) await cancelOpenProtocols(citizenId);
+    if (open > 0) for (const id of ids) await cancelOpenProtocols(id);
 
-    await deleteCitizenAccount(citizenId, { ip: req.ip, userAgent: String(req.headers['user-agent'] || '') });
+    const context = { ip: req.ip, userAgent: String(req.headers['user-agent'] || '') };
+    for (const id of dependents) await deleteCitizenAccount(id, context);
+    await deleteCitizenAccount(citizenId, context);
 
     res.clearCookie(CITIZEN_COOKIE, { httpOnly: true, secure: process.env.NODE_ENV === 'production', sameSite: 'lax', path: '/' });
     if (process.env.NODE_ENV === 'production') {

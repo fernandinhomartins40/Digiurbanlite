@@ -666,7 +666,7 @@ export default function PerfilPage() {
           {deleting && (
             <div className="mt-4 space-y-3 rounded-xl border border-red-200 bg-red-50 p-3">
               <p className="text-sm text-red-900">
-                Ao excluir, apagamos o seu contato, endereço, documentos, biometria, família e o acesso ao portal. Ficam guardados só o seu nome,
+                Ao excluir, apagamos o seu contato, endereço, nascimento, documentos, biometria, família (e os dependentes sem conta própria), conversas que não viraram pedido e o acesso ao portal. Ficam guardados só o seu nome,
                 o CPF e os pedidos já feitos, porque a prefeitura é obrigada a manter o registro do atendimento. Para voltar depois, é preciso
                 ir à prefeitura.
               </p>

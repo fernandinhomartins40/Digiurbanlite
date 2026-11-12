@@ -159,7 +159,7 @@ export default function PrivacidadePage() {
           <strong>Registros de acesso:</strong> pelo menos 6 meses (Marco Civil da Internet, art. 15).
         </li>
         <li>
-          <strong>Conta excluída:</strong> ficam só o nome, o CPF e os pedidos já feitos (obrigação legal, LGPD art. 16, I). Todo o resto é apagado.
+          <strong>Conta excluída:</strong> ficam só o nome, o CPF e os pedidos já feitos (obrigação legal, LGPD art. 16, I). Todo o resto é apagado, inclusive as conversas que não viraram pedido e os dependentes cadastrados por você que não têm conta própria.
         </li>
       </ul>
 

@@ -5,12 +5,48 @@
 
 const findMany = jest.fn();
 const cancel = jest.fn();
+const familyFindMany = jest.fn();
+const tx: Record<string, Record<string, jest.Mock>> = {};
+const model = () => ({ updateMany: jest.fn().mockResolvedValue({}), deleteMany: jest.fn().mockResolvedValue({}), update: jest.fn().mockResolvedValue({}), create: jest.fn().mockResolvedValue({}) });
+for (const name of ['message', 'conversation', 'flowExecution', 'botConversation', 'proactiveNotification', 'documentReading', 'citizenDocument', 'familyComposition', 'familyInvite', 'citizenCategoryAssignment', 'pushSubscription', 'nativePushDevice', 'notificationPreference', 'notification', 'passwordResetToken', 'citizen', 'auditLog']) tx[name] = model();
 
-jest.mock('../../src/lib/prisma', () => ({ prisma: { protocolSimplified: { findMany: (...args: any[]) => findMany(...args) } } }));
+jest.mock('../../src/lib/prisma', () => ({
+  prisma: {
+    protocolSimplified: { findMany: (...args: any[]) => findMany(...args) },
+    familyComposition: { findMany: (...args: any[]) => familyFindMany(...args) },
+    citizenDocument: { findMany: async () => [] },
+    $transaction: async (fn: any) => fn(tx),
+  },
+}));
 jest.mock('../../src/services/protocol-status-wrapper.service', () => ({ cancelProtocolByCitizen: (...args: any[]) => cancel(...args) }));
-jest.mock('../../src/services/face-platform-client.service', () => ({ __esModule: true, default: {} }));
+jest.mock('../../src/services/face-platform-client.service', () => ({
+  __esModule: true,
+  default: { revokeConsent: jest.fn().mockResolvedValue(undefined), deleteCitizenBiometry: jest.fn().mockResolvedValue(undefined) },
+}));
 
-import { ACCOUNT_DELETED_REASON, cancelOpenProtocols } from '../../src/services/citizen-privacy.service';
+import { ACCOUNT_DELETED_REASON, cancelOpenProtocols, deleteCitizenAccount, ownedDependentIds } from '../../src/services/citizen-privacy.service';
+
+describe('exclusão da conta: o que a política promete apagar', () => {
+  it('apaga nascimento, escolha da IA e as conversas sem pedido (as de pedido ficam)', async () => {
+    await deleteCitizenAccount('c1', {});
+    const data = tx.citizen.update.mock.calls[0][0].data;
+    expect(data).toMatchObject({ birthDate: null, aiConsent: null, aiConsentAt: null, phone: null, rg: null, isActive: false, email: '' });
+    const where = tx.message.updateMany.mock.calls[0][0].where.conversation;
+    expect(where.protocolId).toBeNull();
+    expect(where.OR).toEqual([
+      { participant1Id: 'c1', participant1Type: 'CITIZEN' },
+      { participant2Id: 'c1', participant2Type: 'CITIZEN' },
+    ]);
+    expect(tx.botConversation.deleteMany).toHaveBeenCalledWith({ where: { citizenId: 'c1' } });
+    expect(tx.proactiveNotification.deleteMany).toHaveBeenCalledWith({ where: { citizenId: 'c1' } });
+  });
+
+  it('dependentes que saem junto: só os cadastrados pela pessoa e sem acesso próprio', async () => {
+    familyFindMany.mockResolvedValue([{ memberId: 'd1' }]);
+    await expect(ownedDependentIds('c1')).resolves.toEqual(['d1']);
+    expect(familyFindMany.mock.calls[0][0].where).toEqual({ headId: 'c1', isDependent: true, member: { registrationSource: 'FAMILY', email: '' } });
+  });
+});
 
 describe('exclusão da conta com pedidos em andamento', () => {
   beforeEach(() => {

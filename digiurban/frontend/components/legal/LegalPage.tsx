@@ -6,7 +6,7 @@ import Link from 'next/link'
  */
 
 export const SUPPORT_EMAIL = 'fuseagencia10@gmail.com'
-export const LEGAL_UPDATED_AT = '11 de novembro de 2026'
+export const LEGAL_UPDATED_AT = '12 de novembro de 2026'
 
 // Empresa responsável pelo DigiUrban (dados do cartão CNPJ) — as lojas exigem o responsável identificado
 export const COMPANY = {
