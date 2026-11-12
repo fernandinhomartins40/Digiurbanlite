@@ -182,6 +182,66 @@
       "screenshotWidthPercent": 78.03,
       "screenshotInteriorMatchesResizedSource": true,
       "support": "support\\ios-06-excluir-conta-background.png"
+    },
+    {
+      "file": "ios-10-inicio.png",
+      "headline": "Diga do que precisa e ache o serviço",
+      "source": "capturas\\ios\\10-inicio.png",
+      "sourceSha256": "121eceb5814bbf02b8fdc855248b1985b4abfab1df4e9f3e892476071749bd0d",
+      "screenshotBounds": {
+        "left": 145,
+        "top": 570,
+        "width": 1030,
+        "height": 2238
+      },
+      "screenshotWidthPercent": 78.03,
+      "screenshotInteriorMatchesResizedSource": true,
+      "support": "support\\ios-10-inicio-background.png"
+    },
+    {
+      "file": "ios-11-servicos.png",
+      "headline": "Centenas de serviços da sua prefeitura",
+      "source": "capturas\\ios\\11-servicos.png",
+      "sourceSha256": "4fd00da0a4af87d5d7a78c6bade599d2589bb90d7abbf9375632b9adf2e49300",
+      "screenshotBounds": {
+        "left": 145,
+        "top": 570,
+        "width": 1030,
+        "height": 2238
+      },
+      "screenshotWidthPercent": 78.03,
+      "screenshotInteriorMatchesResizedSource": true,
+      "support": "support\\ios-11-servicos-background.png"
+    },
+    {
+      "file": "ios-13-meus-pedidos.png",
+      "headline": "Acompanhe seus pedidos em cada etapa",
+      "source": "capturas\\ios\\13-meus-pedidos.png",
+      "sourceSha256": "7022feffc0edddda2e69c2b760e9963ca74bb67bc41533801555c8bda1f4f3dc",
+      "screenshotBounds": {
+        "left": 145,
+        "top": 570,
+        "width": 1030,
+        "height": 2238
+      },
+      "screenshotWidthPercent": 78.03,
+      "screenshotInteriorMatchesResizedSource": true,
+      "support": "support\\ios-13-meus-pedidos-background.png"
+    },
+    {
+      "file": "ios-15-assistente.png",
+      "headline": "Um assistente para te ajudar",
+      "source": "capturas\\ios\\15-assistente.png",
+      "sourceSha256": "27f4fda5aea5f6b92adc25966e323e6cb8d01e35faf33c70d970b1b763372458",
+      "screenshotBounds": {
+        "left": 145,
+        "top": 570,
+        "width": 1030,
+        "height": 2238
+      },
+      "screenshotWidthPercent": 78.03,
+      "screenshotInteriorMatchesResizedSource": true,
+      "support": "support\\ios-15-assistente-background.png"
     }
   ],
   "files": [
@@ -223,6 +283,42 @@
     },
     {
       "file": "ios-06-excluir-conta.png",
+      "width": 1320,
+      "height": 2868,
+      "channels": 3,
+      "hasAlphaChannel": false,
+      "transparentPixels": false,
+      "playScreenshotRatioOK": null
+    },
+    {
+      "file": "ios-10-inicio.png",
+      "width": 1320,
+      "height": 2868,
+      "channels": 3,
+      "hasAlphaChannel": false,
+      "transparentPixels": false,
+      "playScreenshotRatioOK": null
+    },
+    {
+      "file": "ios-11-servicos.png",
+      "width": 1320,
+      "height": 2868,
+      "channels": 3,
+      "hasAlphaChannel": false,
+      "transparentPixels": false,
+      "playScreenshotRatioOK": null
+    },
+    {
+      "file": "ios-13-meus-pedidos.png",
+      "width": 1320,
+      "height": 2868,
+      "channels": 3,
+      "hasAlphaChannel": false,
+      "transparentPixels": false,
+      "playScreenshotRatioOK": null
+    },
+    {
+      "file": "ios-15-assistente.png",
       "width": 1320,
       "height": 2868,
       "channels": 3,

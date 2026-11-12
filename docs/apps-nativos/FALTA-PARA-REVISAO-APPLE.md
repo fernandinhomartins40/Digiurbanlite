@@ -21,30 +21,19 @@ versão **1.0.0**, situação "Preparar para envio".
 | Páginas legais no ar | privacidade (com a empresa e o CNPJ), termos, excluir conta, suporte |
 | Exclusão de conta no app | pronta e alinhada à política |
 
+## Feito em 12/11/2026
+
+- **Município de demonstração com dados**: catálogo aplicado (404 serviços, 14 etiquetas); 2 cidadãos
+  de teste fictícios, sem e-mail (Ana Teste Revisão, nível Prata, com 3 pedidos, o 2026-000001 com foto
+  e ponto no mapa; Bruno Teste Exclusão, para o revisor testar a exclusão). CPFs e senhas ficam SÓ em
+  `Documents\DigiUrban-chaves-apps\contas-teste-revisao.json` e na ficha da Apple.
+- **Conta de teste e notas** preenchidas na ficha (caminhos dos menus conferidos com o app).
+- **9 capturas** na ficha (1320×2868, `make-store-images.js`): início, serviços, meus pedidos,
+  assistente, conferir documento, entrada, ajuda, excluir conta, esqueci a senha. Nenhuma mostra o
+  CPF da conta de teste. São do WebKit (o mesmo motor do iPhone), não do simulador da Apple.
+- **Texto promocional** preenchido.
+
 ## Falta — em ordem
-
-### 1. Município de demonstração com dados (bloqueia os itens 2 e 3)
-Hoje o "Município Demonstração" tem **0 serviços e 0 pedidos**. O revisor entraria num app vazio,
-o que dá recusa por app incompleto (Apple 2.1) ou por "só abre um site" (4.2).
-- Aplicar o catálogo de serviços nesse município (Super-admin › município › "Atualizar catálogo de serviços").
-- Criar **2 cidadãos de teste**: um para usar, outro para o revisor testar a exclusão de conta.
-- No 1º cidadão: 2 ou 3 pedidos (um com foto e local no mapa), um documento assinado e uma conversa.
-- Sem nome, CPF ou foto de pessoa real. O município já tem 1 cidadão cadastrado: conferir quem é antes de mexer.
-- **Grava na produção** — Claude só faz com o seu "pode".
-
-### 2. Conta de teste na ficha
-Em "Informações para a revisão": CPF e senha do 1º cidadão. Nas notas, trocar `[CPF DE TESTE]`,
-`[SENHA]`, `[CPF 2]` e `[SENHA 2]` pelos dados reais das duas contas de teste.
-Claude faz pela API assim que as contas existirem.
-
-### 3. Mais capturas de tela (recomendado)
-Hoje há **5** na ficha, 1320×2868, com fundo e frase (entrada, conferir documento, esqueci a senha,
-ajuda, excluir conta), montadas por `digiurban/mobile/scripts/make-store-images.js` (só telas sem login).
-O mínimo da Apple é 1, então já dá para
-enviar, mas para a revisão (4.2) é melhor mostrar o app por dentro: início, serviços,
-novo pedido com mapa, câmera de documento, lista de pedidos, conversa, documento assinado.
-Depende do item 1. Claude tira e envia.
-As capturas são do WebKit (o mesmo motor do iPhone), não do simulador da Apple.
 
 ### 4. Privacidade do app — **só você**
 App Store Connect › app › **Privacidade do app**. Respostas prontas em `FICHAS-LOJAS.md`,
@@ -68,7 +57,6 @@ Resposta da Apple: em geral de 1 a 3 dias.
 ## Opcional
 - **Carta de autorização** de uma prefeitura cliente (PDF) nos anexos da revisão: reduz o risco de a
   Apple perguntar se o app é "de governo".
-- **Texto promocional** (aparece acima da descrição; pode mudar sem nova revisão): hoje vazio.
 - **Ícone do site** (`frontend/public/icon*`): ainda é o antigo. O app abre o site, então o ícone
   antigo aparece em algumas telas.
 - **Anexos de conversa** apagados na exclusão de conta: os arquivos continuam no disco do servidor de

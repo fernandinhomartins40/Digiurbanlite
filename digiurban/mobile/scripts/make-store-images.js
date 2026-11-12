@@ -20,6 +20,11 @@ const SCREENS = [
   ['05-ajuda', ['Ajuda sempre', 'à mão']],
   ['06-excluir-conta', ['Seus dados,', 'suas regras']],
   ['07-sem-internet', ['Avisa quando você fica', 'sem internet']],
+  // Telas com login (conta de teste da revisão), só iPhone; reaproveitam fundos já gerados
+  ['10-inicio', ['Diga do que precisa', 'e ache o serviço'], '01-entrada'],
+  ['11-servicos', ['Centenas de serviços', 'da sua prefeitura'], '02-cadastro'],
+  ['13-meus-pedidos', ['Acompanhe seus pedidos', 'em cada etapa'], '04-esqueci-senha'],
+  ['15-assistente', ['Um assistente', 'para te ajudar'], '05-ajuda'],
 ];
 const PLATFORMS = [
   // At 78%, the 1080x2400 source would occupy 1872 of 1920 pixels.
@@ -53,10 +58,10 @@ async function renderHeadline(lines, p) {
   return { images, bottom: top - lineGap };
 }
 
-async function compose(p, name, lines) {
+async function compose(p, name, lines, master = name) {
   const sourceFile = path.join(ROOT, 'capturas', p.source, `${name}.png`);
   try { await fs.access(sourceFile); } catch (err) {
-    if (err.code === 'ENOENT' && p.prefix === 'ios' && ['02-cadastro', '07-sem-internet'].includes(name)) return null;
+    if (err.code === 'ENOENT' && (p.prefix === 'ios' ? ['02-cadastro', '07-sem-internet'] : ['10-inicio', '11-servicos', '13-meus-pedidos', '15-assistente']).includes(name)) return null;
     throw err;
   }
   const original = await fs.readFile(sourceFile);
@@ -87,7 +92,7 @@ async function compose(p, name, lines) {
     .blur(16).png().toBuffer();
 
   // Only decorative artwork is cropped to fit the final store aspect ratio.
-  const background = await sharp(path.join(SUPPORT, 'masters', `${name}.png`))
+  const background = await sharp(path.join(SUPPORT, 'masters', `${master}.png`))
     .resize(p.width, p.height, { fit: 'cover', position: 'centre' })
     .flatten({ background: '#011552' }).removeAlpha().png().toBuffer();
   const supportFile = path.join(SUPPORT, `${p.prefix}-${name}-background.png`);
@@ -150,11 +155,11 @@ async function main() {
   }
   for (const [name, expected] of Object.entries(PROTECTED)) assert.equal(hash(await fs.readFile(path.join(FINAL, name))), expected, `Protected asset changed: ${name}`);
   const compositions = [];
-  for (const p of PLATFORMS) for (const [name, lines] of SCREENS) {
-    const row = await compose(p, name, lines);
+  for (const p of PLATFORMS) for (const [name, lines, master] of SCREENS) {
+    const row = await compose(p, name, lines, master);
     if (row) { compositions.push(row); console.log(`Created ${row.file}`); }
   }
-  assert.equal(compositions.length, 12);
+  assert.equal(compositions.length, 16);
   for (const [file, expected] of Object.entries(sources)) assert.equal(hash(await fs.readFile(path.join(ROOT, 'capturas', file))), expected);
   for (const [file, expected] of Object.entries(PROTECTED)) assert.equal(hash(await fs.readFile(path.join(FINAL, file))), expected);
   const files = await inventory();
