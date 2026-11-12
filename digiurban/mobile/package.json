@@ -6,7 +6,7 @@
   "scripts": {
     "web": "node scripts/copy-web.js",
     "sync": "npm run web && cap sync",
-    "assets": "node scripts/make-icons.js && capacitor-assets generate --android --ios --splashBackgroundColor \"#0f6fbe\" --splashBackgroundColorDark \"#0f6fbe\"",
+    "assets": "node scripts/make-icons.js && capacitor-assets generate --android --ios --splashBackgroundColor \"#011552\" --splashBackgroundColorDark \"#011552\" --iconBackgroundColor \"#011552\" --iconBackgroundColorDark \"#011552\"",
     "test": "node scripts/copy-web.test.js"
   },
   "dependencies": {

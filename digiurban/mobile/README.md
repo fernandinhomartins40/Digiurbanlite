@@ -14,7 +14,7 @@ cd digiurban/mobile
 npm install
 npm test             # confere a tela "sem internet"
 npm run sync         # gera www/ e copia configuração/plugins para android/ e ios/
-npm run assets       # (só se o ícone mudar) refaz ícones e abertura a partir de frontend/public/icon.svg
+npm run assets       # (só se o ícone mudar) refaz ícones e abertura a partir de assets/icon-master.png (identidade nova)
 ```
 
 Precisa de **Node 22+** (só para esses comandos).
