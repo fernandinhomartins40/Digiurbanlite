@@ -21,6 +21,9 @@ versão **1.0.0**, situação "Preparar para envio".
 | Páginas legais no ar | privacidade (com a empresa e o CNPJ), termos, excluir conta, suporte |
 | Exclusão de conta no app | pronta e alinhada à política |
 
+> **Enviado para revisão em 12/11/2026, 11h56 (Brasília)** — situação "Aguardando revisão".
+> Publicação automática ao aprovar. Privacidade do app publicada (o rascunho do envio aceitou a versão sem pendências).
+
 ## Feito em 12/11/2026
 
 - **Município de demonstração com dados**: catálogo aplicado (404 serviços, 14 etiquetas); 2 cidadãos
