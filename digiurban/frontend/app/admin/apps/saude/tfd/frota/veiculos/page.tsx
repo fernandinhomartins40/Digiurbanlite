@@ -1,4 +1,5 @@
 'use client';
+import { confirmDialog } from '@/lib/dialogs'
 
 import { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -71,7 +72,7 @@ export default function VeiculosPage() {
   };
 
   const handleDelete = async (id: string) => {
-    if (!confirm('Deseja realmente excluir este veículo?')) return;
+    if (!(await confirmDialog('Deseja realmente excluir este veículo?'))) return;
 
     try {
       const response = await fetch(`/api/saude/tfd/veiculos/${id}`, {
@@ -166,7 +167,7 @@ export default function VeiculosPage() {
                 <TableHead>Capacidade</TableHead>
                 <TableHead>KM</TableHead>
                 <TableHead>Acessibilidade</TableHead>
-                <TableHead>Status</TableHead>
+                <TableHead>Situação</TableHead>
                 <TableHead>Ações</TableHead>
               </TableRow>
             </TableHeader>

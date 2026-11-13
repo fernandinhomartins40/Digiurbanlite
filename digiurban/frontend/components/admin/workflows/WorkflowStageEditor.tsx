@@ -321,7 +321,7 @@ export function WorkflowStageEditor({
                   />
                 </div>
                 <div className="space-y-1.5">
-                  <Label className="text-xs font-medium">SLA (dias úteis)</Label>
+                  <Label className="text-xs font-medium">Prazo (dias úteis)</Label>
                   <Input
                     type="number"
                     min="1"

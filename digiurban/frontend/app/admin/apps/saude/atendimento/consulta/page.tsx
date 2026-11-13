@@ -1,4 +1,5 @@
 'use client';
+import { notify } from '@/lib/dialogs'
 
 import { useEffect, useState, useCallback } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
@@ -473,7 +474,7 @@ export default function ConsultaMedicaPage() {
       setPlanoSalvo(true);
     } catch (err) {
       console.error('Erro ao salvar consulta:', err);
-      alert('Erro ao salvar consulta');
+      notify('Erro ao salvar consulta');
     }
   };
 
@@ -486,7 +487,7 @@ export default function ConsultaMedicaPage() {
       router.push('/admin/apps/saude/atendimento');
     } catch (err) {
       console.error('Erro ao finalizar:', err);
-      alert('Erro ao finalizar consulta');
+      notify('Erro ao finalizar consulta');
     }
   };
 
@@ -505,7 +506,7 @@ export default function ConsultaMedicaPage() {
       setBuscaMed('');
     } catch (err) {
       console.error('Erro ao criar prescrição:', err);
-      alert('Erro ao criar prescrição');
+      notify('Erro ao criar prescrição');
     }
   };
 
@@ -518,7 +519,7 @@ export default function ConsultaMedicaPage() {
       setFormExame({ tipoExame: '', justificativa: '', prioridade: 'ROTINA' });
     } catch (err) {
       console.error('Erro ao criar exame:', err);
-      alert('Erro ao criar exame');
+      notify('Erro ao criar exame');
     }
   };
 
@@ -531,7 +532,7 @@ export default function ConsultaMedicaPage() {
       setFormEnc({ especialidade: '', motivo: '', prioridade: 'ROTINA' });
     } catch (err) {
       console.error('Erro ao criar encaminhamento:', err);
-      alert('Erro ao criar encaminhamento');
+      notify('Erro ao criar encaminhamento');
     }
   };
 
@@ -544,7 +545,7 @@ export default function ConsultaMedicaPage() {
       setFormAtestado({ tipo: 'MEDICO', cid10: '', diasAfastamento: '1', dataInicio: new Date().toISOString().split('T')[0], dataFim: new Date().toISOString().split('T')[0], observacoes: '' });
     } catch (err) {
       console.error('Erro ao criar atestado:', err);
-      alert('Erro ao criar atestado');
+      notify('Erro ao criar atestado');
     }
   };
 

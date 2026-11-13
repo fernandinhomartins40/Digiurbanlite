@@ -1,4 +1,5 @@
 'use client';
+import { notify } from '@/lib/dialogs'
 
 import { useState, useEffect } from 'react';
 import { useRouter, useParams } from 'next/navigation';
@@ -110,7 +111,7 @@ export default function ClassificacaoRiscoPage() {
       }
     } catch (error) {
       console.error('Erro ao carregar fila:', error);
-      alert('Erro ao carregar dados do paciente');
+      notify('Erro ao carregar dados do paciente');
     } finally {
       setLoading(false);
     }
@@ -120,12 +121,12 @@ export default function ClassificacaoRiscoPage() {
     e.preventDefault();
 
     if (!corSelecionada) {
-      alert('Selecione uma classificação de risco');
+      notify('Selecione uma classificação de risco');
       return;
     }
 
     if (!formData.queixaPrincipal) {
-      alert('Informe a queixa principal do paciente');
+      notify('Informe a queixa principal do paciente');
       return;
     }
 
@@ -151,14 +152,14 @@ export default function ClassificacaoRiscoPage() {
 
       if (!response.ok) {
         const error = await response.json();
-        alert(error.error || 'Erro ao salvar classificação');
+        notify(error.error || 'Erro ao salvar classificação');
         return;
       }
 
       router.push('/admin/apps/saude/atendimento');
     } catch (error) {
       console.error('Erro ao salvar classificação:', error);
-      alert('Erro ao salvar classificação de risco');
+      notify('Erro ao salvar classificação de risco');
     } finally {
       setSaving(false);
     }

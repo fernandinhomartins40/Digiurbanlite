@@ -1,4 +1,5 @@
 'use client';
+import { confirmDialog } from '@/lib/dialogs'
 
 /**
  * Catálogo de PLANOS da plataforma (super-admin). CRUD dos planos SaaS que os
@@ -220,7 +221,7 @@ export default function PlansManagementPage() {
   };
 
   const deletePlan = async (plan: Plan) => {
-    if (!confirm(`Deseja remover o plano "${plan.name}"?`)) return;
+    if (!(await confirmDialog(`Deseja remover o plano "${plan.name}"?`))) return;
     try {
       const res = await fetch(`/api/platform/plans/${plan.id}`, {
         method: 'DELETE',
@@ -330,7 +331,7 @@ export default function PlansManagementPage() {
                   <TableHead>Máx. Usuários</TableHead>
                   <TableHead>Máx. Cidadãos</TableHead>
                   <TableHead>Municípios</TableHead>
-                  <TableHead>Status</TableHead>
+                  <TableHead>Situação</TableHead>
                   <TableHead className="text-right">Ações</TableHead>
                 </TableRow>
               </TableHeader>

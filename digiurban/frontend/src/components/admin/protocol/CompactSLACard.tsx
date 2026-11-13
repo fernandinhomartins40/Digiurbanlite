@@ -68,7 +68,7 @@ export function CompactSLACard({ sla, onClick }: CompactSLACardProps) {
         <div className="flex items-center justify-between gap-2">
           <div className="flex items-center gap-2 min-w-0">
             <Clock className="h-4 w-4 text-gray-600 shrink-0" />
-            <span className="text-sm font-medium text-gray-900 truncate">SLA</span>
+            <span className="text-sm font-medium text-gray-900 truncate">Prazo</span>
           </div>
           {isCompleted && (
             <Badge variant="outline" className="bg-green-50 text-green-700 border-green-200 text-xs">

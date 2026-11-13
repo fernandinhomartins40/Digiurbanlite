@@ -1,4 +1,5 @@
 'use client'
+import { confirmDialog } from '@/lib/dialogs'
 
 /**
  * Lista de compras: o nome, os itens (cada um com seus preços), o total e,
@@ -103,7 +104,7 @@ export default function ListaDeComprasPage() {
   }
 
   const remove = async () => {
-    if (!window.confirm('Apagar esta lista e todos os preços dela?')) return
+    if (!(await confirmDialog('Apagar esta lista e todos os preços dela?'))) return
     try {
       await apiRequest(`/prices/researches/${id}`, { method: 'DELETE' })
       router.push('/admin/pesquisa-precos')

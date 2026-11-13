@@ -1,4 +1,5 @@
 'use client';
+import { notify } from '@/lib/dialogs'
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
@@ -22,7 +23,7 @@ export default function NovaEspecialidade() {
     e.preventDefault();
 
     if (!formData.nome) {
-      alert('Nome é obrigatório');
+      notify('Nome é obrigatório');
       return;
     }
 
@@ -36,15 +37,15 @@ export default function NovaEspecialidade() {
       });
 
       if (response.ok) {
-        alert('Especialidade criada com sucesso!');
+        notify('Especialidade criada com sucesso!');
         router.push('/admin/apps/saude/cadastros/especialidades');
       } else {
         const error = await response.json();
-        alert(`Erro: ${error.error || 'Falha ao criar especialidade'}`);
+        notify(`Erro: ${error.error || 'Falha ao criar especialidade'}`);
       }
     } catch (error) {
       console.error('Erro ao criar especialidade:', error);
-      alert('Erro ao criar especialidade');
+      notify('Erro ao criar especialidade');
     } finally {
       setLoading(false);
     }

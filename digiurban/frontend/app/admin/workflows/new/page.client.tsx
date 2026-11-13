@@ -435,7 +435,7 @@ export default function NewWorkflowPage() {
                   <Input value={name} onChange={(e) => setName(e.target.value)} placeholder="Ex: Workflow - Emissão de Alvará" />
                 </div>
                 <div className="space-y-1.5">
-                  <Label>SLA Padrão (dias)</Label>
+                  <Label>Prazo padrão (dias)</Label>
                   <Input type="number" min="1" value={defaultSLA} onChange={(e) => setDefaultSLA(parseInt(e.target.value) || 1)} />
                 </div>
               </div>

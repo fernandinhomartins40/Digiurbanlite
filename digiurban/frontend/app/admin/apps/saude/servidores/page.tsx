@@ -1,4 +1,5 @@
 'use client';
+import { notify } from '@/lib/dialogs'
 
 /**
  * Página: Servidores da Saúde (Integrado com Sistema Unificado V2.0)
@@ -136,7 +137,7 @@ export default function ServidoresSaudePage() {
       setServidores(data);
     } catch (error) {
       console.error('Erro ao buscar servidores:', error);
-      alert('Erro ao carregar servidores. Verifique o console.');
+      notify('Erro ao carregar servidores. Verifique o console.');
     } finally {
       setLoading(false);
     }
@@ -266,7 +267,7 @@ export default function ServidoresSaudePage() {
                   <TableHead>Nome</TableHead>
                   <TableHead>Categoria</TableHead>
                   <TableHead>Registro</TableHead>
-                  <TableHead>Status</TableHead>
+                  <TableHead>Situação</TableHead>
                   <TableHead className="text-center">Vínculos Ativos</TableHead>
                   <TableHead className="text-center">Equipes Ativas</TableHead>
                   <TableHead className="text-right">Ações</TableHead>

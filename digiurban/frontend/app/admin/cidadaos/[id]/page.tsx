@@ -315,9 +315,10 @@ export default function CitizenDetailsPage() {
 
   const getStatusBadge = (status: string) => {
     const statusConfig = {
-      PENDING: { label: 'Pendente', variant: 'default' as const, icon: Clock },
-      VERIFIED: { label: 'Verificado', variant: 'default' as const, icon: CheckCircle2 },
-      REJECTED: { label: 'Rejeitado', variant: 'destructive' as const, icon: XCircle },
+      PENDING: { label: 'Bronze · a conferir', variant: 'default' as const, icon: Clock },
+      VERIFIED: { label: 'Prata · conferido', variant: 'default' as const, icon: CheckCircle2 },
+      GOLD: { label: 'Ouro · completo', variant: 'default' as const, icon: CheckCircle2 },
+      REJECTED: { label: 'Cadastro recusado', variant: 'destructive' as const, icon: XCircle },
     }
 
     const config = statusConfig[status as keyof typeof statusConfig] || statusConfig.PENDING
@@ -511,67 +512,22 @@ export default function CitizenDetailsPage() {
           {!citizen.isActive && (
             <Badge variant="destructive">Inativo</Badge>
           )}
+          {/* o próximo passo mais comum com a ficha aberta: atender a pessoa */}
+          {citizen.isActive && (
+            <Button onClick={() => router.push(`/admin/balcao?cidadao=${citizenId}`)}>
+              Abrir protocolo para esta pessoa
+            </Button>
+          )}
         </div>
-      </div>
-
-      {/* Estatísticas Rápidas */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-        <Card>
-          <CardContent className="pt-6">
-            <div className="flex items-center gap-3">
-              <FileText className="h-8 w-8 text-blue-600" />
-              <div>
-                <div className="text-2xl font-bold">{citizen._count.protocols}</div>
-                <div className="text-sm text-gray-500">Protocolos</div>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardContent className="pt-6">
-            <div className="flex items-center gap-3">
-              <Users className="h-8 w-8 text-green-600" />
-              <div>
-                <div className="text-2xl font-bold">{citizen._count.familyAsHead}</div>
-                <div className="text-sm text-gray-500">Membros da Família</div>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardContent className="pt-6">
-            <div className="flex items-center gap-3">
-              <Bell className="h-8 w-8 text-orange-600" />
-              <div>
-                <div className="text-2xl font-bold">{citizen._count.notifications}</div>
-                <div className="text-sm text-gray-500">Notificações</div>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardContent className="pt-6">
-            <div className="flex items-center gap-3">
-              <FileText className="h-8 w-8 text-indigo-600" />
-              <div>
-                <div className="text-2xl font-bold">{citizen._count.documents || 0}</div>
-                <div className="text-sm text-gray-500">Documentos Pessoais</div>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
       </div>
 
       {/* Tabs com Informações */}
       <Tabs defaultValue="personal" className="space-y-4">
         <TabsList>
-          <TabsTrigger value="personal">Dados Pessoais</TabsTrigger>
-          <TabsTrigger value="documents">Documentos</TabsTrigger>
-          <TabsTrigger value="family">Composição Familiar</TabsTrigger>
-          <TabsTrigger value="protocols">Protocolos</TabsTrigger>
+          <TabsTrigger value="personal">Dados</TabsTrigger>
+          <TabsTrigger value="documents">Documentos ({citizen._count.documents || 0})</TabsTrigger>
+          <TabsTrigger value="family">Família ({citizen._count.familyAsHead})</TabsTrigger>
+          <TabsTrigger value="protocols">Protocolos ({citizen._count.protocols})</TabsTrigger>
           {citizen.vulnerableFamilyData && (
             <TabsTrigger value="vulnerability">Vulnerabilidade</TabsTrigger>
           )}
@@ -713,7 +669,7 @@ export default function CitizenDetailsPage() {
             </CardHeader>
             <CardContent className="space-y-3">
               <div>
-                <label className="text-sm font-medium text-gray-500">Status</label>
+                <label className="text-sm font-medium text-gray-500">Situação</label>
                 <div className="mt-1">{getStatusBadge(citizen.verificationStatus)}</div>
               </div>
               {citizen.verifiedAt && (

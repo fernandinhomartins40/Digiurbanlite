@@ -1,4 +1,5 @@
 'use client';
+import { confirmDialog } from '@/lib/dialogs'
 
 import { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -78,7 +79,7 @@ export default function EspecialidadesPage() {
   };
 
   const handleDelete = async (id: string) => {
-    if (!confirm('Deseja realmente excluir esta especialidade?')) return;
+    if (!(await confirmDialog('Deseja realmente excluir esta especialidade?'))) return;
 
     try {
       const response = await fetch(`/api/saude/tfd/especialidades/${id}`, {
@@ -186,7 +187,7 @@ export default function EspecialidadesPage() {
                 <TableHead>Ordem</TableHead>
                 <TableHead>Nome</TableHead>
                 <TableHead>Descrição</TableHead>
-                <TableHead>Status</TableHead>
+                <TableHead>Situação</TableHead>
                 <TableHead>Ações</TableHead>
               </TableRow>
             </TableHeader>

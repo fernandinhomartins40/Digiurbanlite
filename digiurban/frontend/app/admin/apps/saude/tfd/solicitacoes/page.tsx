@@ -227,7 +227,7 @@ export default function SolicitacoesPage() {
                   <TableHead>Especialidade</TableHead>
                   <TableHead>Destino</TableHead>
                   <TableHead>Prioridade</TableHead>
-                  <TableHead>Status</TableHead>
+                  <TableHead>Situação</TableHead>
                   <TableHead>Data Consulta</TableHead>
                   <TableHead>Criado em</TableHead>
                   <TableHead>Ações</TableHead>

@@ -1,4 +1,5 @@
 'use client';
+import { notify } from '@/lib/dialogs'
 
 import { useState, useEffect, useCallback } from 'react';
 import { Card } from '@/components/ui/card';
@@ -318,7 +319,7 @@ export default function EquipesPage() {
       setTeamDialogOpen(false);
       fetchTeams();
     } catch (err: any) {
-      alert(err.message || 'Erro ao salvar equipe');
+      notify(err.message || 'Erro ao salvar equipe');
     } finally {
       setSaving(false);
     }
@@ -339,7 +340,7 @@ export default function EquipesPage() {
       if (expandedTeamId === teamToDelete.id) setExpandedTeamId(null);
       fetchTeams();
     } catch (err: any) {
-      alert(err.message || 'Erro ao excluir equipe');
+      notify(err.message || 'Erro ao excluir equipe');
     } finally {
       setSaving(false);
     }
@@ -381,7 +382,7 @@ export default function EquipesPage() {
       if (membersDialogTeam?.id === addMemberTeamId) fetchMembersForDialog(addMemberTeamId);
       fetchTeams();
     } catch (err: any) {
-      alert(err.message || 'Erro ao adicionar membro');
+      notify(err.message || 'Erro ao adicionar membro');
     } finally {
       setSaving(false);
     }
@@ -407,7 +408,7 @@ export default function EquipesPage() {
       if (membersDialogTeam?.id === memberToRemove.teamId) fetchMembersForDialog(memberToRemove.teamId);
       fetchTeams();
     } catch (err: any) {
-      alert(err.message || 'Erro ao remover membro');
+      notify(err.message || 'Erro ao remover membro');
     } finally {
       setSaving(false);
     }
@@ -500,7 +501,7 @@ export default function EquipesPage() {
 
             {/* Status toggle */}
             <div className="w-full sm:w-auto">
-              <Label className="text-xs text-gray-500 mb-1 block">Status</Label>
+              <Label className="text-xs text-gray-500 mb-1 block">Situação</Label>
               <div className="flex rounded-lg border overflow-hidden">
                 <button
                   className={`px-3 py-2 text-sm font-medium transition-colors ${

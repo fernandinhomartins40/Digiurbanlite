@@ -1,4 +1,5 @@
 'use client';
+import { notify } from '@/lib/dialogs'
 
 import { useState, useEffect, useCallback, useMemo } from 'react';
 import { useSearchParams } from 'next/navigation';
@@ -437,7 +438,7 @@ export default function LotacoesPage() {
       setCreateOpen(false);
       fetchAssignments();
     } catch (err: any) {
-      alert(err.message || 'Erro ao criar lotação');
+      notify(err.message || 'Erro ao criar lotação');
     } finally {
       setSaving(false);
     }
@@ -457,7 +458,7 @@ export default function LotacoesPage() {
       setEditOpen(false);
       fetchAssignments();
     } catch (err: any) {
-      alert(err.message || 'Erro ao atualizar lotação');
+      notify(err.message || 'Erro ao atualizar lotação');
     } finally {
       setSaving(false);
     }
@@ -473,7 +474,7 @@ export default function LotacoesPage() {
       setDeleteOpen(false);
       fetchAssignments();
     } catch (err: any) {
-      alert(err.message || 'Erro ao encerrar vínculo');
+      notify(err.message || 'Erro ao encerrar vínculo');
     } finally {
       setSaving(false);
     }

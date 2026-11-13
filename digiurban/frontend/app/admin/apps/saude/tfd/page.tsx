@@ -1,4 +1,5 @@
 'use client';
+import { notify } from '@/lib/dialogs'
 
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
@@ -355,14 +356,14 @@ export default function DashboardTFDPage() {
               <Button
                 variant="outline"
                 className="w-full justify-start"
-                onClick={() => alert('Relatório mensal em desenvolvimento')}
+                onClick={() => notify('Relatório mensal em desenvolvimento')}
               >
                 Relatório mensal
               </Button>
               <Button
                 variant="outline"
                 className="w-full justify-start"
-                onClick={() => alert('Relatório de despesas em desenvolvimento')}
+                onClick={() => notify('Relatório de despesas em desenvolvimento')}
               >
                 Relatório de despesas
               </Button>

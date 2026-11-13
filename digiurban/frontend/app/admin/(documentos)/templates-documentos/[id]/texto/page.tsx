@@ -1,4 +1,5 @@
 'use client'
+import { confirmDialog } from '@/lib/dialogs'
 
 /**
  * Editar modelo de documento do processo interno / licitações (DFD, ETP, TR,
@@ -98,7 +99,7 @@ export default function TextoModeloPage() {
   }
 
   const restore = async () => {
-    if (!window.confirm('Voltar ao texto padrão? As mudanças feitas aqui se perdem.')) return
+    if (!(await confirmDialog('Voltar ao texto padrão? As mudanças feitas aqui se perdem.'))) return
     try {
       await apiRequest(`/document-templates/${id}/restore`, { method: 'POST' })
       toast({ title: 'Modelo voltou ao padrão' })

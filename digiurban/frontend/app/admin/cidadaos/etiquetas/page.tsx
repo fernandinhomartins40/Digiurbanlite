@@ -1,4 +1,5 @@
 'use client'
+import { confirmDialog } from '@/lib/dialogs'
 
 /**
  * Etiquetas do cidadão ("Produtor Rural", "Beneficiário do Bolsa-Aluguel"...).
@@ -128,7 +129,7 @@ export default function EtiquetasPage() {
   }
 
   const remove = async (tag: CitizenTag) => {
-    if (!window.confirm(`Apagar a etiqueta "${tag.name}"?`)) return
+    if (!(await confirmDialog(`Apagar a etiqueta "${tag.name}"?`))) return
     try {
       const response = await apiRequest(`/admin/citizen-tags/${tag.id}`, { method: 'DELETE' })
       toast({ title: response?.message || 'Etiqueta apagada' })

@@ -1,4 +1,5 @@
 'use client'
+import { confirmDialog } from '@/lib/dialogs'
 
 /**
  * IA e créditos do município (painel do servidor, administradores).
@@ -86,7 +87,7 @@ export default function AiCreditsPage() {
   }, [load])
 
   const buy = async (pkg: Pkg) => {
-    if (!confirm(`Comprar o pacote "${pkg.name}" (${fmt(pkg.credits)} créditos) por ${brl(pkg.priceBrl)}? Uma fatura será gerada.`)) return
+    if (!(await confirmDialog(`Comprar o pacote "${pkg.name}" (${fmt(pkg.credits)} créditos) por ${brl(pkg.priceBrl)}? Uma fatura será gerada.`))) return
     setBuying(pkg.id)
     try {
       const res = await fetch('/api/admin/ai-credits/orders', {

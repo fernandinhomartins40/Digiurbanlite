@@ -384,7 +384,7 @@ export function OrganizationalUnitManagementForm({
 
           {isEditMode && (
             <div className="space-y-2">
-              <Label>Status</Label>
+              <Label>Situação</Label>
               <Select
                 value={formData.isActive === false ? 'false' : 'true'}
                 onValueChange={(value) =>

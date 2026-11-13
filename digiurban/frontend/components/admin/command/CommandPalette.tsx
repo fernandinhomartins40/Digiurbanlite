@@ -16,6 +16,7 @@ import { Dialog, DialogContent, DialogTitle } from '@/components/ui/dialog';
 import { apiRequest } from '@/lib/api';
 import { getProtocolStatusLabel } from '@/lib/protocol-helpers';
 import { useAdminNavigation } from '@/components/admin/navigation/useAdminNavigation';
+import { useAdminPermissions } from '@/contexts/AdminAuthContext';
 
 export const COMMAND_PALETTE_EVENT = 'digiurban:command-palette';
 
@@ -50,6 +51,7 @@ const normalize = (value: string) =>
 export function CommandPalette() {
   const router = useRouter();
   const { visibleSections, visibleMayorPortalItems } = useAdminNavigation();
+  const { hasPermission } = useAdminPermissions();
   const [open, setOpen] = useState(false);
   const [query, setQuery] = useState('');
   const [results, setResults] = useState<SearchResult | null>(null);
@@ -105,10 +107,18 @@ export function CommandPalette() {
       seen.add(item.href);
       list.push({ title: item.title, section, href: item.href, icon: item.icon });
     };
-    visibleSections.forEach((section) => section.items.forEach((item) => add(item, section.title)));
+    visibleSections.forEach((section) =>
+      section.items.forEach((item) => {
+        add(item, section.title);
+        // telas de dentro (abas), com a permissão de cada uma
+        item.children
+          ?.filter((child) => !child.permissions || child.permissions.some((permission) => hasPermission(permission)))
+          .forEach((child) => add({ ...child, icon: item.icon }, item.title));
+      })
+    );
     visibleMayorPortalItems.forEach((item) => add(item, 'Gabinete'));
     return list;
-  }, [visibleSections, visibleMayorPortalItems]);
+  }, [visibleSections, visibleMayorPortalItems, hasPermission]);
 
   const term = normalize(query);
   const matches = (text: string) => !term || normalize(text).includes(term);

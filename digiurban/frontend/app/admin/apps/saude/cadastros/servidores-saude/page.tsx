@@ -193,7 +193,7 @@ export default function ServidoresSaudeListagem() {
                 </Select>
               </div>
               <div>
-                <label className="text-sm font-medium mb-2 block">Status</label>
+                <label className="text-sm font-medium mb-2 block">Situação</label>
                 <Select value={filtroStatus} onValueChange={setFiltroStatus}>
                   <SelectTrigger><SelectValue /></SelectTrigger>
                   <SelectContent>
@@ -242,7 +242,7 @@ export default function ServidoresSaudeListagem() {
                       <TableHead>CNS</TableHead>
                       <TableHead>Vínculos</TableHead>
                       <TableHead>Equipes</TableHead>
-                      <TableHead>Status</TableHead>
+                      <TableHead>Situação</TableHead>
                       <TableHead className="text-right">Ações</TableHead>
                     </TableRow>
                   </TableHeader>

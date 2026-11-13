@@ -1,3 +1,4 @@
+import { protocolSense, senseClass } from './senses';
 /**
  * Configuração e helpers para prioridades de protocolos
  * Backend usa INT (1-5), aqui mapeamos para labels e cores
@@ -59,30 +60,17 @@ export function getPriorityColor(priority: number): string {
 /**
  * Status de protocolo (enum ProtocolStatus do backend) — rótulos para servidores
  */
-export const PROTOCOL_STATUS_LABELS: Record<string, string> = {
-  VINCULADO: 'Vinculado',
-  PROGRESSO: 'Em Progresso',
-  ATUALIZACAO: 'Atualização',
-  PENDENCIA: 'Pendência',
-  CONCLUIDO: 'Concluído',
-  CANCELADO: 'Cancelado',
-};
-
-export const PROTOCOL_STATUS_COLORS: Record<string, string> = {
-  VINCULADO: 'bg-blue-100 text-blue-800',
-  PROGRESSO: 'bg-yellow-100 text-yellow-800',
-  ATUALIZACAO: 'bg-orange-100 text-orange-800',
-  PENDENCIA: 'bg-red-100 text-red-800',
-  CONCLUIDO: 'bg-green-100 text-green-800',
-  CANCELADO: 'bg-gray-200 text-gray-700',
-};
+// Palavras e cores vêm da tabela de sentidos (lib/senses.ts): uma só no produto inteiro
+const STATUSES = ['VINCULADO', 'PROGRESSO', 'ATUALIZACAO', 'PENDENCIA', 'CONCLUIDO', 'CANCELADO'];
+export const PROTOCOL_STATUS_LABELS: Record<string, string> = Object.fromEntries(STATUSES.map((st) => [st, protocolSense(st).label]));
+export const PROTOCOL_STATUS_COLORS: Record<string, string> = Object.fromEntries(STATUSES.map((st) => [st, protocolSense(st).className]));
 
 export function getProtocolStatusLabel(status: string): string {
   return PROTOCOL_STATUS_LABELS[status] || status;
 }
 
 export function getProtocolStatusClass(status: string): string {
-  return PROTOCOL_STATUS_COLORS[status] || 'bg-gray-100 text-gray-800';
+  return PROTOCOL_STATUS_COLORS[status] || senseClass('off');
 }
 
 export interface ProtocolSlaSnapshot {
@@ -108,7 +96,7 @@ export function getSlaInfo(
   if (status === 'CONCLUIDO' || status === 'CANCELADO') return null;
 
   if (sla.isPaused) {
-    return { tone: 'paused', label: 'Prazo pausado', className: 'bg-gray-100 text-gray-700 border-gray-300' };
+    return { tone: 'paused', label: 'Prazo pausado', className: senseClass('off') };
   }
 
   const due = new Date(sla.expectedEndDate);
@@ -119,7 +107,7 @@ export function getSlaInfo(
     return {
       tone: 'overdue',
       label: `Atrasado há ${days} dia${days > 1 ? 's' : ''}`,
-      className: 'bg-red-100 text-red-800 border-red-300',
+      className: senseClass('late'),
     };
   }
 
@@ -128,12 +116,12 @@ export function getSlaInfo(
     const startOf = (d: Date) => new Date(d.getFullYear(), d.getMonth(), d.getDate()).getTime();
     const days = Math.round((startOf(due) - startOf(now)) / DAY_MS);
     const label = days === 0 ? 'Vence hoje' : days === 1 ? 'Vence amanhã' : `Vence em ${days} dias`;
-    return { tone: 'due_soon', label, className: 'bg-amber-100 text-amber-800 border-amber-300' };
+    return { tone: 'due_soon', label, className: senseClass('soon') };
   }
 
   return {
     tone: 'ok',
     label: `Prazo ${due.toLocaleDateString('pt-BR')}`,
-    className: 'bg-slate-50 text-slate-700 border-slate-200',
+    className: senseClass('off'),
   };
 }

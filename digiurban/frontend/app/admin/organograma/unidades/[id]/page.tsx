@@ -369,7 +369,7 @@ export default function UnitDetailPage() {
                   </p>
                 </div>
                 <div>
-                  <label className="text-sm font-medium text-gray-500">Status</label>
+                  <label className="text-sm font-medium text-gray-500">Situação</label>
                   <div className="mt-0.5">
                     {unit.isActive !== false ? (
                       <Badge className="bg-green-100 text-green-800 border border-green-300">Ativa</Badge>

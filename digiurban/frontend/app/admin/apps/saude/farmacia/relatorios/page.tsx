@@ -288,7 +288,7 @@ export default function RelatoriosFarmaciaPage() {
                     <th className="py-2 pr-4">Cidadão</th>
                     <th className="py-2 pr-4">Qtd.</th>
                     <th className="py-2 pr-4">Responsável</th>
-                    <th className="py-2">Status</th>
+                    <th className="py-2">Situação</th>
                   </tr>
                 </thead>
                 <tbody>

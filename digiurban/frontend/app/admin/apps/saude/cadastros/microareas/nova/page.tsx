@@ -1,4 +1,5 @@
 'use client';
+import { notify } from '@/lib/dialogs'
 
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
@@ -78,7 +79,7 @@ export default function NovaMicroarea() {
     e.preventDefault();
 
     if (!formData.numero || !formData.equipeId) {
-      alert('Número da microárea e Equipe ESF são obrigatórios');
+      notify('Número da microárea e Equipe ESF são obrigatórios');
       return;
     }
 
@@ -102,15 +103,15 @@ export default function NovaMicroarea() {
 
       if (!response.ok) {
         const error = await response.json();
-        alert(error.error || 'Erro ao criar microárea');
+        notify(error.error || 'Erro ao criar microárea');
         return;
       }
 
-      alert('Microárea criada com sucesso!');
+      notify('Microárea criada com sucesso!');
       router.push('/admin/apps/saude/cadastros/microareas');
     } catch (error) {
       console.error('Erro ao criar microárea:', error);
-      alert('Erro ao criar microárea');
+      notify('Erro ao criar microárea');
     } finally {
       setLoading(false);
     }

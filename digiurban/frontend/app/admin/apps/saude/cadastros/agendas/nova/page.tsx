@@ -1,4 +1,5 @@
 'use client';
+import { notify } from '@/lib/dialogs'
 
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
@@ -291,7 +292,7 @@ export default function NovaAgenda() {
       });
 
       if (response.ok) {
-        alert('Agenda criada com sucesso!');
+        notify('Agenda criada com sucesso!');
         router.push('/admin/apps/saude/cadastros/agendas');
       } else {
         const errorData = await response.json();

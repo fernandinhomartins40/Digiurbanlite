@@ -38,8 +38,10 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
   DropdownMenuSeparator,
+  DropdownMenuLabel,
 } from '@/components/ui/dropdown-menu'
 import { PendingCreationContext } from './protocol-pending-context'
+import { protocolSense } from '@/lib/senses'
 
 interface StageValidation {
   canProgress: boolean
@@ -279,31 +281,7 @@ export function ProtocolHeader({
     }
   }
 
-  // Exportar protocolo
-  const handleExport = () => {
-    toast({
-      title: 'Exportação em desenvolvimento',
-      description: 'Funcionalidade de exportação será implementada em breve.'
-    })
-  }
-
-  // Determinar badge de status
-  const getStatusBadge = () => {
-    switch (status) {
-      case 'VINCULADO':
-        return <Badge variant="outline" className="bg-blue-50 text-blue-700">Vinculado</Badge>
-      case 'PROGRESSO':
-        return <Badge variant="outline" className="bg-yellow-50 text-yellow-700">Em Progresso</Badge>
-      case 'CONCLUIDO':
-        return <Badge variant="outline" className="bg-green-50 text-green-700">Concluído</Badge>
-      case 'PENDENCIA':
-        return <Badge variant="outline" className="bg-orange-50 text-orange-700">Pendente</Badge>
-      case 'CANCELADO':
-        return <Badge variant="outline" className="bg-red-50 text-red-700">Cancelado</Badge>
-      default:
-        return <Badge variant="outline">{status}</Badge>
-    }
-  }
+  const statusInfo = protocolSense(status)
 
   const allowedActions = currentStage?.metadata?.allowedActions || []
   const showActions = currentStage?.status === 'IN_PROGRESS' && allowedActions.length > 0
@@ -363,141 +341,97 @@ export function ProtocolHeader({
                 )}
               </div>
             </div>
-            <div className="shrink-0">
-              {getStatusBadge()}
-            </div>
+            <span className={`shrink-0 ${statusInfo.className}`}>{statusInfo.label}</span>
           </div>
 
-          {/* Linha 2: Etapa Atual */}
-          {currentStage && (
-            <div className="mb-4 p-3 bg-blue-50 rounded-lg border border-blue-200">
-              <div className="flex items-center gap-2">
-                <Clock className="h-4 w-4 text-blue-600 shrink-0" />
-                <div className="min-w-0 flex-1">
-                  <p className="text-sm font-medium text-blue-900 truncate">
-                    Etapa Atual: {currentStage.stageName}
-                  </p>
-                </div>
-                {currentStage.status === 'IN_PROGRESS' && (
-                  <Badge variant="default" className="bg-blue-600 shrink-0">
-                    Em Andamento
-                  </Badge>
-                )}
-              </div>
-            </div>
-          )}
-
-          {/* Linha 3: Ações Primárias */}
-          <div className="flex flex-wrap gap-2">
-            {/* Ações de Workflow (apenas se etapa em progresso) */}
-            {showActions && (
-              <>
-                {allowedActions.includes('APPROVE') && (
-                  <Button
-                    size="sm"
-                    onClick={() => {
-                      loadValidation().then(() => setShowApproveModal(true))
-                    }}
-                    disabled={isValidating}
-                  >
-                    <CheckCircle className="h-4 w-4 mr-2" />
-                    {approveActionLabel}
-                  </Button>
-                )}
-
-                {allowedActions.includes('REJECT') && (
-                  <Button
-                    size="sm"
-                    variant="destructive"
-                    onClick={() => setShowRejectModal(true)}
-                  >
-                    <XCircle className="h-4 w-4 mr-2" />
-                    Rejeitar
-                  </Button>
-                )}
-
-                {allowedActions.includes('CREATE_PENDING') && (
-                  <Button
-                    size="sm"
-                    variant="outline"
-                    onClick={() => requestPendingCreation('CREATE_PENDING')}
-                  >
-                    <AlertCircle className="h-4 w-4 mr-2" />
-                    {createPendingActionLabel}
-                  </Button>
-                )}
-
-                {allowedActions.includes('REQUEST_INFO') && (
-                  <Button
-                    size="sm"
-                    variant="outline"
-                    onClick={() => requestPendingCreation('REQUEST_INFO')}
-                  >
-                    <FileText className="h-4 w-4 mr-2" />
-                    {requestInfoActionLabel}
-                  </Button>
-                )}
-              </>
+          {/* Agora: a etapa e UM botão de destaque; o resto espera em "Mais opções" */}
+          <div className="flex flex-wrap items-center gap-2">
+            {currentStage && (
+              <p className="mr-auto min-w-0 truncate text-sm text-gray-700">
+                <span className="font-semibold text-gray-900">Agora:</span> {currentStage.stageName}
+              </p>
             )}
 
-            {/* Ações Gerais (sempre disponíveis) */}
-            <Button
-              size="sm"
-              variant="outline"
-              onClick={() => setShowMessageModal(true)}
-            >
+            {showActions && allowedActions.includes('APPROVE') && (
+              <Button
+                size="sm"
+                onClick={() => {
+                  loadValidation().then(() => setShowApproveModal(true))
+                }}
+                disabled={isValidating}
+              >
+                <CheckCircle className="h-4 w-4 mr-2" />
+                {approveActionLabel}
+              </Button>
+            )}
+
+            {showActions && allowedActions.includes('CREATE_PENDING') && (
+              <Button size="sm" variant="outline" onClick={() => requestPendingCreation('CREATE_PENDING')}>
+                <AlertCircle className="h-4 w-4 mr-2" />
+                {createPendingActionLabel}
+              </Button>
+            )}
+
+            <Button size="sm" variant="outline" onClick={() => setShowMessageModal(true)}>
               <MessageSquare className="h-4 w-4 mr-2" />
               Mensagem
             </Button>
 
-            <Button
-              size="sm"
-              variant="outline"
-              onClick={handleExport}
-            >
-              <Download className="h-4 w-4 mr-2" />
-              Exportar
-            </Button>
-
-            {/* Dropdown de Atribuições */}
-            {onAssignAction && (
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <Button size="sm" variant="outline">
-                    <MoreVertical className="h-4 w-4 mr-2" />
-                    Atribuir
-                  </Button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent align="end" className="w-56">
-                  <DropdownMenuItem onClick={() => onAssignAction('assign')}>
-                    <UserPlus className="mr-2 h-4 w-4" />
-                    <span>Atribuir Servidor</span>
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button size="sm" variant="outline" aria-label="Mais opções">
+                  <MoreVertical className="h-4 w-4 sm:mr-2" />
+                  <span className="hidden sm:inline">Mais opções</span>
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" className="w-64">
+                {showActions && allowedActions.includes('REQUEST_INFO') && (
+                  <DropdownMenuItem onClick={() => requestPendingCreation('REQUEST_INFO')}>
+                    <FileText className="mr-2 h-4 w-4" />
+                    <span>{requestInfoActionLabel}</span>
                   </DropdownMenuItem>
-                  <DropdownMenuItem onClick={() => onAssignAction('delegate')}>
-                    <UserCheck className="mr-2 h-4 w-4" />
-                    <span>Delegar Temporário</span>
-                  </DropdownMenuItem>
-                  <DropdownMenuSeparator />
-                  <DropdownMenuItem onClick={() => onAssignAction('forward')}>
-                    <ArrowRightLeft className="mr-2 h-4 w-4" />
-                    <span>Encaminhar</span>
-                  </DropdownMenuItem>
-                  <DropdownMenuItem onClick={() => onAssignAction('team')}>
-                    <Users className="mr-2 h-4 w-4" />
-                    <span>Atribuir Equipe</span>
-                  </DropdownMenuItem>
-                  {onRealignWorkflow && (
-                    <>
-                      <DropdownMenuSeparator />
-                      <DropdownMenuItem onClick={onRealignWorkflow}>
-                        <RefreshCw className="mr-2 h-4 w-4" />
-                        <span>Re-alinhar fluxo</span>
-                      </DropdownMenuItem>
-                    </>
-                  )}
-                </DropdownMenuContent>
-              </DropdownMenu>
-            )}
+                )}
+                {onAssignAction && (
+                  <>
+                    <DropdownMenuLabel className="text-xs font-medium text-muted-foreground">Passar para…</DropdownMenuLabel>
+                    <DropdownMenuItem onClick={() => onAssignAction('assign')}>
+                      <UserPlus className="mr-2 h-4 w-4" />
+                      <span>Outra pessoa</span>
+                    </DropdownMenuItem>
+                    <DropdownMenuItem onClick={() => onAssignAction('team')}>
+                      <Users className="mr-2 h-4 w-4" />
+                      <span>Uma equipe</span>
+                    </DropdownMenuItem>
+                    <DropdownMenuItem onClick={() => onAssignAction('forward')}>
+                      <ArrowRightLeft className="mr-2 h-4 w-4" />
+                      <span>Outra secretaria</span>
+                    </DropdownMenuItem>
+                    <DropdownMenuItem onClick={() => onAssignAction('delegate')}>
+                      <UserCheck className="mr-2 h-4 w-4" />
+                      <span>Alguém por um tempo (férias, folga)</span>
+                    </DropdownMenuItem>
+                  </>
+                )}
+                {onRealignWorkflow && (
+                  <>
+                    <DropdownMenuSeparator />
+                    <DropdownMenuItem onClick={onRealignWorkflow}>
+                      <RefreshCw className="mr-2 h-4 w-4" />
+                      <span>Corrigir as etapas deste protocolo</span>
+                    </DropdownMenuItem>
+                  </>
+                )}
+                {showActions && allowedActions.includes('REJECT') && (
+                  <>
+                    <DropdownMenuSeparator />
+                    <DropdownMenuItem onClick={() => setShowRejectModal(true)} className="text-[var(--lg-red)] focus:text-[var(--lg-red)]">
+                      <XCircle className="mr-2 h-4 w-4" />
+                      <span>Rejeitar</span>
+                    </DropdownMenuItem>
+                  </>
+                )}
+              </DropdownMenuContent>
+            </DropdownMenu>
           </div>
         </div>
       </div>

@@ -1,4 +1,5 @@
 'use client';
+import { confirmDialog } from '@/lib/dialogs'
 
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
@@ -35,7 +36,7 @@ export default function UnidadesListagem() {
   };
 
   const handleDelete = async (id: string) => {
-    if (!confirm('Deseja realmente desativar esta unidade?')) return;
+    if (!(await confirmDialog('Deseja realmente desativar esta unidade?'))) return;
 
     try {
       await fetch(`/api/apps/saude/cadastros/unidades/${id}`, {
@@ -117,7 +118,7 @@ export default function UnidadesListagem() {
                     <TableHead>CNES</TableHead>
                     <TableHead>Endereço</TableHead>
                     <TableHead>Telefone</TableHead>
-                    <TableHead>Status</TableHead>
+                    <TableHead>Situação</TableHead>
                     <TableHead>Ações</TableHead>
                   </TableRow>
                 </TableHeader>

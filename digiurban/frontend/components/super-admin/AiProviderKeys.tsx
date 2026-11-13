@@ -1,4 +1,5 @@
 'use client';
+import { confirmDialog } from '@/lib/dialogs'
 
 /**
  * Formulários das chaves de API, um por serviço de IA (Super-admin › Chaves de API).
@@ -123,7 +124,7 @@ function InternalTokenCard({ isAdmin }: { isAdmin: boolean }) {
   useEffect(() => load(), [load]);
 
   const rotate = async () => {
-    if (!confirm('Gerar um novo token interno? O DigiBot passa a usá-lo sozinho em até 30 segundos; o anterior continua valendo por 10 minutos.')) return;
+    if (!(await confirmDialog('Gerar um novo token interno? O DigiBot passa a usá-lo sozinho em até 30 segundos; o anterior continua valendo por 10 minutos.'))) return;
     setBusy(true);
     try {
       await api('/internal-token/rotate', { method: 'POST' });
@@ -311,7 +312,7 @@ function ProviderForm({ p, isAdmin, onChange }: { p: AiProvider; isAdmin: boolea
                   variant="ghost"
                   className="text-red-600"
                   disabled={!!busy}
-                  onClick={() => confirm(`Apagar a chave de ${p.label}?`) && save({ removeKey: true }, 'Chave apagada')}
+                  onClick={async () => (await confirmDialog(`Apagar a chave de ${p.label}?`)) && save({ removeKey: true }, 'Chave apagada')}
                 >
                   <Trash2 className="mr-1 h-4 w-4" />
                   Apagar chave

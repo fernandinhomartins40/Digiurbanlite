@@ -344,7 +344,7 @@ export default function DashboardOverview() {
                           <p className="font-medium">{dept.completedProtocols}</p>
                         </div>
                         <div>
-                          <p className="text-muted-foreground">SLA</p>
+                          <p className="text-muted-foreground">Prazo</p>
                           <p className="font-medium">{formatPercentage(dept.slaComplianceRate)}</p>
                         </div>
                         <div>

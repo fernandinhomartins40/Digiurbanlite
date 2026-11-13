@@ -1,4 +1,5 @@
 'use client'
+import { confirmDialog } from '@/lib/dialogs'
 
 import { useState, useEffect, useCallback } from 'react'
 import { useRouter } from 'next/navigation'
@@ -73,7 +74,7 @@ export default function WorkflowsPage() {
   useEffect(() => { loadWorkflows(); loadStats() }, [loadWorkflows, loadStats])
 
   const handleCreateDefaults = async () => {
-    if (!confirm('Isso criará/atualizará workflows para todos os serviços. Continuar?')) return
+    if (!(await confirmDialog('Isso criará/atualizará workflows para todos os serviços. Continuar?'))) return
     try {
       setCreatingDefaults(true)
       const response = await apiRequest('/service-workflows/seed-all', { method: 'POST' })
@@ -87,7 +88,7 @@ export default function WorkflowsPage() {
   }
 
   const handleDelete = async (serviceId: string, serviceName: string) => {
-    if (!confirm(`Deletar o workflow de "${serviceName}"?`)) return
+    if (!(await confirmDialog(`Deletar o workflow de "${serviceName}"?`))) return
     try {
       await apiRequest(`/service-workflows/service/${serviceId}`, { method: 'DELETE' })
       toast({ title: 'Workflow deletado' })
@@ -98,7 +99,7 @@ export default function WorkflowsPage() {
   }
 
   const handleDeleteAll = async () => {
-    if (!confirm('ATENÇÃO! Isso irá DELETAR TODOS OS WORKFLOWS. Esta ação NÃO PODE SER DESFEITA.')) return
+    if (!(await confirmDialog('ATENÇÃO! Isso irá DELETAR TODOS OS WORKFLOWS. Esta ação NÃO PODE SER DESFEITA.'))) return
     if (prompt('Digite "DELETAR TUDO" para confirmar:') !== 'DELETAR TUDO') return
     try {
       setDeletingAll(true)
@@ -135,7 +136,7 @@ export default function WorkflowsPage() {
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-2">
           <div className="flex items-center gap-3">
             <GitBranch className="h-6 w-6 sm:h-8 sm:w-8 text-primary" />
-            <h1 className="text-2xl sm:text-3xl font-bold">Workflows de Serviços</h1>
+            <h1 className="text-2xl sm:text-3xl font-bold">Etapas dos serviços</h1>
           </div>
           <HelpButton onClick={() => setShowHelp(true)} position="inline" label="Como usar?" size="md" />
         </div>

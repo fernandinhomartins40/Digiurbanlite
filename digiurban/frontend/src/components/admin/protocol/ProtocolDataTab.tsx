@@ -1,4 +1,5 @@
 'use client'
+import { confirmDialog } from '@/lib/dialogs'
 
 import { useState, useEffect } from 'react'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
@@ -325,7 +326,7 @@ export function ProtocolDataTab({
 
   // Aprovar todos os campos
   const handleApproveAll = async () => {
-    if (!confirm('Tem certeza que deseja aprovar todos os campos pendentes?')) {
+    if (!(await confirmDialog('Tem certeza que deseja aprovar todos os campos pendentes?'))) {
       return
     }
 

@@ -1,4 +1,5 @@
 'use client';
+import { notify } from '@/lib/dialogs'
 
 import { useState, useEffect } from 'react';
 import { useRouter, useParams } from 'next/navigation';
@@ -91,7 +92,7 @@ export default function EditarUnidade() {
 
   const loadUnidade = async () => {
     if (!formData.organizationalUnitId) {
-      alert('Selecione o setor/unidade organizacional');
+      notify('Selecione o setor/unidade organizacional');
       return;
     }
 
@@ -121,7 +122,7 @@ export default function EditarUnidade() {
       });
     } catch (error) {
       console.error('Erro ao carregar unidade:', error);
-      alert('Erro ao carregar dados da unidade');
+      notify('Erro ao carregar dados da unidade');
       router.push('/admin/apps/saude/cadastros/unidades');
     } finally {
       setLoadingData(false);
@@ -132,7 +133,7 @@ export default function EditarUnidade() {
     e.preventDefault();
 
     if (!formData.nome) {
-      alert('Nome é obrigatório');
+      notify('Nome é obrigatório');
       return;
     }
 
@@ -146,15 +147,15 @@ export default function EditarUnidade() {
       });
 
       if (response.ok) {
-        alert('Unidade atualizada com sucesso!');
+        notify('Unidade atualizada com sucesso!');
         router.push('/admin/apps/saude/cadastros/unidades');
       } else {
         const error = await response.json();
-        alert(`Erro: ${error.error || 'Falha ao atualizar unidade'}`);
+        notify(`Erro: ${error.error || 'Falha ao atualizar unidade'}`);
       }
     } catch (error) {
       console.error('Erro ao atualizar unidade:', error);
-      alert('Erro ao atualizar unidade');
+      notify('Erro ao atualizar unidade');
     } finally {
       setLoading(false);
     }
@@ -313,7 +314,7 @@ export default function EditarUnidade() {
                 </div>
 
                 <div>
-                  <Label htmlFor="isActive">Status</Label>
+                  <Label htmlFor="isActive">Situação</Label>
                   <Select
                     value={formData.isActive ? 'true' : 'false'}
                     onValueChange={(value) => setFormData({ ...formData, isActive: value === 'true' })}

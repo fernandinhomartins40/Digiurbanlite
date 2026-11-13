@@ -1,4 +1,5 @@
 'use client';
+import { notify } from '@/lib/dialogs'
 
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
@@ -64,11 +65,11 @@ export default function DispensacaoPage() {
     setDispensandoId(prescricaoId);
     try {
       await dispensarPrescricaoCompleta(prescricaoId);
-      alert('Prescrição dispensada com sucesso!');
+      notify('Prescrição dispensada com sucesso!');
       await carregarPendentes();
     } catch (error: any) {
       console.error('Erro ao dispensar prescrição:', error);
-      alert(`Erro ao dispensar prescrição: ${error?.message || error}`);
+      notify(`Erro ao dispensar prescrição: ${error?.message || error}`);
     } finally {
       setDispensandoId(null);
     }
@@ -89,7 +90,7 @@ export default function DispensacaoPage() {
 
   const handleAddItem = () => {
     if (!novoItem.estoqueId || !novoItem.medicamento || novoItem.quantidade <= 0) {
-      alert('Preencha todos os campos do item');
+      notify('Preencha todos os campos do item');
       return;
     }
 
@@ -110,7 +111,7 @@ export default function DispensacaoPage() {
     e.preventDefault();
 
     if (itens.length === 0) {
-      alert('Adicione ao menos um item à dispensação');
+      notify('Adicione ao menos um item à dispensação');
       return;
     }
 
@@ -128,11 +129,11 @@ export default function DispensacaoPage() {
         observacoes: formData.observacoes || undefined,
       });
 
-      alert('Dispensação registrada com sucesso!');
+      notify('Dispensação registrada com sucesso!');
       router.push('/admin/apps/saude/farmacia');
     } catch (error) {
       console.error('Erro ao registrar dispensação:', error);
-      alert('Erro ao registrar dispensação');
+      notify('Erro ao registrar dispensação');
     } finally {
       setLoading(false);
     }

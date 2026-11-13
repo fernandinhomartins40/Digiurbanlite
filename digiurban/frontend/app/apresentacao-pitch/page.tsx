@@ -1,4 +1,5 @@
 'use client';
+import { notify } from '@/lib/dialogs'
 
 import { useCallback, useEffect, useState } from 'react';
 import type { ElementType, ReactElement, ReactNode } from 'react';
@@ -697,7 +698,7 @@ export default function ApresentacaoPitchPage() {
       window.URL.revokeObjectURL(url);
     } catch (error) {
       console.error('Erro ao exportar PDF:', error);
-      alert('Erro ao exportar apresentação em PDF. Verifique se o servidor está rodando.');
+      notify('Erro ao exportar apresentação em PDF. Verifique se o servidor está rodando.');
     } finally {
       setExporting(false);
     }

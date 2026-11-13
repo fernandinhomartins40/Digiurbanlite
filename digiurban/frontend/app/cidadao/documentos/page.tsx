@@ -1,4 +1,5 @@
 'use client';
+import { confirmDialog } from '@/lib/dialogs'
 
 /**
  * Meus documentos — duas abas: documentos pessoais e assinaturas digitais.
@@ -151,7 +152,7 @@ export default function DocumentosPage() {
   };
 
   const remove = async (doc: Document) => {
-    if (!confirm(`Excluir ${citizenDocumentLabel(doc.documentType)}?`)) return;
+    if (!(await confirmDialog(`Excluir ${citizenDocumentLabel(doc.documentType)}?`))) return;
     try {
       const response = await apiClient.delete(`/citizen/personal-documents/${doc.id}`);
       if (!response.ok) {

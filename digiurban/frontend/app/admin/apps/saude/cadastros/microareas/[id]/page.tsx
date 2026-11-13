@@ -1,4 +1,5 @@
 'use client';
+import { notify } from '@/lib/dialogs'
 
 import { useState, useEffect } from 'react';
 import { useRouter, useParams } from 'next/navigation';
@@ -99,7 +100,7 @@ export default function EditarMicroarea() {
       });
     } catch (error) {
       console.error('Erro ao carregar microárea:', error);
-      alert('Erro ao carregar microárea');
+      notify('Erro ao carregar microárea');
     } finally {
       setLoading(false);
     }
@@ -133,7 +134,7 @@ export default function EditarMicroarea() {
     e.preventDefault();
 
     if (!formData.numero || !formData.equipeId) {
-      alert('Número da microárea e Equipe ESF são obrigatórios');
+      notify('Número da microárea e Equipe ESF são obrigatórios');
       return;
     }
 
@@ -157,15 +158,15 @@ export default function EditarMicroarea() {
 
       if (!response.ok) {
         const error = await response.json();
-        alert(error.error || 'Erro ao atualizar microárea');
+        notify(error.error || 'Erro ao atualizar microárea');
         return;
       }
 
-      alert('Microárea atualizada com sucesso!');
+      notify('Microárea atualizada com sucesso!');
       router.push('/admin/apps/saude/cadastros/microareas');
     } catch (error) {
       console.error('Erro ao atualizar microárea:', error);
-      alert('Erro ao atualizar microárea');
+      notify('Erro ao atualizar microárea');
     } finally {
       setSaving(false);
     }
@@ -332,7 +333,7 @@ export default function EditarMicroarea() {
 
               {/* Status */}
               <div>
-                <Label htmlFor="ativo">Status</Label>
+                <Label htmlFor="ativo">Situação</Label>
                 <Select
                   value={formData.ativo ? 'true' : 'false'}
                   onValueChange={(value) => setFormData({ ...formData, ativo: value === 'true' })}

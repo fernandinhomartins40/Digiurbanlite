@@ -13,7 +13,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import Link from 'next/link'
 import { usePathname, useRouter } from 'next/navigation'
-import { Bell, Loader2, LogOut, Settings, User } from 'lucide-react'
+import { Bell, Loader2, LogOut, User } from 'lucide-react'
 import { useAdminAuth, useAdminPermissions } from '@/contexts/AdminAuthContext'
 import { useNotifications } from '@/hooks/useNotifications'
 import { ROLE_DISPLAY_NAMES } from '@/types/roles'
@@ -151,16 +151,11 @@ export function AdminLayout({ children }: AdminLayoutProps) {
                 </span>
               </DropdownMenuLabel>
               <DropdownMenuSeparator />
-              <DropdownMenuItem onClick={() => router.push('/admin/perfil')} className="cursor-pointer">
+              {/* o que é da pessoa (perfil, aparência, avisos, senha) fica aqui, não no menu da prefeitura */}
+              <DropdownMenuItem onClick={() => router.push('/admin/configuracoes')} className="cursor-pointer">
                 <User className="mr-2 h-4 w-4" />
-                Meu perfil
+                Minha conta
               </DropdownMenuItem>
-              {hasMinRole('ADMIN') && (
-                <DropdownMenuItem onClick={() => router.push('/admin/configuracoes')} className="cursor-pointer">
-                  <Settings className="mr-2 h-4 w-4" />
-                  Configurações
-                </DropdownMenuItem>
-              )}
               <DropdownMenuSeparator />
               <DropdownMenuItem onClick={() => logout()} className="cursor-pointer text-[var(--lg-red)] focus:text-[var(--lg-red)]">
                 <LogOut className="mr-2 h-4 w-4" />

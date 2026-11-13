@@ -59,6 +59,14 @@ export interface AdminNavItem {
   badge?: string;
   /** só para quem tem o perfil Gabinete do Prefeito (marcado no cadastro do servidor) */
   gabinete?: boolean;
+  /** telas de dentro deste item: aparecem como abas na tela e na busca (Ctrl+K), não no menu */
+  children?: AdminNavChild[];
+}
+
+export interface AdminNavChild {
+  title: string;
+  href: string;
+  permissions?: string[];
 }
 
 export interface AdminNavSection {
@@ -85,20 +93,28 @@ function numberBadge(value?: number): string | undefined {
   return value > 99 ? '99+' : String(value);
 }
 
+/** Telas de dentro de "Cidadãos": abas da própria tela, não itens do menu */
+export const CITIZEN_SUB_SCREENS: AdminNavChild[] = [
+  { title: 'Cidadãos', href: '/admin/cidadaos', permissions: ['citizens:read'] },
+  { title: 'Cadastros a conferir', href: '/admin/cidadaos/pendentes', permissions: ['citizens:verify'] },
+  { title: 'Etiquetas', href: '/admin/cidadaos/etiquetas', permissions: ['citizens:read'] },
+  { title: 'Famílias', href: '/admin/composicao-familiar', permissions: ['citizens:read'] },
+  { title: 'Biometria no balcão', href: '/admin/cidadaos/biometria-facial' },
+];
+
+// Menu por TAREFA (o que a pessoa faz), não por módulo. Coisas da própria pessoa
+// (perfil, aparência, senha) ficam no avatar do topo, não aqui.
 export function getAdminMainNavigation(stats?: AdminNavStats): AdminNavSection[] {
   return [
-    // ── Início (sem label, sempre visível) ─────────────────────────────────
     {
       title: '',
       color: 'slate',
-      items: [
-        { title: 'Início', href: '/admin', icon: House },
-      ],
+      items: [{ title: 'Início', href: '/admin', icon: House }],
     },
 
-    // ── Atendimento ────────────────────────────────────────────────────────
+    // ── Atender: tudo que envolve o cidadão ───────────────────────────────
     {
-      title: 'Atendimento',
+      title: 'Atender',
       color: 'blue',
       collapsible: true,
       defaultCollapsed: false,
@@ -110,85 +126,47 @@ export function getAdminMainNavigation(stats?: AdminNavStats): AdminNavSection[]
           permissions: ['protocols:read'],
           badge: numberBadge(stats?.pendingProtocols),
         },
+        // Atendimento presencial em 3 passos (sempre gera protocolo)
+        { title: 'Balcão', href: '/admin/balcao', icon: Store, permissions: ['protocols:create'] },
         {
-          // Atendimento presencial em 3 passos (sempre gera protocolo)
-          title: 'Balcão',
-          href: '/admin/balcao',
-          icon: Store,
-          permissions: ['protocols:create'],
-          badge: 'NOVO',
+          title: 'Mensagens',
+          href: '/admin/mensagens',
+          icon: MessageCircle,
+          permissions: ['messages:read'],
+          badge: numberBadge(stats?.unreadMessages),
         },
+        { title: 'Agenda', href: '/admin/agenda', icon: Calendar, minRole: 'USER' },
         {
-          // Atalho para as mesas de trabalho (apps) a que o servidor tem acesso
-          title: 'Apps',
-          href: '/admin/apps',
-          icon: LayoutGrid,
-          minRole: 'USER',
-        },
-        {
-          // agenda pessoal, da unidade e da secretaria (+ o que o sistema agenda sozinho)
-          title: 'Agenda',
-          href: '/admin/agenda',
-          icon: Calendar,
-          minRole: 'USER',
-        },
-        {
-          // pedidos no mapa, no escopo de cada servidor
-          title: 'Mapa dos pedidos',
-          href: '/admin/mapa',
-          icon: Map,
-          permissions: ['protocols:read'],
-        },
-        {
+          // Pendentes, Etiquetas, Famílias e Biometria são abas desta tela
           title: 'Cidadãos',
           href: '/admin/cidadaos',
           icon: UserPlus,
           permissions: ['citizens:read'],
-        },
-        {
-          title: 'Cidadãos Pendentes',
-          href: '/admin/cidadaos/pendentes',
-          icon: UserCheck,
-          permissions: ['citizens:verify'],
           badge: numberBadge(stats?.pendingCitizens),
-        },
-        {
-          title: 'Etiquetas',
-          href: '/admin/cidadaos/etiquetas',
-          icon: Tag,
-          permissions: ['citizens:read'],
-        },
-        {
-          title: 'Composição Familiar',
-          href: '/admin/composicao-familiar',
-          icon: Users,
-          permissions: ['citizens:read'],
-        },
-        {
-          title: 'Biometria Presencial',
-          href: '/admin/cidadaos/biometria-facial',
-          icon: ScanFace,
-          badge: 'NOVO',
+          children: CITIZEN_SUB_SCREENS.slice(1),
         },
       ],
     },
 
-    // ── Serviços ───────────────────────────────────────────────────────────
+    // ── Minha secretaria: as mesas de trabalho e o território ─────────────
     {
-      title: 'Serviços',
+      title: 'Minha secretaria',
       color: 'emerald',
       collapsible: true,
       defaultCollapsed: false,
       items: [
-        {
-          // Catálogo + Desempenho (abas dentro da página)
-          title: 'Serviços',
-          href: '/admin/servicos',
-          icon: Settings,
-          permissions: ['services:create', 'services:update', 'services:read'],
-        },
-        // WORKFLOWS: disabled via FEATURE_FLAGS.WORKFLOWS
-        // { title: 'Workflows', href: '/admin/workflows', icon: GitBranch, minRole: 'ADMIN' },
+        { title: 'Apps', href: '/admin/apps', icon: LayoutGrid, minRole: 'USER' },
+        { title: 'Mapa dos pedidos', href: '/admin/mapa', icon: Map, permissions: ['protocols:read'] },
+      ],
+    },
+
+    // ── Trabalho interno: o que não envolve o cidadão ─────────────────────
+    {
+      title: 'Trabalho interno',
+      color: 'amber',
+      collapsible: true,
+      defaultCollapsed: false,
+      items: [
         {
           // memorandos, ofícios, pareceres entre unidades (caixa de entrada da unidade)
           title: 'Processos internos',
@@ -197,70 +175,47 @@ export function getAdminMainNavigation(stats?: AdminNavStats): AdminNavSection[]
           minRole: 'USER',
           badge: numberBadge(stats?.internalProcessInbox),
         },
-        {
-          // cotação com as fontes oficiais (IN 65/2021); vira o documento do processo interno
-          title: 'Pesquisa de preços',
-          href: '/admin/pesquisa-precos',
-          icon: Search,
-          minRole: 'USER',
-        },
-        {
-          title: 'DigiBot',
-          href: '/admin/digibot',
-          icon: Bot,
-          minRole: 'ADMIN',
-        },
+        // cotação com as fontes oficiais (IN 65/2021); vira o documento do processo interno
+        { title: 'Pesquisa de preços', href: '/admin/pesquisa-precos', icon: Search, minRole: 'USER' },
+        // Meus documentos · Assinaturas · Modelos · Certificados (abas dentro da página)
+        { title: 'Documentos', href: '/admin/meus-documentos', icon: FileText, minRole: 'USER' },
       ],
     },
 
-    // ── Comunicação ────────────────────────────────────────────────────────
+    // ── Gestão: quem acompanha e decide ───────────────────────────────────
     {
-      title: 'Comunicação',
-      color: 'cyan',
+      title: 'Gestão',
+      color: 'violet',
       collapsible: true,
       defaultCollapsed: false,
       items: [
-        {
-          title: 'Mensagens',
-          href: '/admin/mensagens',
-          icon: MessageCircle,
-          permissions: ['messages:read'],
-          badge: numberBadge(stats?.unreadMessages),
-        },
-        { title: 'E-mails do sistema', href: '/admin/email', icon: Mail, minRole: 'MANAGER' },
-      ],
-    },
-
-    // ── Documentos e análises ──────────────────────────────────────────────
-    {
-      title: 'Documentos e análises',
-      color: 'amber',
-      collapsible: true,
-      defaultCollapsed: true,
-      items: [
-        // Meus documentos · Assinaturas · Modelos · Certificados (abas dentro da página)
-        { title: 'Documentos', href: '/admin/meus-documentos', icon: FileText, minRole: 'USER' },
         // Painel · Relatórios · Assistente de IA (abas dentro da página)
         { title: 'Análises e relatórios', href: '/admin/analytics', icon: BarChart3, minRole: 'COORDINATOR' },
-        // SEGURANCA_ESCOLAR: disabled via FEATURE_FLAGS.SEGURANCA_ESCOLAR
-        // { title: 'Seg. Escolar', href: '/admin/apps/seguranca-escolar', icon: Shield, badge: 'NOVO' },
       ],
     },
 
-    // ── Equipe e Sistema ───────────────────────────────────────────────────
+    // ── Prefeitura: como o sistema está montado para o município ──────────
     {
-      title: 'Equipe e Sistema',
+      title: 'Prefeitura',
       color: 'slate',
       collapsible: true,
       defaultCollapsed: true,
       items: [
-        { title: 'Servidores', href: '/admin/servidores', icon: Users, minRole: 'COORDINATOR' },
-        { title: 'Organograma', href: '/admin/organograma', icon: Network, minRole: 'COORDINATOR' },
-        { title: 'Perfil', href: '/admin/perfil', icon: UserCircle, minRole: 'USER' },
         { title: 'Primeiros passos', href: '/admin/primeiros-passos', icon: Rocket, minRole: 'ADMIN' },
-        { title: 'Configurações', href: '/admin/configuracoes', icon: Settings, minRole: 'ADMIN' },
+        {
+          // Catálogo + Desempenho (abas dentro da página)
+          title: 'Serviços',
+          href: '/admin/servicos',
+          icon: Settings,
+          permissions: ['services:create', 'services:update', 'services:read'],
+        },
+        { title: 'Equipe', href: '/admin/servidores', icon: Users, minRole: 'COORDINATOR' },
+        { title: 'Organograma', href: '/admin/organograma', icon: Network, minRole: 'COORDINATOR' },
+        { title: 'DigiBot', href: '/admin/digibot', icon: Bot, minRole: 'ADMIN' },
+        { title: 'E-mails do sistema', href: '/admin/email', icon: Mail, minRole: 'MANAGER' },
         { title: 'Integrações', href: '/admin/integracoes', icon: Zap, minRole: 'ADMIN' },
         { title: 'IA e créditos', href: '/admin/ia-creditos', icon: Sparkles, minRole: 'ADMIN' },
+        { title: 'Configurações', href: '/admin/configuracoes/prefeitura', icon: Building2, minRole: 'ADMIN' },
       ],
     },
   ];

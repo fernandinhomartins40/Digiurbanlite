@@ -1,4 +1,5 @@
 'use client';
+import { notify } from '@/lib/dialogs'
 
 import { useState, useEffect } from 'react';
 import { useRouter, useParams } from 'next/navigation';
@@ -62,7 +63,7 @@ export default function EditarSala() {
       setUnidades(data);
     } catch (error) {
       console.error('Erro ao carregar unidades:', error);
-      alert('Erro ao carregar unidades de saúde');
+      notify('Erro ao carregar unidades de saúde');
     } finally {
       setLoadingUnidades(false);
     }
@@ -100,7 +101,7 @@ export default function EditarSala() {
       });
     } catch (error) {
       console.error('Erro ao carregar sala:', error);
-      alert('Erro ao carregar dados da sala');
+      notify('Erro ao carregar dados da sala');
       router.push('/admin/apps/saude/cadastros/salas');
     } finally {
       setLoadingData(false);
@@ -111,12 +112,12 @@ export default function EditarSala() {
     e.preventDefault();
 
     if (!formData.nome) {
-      alert('Nome da sala é obrigatório');
+      notify('Nome da sala é obrigatório');
       return;
     }
 
     if (!formData.unidadeId) {
-      alert('Unidade de Saúde é obrigatória');
+      notify('Unidade de Saúde é obrigatória');
       return;
     }
 
@@ -133,15 +134,15 @@ export default function EditarSala() {
       });
 
       if (response.ok) {
-        alert('Sala atualizada com sucesso!');
+        notify('Sala atualizada com sucesso!');
         router.push('/admin/apps/saude/cadastros/salas');
       } else {
         const error = await response.json();
-        alert(`Erro: ${error.error || 'Falha ao atualizar sala'}`);
+        notify(`Erro: ${error.error || 'Falha ao atualizar sala'}`);
       }
     } catch (error) {
       console.error('Erro ao atualizar sala:', error);
-      alert('Erro ao atualizar sala');
+      notify('Erro ao atualizar sala');
     } finally {
       setLoading(false);
     }
@@ -313,7 +314,7 @@ export default function EditarSala() {
 
                   {/* Status */}
                   <div>
-                    <Label htmlFor="ativa">Status</Label>
+                    <Label htmlFor="ativa">Situação</Label>
                     <Select
                       value={formData.ativa ? 'true' : 'false'}
                       onValueChange={(value) => setFormData({ ...formData, ativa: value === 'true' })}

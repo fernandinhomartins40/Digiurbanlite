@@ -222,7 +222,7 @@ export function StageFocusCard({
               <div className="flex items-center gap-2 text-sm">
                 <CheckCircle2 className="h-4 w-4 text-green-600 shrink-0" />
                 <div className="min-w-0 flex-1">
-                  <p className="text-xs text-green-600 font-medium">Status</p>
+                  <p className="text-xs text-green-600 font-medium">Situação</p>
                   <p className="text-sm text-green-900 font-semibold">
                     Pronto para aprovar
                   </p>

@@ -1,4 +1,5 @@
 'use client';
+import { confirmDialog } from '@/lib/dialogs'
 
 import { useState, useEffect } from 'react';
 import { useRouter, useParams } from 'next/navigation';
@@ -205,7 +206,7 @@ export default function EditarServidorSaude() {
   };
 
   const encerrarVinculo = async (assignmentId: string) => {
-    if (!confirm('Deseja encerrar este vínculo?')) return;
+    if (!(await confirmDialog('Deseja encerrar este vínculo?'))) return;
     try {
       const res = await fetch(`/api/saude/servidores/${servidorId}/vinculos/${assignmentId}`, {
         method: 'DELETE',
@@ -222,7 +223,7 @@ export default function EditarServidorSaude() {
   };
 
   const removerEquipe = async (memberId: string) => {
-    if (!confirm('Deseja remover da equipe?')) return;
+    if (!(await confirmDialog('Deseja remover da equipe?'))) return;
     try {
       const res = await fetch(`/api/saude/servidores/${servidorId}/equipes/${memberId}`, {
         method: 'DELETE',
@@ -419,7 +420,7 @@ export default function EditarServidorSaude() {
               )}
 
               <div>
-                <Label>Status</Label>
+                <Label>Situação</Label>
                 <Select value={formData.status} onValueChange={(v) => setFormData((f) => ({ ...f, status: v }))}>
                   <SelectTrigger><SelectValue /></SelectTrigger>
                   <SelectContent>

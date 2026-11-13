@@ -332,7 +332,7 @@ export default function TemplateEditPage() {
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="isActive">Status</Label>
+              <Label htmlFor="isActive">Situação</Label>
               <div className="flex items-center gap-2 h-10">
                 <input
                   type="checkbox"

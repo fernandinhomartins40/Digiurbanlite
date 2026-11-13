@@ -542,7 +542,7 @@ export default function AuditLogsTab() {
                 <p className="text-gray-900">{selectedLog.resource} · {selectedLog.resourceId}</p>
               </div>
               <div>
-                <label className="text-sm font-medium text-gray-700">Status</label>
+                <label className="text-sm font-medium text-gray-700">Situação</label>
                 <div className="mt-1">{getStatusBadge(selectedLog.status)}</div>
               </div>
               <div>

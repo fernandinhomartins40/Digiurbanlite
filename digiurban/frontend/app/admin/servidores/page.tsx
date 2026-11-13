@@ -447,7 +447,7 @@ export default function ServidoresPage() {
                 <TableHead className="hidden md:table-cell min-w-[120px]">CPF / Matricula</TableHead>
                 <TableHead className="hidden lg:table-cell min-w-[240px]">Lotação Atual</TableHead>
                 <TableHead className="min-w-[140px]">Perfil de Acesso</TableHead>
-                <TableHead className="hidden lg:table-cell min-w-[80px]">Status</TableHead>
+                <TableHead className="hidden lg:table-cell min-w-[80px]">Situação</TableHead>
                 <TableHead className="text-right min-w-[80px]">Ações</TableHead>
               </TableRow>
             </TableHeader>

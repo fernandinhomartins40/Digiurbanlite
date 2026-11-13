@@ -1,4 +1,5 @@
 'use client'
+import { confirmDialog } from '@/lib/dialogs'
 
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
@@ -152,7 +153,7 @@ export function DemandasEnviadas() {
   }
 
   const handleCancelTicket = async (ticket: AdminTicket) => {
-    const confirmed = window.confirm(
+    const confirmed = await confirmDialog(
       `Deseja cancelar o chamado ${ticket.number}? Esta ação só pode ser feita enquanto ele estiver pendente.`
     )
 
@@ -425,7 +426,7 @@ export function DemandasEnviadas() {
                                 </Link>
                               </div>
                               <div>
-                                <strong>Status:</strong> {ticket.protocol.status}
+                                <strong>Situação:</strong> {ticket.protocol.status}
                               </div>
                               {ticket.protocol.assignedUser && (
                                 <div className="sm:col-span-2 break-words">

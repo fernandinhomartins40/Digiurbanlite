@@ -1,4 +1,5 @@
 'use client';
+import { notify } from '@/lib/dialogs'
 
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
@@ -46,7 +47,7 @@ export default function NovaSala() {
       setUnidades(data);
     } catch (error) {
       console.error('Erro ao carregar unidades:', error);
-      alert('Erro ao carregar unidades de saúde');
+      notify('Erro ao carregar unidades de saúde');
     } finally {
       setLoadingUnidades(false);
     }
@@ -56,12 +57,12 @@ export default function NovaSala() {
     e.preventDefault();
 
     if (!formData.nome) {
-      alert('Nome da sala é obrigatório');
+      notify('Nome da sala é obrigatório');
       return;
     }
 
     if (!formData.unidadeId) {
-      alert('Unidade de Saúde é obrigatória');
+      notify('Unidade de Saúde é obrigatória');
       return;
     }
 
@@ -78,15 +79,15 @@ export default function NovaSala() {
       });
 
       if (response.ok) {
-        alert('Sala criada com sucesso!');
+        notify('Sala criada com sucesso!');
         router.push('/admin/apps/saude/cadastros/salas');
       } else {
         const error = await response.json();
-        alert(`Erro: ${error.error || 'Falha ao criar sala'}`);
+        notify(`Erro: ${error.error || 'Falha ao criar sala'}`);
       }
     } catch (error) {
       console.error('Erro ao criar sala:', error);
-      alert('Erro ao criar sala');
+      notify('Erro ao criar sala');
     } finally {
       setLoading(false);
     }

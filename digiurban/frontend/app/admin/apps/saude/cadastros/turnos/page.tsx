@@ -1,4 +1,5 @@
 'use client';
+import { confirmDialog } from '@/lib/dialogs'
 
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
@@ -35,7 +36,7 @@ export default function TurnosListagem() {
   };
 
   const handleDelete = async (id: string) => {
-    if (!confirm('Deseja realmente desativar este turno?')) return;
+    if (!(await confirmDialog('Deseja realmente desativar este turno?'))) return;
 
     try {
       await fetch(`/api/apps/saude/cadastros/turnos/${id}`, {
@@ -121,7 +122,7 @@ export default function TurnosListagem() {
                     <TableHead>Horário Início</TableHead>
                     <TableHead>Horário Fim</TableHead>
                     <TableHead>Carga Horária</TableHead>
-                    <TableHead>Status</TableHead>
+                    <TableHead>Situação</TableHead>
                     <TableHead>Ações</TableHead>
                   </TableRow>
                 </TableHeader>

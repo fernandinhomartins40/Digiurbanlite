@@ -1,4 +1,5 @@
 'use client';
+import { notify } from '@/lib/dialogs'
 
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
@@ -130,7 +131,7 @@ export default function NovaDispensacaoPage() {
 
   const adicionarItem = () => {
     if (!searchMedicamento) {
-      alert('Busque um medicamento primeiro');
+      notify('Busque um medicamento primeiro');
       return;
     }
 
@@ -139,13 +140,13 @@ export default function NovaDispensacaoPage() {
     );
 
     if (!estoqueItem) {
-      alert('Medicamento não encontrado no estoque');
+      notify('Medicamento não encontrado no estoque');
       return;
     }
 
     const jaAdicionado = itens.find((i) => i.estoqueId === estoqueItem.id);
     if (jaAdicionado) {
-      alert('Este medicamento já foi adicionado');
+      notify('Este medicamento já foi adicionado');
       return;
     }
 
@@ -180,19 +181,19 @@ export default function NovaDispensacaoPage() {
     e.preventDefault();
 
     if (!selectedCidadao) {
-      alert('Selecione um cidadão');
+      notify('Selecione um cidadão');
       return;
     }
 
     if (itens.length === 0) {
-      alert('Adicione pelo menos um medicamento');
+      notify('Adicione pelo menos um medicamento');
       return;
     }
 
     // Validar quantidades
     for (const item of itens) {
       if (item.quantidade > item.quantidadeDisponivel) {
-        alert(`Quantidade solicitada de "${item.medicamento}" excede o estoque disponível (${item.quantidadeDisponivel})`);
+        notify(`Quantidade solicitada de "${item.medicamento}" excede o estoque disponível (${item.quantidadeDisponivel})`);
         return;
       }
     }
@@ -222,11 +223,11 @@ export default function NovaDispensacaoPage() {
         throw new Error(await response.text());
       }
 
-      alert('Dispensação registrada com sucesso!');
+      notify('Dispensação registrada com sucesso!');
       router.push('/admin/apps/saude/farmacia/dispensacao');
     } catch (error: any) {
       console.error('Erro ao registrar dispensação:', error);
-      alert(`Erro ao registrar dispensação: ${error.message}`);
+      notify(`Erro ao registrar dispensação: ${error.message}`);
     } finally {
       setLoading(false);
     }

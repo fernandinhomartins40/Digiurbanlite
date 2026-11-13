@@ -56,6 +56,9 @@ interface Service {
   };
 }
 
+type StepKey = 'sobre' | 'local' | 'documentos' | 'conferir';
+const STEP_TITLE: Record<StepKey, string> = { sobre: 'Sobre o pedido', local: 'Onde é', documentos: 'Documentos', conferir: 'Conferir e enviar' };
+
 // Mapeamento de moduleType para tipo de API de programas
 const MODULE_TO_API_TYPE: Record<string, string> = {
   INSCRICAO_PROGRAMA_RURAL: 'programas-rurais',
@@ -94,6 +97,8 @@ export default function SolicitarServicoPage() {
   const [uploadedFiles, setUploadedFiles] = useState<Record<string, File>>({});
   const [locationData, setLocationData] = useState<LocationData | null>(null);
   const [showLocation, setShowLocation] = useState(false);
+  const [step, setStep] = useState<StepKey>('sobre');
+  const [sent, setSent] = useState<{ id?: string; number?: string } | null>(null);
 
   // Determinar quais campos usar: do programa selecionado ou do serviço
   // useMemo para evitar recriar array em cada render
@@ -144,7 +149,6 @@ export default function SolicitarServicoPage() {
     fields: activeFormFields,
     onPrefillComplete: (count) => {
       if (count > 0) {
-        console.log(`[Solicitar] ${count} campos pré-preenchidos automaticamente`);
       }
     }
   });
@@ -161,13 +165,6 @@ export default function SolicitarServicoPage() {
       // Garantir que requiredDocuments seja um array
       data.service.requiredDocuments = normalizeRequiredDocuments(data.service.requiredDocuments);
 
-      console.log('📄 Serviço carregado:', {
-        name: data.service.name,
-        requiresDocuments: data.service.requiresDocuments,
-        requiredDocuments: data.service.requiredDocuments,
-        isArray: Array.isArray(data.service.requiredDocuments),
-        length: data.service.requiredDocuments?.length
-      });
 
       setService(data.service);
 
@@ -218,75 +215,39 @@ export default function SolicitarServicoPage() {
     toast.info('Arquivo removido');
   };
 
+  /** primeira coisa que falta, e em que passo ela fica */
+  const firstProblem = (): { step: StepKey; message: string } | null => {
+    if (isProgramEnrollment && !selectedProgram) return { step: 'sobre', message: 'Escolha um programa' };
+    const own = activeFormFields.some((field) => !field.id.toLowerCase().startsWith('citizen_'));
+    if (!description.trim() && !own) return { step: 'sobre', message: 'Conte o que você precisa' };
+    for (const field of activeFormFields) {
+      if (field.required && !customFormData[field.id]) return { step: 'sobre', message: `Falta preencher: ${field.label}` };
+    }
+    if (requiresSpecificLocation && !locationData) return { step: 'local', message: 'Marque no mapa onde é' };
+    if (locationData && !locationData.confirmed && !locationData.isGPS) {
+      return { step: requiresSpecificLocation ? 'local' : 'sobre', message: 'Toque no alfinete do mapa para confirmar o local' };
+    }
+    const docs: any[] = selectedProgram?.requiredDocuments
+      ? normalizeRequiredDocuments(selectedProgram.requiredDocuments)
+      : service?.requiresDocuments && service?.requiredDocuments
+        ? normalizeRequiredDocuments(service.requiredDocuments)
+        : [];
+    for (const doc of docs) {
+      const required = typeof doc === 'string' || doc.required;
+      const docId = typeof doc === 'string' ? doc : doc.id || doc.name;
+      if (required && !uploadedFiles[docId]) return { step: 'documentos', message: `Falta o documento: ${typeof doc === 'string' ? doc : doc.name}` };
+    }
+    return null;
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    // Se for inscrição em programa, validar se programa foi selecionado
-    if (isProgramEnrollment && !selectedProgram) {
-      toast.error('Por favor, selecione um programa');
+    const problem = firstProblem();
+    if (problem) {
+      setStep(problem.step);
+      toast.error(problem.message);
       return;
-    }
-
-    const hasOwnQuestions = activeFormFields.some((field) => !field.id.toLowerCase().startsWith('citizen_'));
-    if (!description.trim() && !hasOwnQuestions) {
-      toast.error('Conte o que você precisa');
-      return;
-    }
-
-    // ✅ NOVO: Validar geolocalização se obrigatória
-    if (requiresSpecificLocation && !locationData) {
-      toast.error('Por favor, informe a localização do problema');
-      return;
-    }
-    if (locationData && !locationData.confirmed && !locationData.isGPS) {
-      toast.error('Toque no alfinete do mapa para confirmar o local');
-      return;
-    }
-
-    // Validar campos obrigatórios do formulário customizado (usar campos ativos)
-    if (activeFormFields && activeFormFields.length > 0) {
-      for (const field of activeFormFields) {
-        if (field.required && !customFormData[field.id]) {
-          toast.error(`O campo "${field.label}" é obrigatório`);
-          return;
-        }
-      }
-    }
-
-    // Validar documentos obrigatórios do serviço
-    if (!selectedProgram && service?.requiresDocuments && service?.requiredDocuments) {
-      const docs = normalizeRequiredDocuments(service.requiredDocuments);
-      console.log('🔍 Validando documentos do serviço:', {
-        requiresDocuments: service.requiresDocuments,
-        docs,
-        uploadedFiles: Object.keys(uploadedFiles)
-      });
-
-      const requiredDocs = docs.filter((doc: any) => {
-        if (typeof doc === 'string') return true; // Strings são sempre obrigatórias
-        return doc.required;
-      });
-
-      for (const doc of requiredDocs) {
-        const docId = typeof doc === 'string' ? doc : (doc.id || doc.name);
-        if (!uploadedFiles[docId]) {
-          const docName = typeof doc === 'string' ? doc : doc.name;
-          toast.error(`Por favor, envie o documento: ${docName}`);
-          return;
-        }
-      }
-    }
-
-    // Validar documentos obrigatórios do programa
-    if (selectedProgram?.requiredDocuments) {
-      const programDocs = normalizeRequiredDocuments(selectedProgram.requiredDocuments);
-      const requiredDocs = programDocs.filter((doc: any) => doc.required);
-      for (const doc of requiredDocs) {
-        if (!uploadedFiles[doc.id || doc.name]) {
-          toast.error(`Documento "${doc.name}" é obrigatório`);
-          return;
-        }
-      }
     }
 
     setSubmitting(true);
@@ -313,14 +274,9 @@ export default function SolicitarServicoPage() {
         finalCustomFormData.programId = selectedProgram.id;
       }
 
-      // 🔍 DEBUG: Log dos dados antes de enviar
-      console.log('🔍 [FRONTEND DEBUG] customFormData ORIGINAL:', customFormData);
-      console.log('🔍 [FRONTEND DEBUG] customFormData FILTRADO (sem citizen_*):', finalCustomFormData);
-      console.log('🔍 [FRONTEND DEBUG] activeFormFields:', activeFormFields.map(f => f.id));
 
       if (activeFormFields.length > 0 || selectedProgram?.id) {
         const jsonString = JSON.stringify(finalCustomFormData);
-        console.log('🔍 [FRONTEND DEBUG] JSON string que será enviado:', jsonString);
         formData.append('customFormData', jsonString);
       }
 
@@ -329,7 +285,6 @@ export default function SolicitarServicoPage() {
       // fica de fora e o sistema usa o endereço do cadastro
       if (locationData && (locationData.confirmed || locationData.isGPS)) {
         formData.append('locationData', JSON.stringify(locationData));
-        console.log('[Solicitar] locationData enviado:', locationData);
       }
 
       // ✅ FORMATO CORRETO: Enviar com índices para compatibilidade com Multer .any()
@@ -345,7 +300,6 @@ export default function SolicitarServicoPage() {
         formData.append(`documents[${index}][file]`, file);
       });
 
-      console.log('📤 Enviando solicitação com', Object.keys(uploadedFiles).length, 'arquivo(s)');
 
       // ✅ SEGURANÇA: Fazer request com FormData
       const response = await fetch(getFullApiUrl(`/citizen/services/${serviceId}/request`), {
@@ -357,7 +311,7 @@ export default function SolicitarServicoPage() {
 
       if (!response.ok) {
         // Tentar extrair erro em JSON, se falhar usar status HTTP
-        let errorMessage = 'Erro ao enviar solicitação';
+        let errorMessage = 'Não foi possível enviar o pedido agora. Tente de novo em alguns minutos.';
         try {
           const contentType = response.headers.get('content-type');
           if (contentType && contentType.includes('application/json')) {
@@ -367,28 +321,25 @@ export default function SolicitarServicoPage() {
             // Resposta não é JSON (provavelmente HTML de erro)
             const textResponse = await response.text();
             console.error('Resposta de erro (não-JSON):', textResponse.substring(0, 200));
-            errorMessage = `Erro HTTP ${response.status}: ${response.statusText}`;
+            errorMessage = 'Não foi possível enviar o pedido agora. Tente de novo em alguns minutos.';
           }
         } catch (parseError) {
           console.error('Erro ao processar resposta de erro:', parseError);
-          errorMessage = `Erro HTTP ${response.status}: ${response.statusText}`;
+          errorMessage = 'Não foi possível enviar o pedido agora. Tente de novo em alguns minutos.';
         }
         throw new Error(errorMessage);
       }
 
       const data = await response.json();
 
-      toast.success('Pedido enviado!', {
-        description: `Número do pedido: ${data.protocol.number}. Acompanhe em Meus pedidos.`,
-      });
-
-      router.push(data.protocol?.id ? `/cidadao/protocolos/${data.protocol.id}` : '/cidadao/protocolos');
+      setSent({ id: data.protocol?.id, number: data.protocol?.number });
+      window.scrollTo({ top: 0 });
     } catch (error) {
       console.error('Erro ao solicitar serviço:', error);
       toast.error(
         error instanceof Error
           ? error.message
-          : 'Erro ao enviar solicitação. Tente novamente.'
+          : 'Não foi possível enviar o pedido. Tente de novo.'
       );
     } finally {
       setSubmitting(false);
@@ -437,6 +388,62 @@ export default function SolicitarServicoPage() {
     : service.requiresDocuments && Array.isArray(service.requiredDocuments)
       ? service.requiredDocuments
       : [];
+
+  // passos: só os que este serviço tem; serviço simples (só "sobre") envia direto
+  const middle: StepKey[] = [...(requiresSpecificLocation ? (['local'] as StepKey[]) : []), ...(docsToSend.length > 0 ? (['documentos'] as StepKey[]) : [])];
+  const steps: StepKey[] = middle.length > 0 ? ['sobre', ...middle, 'conferir'] : ['sobre'];
+  const stepIndex = Math.max(0, steps.indexOf(step));
+  const current = steps[stepIndex];
+  const isLast = stepIndex === steps.length - 1;
+  const goNext = () => {
+    const problem = firstProblem();
+    if (problem && steps.indexOf(problem.step) <= stepIndex) {
+      toast.error(problem.message);
+      return;
+    }
+    setStep(steps[stepIndex + 1]);
+    window.scrollTo({ top: 0 });
+  };
+  const answered = activeFormFields.filter((field) => !field.id.toLowerCase().startsWith('citizen_') && customFormData[field.id] !== undefined && customFormData[field.id] !== '');
+
+  if (sent) {
+    return (
+      <CitizenLayout>
+        <div className="mx-auto w-full max-w-md space-y-6 py-6 text-center">
+          <CheckCircle className="mx-auto h-16 w-16 text-[var(--lg-green)]" />
+          <div className="space-y-1">
+            <h1 className="text-2xl font-bold text-gray-900">Pedido recebido</h1>
+            <p className="text-gray-600">{service.name}</p>
+          </div>
+          <div className="rounded-2xl border bg-white p-5">
+            <p className="text-sm text-gray-500">Número do pedido</p>
+            <p className="mt-1 text-3xl font-bold tracking-wide text-gray-900">{sent.number || '—'}</p>
+            {!!service.estimatedDays && (
+              <p className="mt-3 text-sm text-gray-600">
+                A prefeitura tem até {service.estimatedDays} dia{service.estimatedDays > 1 ? 's' : ''} para responder.
+              </p>
+            )}
+          </div>
+          <div className="rounded-2xl border bg-white p-5 text-left">
+            <p className="font-medium text-gray-900">O que acontece agora</p>
+            <ol className="mt-2 list-decimal space-y-1.5 pl-5 text-sm text-gray-600">
+              <li>{service.department.name} recebe e analisa o seu pedido.</li>
+              <li>Se faltar alguma coisa, você recebe um aviso aqui no app.</li>
+              <li>Quando ficar pronto, a resposta aparece em Meus pedidos.</li>
+            </ol>
+          </div>
+          <div className="space-y-2">
+            <Button size="lg" className="h-12 w-full text-base" onClick={() => router.push(sent.id ? `/cidadao/protocolos/${sent.id}` : '/cidadao/protocolos')}>
+              Acompanhar o pedido
+            </Button>
+            <Button variant="ghost" className="w-full" onClick={() => router.push('/cidadao')}>
+              Voltar ao início
+            </Button>
+          </div>
+        </div>
+      </CitizenLayout>
+    );
+  }
 
   return (
     <CitizenLayout>
@@ -514,7 +521,19 @@ export default function SolicitarServicoPage() {
         )}
 
         {showForm && (
-          <form onSubmit={handleSubmit} className="space-y-5 rounded-2xl border bg-white p-4 sm:p-6">
+          <form onSubmit={handleSubmit} noValidate className="space-y-5 rounded-2xl border bg-white p-4 sm:p-6">
+            {steps.length > 1 && (
+              <div className="space-y-2">
+                <p className="text-sm text-gray-500">
+                  Passo {stepIndex + 1} de {steps.length} · <span className="font-medium text-gray-900">{STEP_TITLE[current]}</span>
+                </p>
+                <div className="h-1.5 overflow-hidden rounded-full bg-gray-100" aria-hidden>
+                  <div className="h-full rounded-full bg-[var(--lg-blue)] transition-all" style={{ width: `${((stepIndex + 1) / steps.length) * 100}%` }} />
+                </div>
+              </div>
+            )}
+
+            <div hidden={current !== 'sobre'} className="space-y-5">
             {hasPrefilledData && (
               <p className="flex items-start gap-2 text-sm text-gray-600">
                 <UserCheck className="mt-0.5 h-4 w-4 shrink-0 text-emerald-600" />
@@ -570,23 +589,26 @@ export default function SolicitarServicoPage() {
               />
             </div>
 
-            {/* localização: obrigatória em alguns serviços; nos outros, só se a pessoa quiser */}
-            {requiresSpecificLocation || showLocation ? (
-              <LocationPicker
-                value={locationData}
-                onChange={setLocationData}
-                required={Boolean(requiresSpecificLocation)}
-                serviceName={service?.name}
-              />
+            {/* localização opcional: só se a pessoa quiser */}
+            {!requiresSpecificLocation && (showLocation ? (
+              <LocationPicker value={locationData} onChange={setLocationData} required={false} serviceName={service?.name} />
             ) : (
               <button type="button" onClick={() => setShowLocation(true)} className="text-sm font-medium text-blue-600 hover:underline">
                 + Marcar o local no mapa (opcional)
               </button>
+            ))}
+            </div>
+
+            {/* localização obrigatória: passo próprio */}
+            {requiresSpecificLocation && (
+              <div hidden={current !== 'local'}>
+                <LocationPicker value={locationData} onChange={setLocationData} required serviceName={service?.name} />
+              </div>
             )}
 
             {/* documentos */}
             {docsToSend.length > 0 && (
-              <div className="space-y-3 border-t pt-5">
+              <div hidden={current !== 'documentos'} className="space-y-3">
                 <div>
                   <h3 className="font-medium text-gray-900">Documentos</h3>
                   <p className="text-sm text-gray-500">Foto ou arquivo de cada um.</p>
@@ -623,12 +645,55 @@ export default function SolicitarServicoPage() {
               </div>
             )}
 
+            {/* conferir: o que vai ser enviado, antes de enviar */}
+            {current === 'conferir' && (
+              <dl className="divide-y rounded-xl border text-sm">
+                {answered.map((field) => (
+                  <div key={field.id} className="flex justify-between gap-4 px-4 py-2.5">
+                    <dt className="text-gray-500">{field.label}</dt>
+                    <dd className="text-right font-medium text-gray-900">
+                      {Array.isArray(customFormData[field.id]) ? customFormData[field.id].join(', ') : typeof customFormData[field.id] === 'boolean' ? (customFormData[field.id] ? 'Sim' : 'Não') : String(customFormData[field.id])}
+                    </dd>
+                  </div>
+                ))}
+                {description.trim() && (
+                  <div className="px-4 py-2.5">
+                    <dt className="text-gray-500">O que você escreveu</dt>
+                    <dd className="mt-1 whitespace-pre-line text-gray-900">{description.trim()}</dd>
+                  </div>
+                )}
+                {locationData && (
+                  <div className="flex justify-between gap-4 px-4 py-2.5">
+                    <dt className="text-gray-500">Local</dt>
+                    <dd className="font-medium text-gray-900">Marcado no mapa</dd>
+                  </div>
+                )}
+                {Object.keys(uploadedFiles).length > 0 && (
+                  <div className="flex justify-between gap-4 px-4 py-2.5">
+                    <dt className="text-gray-500">Documentos</dt>
+                    <dd className="font-medium text-gray-900">{Object.keys(uploadedFiles).length} enviado{Object.keys(uploadedFiles).length > 1 ? 's' : ''}</dd>
+                  </div>
+                )}
+              </dl>
+            )}
+
             <div className="space-y-2 border-t pt-5">
-              <Button type="submit" size="lg" disabled={submitting} className="h-12 w-full text-base">
-                {submitting ? <Loader2 className="mr-2 h-5 w-5 animate-spin" /> : <Send className="mr-2 h-5 w-5" />}
-                {submitting ? 'Enviando...' : 'Enviar pedido'}
-              </Button>
-              <p className="text-center text-xs text-gray-500">Você recebe um número e acompanha tudo em Meus pedidos.</p>
+              {isLast ? (
+                <Button type="submit" size="lg" disabled={submitting} className="h-12 w-full text-base">
+                  {submitting ? <Loader2 className="mr-2 h-5 w-5 animate-spin" /> : <Send className="mr-2 h-5 w-5" />}
+                  {submitting ? 'Enviando...' : 'Enviar pedido'}
+                </Button>
+              ) : (
+                <Button type="button" size="lg" onClick={goNext} className="h-12 w-full text-base">
+                  Continuar
+                </Button>
+              )}
+              {stepIndex > 0 && (
+                <Button type="button" variant="ghost" className="w-full" disabled={submitting} onClick={() => setStep(steps[stepIndex - 1])}>
+                  Voltar
+                </Button>
+              )}
+              {isLast && <p className="text-center text-xs text-gray-500">Você recebe um número e acompanha tudo em Meus pedidos.</p>}
             </div>
           </form>
         )}

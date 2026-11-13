@@ -1,4 +1,5 @@
 'use client';
+import { notify } from '@/lib/dialogs'
 
 import { useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
@@ -118,7 +119,7 @@ export default function UnidadesPage() {
       setDeletingUnit(null);
       void loadUnits();
     } catch (deleteError) {
-      alert(deleteError instanceof Error ? deleteError.message : 'Erro ao desativar unidade');
+      notify(deleteError instanceof Error ? deleteError.message : 'Erro ao desativar unidade');
     } finally {
       setSaving(false);
     }
@@ -257,7 +258,7 @@ export default function UnidadesPage() {
                         <th className="p-3 text-left font-semibold text-gray-700">Responsável</th>
                         <th className="p-3 text-center font-semibold text-gray-700">Servidores</th>
                         <th className="p-3 text-center font-semibold text-gray-700">Cargos</th>
-                        <th className="p-3 text-center font-semibold text-gray-700">Status</th>
+                        <th className="p-3 text-center font-semibold text-gray-700">Situação</th>
                         <th className="p-3 text-right font-semibold text-gray-700">Ações</th>
                       </tr>
                     </thead>

@@ -1,4 +1,5 @@
 'use client';
+import { confirmDialog } from '@/lib/dialogs'
 
 import { useState, useEffect } from 'react';
 import { useParams, useRouter } from 'next/navigation';
@@ -86,7 +87,7 @@ export default function DocumentoDetalhesPage() {
   };
 
   const handleApprove = async () => {
-    if (!confirm('Deseja aprovar este documento?')) return;
+    if (!(await confirmDialog('Deseja aprovar este documento?'))) return;
 
     try {
       setProcessing(true);

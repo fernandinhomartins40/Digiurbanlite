@@ -543,7 +543,7 @@ export default function AssinaturasDigitaisPage() {
                                   <span className="font-medium">Certificado usado:</span> {mySignature.certificate.commonName}
                                 </p>
                                 <p className="text-sm text-green-800 mt-1">
-                                  <span className="font-medium">Status:</span> {getStatusBadge(mySignature.verificationStatus)}
+                                  <span className="font-medium">Situação:</span> {getStatusBadge(mySignature.verificationStatus)}
                                 </p>
                               </div>
                             )}

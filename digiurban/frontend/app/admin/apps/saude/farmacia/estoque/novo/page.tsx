@@ -1,4 +1,5 @@
 'use client';
+import { notify } from '@/lib/dialogs'
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
@@ -101,11 +102,11 @@ export default function NovoEstoquePage() {
         throw new Error(errorText || 'Erro ao cadastrar medicamento');
       }
 
-      alert('Medicamento cadastrado no estoque com sucesso!');
+      notify('Medicamento cadastrado no estoque com sucesso!');
       router.push('/admin/apps/saude/farmacia/estoque');
     } catch (error: any) {
       console.error('Erro ao cadastrar medicamento:', error);
-      alert(`Erro ao cadastrar medicamento: ${error.message}`);
+      notify(`Erro ao cadastrar medicamento: ${error.message}`);
     } finally {
       setLoading(false);
     }

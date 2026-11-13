@@ -1,4 +1,5 @@
 'use client';
+import { notify } from '@/lib/dialogs'
 
 import { useState, useEffect } from 'react';
 import { useRouter, useParams } from 'next/navigation';
@@ -58,7 +59,7 @@ export default function EditarTurno() {
       });
     } catch (error) {
       console.error('Erro ao carregar turno:', error);
-      alert('Erro ao carregar dados do turno');
+      notify('Erro ao carregar dados do turno');
       router.push('/admin/apps/saude/cadastros/turnos');
     } finally {
       setLoadingData(false);
@@ -69,7 +70,7 @@ export default function EditarTurno() {
     e.preventDefault();
 
     if (!formData.nome || !formData.horaInicio || !formData.horaFim) {
-      alert('Nome, horário de início e fim são obrigatórios');
+      notify('Nome, horário de início e fim são obrigatórios');
       return;
     }
 
@@ -89,15 +90,15 @@ export default function EditarTurno() {
       });
 
       if (response.ok) {
-        alert('Turno atualizado com sucesso!');
+        notify('Turno atualizado com sucesso!');
         router.push('/admin/apps/saude/cadastros/turnos');
       } else {
         const error = await response.json();
-        alert(`Erro: ${error.error || 'Falha ao atualizar turno'}`);
+        notify(`Erro: ${error.error || 'Falha ao atualizar turno'}`);
       }
     } catch (error) {
       console.error('Erro ao atualizar turno:', error);
-      alert('Erro ao atualizar turno');
+      notify('Erro ao atualizar turno');
     } finally {
       setLoading(false);
     }
@@ -168,7 +169,7 @@ export default function EditarTurno() {
                 </div>
 
                 <div>
-                  <Label htmlFor="ativo">Status</Label>
+                  <Label htmlFor="ativo">Situação</Label>
                   <Select
                     value={formData.ativo ? 'true' : 'false'}
                     onValueChange={(value) => setFormData({ ...formData, ativo: value === 'true' })}

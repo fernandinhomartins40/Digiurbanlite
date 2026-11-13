@@ -1,4 +1,5 @@
 'use client';
+import { confirmDialog } from '@/lib/dialogs'
 
 /**
  * Meu perfil — uma coluna:
@@ -256,9 +257,9 @@ export default function PerfilPage() {
         (formData.birthDate ? day(formData.birthDate) : '') !== day((citizen as any).birthDate);
       if (
         changed &&
-        !window.confirm(
+        !(await confirmDialog(
           'Nome, data de nascimento, RG e nome da mãe já foram conferidos pela prefeitura. Se mudar, o seu cadastro volta para conferência. Quer continuar?'
-        )
+        ))
       ) {
         return;
       }

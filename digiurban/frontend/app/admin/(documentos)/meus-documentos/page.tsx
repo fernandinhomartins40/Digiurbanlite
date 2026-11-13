@@ -1,4 +1,5 @@
 'use client';
+import { confirmDialog } from '@/lib/dialogs'
 
 import { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -173,7 +174,7 @@ export default function MeusDocumentosPage() {
   };
 
   const handleDelete = async (doc: ExternalDocument) => {
-    if (!confirm(`Deseja realmente remover "${doc.fileName}"?`)) {
+    if (!(await confirmDialog(`Deseja realmente remover "${doc.fileName}"?`))) {
       return;
     }
 

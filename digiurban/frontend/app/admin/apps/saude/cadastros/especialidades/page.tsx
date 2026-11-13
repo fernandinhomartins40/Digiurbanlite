@@ -1,4 +1,5 @@
 'use client';
+import { confirmDialog } from '@/lib/dialogs'
 
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
@@ -35,7 +36,7 @@ export default function EspecialidadesListagem() {
   };
 
   const handleDelete = async (id: string) => {
-    if (!confirm('Deseja realmente desativar esta especialidade?')) return;
+    if (!(await confirmDialog('Deseja realmente desativar esta especialidade?'))) return;
 
     try {
       await fetch(`/api/apps/saude/cadastros/especialidades/${id}`, {
@@ -104,7 +105,7 @@ export default function EspecialidadesListagem() {
                     <TableHead>Nome</TableHead>
                     <TableHead>Código CBO</TableHead>
                     <TableHead>Descrição</TableHead>
-                    <TableHead>Status</TableHead>
+                    <TableHead>Situação</TableHead>
                     <TableHead>Ações</TableHead>
                   </TableRow>
                 </TableHeader>

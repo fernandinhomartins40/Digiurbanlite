@@ -202,7 +202,7 @@ export function InscricoesView({ config, data }: InscricoesViewProps) {
                     <th className="p-3 text-left font-medium">CPF</th>
                     <th className="p-3 text-left font-medium">Email</th>
                     <th className="p-3 text-left font-medium">Data Inscrição</th>
-                    <th className="p-3 text-left font-medium">Status</th>
+                    <th className="p-3 text-left font-medium">Situação</th>
                     <th className="p-3 text-left font-medium">Protocolo</th>
                     <th className="p-3 text-left font-medium">Ações</th>
                   </tr>

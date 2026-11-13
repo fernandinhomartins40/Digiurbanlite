@@ -1,4 +1,5 @@
 'use client';
+import { confirmDialog } from '@/lib/dialogs'
 
 import { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -67,7 +68,7 @@ export default function MotoristasPage() {
   };
 
   const handleDelete = async (id: string) => {
-    if (!confirm('Deseja realmente excluir este motorista?')) return;
+    if (!(await confirmDialog('Deseja realmente excluir este motorista?'))) return;
 
     try {
       const response = await fetch(`/api/saude/tfd/motoristas/${id}`, {
@@ -179,7 +180,7 @@ export default function MotoristasPage() {
                 <TableHead>Categoria</TableHead>
                 <TableHead>Validade CNH</TableHead>
                 <TableHead>Telefone</TableHead>
-                <TableHead>Status</TableHead>
+                <TableHead>Situação</TableHead>
                 <TableHead>Ações</TableHead>
               </TableRow>
             </TableHeader>

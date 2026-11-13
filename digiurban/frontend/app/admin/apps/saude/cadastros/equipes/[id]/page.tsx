@@ -1,4 +1,5 @@
 'use client';
+import { notify } from '@/lib/dialogs'
 
 import { useState, useEffect } from 'react';
 import { useRouter, useParams } from 'next/navigation';
@@ -96,7 +97,7 @@ export default function EditarEquipeESF() {
       });
     } catch (error) {
       console.error('Erro ao carregar equipe:', error);
-      alert('Erro ao carregar dados da equipe');
+      notify('Erro ao carregar dados da equipe');
       router.push('/admin/apps/saude/cadastros/equipes');
     } finally {
       setLoadingData(false);
@@ -134,7 +135,7 @@ export default function EditarEquipeESF() {
     e.preventDefault();
 
     if (!formData.ine || !formData.nome || !formData.tipo || !formData.teamId) {
-      alert('Preencha todos os campos obrigatórios');
+      notify('Preencha todos os campos obrigatórios');
       return;
     }
 
@@ -149,15 +150,15 @@ export default function EditarEquipeESF() {
 
       if (!response.ok) {
         const error = await response.json();
-        alert(error.error || 'Erro ao atualizar equipe');
+        notify(error.error || 'Erro ao atualizar equipe');
         return;
       }
 
-      alert('Equipe atualizada com sucesso!');
+      notify('Equipe atualizada com sucesso!');
       router.push('/admin/apps/saude/cadastros/equipes');
     } catch (error) {
       console.error('Erro ao atualizar equipe:', error);
-      alert('Erro ao atualizar equipe');
+      notify('Erro ao atualizar equipe');
     } finally {
       setLoading(false);
     }
@@ -339,7 +340,7 @@ export default function EditarEquipeESF() {
 
                 {/* Status */}
                 <div className="space-y-2">
-                  <Label htmlFor="ativo">Status</Label>
+                  <Label htmlFor="ativo">Situação</Label>
                   <Select
                     value={formData.ativo ? 'true' : 'false'}
                     onValueChange={(value) => setFormData({ ...formData, ativo: value === 'true' })}

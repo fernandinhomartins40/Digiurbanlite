@@ -1,4 +1,5 @@
 'use client';
+import { notify } from '@/lib/dialogs'
 
 import React, { useState, useEffect } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
@@ -60,11 +61,11 @@ export default function TriagemPage() {
         classificacaoRisco: formData.classificacaoRisco as any,
       });
 
-      alert('Triagem realizada com sucesso!');
+      notify('Triagem realizada com sucesso!');
       router.push('/admin/apps/saude/atendimento/fila');
     } catch (error) {
       console.error('Erro ao realizar triagem:', error);
-      alert('Erro ao realizar triagem');
+      notify('Erro ao realizar triagem');
     } finally {
       setLoading(false);
     }

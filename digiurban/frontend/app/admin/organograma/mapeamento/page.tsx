@@ -294,7 +294,7 @@ export default function MapeamentoPage() {
                 <th className="px-4 py-3 text-left font-medium text-muted-foreground">Unidade</th>
                 <th className="px-4 py-3 text-left font-medium text-muted-foreground">Tipo</th>
                 <th className="px-4 py-3 text-left font-medium text-muted-foreground">Bairro</th>
-                <th className="px-4 py-3 text-left font-medium text-muted-foreground">Status</th>
+                <th className="px-4 py-3 text-left font-medium text-muted-foreground">Situação</th>
                 <th className="px-4 py-3 text-left font-medium text-muted-foreground">Unidade organizacional</th>
               </tr>
             </thead>

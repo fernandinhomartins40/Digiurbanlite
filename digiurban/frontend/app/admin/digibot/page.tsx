@@ -1,4 +1,5 @@
 'use client';
+import { confirmDialog } from '@/lib/dialogs'
 
 /**
  * Painel › DigiBot — configuração do assistente do cidadão, SEM código.
@@ -212,7 +213,7 @@ function DigibotPage() {
   };
 
   const discard = async () => {
-    if (!window.confirm('Descartar as alterações não publicadas?')) return;
+    if (!(await confirmDialog('Descartar as alterações não publicadas?'))) return;
     try {
       const s = await digibotApi<BotSettingsResponse>('/settings/discard', { method: 'POST' });
       setSettings((prev) => (prev ? { ...prev, ...s } : prev));
@@ -224,7 +225,7 @@ function DigibotPage() {
   };
 
   const restore = async (id: string) => {
-    if (!window.confirm('Voltar para esta versão? Ela passa a valer para os cidadãos.')) return;
+    if (!(await confirmDialog('Voltar para esta versão? Ela passa a valer para os cidadãos.'))) return;
     try {
       const s = await digibotApi<BotSettingsResponse>(`/settings/versions/${id}/restore`, { method: 'POST' });
       setSettings(s);

@@ -97,7 +97,7 @@ export default function SuperAdminDashboard() {
   if (loading && !data) {
     return (
       <div className="flex items-center justify-center py-24 text-gray-600">
-        <Loader2 className="h-6 w-6 animate-spin mr-2" /> Carregando a visão da plataforma...
+        <Loader2 className="h-6 w-6 animate-spin mr-2" /> Carregando...
       </div>
     );
   }
@@ -120,43 +120,13 @@ export default function SuperAdminDashboard() {
     <div className="space-y-6">
       <div className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-3">
         <div>
-          <h1 className="text-3xl font-bold text-gray-900">Visão da plataforma</h1>
-          <p className="text-gray-600 mt-1">Todos os municípios em um só lugar.</p>
+          <h1 className="text-3xl font-bold text-gray-900">Hoje na plataforma</h1>
+          <p className="text-gray-600 mt-1">O que pede atenção primeiro; os números vêm depois.</p>
         </div>
         <Button variant="outline" size="sm" onClick={load} disabled={loading}>
           <RefreshCw className={`h-4 w-4 mr-2 ${loading ? 'animate-spin' : ''}`} />
           Atualizar
         </Button>
-      </div>
-
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        <Kpi
-          title="Municípios"
-          value={num(data.tenants.total)}
-          hint={`${data.tenants.active} ${data.tenants.active === 1 ? 'ativo' : 'ativos'} · ${data.tenants.suspended} ${data.tenants.suspended === 1 ? 'suspenso' : 'suspensos'}`}
-          icon={Building2}
-          href="/super-admin/tenants"
-        />
-        <Kpi
-          title="Pedidos (protocolos)"
-          value={num(data.usage.protocols)}
-          hint={`${num(data.usage.protocolsLast30Days)} nos últimos 30 dias`}
-          icon={FileText}
-        />
-        <Kpi
-          title="Faturas em aberto"
-          value={brl(data.billing.openAmount)}
-          hint={data.billing.overdueCount ? `${data.billing.overdueCount} vencida(s): ${brl(data.billing.overdueAmount)}` : `${data.billing.openCount} fatura(s) · nenhuma vencida`}
-          icon={CreditCard}
-          href="/super-admin/billing"
-        />
-        <Kpi
-          title="Leads novos"
-          value={num(data.leads.new)}
-          hint={`${num(data.leads.last30Days)} nos últimos 30 dias`}
-          icon={UserPlus}
-          href="/super-admin/leads"
-        />
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
@@ -229,6 +199,36 @@ export default function SuperAdminDashboard() {
             </Card>
           </Link>
         </div>
+      </div>
+
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        <Kpi
+          title="Municípios"
+          value={num(data.tenants.total)}
+          hint={`${data.tenants.active} ${data.tenants.active === 1 ? 'ativo' : 'ativos'} · ${data.tenants.suspended} ${data.tenants.suspended === 1 ? 'suspenso' : 'suspensos'}`}
+          icon={Building2}
+          href="/super-admin/tenants"
+        />
+        <Kpi
+          title="Pedidos (protocolos)"
+          value={num(data.usage.protocols)}
+          hint={`${num(data.usage.protocolsLast30Days)} nos últimos 30 dias`}
+          icon={FileText}
+        />
+        <Kpi
+          title="Faturas em aberto"
+          value={brl(data.billing.openAmount)}
+          hint={data.billing.overdueCount ? `${data.billing.overdueCount} vencida(s): ${brl(data.billing.overdueAmount)}` : `${data.billing.openCount} fatura(s) · nenhuma vencida`}
+          icon={CreditCard}
+          href="/super-admin/billing"
+        />
+        <Kpi
+          title="Leads novos"
+          value={num(data.leads.new)}
+          hint={`${num(data.leads.last30Days)} nos últimos 30 dias`}
+          icon={UserPlus}
+          href="/super-admin/leads"
+        />
       </div>
     </div>
   );

@@ -1,6 +1,8 @@
 'use client'
+import { confirmDialog } from '@/lib/dialogs'
 
 import { useState, useRef, useEffect } from 'react'
+import { usePathname } from 'next/navigation'
 import { useAdminAuth } from '@/contexts/AdminAuthContext'
 import { useAdminPreferences } from '@/hooks/useAdminPreferences'
 import { TabPerfil, TabAparencia } from './tabs'
@@ -97,6 +99,11 @@ export default function ConfiguracoesPage() {
   } = useAdminPreferences()
 
   const [activeTab, setActiveTab] = useState<TabId>('perfil')
+  // duas telas numa: "Minha conta" (da pessoa, pelo avatar) e "Configurações da prefeitura" (pelo menu)
+  const area: 'conta' | 'prefeitura' = usePathname()?.endsWith('/prefeitura') ? 'prefeitura' : 'conta'
+  useEffect(() => {
+    setActiveTab(area === 'prefeitura' ? 'sistema' : 'perfil')
+  }, [area])
   const fileInputRef = useRef<HTMLInputElement>(null)
 
   // Estados para edição de perfil
@@ -147,7 +154,7 @@ export default function ConfiguracoesPage() {
   }
 
   const handleResetPreferences = async () => {
-    if (confirm('Tem certeza que deseja restaurar todas as preferências para os valores padrão?')) {
+    if (await confirmDialog('Tem certeza que deseja restaurar todas as preferências para os valores padrão?')) {
       await resetPreferences()
     }
   }
@@ -185,7 +192,7 @@ export default function ConfiguracoesPage() {
   }
 
   const handleRemoveAvatar = async () => {
-    if (confirm('Tem certeza que deseja remover sua foto de perfil?')) {
+    if (await confirmDialog('Tem certeza que deseja remover sua foto de perfil?')) {
       await removeAvatar()
     }
   }
@@ -215,13 +222,13 @@ export default function ConfiguracoesPage() {
   }
 
   const handleRevokeSession = async (sessionId: string) => {
-    if (confirm('Tem certeza que deseja encerrar esta sessão?')) {
+    if (await confirmDialog('Tem certeza que deseja encerrar esta sessão?')) {
       await revokeSession(sessionId)
     }
   }
 
   const handleRevokeAllSessions = async () => {
-    if (confirm('Tem certeza que deseja encerrar todas as outras sessões? Você permanecerá conectado apenas neste dispositivo.')) {
+    if (await confirmDialog('Tem certeza que deseja encerrar todas as outras sessões? Você permanecerá conectado apenas neste dispositivo.')) {
       await revokeAllSessions()
     }
   }
@@ -239,9 +246,9 @@ export default function ConfiguracoesPage() {
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
-          <h1 className="text-2xl sm:text-3xl font-bold text-gray-900">Configurações</h1>
+          <h1 className="text-2xl sm:text-3xl font-bold text-gray-900">{area === 'prefeitura' ? 'Configurações da prefeitura' : 'Minha conta'}</h1>
           <p className="text-sm sm:text-base text-gray-600 mt-1">
-            Gerencie suas preferências, perfil e segurança do sistema
+            {area === 'prefeitura' ? 'Valem para todos os servidores do município' : 'Seu perfil, aparência, avisos e senha'}
           </p>
         </div>
         <div className="flex gap-2">
@@ -251,7 +258,7 @@ export default function ConfiguracoesPage() {
             disabled={saving}
           >
             <RefreshCw className="mr-2 h-4 w-4" />
-            Resetar
+            Voltar ao padrão
           </Button>
           <Button onClick={handleSavePreferences} disabled={saving}>
             {saving ? (
@@ -262,7 +269,7 @@ export default function ConfiguracoesPage() {
             ) : (
               <>
                 <Save className="mr-2 h-4 w-4" />
-                Salvar Alterações
+                Salvar
               </>
             )}
           </Button>
@@ -271,7 +278,8 @@ export default function ConfiguracoesPage() {
 
       {/* Tabs de configurações */}
       <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as TabId)} className="w-full">
-        <TabsList className="w-full grid grid-cols-4 lg:grid-cols-8 gap-1 h-auto">
+        <TabsList className="w-full grid grid-cols-3 lg:grid-cols-6 gap-1 h-auto">
+          {area === 'conta' && (<>
           <TabsTrigger value="perfil" className="flex flex-col sm:flex-row items-center gap-1 py-2">
             <User className="h-4 w-4" />
             <span className="text-xs sm:text-sm">Perfil</span>
@@ -288,7 +296,8 @@ export default function ConfiguracoesPage() {
             <Shield className="h-4 w-4" />
             <span className="text-xs sm:text-sm">Privacidade</span>
           </TabsTrigger>
-          {(user.role === 'ADMIN' || user.role === 'SUPER_ADMIN' || user.role === 'MANAGER') && (
+          </>)}
+          {area === 'prefeitura' && (user.role === 'ADMIN' || user.role === 'SUPER_ADMIN' || user.role === 'MANAGER') && (
             <>
               <TabsTrigger value="sistema" className="flex flex-col sm:flex-row items-center gap-1 py-2">
                 <Settings className="h-4 w-4" />
@@ -300,6 +309,7 @@ export default function ConfiguracoesPage() {
               </TabsTrigger>
             </>
           )}
+          {area === 'conta' && (<>
           <TabsTrigger value="seguranca" className="flex flex-col sm:flex-row items-center gap-1 py-2">
             <Lock className="h-4 w-4" />
             <span className="text-xs sm:text-sm">Segurança</span>
@@ -308,6 +318,7 @@ export default function ConfiguracoesPage() {
             <Sliders className="h-4 w-4" />
             <span className="text-xs sm:text-sm">Avançado</span>
           </TabsTrigger>
+          </>)}
         </TabsList>
 
         {/* ABA: Perfil */}

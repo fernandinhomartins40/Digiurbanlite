@@ -67,6 +67,36 @@ export default function CitizenHomePage() {
           <p className="text-gray-600 mt-1">O que a prefeitura pode fazer por você hoje?</p>
         </div>
 
+        {/* Aguardando você: quando existe, é o mais importante da tela — vem primeiro */}
+        {!awaiting.loading && awaitingCount > 0 && (
+          <Card className="border-orange-200 bg-orange-50/60">
+            <CardHeader className="pb-3">
+              <CardTitle className="text-lg flex items-center gap-2 text-orange-900">
+                <AlertCircle className="h-5 w-5" />
+                Aguardando você ({awaitingCount})
+              </CardTitle>
+              <p className="text-sm text-orange-800">
+                A prefeitura precisa de uma resposta ou documento seu para continuar estes pedidos.
+              </p>
+            </CardHeader>
+            <CardContent className="space-y-2">
+              {awaiting.protocols.map((protocol) => (
+                <Link
+                  key={protocol.id}
+                  href={`/cidadao/protocolos/${protocol.id}`}
+                  className="flex items-center justify-between gap-3 rounded-lg border border-orange-200 bg-white px-4 py-3 hover:border-orange-400"
+                >
+                  <span className="min-w-0">
+                    <span className="block font-medium text-gray-900 truncate">{protocol.service?.name || protocol.title}</span>
+                    <span className="block text-xs text-muted-foreground">Pedido nº {protocol.number}</span>
+                  </span>
+                  <span className="shrink-0 text-sm font-semibold text-orange-700">Responder</span>
+                </Link>
+              ))}
+            </CardContent>
+          </Card>
+        )}
+
         {/* 1. Do que você precisa? */}
         <Card>
           <CardHeader className="pb-3">
@@ -139,36 +169,6 @@ export default function CitizenHomePage() {
 
         <ForYouBlock />
 
-        {/* 2. Aguardando você */}
-        {!awaiting.loading && awaitingCount > 0 && (
-          <Card className="border-orange-200 bg-orange-50/60">
-            <CardHeader className="pb-3">
-              <CardTitle className="text-lg flex items-center gap-2 text-orange-900">
-                <AlertCircle className="h-5 w-5" />
-                Aguardando você ({awaitingCount})
-              </CardTitle>
-              <p className="text-sm text-orange-800">
-                A prefeitura precisa de uma resposta ou documento seu para continuar estes pedidos.
-              </p>
-            </CardHeader>
-            <CardContent className="space-y-2">
-              {awaiting.protocols.map((protocol) => (
-                <Link
-                  key={protocol.id}
-                  href={`/cidadao/protocolos/${protocol.id}`}
-                  className="flex items-center justify-between gap-3 rounded-lg border border-orange-200 bg-white px-4 py-3 hover:border-orange-400"
-                >
-                  <span className="min-w-0">
-                    <span className="block font-medium text-gray-900 truncate">{protocol.service?.name || protocol.title}</span>
-                    <span className="block text-xs text-muted-foreground">Pedido nº {protocol.number}</span>
-                  </span>
-                  <span className="shrink-0 text-sm font-semibold text-orange-700">Responder</span>
-                </Link>
-              ))}
-            </CardContent>
-          </Card>
-        )}
-
         {/* 3. Seus pedidos */}
         <Card>
           <CardHeader className="pb-3 flex flex-row items-center justify-between space-y-0">
@@ -236,22 +236,6 @@ export default function CitizenHomePage() {
             )}
           </CardContent>
         </Card>
-
-        {/* Assistente */}
-        <Link href="/cidadao/assistente" className="block">
-          <Card className="transition-shadow hover:shadow-md">
-            <CardContent className="flex items-center gap-4 p-5">
-              <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-blue-600 to-purple-600">
-                <MessageCircle className="h-6 w-6 text-white" />
-              </div>
-              <div className="min-w-0 flex-1">
-                <p className="font-semibold text-gray-900">Prefere conversar?</p>
-                <p className="text-sm text-gray-600">O assistente ajuda a encontrar serviços, consultar pedidos e falar com a prefeitura.</p>
-              </div>
-              <ArrowRight className="h-5 w-5 shrink-0 text-gray-400" />
-            </CardContent>
-          </Card>
-        </Link>
       </div>
     </CitizenLayout>
   );

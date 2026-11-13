@@ -1,4 +1,5 @@
 'use client'
+import { confirmDialog } from '@/lib/dialogs'
 
 /** Etiquetas do cidadão na ficha: mostra as que ele tem e deixa colocar/tirar à mão. */
 
@@ -63,7 +64,7 @@ export function CitizenTagsCard({ citizenId }: { citizenId: string }) {
   }
 
   const remove = async (tag: CitizenTagItem) => {
-    if (!window.confirm(`Tirar a etiqueta "${tag.name}" deste cidadão?`)) return
+    if (!(await confirmDialog(`Tirar a etiqueta "${tag.name}" deste cidadão?`))) return
     try {
       setBusy(true)
       await apiRequest(`/admin/citizen-tags/citizen/${citizenId}/${tag.id}`, { method: 'DELETE' })

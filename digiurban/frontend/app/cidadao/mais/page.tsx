@@ -1,4 +1,5 @@
 'use client';
+import { confirmDialog } from '@/lib/dialogs'
 
 import { CitizenLayout } from '@/components/citizen/CitizenLayout';
 import { Card, CardContent } from '@/components/ui/card';
@@ -39,7 +40,7 @@ export default function MaisPage() {
   const { logout, citizen } = useCitizenAuth();
 
   const handleLogout = async () => {
-    if (confirm('Deseja realmente sair?')) {
+    if (await confirmDialog('Deseja realmente sair?')) {
       await logout();
     }
   };
@@ -67,17 +68,10 @@ export default function MaisPage() {
       href: '/cidadao/documentos',
     },
     {
-      id: 'face-read',
-      label: 'Leitura biométrica',
-      description: 'Testar se a biometria facial está reconhecendo corretamente',
-      icon: ScanFace,
-      href: '/cidadao/biometria-facial/leitura',
-    },
-    {
-      id: 'face-enroll',
+      id: 'face',
       label: 'Biometria facial',
-      description: 'Cadastrar a biometria facial ao vivo pela primeira vez',
-      icon: Shield,
+      description: 'Cadastrar o seu rosto ou testar se ele é reconhecido',
+      icon: ScanFace,
       href: '/cidadao/biometria-facial',
     },
     {
@@ -105,14 +99,6 @@ export default function MaisPage() {
       onClick: handleLogout,
       variant: 'danger',
     },
-    {
-      id: 'delete-account',
-      label: 'Excluir minha conta',
-      description: 'Apagar os seus dados do portal',
-      icon: Trash2,
-      href: '/cidadao/perfil?excluir=1',
-      variant: 'danger',
-    },
   ];
 
   return (
@@ -120,8 +106,8 @@ export default function MaisPage() {
       <div className="space-y-6">
         {/* Header */}
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">Menu</h1>
-          <p className="text-gray-600 mt-1">Configurações e opções adicionais</p>
+          <h1 className="text-2xl font-bold text-gray-900">{citizen?.name?.split(' ')[0] || 'Eu'}</h1>
+          <p className="text-gray-600 mt-1">Seu cadastro, sua família e seus documentos</p>
         </div>
 
         {/* User Info Card */}
@@ -224,13 +210,14 @@ export default function MaisPage() {
             </div>
             <p className="text-xs text-gray-500">Versão 1.0.0</p>
             <p className="text-xs text-gray-500 mt-2">
-              O DigiUrban é a plataforma digital usada pela sua prefeitura. Não é um órgão de governo.
+              O Digiurban é a plataforma digital usada pela sua prefeitura. Não é um órgão de governo.
             </p>
             <p className="text-xs text-gray-500 mt-1">
               Suporte: <a href={`mailto:${SUPPORT_EMAIL}`} className="underline">{SUPPORT_EMAIL}</a>
             </p>
-            <p className="text-xs text-gray-400 mt-1">
-              © {new Date().getFullYear()} - Todos os direitos reservados
+            {/* excluir a conta fica aqui, discreto: não é opção do dia a dia */}
+            <p className="text-xs text-gray-500 mt-3">
+              <a href="/cidadao/perfil?excluir=1" className="underline">Excluir minha conta</a>
             </p>
           </CardContent>
         </Card>

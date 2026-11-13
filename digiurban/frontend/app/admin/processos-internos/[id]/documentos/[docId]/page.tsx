@@ -1,4 +1,5 @@
 'use client'
+import { confirmDialog } from '@/lib/dialogs'
 
 /**
  * Documento do processo interno (DFD, ETP, Termo de Referência, parecer...):
@@ -157,7 +158,7 @@ export default function ProcessoDocumentoPage() {
   }
 
   const remove = async () => {
-    if (!window.confirm('Apagar este rascunho?')) return
+    if (!(await confirmDialog('Apagar este rascunho?'))) return
     try {
       await apiRequest(`/internal-processes/documents/${docId}`, { method: 'DELETE' })
       router.push(`/admin/processos-internos/${id}`)

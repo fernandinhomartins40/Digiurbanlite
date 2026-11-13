@@ -1,4 +1,5 @@
 'use client';
+import { notify } from '@/lib/dialogs'
 
 import { useState, useEffect, useMemo } from 'react';
 import { Card } from '@/components/ui/card';
@@ -353,7 +354,7 @@ export default function HierarquiasPage() {
       setDeleteOpen(false);
       fetchHierarchies();
     } catch (err: any) {
-      alert(err.message || 'Erro ao remover hierarquia');
+      notify(err.message || 'Erro ao remover hierarquia');
     } finally {
       setSaving(false);
     }
@@ -413,7 +414,7 @@ export default function HierarquiasPage() {
 
             {/* Status toggle */}
             <div className="flex items-center gap-2">
-              <Label className="text-sm font-medium text-gray-700 whitespace-nowrap">Status:</Label>
+              <Label className="text-sm font-medium text-gray-700 whitespace-nowrap">Situação:</Label>
               <div className="flex rounded-md overflow-hidden border">
                 <button
                   type="button"

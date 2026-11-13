@@ -1,4 +1,5 @@
 'use client';
+import { confirmDialog } from '@/lib/dialogs'
 
 /**
  * Super-admin › Privacidade › Biometria facial: modelo do motor, limites de
@@ -120,7 +121,7 @@ export function FaceBiometrySettings({ isAdmin, retention, onSaved }: { isAdmin:
   };
 
   const runNow = async () => {
-    if (!window.confirm('Apagar agora as fotos e registros da biometria que já passaram do prazo?')) return;
+    if (!(await confirmDialog('Apagar agora as fotos e registros da biometria que já passaram do prazo?'))) return;
     setRunning(true);
     try {
       const data = await api('/retention/face/run', { method: 'POST' });

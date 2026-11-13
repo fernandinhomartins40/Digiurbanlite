@@ -1,4 +1,5 @@
 'use client';
+import { notify } from '@/lib/dialogs'
 
 import React, { useState, useEffect } from 'react';
 import { useRouter, useParams } from 'next/navigation';
@@ -111,7 +112,7 @@ export default function AcolhimentoPage() {
       }
     } catch (error) {
       console.error('Erro ao carregar fila:', error);
-      alert('Erro ao carregar dados do paciente');
+      notify('Erro ao carregar dados do paciente');
     } finally {
       setLoading(false);
     }
@@ -121,7 +122,7 @@ export default function AcolhimentoPage() {
     e.preventDefault();
 
     if (!condutaSelecionada) {
-      alert('Selecione uma conduta');
+      notify('Selecione uma conduta');
       return;
     }
 
@@ -139,14 +140,14 @@ export default function AcolhimentoPage() {
 
       if (!response.ok) {
         const error = await response.json();
-        alert(error.error || 'Erro ao salvar acolhimento');
+        notify(error.error || 'Erro ao salvar acolhimento');
         return;
       }
 
       router.push('/admin/apps/saude/atendimento');
     } catch (error) {
       console.error('Erro ao salvar acolhimento:', error);
-      alert('Erro ao salvar acolhimento');
+      notify('Erro ao salvar acolhimento');
     } finally {
       setSaving(false);
     }

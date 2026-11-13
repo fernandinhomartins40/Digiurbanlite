@@ -1,4 +1,5 @@
 'use client';
+import { notify } from '@/lib/dialogs'
 
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
@@ -68,7 +69,7 @@ export default function SecretariasPage() {
       });
       await fetchDepartments();
     } catch (err: any) {
-      alert(err.message || 'Erro ao sincronizar secretarias');
+      notify(err.message || 'Erro ao sincronizar secretarias');
     } finally {
       setSyncing(false);
     }

@@ -1,4 +1,5 @@
 'use client';
+import { notify } from '@/lib/dialogs'
 
 import { useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
@@ -140,7 +141,7 @@ export default function CargosPage() {
       setSelectedPosition(null);
       void loadPositions();
     } catch (deleteError) {
-      alert(deleteError instanceof Error ? deleteError.message : 'Erro ao desativar cargo');
+      notify(deleteError instanceof Error ? deleteError.message : 'Erro ao desativar cargo');
     } finally {
       setSaving(false);
     }

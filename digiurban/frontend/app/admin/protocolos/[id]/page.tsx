@@ -1,4 +1,5 @@
 'use client'
+import { confirmDialog } from '@/lib/dialogs'
 
 import { Skeleton } from '@/components/ui/skeleton'
 import { useState, useEffect, useMemo } from 'react'
@@ -234,7 +235,7 @@ export default function ProtocolDetailPage() {
   }
 
   const handleRealignWorkflow = async () => {
-    const confirmed = window.confirm(
+    const confirmed = await confirmDialog(
       'Re-alinhar o fluxo deste protocolo com o serviço?\n\n' +
       'As exigências de documentos das etapas serão atualizadas conforme o formulário ' +
       'do serviço. Nenhuma etapa, progresso ou documento enviado é perdido. ' +
@@ -548,67 +549,8 @@ export default function ProtocolDetailPage() {
               onReassign={() => handleAssignAction('assign')}
             />
 
-            {/* SLA Compacto */}
-            <CompactSLACard
-              sla={sla}
-              onClick={() => {
-                toast({
-                  title: 'SLA Detalhado',
-                  description: 'Clique para ver detalhes completos do SLA'
-                })
-              }}
-            />
-
-            {/* Estatísticas Rápidas */}
-            <Card>
-              <CardContent className="p-4 space-y-3">
-                <div className="flex items-center justify-between text-sm">
-                  <div className="flex items-center gap-2 text-gray-600">
-                    <Clock className="h-4 w-4" />
-                    <span>Etapas</span>
-                  </div>
-                  <span className="font-medium text-gray-900">
-                    {stages.filter(s => s.status === 'COMPLETED').length}/{stages.length}
-                  </span>
-                </div>
-
-                <div className="flex items-center justify-between text-sm">
-                  <div className="flex items-center gap-2 text-gray-600">
-                    <FileText className="h-4 w-4" />
-                    <span>Documentos</span>
-                  </div>
-                  <span className="font-medium text-gray-900">{documents.length}</span>
-                </div>
-
-                <div className="flex items-center justify-between text-sm">
-                  <div className="flex items-center gap-2 text-gray-600">
-                    <AlertCircle className="h-4 w-4" />
-                    <span>Pendências</span>
-                  </div>
-                  <span className={`font-medium ${openPendings.length > 0 ? 'text-red-600' : 'text-gray-900'}`}>
-                    {openPendings.length}
-                  </span>
-                </div>
-
-                <div className="flex items-center justify-between text-sm">
-                  <div className="flex items-center gap-2 text-gray-600">
-                    <MessageSquare className="h-4 w-4" />
-                    <span>Mensagens</span>
-                  </div>
-                  <span className="font-medium text-gray-900">{interactions.length}</span>
-                </div>
-
-                {citizenLinks.length > 0 && (
-                  <div className="flex items-center justify-between text-sm pt-2 border-t">
-                    <div className="flex items-center gap-2 text-gray-600">
-                      <Users className="h-4 w-4" />
-                      <span>Vínculos</span>
-                    </div>
-                    <span className="font-medium text-gray-900">{citizenLinks.length}</span>
-                  </div>
-                )}
-              </CardContent>
-            </Card>
+            {/* Prazo: abre o histórico do protocolo */}
+            <CompactSLACard sla={sla} onClick={() => setActiveTab('atribuicoes')} />
 
             <ProtocolInternalProcessesCard protocolId={protocolId} protocolNumber={protocol.number} />
           </div>

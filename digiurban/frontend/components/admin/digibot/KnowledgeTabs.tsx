@@ -1,4 +1,5 @@
 'use client';
+import { confirmDialog } from '@/lib/dialogs'
 
 /** Abas de conhecimento do bot: serviços (palavras do cidadão), perguntas frequentes e "Ensinar o bot" */
 
@@ -200,7 +201,7 @@ export function FaqTab() {
   };
 
   const remove = async (faq: BotFaq) => {
-    if (!window.confirm(`Excluir a pergunta "${faq.question}"?`)) return;
+    if (!(await confirmDialog(`Excluir a pergunta "${faq.question}"?`))) return;
     try {
       await digibotApi(`/faqs/${faq.id}`, { method: 'DELETE' });
       setFaqs((all) => (all || []).filter((f) => f.id !== faq.id));

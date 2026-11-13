@@ -699,6 +699,33 @@
   .lg-root :is(.bg-white, .bg-card):not(.lg-glass) { background-color: var(--lg-surface); -webkit-backdrop-filter: none; backdrop-filter: none; }
 }
 
+/* ---------------------------------------------------------------------------
+ * Sistema do miolo: o par do vidro para o CONTEÚDO das telas.
+ * Uma escala de título, um espaçamento de página e uma cor por situação,
+ * aplicados de uma vez às telas montadas à mão (sem editar cada uma).
+ * ------------------------------------------------------------------------- */
+/* Título da página: um tamanho só (as telas usavam text-2xl, 3xl e 4xl) */
+.lg-root main h1:not(.lg-keep) { font-size: 1.625rem; line-height: 2rem; font-weight: 700; letter-spacing: -0.02em; }
+@media (max-width: 640px) { .lg-root main h1:not(.lg-keep) { font-size: 1.375rem; line-height: 1.75rem; } }
+/* Espaçamento da página: a moldura (main) já dá a margem; o p-4/p-6/p-8 do
+   contêiner de fora de cada tela somava uma segunda margem, diferente por tela */
+.lg-root main > :is(.p-3, .p-4, .p-6, .p-8):is(.space-y-4, .space-y-5, .space-y-6, .space-y-8):not([class*="bg-"]):not([class*="border"]):not([class*="rounded"]) { padding: 0; }
+/* Tabela de sentidos: cada situação tem UMA cor no produto inteiro (lib/senses.ts).
+   Vermelho = atrasado ou ação que apaga; nada mais. */
+.sense {
+  display: inline-flex; align-items: center; gap: 0.35rem; white-space: nowrap;
+  border-radius: 999px; padding: 0.2rem 0.65rem; font-size: 0.75rem; line-height: 1rem; font-weight: 600;
+  background: color-mix(in srgb, var(--sense) 15%, transparent);
+  color: color-mix(in srgb, var(--sense) 72%, var(--lg-ink));
+}
+.sense-late { --sense: var(--lg-red); }
+.sense-soon { --sense: #d99a00; }
+.sense-waiting { --sense: var(--lg-orange); }
+.sense-progress { --sense: var(--lg-blue); }
+.sense-done { --sense: var(--lg-green); }
+.sense-off { --sense: #8e8e93; }
+.sense-text { background: none; padding: 0; border-radius: 0; }
+
 /* Vidro colorido azul (cabeçalhos e bolhas do Assistente, botões de ação) */
 .lg-tint-blue { --tint: #1e7bf0; }
 

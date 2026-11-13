@@ -1,4 +1,5 @@
 'use client';
+import { confirmDialog } from '@/lib/dialogs'
 
 import { Skeleton } from '@/components/ui/skeleton'
 import { useEffect, useMemo, useState } from 'react';
@@ -378,7 +379,7 @@ export default function AdminCentralAgendaPage() {
   };
 
   const handleDeleteEvent = async (eventId: string) => {
-    if (!confirm('Deseja realmente excluir este evento?')) {
+    if (!(await confirmDialog('Deseja realmente excluir este evento?'))) {
       return;
     }
 
@@ -572,7 +573,7 @@ export default function AdminCentralAgendaPage() {
             {showFilters && (
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-3 pt-3 border-t border-slate-200/80">
                 <div>
-                  <label className="text-sm font-medium mb-1 block">Status</label>
+                  <label className="text-sm font-medium mb-1 block">Situação</label>
                   <Select value={statusFilter} onValueChange={(value) => setStatusFilter(value as 'all' | CentralCalendarEventStatus)}>
                     <SelectTrigger>
                       <SelectValue />

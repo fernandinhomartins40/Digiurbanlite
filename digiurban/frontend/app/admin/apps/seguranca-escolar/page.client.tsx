@@ -1,4 +1,5 @@
 'use client';
+import { notify } from '@/lib/dialogs'
 
 import { useEffect, useMemo, useState } from 'react';
 import {
@@ -273,7 +274,7 @@ export default function SegurancaEscolarPage() {
 
   async function handleCreateDevice() {
     if (!selectedSchoolId || !deviceForm.code || !deviceForm.name) {
-      alert('Informe a escola, o código e o nome da câmera.');
+      notify('Informe a escola, o código e o nome da câmera.');
       return;
     }
 
@@ -288,7 +289,7 @@ export default function SegurancaEscolarPage() {
       setDeviceForm({ code: '', name: '', streamUrl: '', username: '', password: '' });
       await loadAll();
     } catch (error: any) {
-      alert(error?.response?.data?.error || 'Erro ao cadastrar câmera.');
+      notify(error?.response?.data?.error || 'Erro ao cadastrar câmera.');
     } finally {
       setSubmitting(null);
     }
@@ -296,7 +297,7 @@ export default function SegurancaEscolarPage() {
 
   async function handleCreateZone() {
     if (!selectedSchoolId || !zoneForm.deviceId || !zoneForm.name) {
-      alert('Selecione a câmera e informe o nome da zona.');
+      notify('Selecione a câmera e informe o nome da zona.');
       return;
     }
 
@@ -309,7 +310,7 @@ export default function SegurancaEscolarPage() {
       setZoneForm({ deviceId: '', name: '', gateName: '', direction: 'ENTRY' });
       await loadAll();
     } catch (error: any) {
-      alert(error?.response?.data?.error || 'Erro ao cadastrar zona.');
+      notify(error?.response?.data?.error || 'Erro ao cadastrar zona.');
     } finally {
       setSubmitting(null);
     }
@@ -363,7 +364,7 @@ export default function SegurancaEscolarPage() {
       await facePlatformService.reviewEvent(eventId, decision);
       await loadAll();
     } catch (error: any) {
-      alert(error?.response?.data?.error || 'Erro ao revisar evento.');
+      notify(error?.response?.data?.error || 'Erro ao revisar evento.');
     } finally {
       setSubmitting(null);
     }
@@ -379,7 +380,7 @@ export default function SegurancaEscolarPage() {
       await facePlatformService.saveConfiguration(selectedSchoolId, configForm);
       await loadAll();
     } catch (error: any) {
-      alert(error?.response?.data?.error || 'Erro ao salvar configuração.');
+      notify(error?.response?.data?.error || 'Erro ao salvar configuração.');
     } finally {
       setSubmitting(null);
     }

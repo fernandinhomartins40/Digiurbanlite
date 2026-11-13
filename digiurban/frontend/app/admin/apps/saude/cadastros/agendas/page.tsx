@@ -1,4 +1,5 @@
 'use client';
+import { confirmDialog } from '@/lib/dialogs'
 
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
@@ -35,7 +36,7 @@ export default function AgendasListagem() {
   };
 
   const handleDelete = async (id: string) => {
-    if (!confirm('Deseja realmente desativar esta agenda?')) return;
+    if (!(await confirmDialog('Deseja realmente desativar esta agenda?'))) return;
 
     try {
       await fetch(`/api/apps/saude/cadastros/agendas/${id}`, {
@@ -123,7 +124,7 @@ export default function AgendasListagem() {
                     <TableHead>Sala</TableHead>
                     <TableHead>Período</TableHead>
                     <TableHead>Vagas/Dia</TableHead>
-                    <TableHead>Status</TableHead>
+                    <TableHead>Situação</TableHead>
                     <TableHead>Ações</TableHead>
                   </TableRow>
                 </TableHeader>

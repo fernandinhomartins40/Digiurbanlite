@@ -525,7 +525,7 @@ export function CertificateRequestsManager() {
                       <p className="text-green-900 font-mono text-sm">{selectedRequest.certificate.serialNumber}</p>
                     </div>
                     <div>
-                      <label className="text-sm font-medium text-green-700">Status</label>
+                      <label className="text-sm font-medium text-green-700">Situação</label>
                       <p className="text-green-900">{selectedRequest.certificate.status}</p>
                     </div>
                   </div>

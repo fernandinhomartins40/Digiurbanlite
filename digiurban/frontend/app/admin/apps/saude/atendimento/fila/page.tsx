@@ -1,4 +1,5 @@
 'use client';
+import { notify } from '@/lib/dialogs'
 
 import { useEffect, useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -67,7 +68,7 @@ export default function FilaAtendimentoPage() {
 
   const handleChamarProximo = async (consultorio: string) => {
     if (!unidadeSelecionada?.id) {
-      alert('Selecione uma unidade primeiro');
+      notify('Selecione uma unidade primeiro');
       return;
     }
 
@@ -76,7 +77,7 @@ export default function FilaAtendimentoPage() {
       await loadFila(unidadeSelecionada.id);
     } catch (error) {
       console.error('Erro ao chamar próximo:', error);
-      alert('Erro ao chamar próximo paciente');
+      notify('Erro ao chamar próximo paciente');
     }
   };
 

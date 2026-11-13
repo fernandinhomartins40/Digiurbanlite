@@ -1,4 +1,5 @@
 'use client'
+import { confirmDialog } from '@/lib/dialogs'
 
 import { useState, useEffect } from 'react'
 import { useAdminAuth } from '@/contexts/AdminAuthContext'
@@ -124,7 +125,7 @@ export default function TemplatesDocumentosPage() {
 
   // modelo do catálogo editado pelo município: desfaz as mudanças
   const handleRestore = async (templateId: string) => {
-    if (!window.confirm('Voltar este modelo ao padrão? As mudanças feitas pelo município nele se perdem.')) return
+    if (!(await confirmDialog('Voltar este modelo ao padrão? As mudanças feitas pelo município nele se perdem.'))) return
     try {
       const result = await apiRequest(`/document-templates/${templateId}/restore`, { method: 'POST' })
       if (result.success) {

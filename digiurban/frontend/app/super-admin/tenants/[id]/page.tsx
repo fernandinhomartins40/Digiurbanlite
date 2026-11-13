@@ -1,4 +1,5 @@
 'use client';
+import { confirmDialog } from '@/lib/dialogs'
 
 /**
  * ============================================================================
@@ -228,7 +229,7 @@ export default function TenantDetailPage() {
 
   // catálogo de serviços: cria o que falta e melhora o que o município não editou
   const applyCatalog = async () => {
-    if (!window.confirm('Aplicar o catálogo de serviços neste município? Serviços editados pelo município não são alterados.')) return;
+    if (!(await confirmDialog('Aplicar o catálogo de serviços neste município? Serviços editados pelo município não são alterados.'))) return;
     setSaving(true);
     try {
       const res = await fetch(`/api/platform/tenants/${id}/service-catalog`, { method: 'POST' });

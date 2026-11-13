@@ -757,7 +757,7 @@ export default function VinculosUnificadoPage() {
                 </Select>
               </div>
               <div>
-                <Label>Status</Label>
+                <Label>Situação</Label>
                 <Select value={filtroStatus} onValueChange={setFiltroStatus}>
                   <SelectTrigger><SelectValue /></SelectTrigger>
                   <SelectContent>
@@ -800,7 +800,7 @@ export default function VinculosUnificadoPage() {
                       <TableHead>Registro</TableHead>
                       <TableHead>Vínculos (Unidades)</TableHead>
                       <TableHead>Equipes</TableHead>
-                      <TableHead>Status</TableHead>
+                      <TableHead>Situação</TableHead>
                       <TableHead className="text-right">Ações</TableHead>
                     </TableRow>
                   </TableHeader>

@@ -714,7 +714,7 @@ export function ArchivedProtocolView({
         <TabsList className="grid w-full grid-cols-5 bg-white shadow-sm mb-4">
           <TabsTrigger value="timeline" className="flex items-center gap-2">
             <Clock className="h-4 w-4" />
-            <span className="hidden sm:inline">Timeline</span>
+            <span className="hidden sm:inline">Histórico</span>
           </TabsTrigger>
           <TabsTrigger value="documentos" className="flex items-center gap-2">
             <FileText className="h-4 w-4" />

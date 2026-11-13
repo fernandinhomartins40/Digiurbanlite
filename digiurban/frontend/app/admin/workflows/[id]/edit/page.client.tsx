@@ -489,7 +489,7 @@ export default function WorkflowEditPage() {
     return (
       <div className="p-6 text-center">
         <AlertCircle className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
-        <h2 className="text-xl font-semibold mb-2">Workflow não encontrado</h2>
+        <h2 className="text-xl font-semibold mb-2">Etapas não encontradas</h2>
         <Button variant="outline" onClick={() => router.push('/admin/workflows')}><ArrowLeft className="h-4 w-4 mr-2" />Voltar</Button>
       </div>
     )
@@ -546,11 +546,11 @@ export default function WorkflowEditPage() {
             </div>
             <div className="grid grid-cols-2 gap-3">
               <div className="space-y-1.5">
-                <Label className="text-sm">SLA Padrão (dias)</Label>
+                <Label className="text-sm">Prazo padrão (dias)</Label>
                 <Input type="number" min="1" value={defaultSLA} onChange={(e) => setDefaultSLA(parseInt(e.target.value) || 1)} />
               </div>
               <div className="space-y-1.5">
-                <Label className="text-sm">Status</Label>
+                <Label className="text-sm">Situação</Label>
                 <div className="flex items-center gap-2 h-10">
                   <Switch checked={isActive} onCheckedChange={setIsActive} />
                   <span className="text-sm">{isActive ? 'Ativo' : 'Inativo'}</span>

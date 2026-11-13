@@ -1,4 +1,5 @@
 'use client';
+import { confirmDialog } from '@/lib/dialogs'
 
 /**
  * Equipe da plataforma — quem opera este console.
@@ -101,7 +102,7 @@ export default function PlatformTeamPage() {
   };
 
   const resetPassword = async (m: Member) => {
-    if (!confirm(`Gerar uma nova senha temporária para ${m.name}? A senha atual deixa de funcionar.`)) return;
+    if (!(await confirmDialog(`Gerar uma nova senha temporária para ${m.name}? A senha atual deixa de funcionar.`))) return;
     setBusy(m.id);
     try {
       const data = await call(`/api/platform/team/${m.id}/reset-password`, { method: 'POST' });

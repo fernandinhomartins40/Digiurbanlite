@@ -1,4 +1,5 @@
 'use client';
+import { notify } from '@/lib/dialogs'
 
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
@@ -87,7 +88,7 @@ export default function NovaSolicitacaoTFDPage() {
     e.preventDefault();
 
     if (!selectedCidadao) {
-      alert('Selecione um cidadão antes de continuar');
+      notify('Selecione um cidadão antes de continuar');
       return;
     }
 
@@ -156,7 +157,7 @@ export default function NovaSolicitacaoTFDPage() {
 
       // Atendimento presencial também gera protocolo: o cidadão acompanha por ele
       const numero = solicitacao?.protocol?.number;
-      alert(
+      notify(
         numero
           ? `Solicitação registrada. Protocolo nº ${numero} — entregue este número ao cidadão para acompanhar em "Meus pedidos".`
           : 'Solicitação TFD registrada com sucesso!'
@@ -164,7 +165,7 @@ export default function NovaSolicitacaoTFDPage() {
       router.push('/admin/apps/saude/tfd/solicitacoes');
     } catch (error: any) {
       console.error('Erro ao criar solicitação:', error);
-      alert(`Erro ao criar solicitação: ${error.message}`);
+      notify(`Erro ao criar solicitação: ${error.message}`);
     } finally {
       setLoading(false);
     }

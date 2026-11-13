@@ -25,7 +25,9 @@ import {
   ChevronRight,
   RefreshCw,
   X,
+  SlidersHorizontal,
 } from 'lucide-react'
+import { protocolSense } from '@/lib/senses'
 import {
   getPriorityLabel,
   getPriorityBadgeClass,
@@ -134,6 +136,8 @@ function ProtocolsQueue() {
   }, [])
 
   const [searchInput, setSearchInput] = useState(search)
+  // filtros ficam guardados atrás de "Filtrar"; a tela abre só com as filas e a busca
+  const [showFilters, setShowFilters] = useState(false)
   const [protocols, setProtocols] = useState<Protocol[]>([])
   const [total, setTotal] = useState(0)
   const [totalPages, setTotalPages] = useState(1)
@@ -293,11 +297,11 @@ function ProtocolsQueue() {
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
         <div>
-          <h1 className="text-2xl sm:text-3xl font-bold text-gray-900">Gestão de Protocolos</h1>
+          <h1 className="text-2xl sm:text-3xl font-bold text-gray-900">Protocolos</h1>
           <p className="text-sm sm:text-base text-gray-600 mt-1">
-            {user?.role === 'USER' ? 'Seus protocolos atribuídos' :
-             user?.role === 'ADMIN' ? 'Todos os protocolos municipais' :
-             'Protocolos do seu setor'}
+            {user?.role === 'USER' ? 'Os protocolos que estão com você' :
+             user?.role === 'ADMIN' ? 'Todos os protocolos do município' :
+             'Os protocolos da sua secretaria'}
           </p>
         </div>
         <div className="flex flex-wrap gap-2">
@@ -355,6 +359,7 @@ function ProtocolsQueue() {
       <Card>
         <CardContent className="pt-6">
           {/* Onde: secretaria e serviço (substituem as antigas páginas de módulo) */}
+          {(showFilters || hasContextFilter) && (
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4 mb-3 sm:mb-4">
             <Select
               value={departmentCodeNorm || 'all'}
@@ -395,6 +400,7 @@ function ProtocolsQueue() {
               </SelectContent>
             </Select>
           </div>
+          )}
 
           {selectedService?.hasForm && (
             <div className="mb-3 sm:mb-4 flex flex-wrap items-center gap-2" role="tablist" aria-label="Forma de visualizar">
@@ -437,16 +443,29 @@ function ProtocolsQueue() {
               />
             </div>
 
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => setShowFilters((v) => !v)}
+              aria-expanded={showFilters}
+              className="justify-start sm:w-fit"
+            >
+              <SlidersHorizontal className="mr-2 h-4 w-4" />
+              {showFilters ? 'Esconder filtros' : hasExtraFilters ? 'Filtros (em uso)' : 'Filtrar'}
+            </Button>
+
+            {showFilters && (
+            <>
             <Select value={statusFilter} onValueChange={(value) => updateParams({ status: value })}>
-              <SelectTrigger aria-label="Filtrar por status">
-                <SelectValue placeholder="Todos os status" />
+              <SelectTrigger aria-label="Filtrar por situação">
+                <SelectValue placeholder="Todas as situações" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="all">Todos os status</SelectItem>
-                <SelectItem value="VINCULADO">Vinculado</SelectItem>
-                <SelectItem value="PROGRESSO">Em Progresso</SelectItem>
-                <SelectItem value="ATUALIZACAO">Atualização</SelectItem>
-                <SelectItem value="PENDENCIA">Pendência</SelectItem>
+                <SelectItem value="all">Todas as situações</SelectItem>
+                <SelectItem value="VINCULADO">Novo</SelectItem>
+                <SelectItem value="PROGRESSO">Em andamento</SelectItem>
+                <SelectItem value="ATUALIZACAO">Em atualização</SelectItem>
+                <SelectItem value="PENDENCIA">Aguardando cidadão</SelectItem>
                 <SelectItem value="CONCLUIDO">Concluído</SelectItem>
                 <SelectItem value="CANCELADO">Cancelado</SelectItem>
               </SelectContent>
@@ -478,6 +497,8 @@ function ProtocolsQueue() {
                 ))}
               </SelectContent>
             </Select>
+            </>
+            )}
           </div>
 
           <div className="mt-3 flex flex-wrap items-center justify-between gap-2 text-sm text-gray-600">
@@ -544,12 +565,13 @@ function ProtocolsQueue() {
                     <div className="flex-1 min-w-0">
                       <div className="flex flex-wrap items-center gap-2 mb-2">
                         <h3 className="text-base sm:text-lg font-semibold">#{protocol.number}</h3>
-                        <Badge variant="secondary" className={`text-xs ${getProtocolStatusClass(protocol.status)}`}>
-                          {getProtocolStatusLabel(protocol.status)}
-                        </Badge>
-                        <Badge variant="outline" className={`border text-xs ${getPriorityBadgeClass(protocol.priority)}`}>
-                          {getPriorityLabel(protocol.priority)}
-                        </Badge>
+                        <span className={protocolSense(protocol.status).className}>{protocolSense(protocol.status).label}</span>
+                        {/* prioridade normal não é notícia: só aparece quando foge do normal */}
+                        {protocol.priority !== 3 && (
+                          <Badge variant="outline" className={`border text-xs ${getPriorityBadgeClass(protocol.priority)}`}>
+                            Prioridade {getPriorityLabel(protocol.priority).toLowerCase()}
+                          </Badge>
+                        )}
                         {slaInfo && (
                           <Badge variant="outline" className={`border text-xs ${slaInfo.className}`}>
                             <Clock className="h-3 w-3 mr-1" />
@@ -563,13 +585,13 @@ function ProtocolsQueue() {
 
                       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2 sm:gap-4 text-xs sm:text-sm text-gray-500">
                         <div className="truncate">
-                          <span className="font-medium">Cidadão:</span> {protocol.citizen?.name || 'N/A'}
+                          <span className="font-medium">Cidadão:</span> {protocol.citizen?.name || '—'}
                         </div>
                         <div className="truncate">
-                          <span className="font-medium">Serviço:</span> {protocol.service?.name || 'N/A'}
+                          <span className="font-medium">Serviço:</span> {protocol.service?.name || '—'}
                         </div>
                         <div className="truncate">
-                          <span className="font-medium">Departamento:</span> {protocol.department?.name || 'N/A'}
+                          <span className="font-medium">Secretaria:</span> {protocol.department?.name || '—'}
                         </div>
                       </div>
 

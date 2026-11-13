@@ -1,4 +1,5 @@
 'use client';
+import { notify } from '@/lib/dialogs'
 
 import { useState, useEffect } from 'react';
 import { useRouter, useParams } from 'next/navigation';
@@ -53,7 +54,7 @@ export default function EditarEspecialidade() {
       });
     } catch (error) {
       console.error('Erro ao carregar especialidade:', error);
-      alert('Erro ao carregar dados da especialidade');
+      notify('Erro ao carregar dados da especialidade');
       router.push('/admin/apps/saude/cadastros/especialidades');
     } finally {
       setLoadingData(false);
@@ -64,7 +65,7 @@ export default function EditarEspecialidade() {
     e.preventDefault();
 
     if (!formData.nome) {
-      alert('Nome é obrigatório');
+      notify('Nome é obrigatório');
       return;
     }
 
@@ -78,15 +79,15 @@ export default function EditarEspecialidade() {
       });
 
       if (response.ok) {
-        alert('Especialidade atualizada com sucesso!');
+        notify('Especialidade atualizada com sucesso!');
         router.push('/admin/apps/saude/cadastros/especialidades');
       } else {
         const error = await response.json();
-        alert(`Erro: ${error.error || 'Falha ao atualizar especialidade'}`);
+        notify(`Erro: ${error.error || 'Falha ao atualizar especialidade'}`);
       }
     } catch (error) {
       console.error('Erro ao atualizar especialidade:', error);
-      alert('Erro ao atualizar especialidade');
+      notify('Erro ao atualizar especialidade');
     } finally {
       setLoading(false);
     }
@@ -149,7 +150,7 @@ export default function EditarEspecialidade() {
                 </div>
 
                 <div>
-                  <Label htmlFor="isActive">Status</Label>
+                  <Label htmlFor="isActive">Situação</Label>
                   <Select
                     value={formData.isActive ? 'true' : 'false'}
                     onValueChange={(value) => setFormData({ ...formData, isActive: value === 'true' })}

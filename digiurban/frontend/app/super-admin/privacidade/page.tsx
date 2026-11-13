@@ -1,4 +1,5 @@
 'use client';
+import { confirmDialog } from '@/lib/dialogs'
 
 /**
  * Super-admin › Privacidade — prazo de guarda das conversas (LGPD).
@@ -112,7 +113,7 @@ export default function PrivacyPage() {
   };
 
   const runNow = async () => {
-    if (!window.confirm('Apagar agora o conteúdo que já passou do prazo? Isso não pode ser desfeito.')) return;
+    if (!(await confirmDialog('Apagar agora o conteúdo que já passou do prazo? Isso não pode ser desfeito.'))) return;
     setRunning(true);
     try {
       const data = await api('/retention/run', { method: 'POST' });

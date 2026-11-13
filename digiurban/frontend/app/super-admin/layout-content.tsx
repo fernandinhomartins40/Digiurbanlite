@@ -64,18 +64,18 @@ interface Group {
   items: { title: string; href: string; icon: LucideIcon }[];
 }
 
-// Menu por tarefa (auditoria de produto do super-admin, 2026-09-29)
+// Menu em quatro frentes: clientes, suporte, como a plataforma está montada e a saúde do sistema
 const GROUPS: Group[] = [
   {
     key: 'visao',
-    title: 'Visão',
+    title: 'Hoje',
     icon: LayoutDashboard,
     color: '#0A7CFF',
-    items: [{ title: 'Visão da plataforma', href: '/super-admin', icon: LayoutDashboard }],
+    items: [{ title: 'Hoje na plataforma', href: '/super-admin', icon: LayoutDashboard }],
   },
   {
     key: 'municipios',
-    title: 'Municípios',
+    title: 'Clientes',
     icon: Building2,
     color: '#2FB84F',
     items: [
@@ -96,30 +96,30 @@ const GROUPS: Group[] = [
     ],
   },
   {
-    key: 'sistema',
-    title: 'Sistema',
+    key: 'plataforma',
+    title: 'Plataforma',
     icon: SlidersHorizontal,
-    color: '#FF8A1F',
+    color: '#12B5CB',
     items: [
-      { title: 'Monitoramento', href: '/super-admin/monitoring', icon: Activity },
-      { title: 'Backups', href: '/super-admin/operations', icon: Wrench },
-      { title: 'Banco de dados', href: '/super-admin/settings/schema', icon: Database },
-      { title: 'Auditoria', href: '/super-admin/audit', icon: FileText },
       { title: 'IA', href: '/super-admin/ia', icon: Bot },
       { title: 'Chaves de API', href: '/super-admin/ia/chaves', icon: KeyRound },
       { title: 'Mapas (Google)', href: '/super-admin/mapas', icon: MapIcon },
+      { title: 'E-mail (envio)', href: '/super-admin/email', icon: Mail },
+      { title: 'Modelos de e-mail', href: '/super-admin/email-templates', icon: ScrollText },
       { title: 'Apps nativos', href: '/super-admin/apps-nativos', icon: Smartphone },
       { title: 'Privacidade', href: '/super-admin/privacidade', icon: ShieldCheck },
     ],
   },
   {
-    key: 'email',
-    title: 'E-mail',
-    icon: Mail,
-    color: '#12B5CB',
+    key: 'sistema',
+    title: 'Saúde do sistema',
+    icon: Activity,
+    color: '#FF8A1F',
     items: [
-      { title: 'Envio pelo VeloMail', href: '/super-admin/email', icon: LayoutDashboard },
-      { title: 'Modelos', href: '/super-admin/email-templates', icon: ScrollText },
+      { title: 'Monitoramento', href: '/super-admin/monitoring', icon: Activity },
+      { title: 'Backups', href: '/super-admin/operations', icon: Wrench },
+      { title: 'Auditoria', href: '/super-admin/audit', icon: FileText },
+      { title: 'Banco de dados', href: '/super-admin/settings/schema', icon: Database },
     ],
   },
 ];

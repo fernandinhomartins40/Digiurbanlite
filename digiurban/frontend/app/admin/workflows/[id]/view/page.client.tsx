@@ -1,4 +1,5 @@
 'use client'
+import { confirmDialog } from '@/lib/dialogs'
 
 import { useState, useEffect, useCallback } from 'react'
 import { useParams, useRouter } from 'next/navigation'
@@ -67,7 +68,7 @@ export default function WorkflowViewPage() {
 
   const handleDelete = async () => {
     if (!workflow) return
-    if (!confirm(`Deletar o workflow "${workflow.name}"?`)) return
+    if (!(await confirmDialog(`Deletar o workflow "${workflow.name}"?`))) return
     try {
       await apiRequest(`/service-workflows/service/${workflow.serviceId}`, { method: 'DELETE' })
       toast({ title: 'Workflow deletado' })
@@ -100,7 +101,7 @@ export default function WorkflowViewPage() {
     return (
       <div className="p-6 text-center">
         <AlertCircle className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
-        <h2 className="text-xl font-semibold mb-2">Workflow não encontrado</h2>
+        <h2 className="text-xl font-semibold mb-2">Etapas não encontradas</h2>
         <Button variant="outline" onClick={() => router.push('/admin/workflows')}><ArrowLeft className="h-4 w-4 mr-2" />Voltar</Button>
       </div>
     )

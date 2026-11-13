@@ -1,4 +1,5 @@
 'use client';
+import { notify } from '@/lib/dialogs'
 
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
@@ -95,7 +96,7 @@ export default function NovaEquipeESF() {
     e.preventDefault();
 
     if (!formData.ine || !formData.nome || !formData.tipo || !formData.unidadeId || !formData.teamId) {
-      alert('Preencha todos os campos obrigatórios');
+      notify('Preencha todos os campos obrigatórios');
       return;
     }
 
@@ -110,7 +111,7 @@ export default function NovaEquipeESF() {
 
       if (!response.ok) {
         const error = await response.json();
-        alert(error.error || 'Erro ao criar equipe');
+        notify(error.error || 'Erro ao criar equipe');
         return;
       }
 
@@ -118,7 +119,7 @@ export default function NovaEquipeESF() {
       router.push(`/admin/apps/saude/cadastros/equipes/${equipe.id}/microareas`);
     } catch (error) {
       console.error('Erro ao criar equipe:', error);
-      alert('Erro ao criar equipe');
+      notify('Erro ao criar equipe');
     } finally {
       setLoading(false);
     }

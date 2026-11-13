@@ -1,3 +1,4 @@
+import { notify } from '@/lib/dialogs'
 /**
  * Hook para buscar e processar dados consolidados
  * Filtra apenas protocolos CONCLUÍDOS e transforma em registros consultáveis
@@ -84,7 +85,7 @@ export function useConsolidatedData({ protocols, config }: UseConsolidatedDataPr
     handleExportCard: async (record: ConsolidatedRecord) => {
       // TODO: Implementar exportação de ficha individual (PDF)
       console.log('Exportar ficha:', record);
-      alert('Funcionalidade de exportação será implementada em breve');
+      notify('Funcionalidade de exportação será implementada em breve');
     },
 
     handleExportAll: async () => {
@@ -116,19 +117,19 @@ export function useConsolidatedData({ protocols, config }: UseConsolidatedDataPr
     handleExportAttendance: async () => {
       // TODO: Exportar lista de presença (PDF formatado)
       console.log('Exportar lista de presença');
-      alert('Funcionalidade será implementada em breve');
+      notify('Funcionalidade será implementada em breve');
     },
 
     handleSendBulkEmail: async (records: ConsolidatedRecord[]) => {
       // TODO: Enviar email em massa
       console.log('Enviar email para:', records);
-      alert(`Enviar email para ${records.length} inscritos?`);
+      notify(`Enviar email para ${records.length} inscritos?`);
     },
 
     handleGenerateCertificates: async (records: ConsolidatedRecord[]) => {
       // TODO: Gerar certificados
       console.log('Gerar certificados para:', records);
-      alert(`Gerar certificados para ${records.length} aprovados?`);
+      notify(`Gerar certificados para ${records.length} aprovados?`);
     },
 
     handleFilterStatus: (status: string) => {
@@ -138,13 +139,13 @@ export function useConsolidatedData({ protocols, config }: UseConsolidatedDataPr
     handleExportMap: async () => {
       // TODO: Exportar mapa com marcadores
       console.log('Exportar mapa');
-      alert('Funcionalidade será implementada em breve');
+      notify('Funcionalidade será implementada em breve');
     },
 
     handleGenerateReport: async () => {
       // TODO: Gerar relatório consolidado
       console.log('Gerar relatório');
-      alert('Funcionalidade será implementada em breve');
+      notify('Funcionalidade será implementada em breve');
     },
 
     handleFilterExpiry: (filter: string) => {
@@ -154,25 +155,25 @@ export function useConsolidatedData({ protocols, config }: UseConsolidatedDataPr
     handleSendExpiryNotification: async (records: ConsolidatedRecord[]) => {
       // TODO: Enviar notificação de vencimento
       console.log('Notificar vencimento:', records);
-      alert(`Notificar ${records.length} licenças próximas ao vencimento?`);
+      notify(`Notificar ${records.length} licenças próximas ao vencimento?`);
     },
 
     handleRenewLicense: async (record: ConsolidatedRecord) => {
       // TODO: Criar novo protocolo para renovação
       console.log('Renovar licença:', record);
-      alert('Criar novo protocolo de renovação?');
+      notify('Criar novo protocolo de renovação?');
     },
 
     handleExportCalendar: async () => {
       // TODO: Exportar agenda
       console.log('Exportar agenda');
-      alert('Funcionalidade será implementada em breve');
+      notify('Funcionalidade será implementada em breve');
     },
 
     handleSendReminder: async (records: ConsolidatedRecord[]) => {
       // TODO: Enviar lembrete de agendamento
       console.log('Enviar lembrete:', records);
-      alert(`Enviar lembrete para ${records.length} agendamentos?`);
+      notify(`Enviar lembrete para ${records.length} agendamentos?`);
     },
 
     handleExport: async () => {

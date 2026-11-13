@@ -1,4 +1,5 @@
 'use client';
+import { confirmDialog } from '@/lib/dialogs'
 
 import { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
@@ -136,7 +137,7 @@ export default function EmailTemplatesPage() {
   };
 
   const handleDelete = async (template: EmailTemplate) => {
-    if (!confirm(`Tem certeza que deseja deletar o template "${template.name}"?`)) {
+    if (!(await confirmDialog(`Tem certeza que deseja deletar o template "${template.name}"?`))) {
       return;
     }
 
@@ -227,7 +228,7 @@ export default function EmailTemplatesPage() {
                   <TableHead>E-mail</TableHead>
                   <TableHead>Quando é enviado</TableHead>
                   <TableHead>Assunto</TableHead>
-                  <TableHead>Status</TableHead>
+                  <TableHead>Situação</TableHead>
                   <TableHead className="text-right">Ações</TableHead>
                 </TableRow>
               </TableHeader>

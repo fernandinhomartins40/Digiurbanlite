@@ -1,4 +1,5 @@
 'use client'
+import { confirmDialog } from '@/lib/dialogs'
 
 import { useState, useEffect, useCallback } from 'react'
 import { ServicosTabsNav } from '@/components/admin/services/ServicosTabsNav'
@@ -166,7 +167,7 @@ export default function ServicesManagementPage() {
 
   // Desativar serviço
   const deleteService = async (serviceId: string) => {
-    if (!confirm('Tem certeza que deseja desativar este serviço?')) return
+    if (!(await confirmDialog('Tem certeza que deseja desativar este serviço?'))) return
 
     try {
       await apiRequest(`/api/services/${serviceId}`, {
@@ -569,7 +570,7 @@ export default function ServicesManagementPage() {
                 </div>
 
                 <div>
-                  <Label className="text-xs sm:text-sm text-gray-600">Status</Label>
+                  <Label className="text-xs sm:text-sm text-gray-600">Situação</Label>
                   <div className="mt-1">
                     <Badge variant={selectedService.isActive ? "default" : "secondary"} className="text-xs">
                       {selectedService.isActive ? 'Ativo' : 'Inativo'}

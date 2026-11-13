@@ -8,7 +8,7 @@
  */
 
 import { useEffect, useState } from 'react';
-import { FileText, Folder, Home, Menu, Sparkles } from 'lucide-react';
+import { FileText, Folder, Home, Sparkles, User } from 'lucide-react';
 import { useCitizenAuth } from '@/contexts/CitizenAuthContext';
 import { GlassTabBar } from '@/components/liquid-glass/GlassTabBar';
 
@@ -46,9 +46,9 @@ export function BottomNavigation({ hideOnDesktop = false }: { hideOnDesktop?: bo
         { key: 'pedidos', label: 'Pedidos', href: '/cidadao/protocolos', icon: Folder, badge: awaiting },
         {
           key: 'mais',
-          label: 'Mais',
+          label: 'Eu',
           href: '/cidadao/mais',
-          icon: Menu,
+          icon: User,
           alsoActiveOn: ['/cidadao/perfil', '/cidadao/familia', '/cidadao/documentos', '/cidadao/biometria-facial'],
         },
       ]}

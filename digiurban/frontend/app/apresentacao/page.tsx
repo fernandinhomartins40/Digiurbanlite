@@ -1,4 +1,5 @@
 'use client';
+import { notify } from '@/lib/dialogs'
 
 import { useState, useCallback, useEffect } from 'react';
 import Link from 'next/link';
@@ -1647,7 +1648,7 @@ export default function ApresentacaoPage() {
       window.URL.revokeObjectURL(url);
     } catch (error) {
       console.error('Erro ao exportar PDF:', error);
-      alert('Erro ao exportar apresentação em PDF. Verifique se o servidor está rodando.');
+      notify('Erro ao exportar apresentação em PDF. Verifique se o servidor está rodando.');
     } finally {
       setExporting(false);
     }

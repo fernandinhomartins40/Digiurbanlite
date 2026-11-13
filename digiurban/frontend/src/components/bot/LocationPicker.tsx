@@ -1,4 +1,5 @@
 'use client';
+import { notify } from '@/lib/dialogs'
 
 import React, { useState } from 'react';
 import { MapPin, Navigation, Edit3 } from 'lucide-react';
@@ -45,7 +46,7 @@ export function LocationPicker({
     setMode('loading');
 
     if (!navigator.geolocation) {
-      alert('Geolocalização não suportada pelo navegador');
+      notify('Geolocalização não suportada pelo navegador');
       setMode('select');
       return;
     }
@@ -63,7 +64,7 @@ export function LocationPicker({
         setMode('select');
       },
       error => {
-        alert('Erro ao obter localização: ' + error.message);
+        notify('Erro ao obter localização: ' + error.message);
         setMode('select');
       }
     );

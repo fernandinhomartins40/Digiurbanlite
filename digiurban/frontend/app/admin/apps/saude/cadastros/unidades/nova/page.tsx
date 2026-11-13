@@ -1,4 +1,5 @@
 'use client';
+import { notify } from '@/lib/dialogs'
 
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
@@ -68,12 +69,12 @@ export default function NovaUnidade() {
     e.preventDefault();
 
     if (!formData.nome) {
-      alert('Nome é obrigatório');
+      notify('Nome é obrigatório');
       return;
     }
 
     if (!formData.organizationalUnitId) {
-      alert('Selecione o setor/unidade organizacional');
+      notify('Selecione o setor/unidade organizacional');
       return;
     }
 
@@ -87,15 +88,15 @@ export default function NovaUnidade() {
       });
 
       if (response.ok) {
-        alert('Unidade criada com sucesso!');
+        notify('Unidade criada com sucesso!');
         router.push('/admin/apps/saude/cadastros/unidades');
       } else {
         const error = await response.json();
-        alert(`Erro: ${error.error || 'Falha ao criar unidade'}`);
+        notify(`Erro: ${error.error || 'Falha ao criar unidade'}`);
       }
     } catch (error) {
       console.error('Erro ao criar unidade:', error);
-      alert('Erro ao criar unidade');
+      notify('Erro ao criar unidade');
     } finally {
       setLoading(false);
     }

@@ -469,7 +469,7 @@ export function ProtocolDocumentsManager({
               ) : null}
 
               <div className="space-y-2">
-                <Label htmlFor="template-select">Template</Label>
+                <Label htmlFor="template-select">Modelo</Label>
                 <select
                   id="template-select"
                   className="h-10 w-full rounded-md border border-gray-300 bg-white px-3 text-sm"

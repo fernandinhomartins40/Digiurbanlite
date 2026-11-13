@@ -1,4 +1,5 @@
 'use client'
+import { confirmDialog, notify } from '@/lib/dialogs'
 
 import { useState, useEffect, useCallback } from 'react'
 import { useAdminAuth } from '@/contexts/AdminAuthContext'
@@ -363,7 +364,7 @@ export default function RelatoriosPage() {
       setActiveTab('meus-relatorios')
     } catch (error) {
       console.error('Erro ao criar relatório:', error)
-      alert('Erro ao criar relatório do template')
+      notify('Erro ao criar relatório do template')
     } finally {
       setIsCreatingFromTemplate(false)
     }
@@ -391,7 +392,7 @@ export default function RelatoriosPage() {
       setIsEditDialogOpen(false)
     } catch (error) {
       console.error('Erro ao atualizar relatório:', error)
-      alert('Erro ao atualizar relatório')
+      notify('Erro ao atualizar relatório')
     }
   }
 
@@ -446,7 +447,7 @@ export default function RelatoriosPage() {
       resetExecuteForm()
     } catch (error) {
       console.error('Erro ao executar relatório:', error)
-      alert('Erro ao executar relatório')
+      notify('Erro ao executar relatório')
     } finally {
       setIsExecuting(false)
     }
@@ -484,7 +485,7 @@ export default function RelatoriosPage() {
       await fetchReports()
     } catch (error) {
       console.error('Erro ao executar relatório:', error)
-      alert('Erro ao executar relatório')
+      notify('Erro ao executar relatório')
     } finally {
       setIsExecuting(false)
     }
@@ -493,7 +494,7 @@ export default function RelatoriosPage() {
   // ====================== DELETAR ======================
 
   const deleteReport = async (id: string) => {
-    if (!confirm('Tem certeza que deseja deletar este relatório?')) return
+    if (!(await confirmDialog('Tem certeza que deseja deletar este relatório?'))) return
 
     try {
       const response = await fetch(`${API_URL}/admin/relatorios/${id}`, {
@@ -507,7 +508,7 @@ export default function RelatoriosPage() {
       await fetchReports()
     } catch (error) {
       console.error('Erro ao deletar relatório:', error)
-      alert('Erro ao deletar relatório')
+      notify('Erro ao deletar relatório')
     }
   }
 
@@ -756,7 +757,7 @@ export default function RelatoriosPage() {
 
               <div className="grid grid-cols-2 gap-3">
                 <div className="grid gap-1.5">
-                  <Label className="text-xs">Status</Label>
+                  <Label className="text-xs">Situação</Label>
                   <Select
                     value={executeData.filterStatus}
                     onValueChange={(value) => setExecuteData({ ...executeData, filterStatus: value })}

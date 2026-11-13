@@ -55,7 +55,7 @@ export function ProtocolStagesTab({ protocolId, stages, onRefresh, onCreatePendi
   return (
     <div className="space-y-4">
       <div className="flex items-center gap-2">
-        <h3 className="text-lg font-semibold">Workflow / Etapas</h3>
+        <h3 className="text-lg font-semibold">Etapas</h3>
       </div>
 
       {currentStage && (

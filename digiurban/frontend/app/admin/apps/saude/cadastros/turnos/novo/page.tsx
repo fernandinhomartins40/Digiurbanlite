@@ -1,4 +1,5 @@
 'use client';
+import { notify } from '@/lib/dialogs'
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
@@ -24,7 +25,7 @@ export default function NovoTurno() {
     e.preventDefault();
 
     if (!formData.nome || !formData.horaInicio || !formData.horaFim) {
-      alert('Nome, horário de início e fim são obrigatórios');
+      notify('Nome, horário de início e fim são obrigatórios');
       return;
     }
 
@@ -38,15 +39,15 @@ export default function NovoTurno() {
       });
 
       if (response.ok) {
-        alert('Turno criado com sucesso!');
+        notify('Turno criado com sucesso!');
         router.push('/admin/apps/saude/cadastros/turnos');
       } else {
         const error = await response.json();
-        alert(`Erro: ${error.error || 'Falha ao criar turno'}`);
+        notify(`Erro: ${error.error || 'Falha ao criar turno'}`);
       }
     } catch (error) {
       console.error('Erro ao criar turno:', error);
-      alert('Erro ao criar turno');
+      notify('Erro ao criar turno');
     } finally {
       setLoading(false);
     }

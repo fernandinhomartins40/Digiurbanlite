@@ -131,7 +131,7 @@ export function GenericTableView({ config, data }: GenericTableViewProps) {
                       </th>
                     ))}
                     <th className="p-3 text-left font-medium text-sm">Data Aprovação</th>
-                    <th className="p-3 text-left font-medium text-sm">Status</th>
+                    <th className="p-3 text-left font-medium text-sm">Situação</th>
                     <th className="p-3 text-left font-medium text-sm">Ações</th>
                   </tr>
                 </thead>

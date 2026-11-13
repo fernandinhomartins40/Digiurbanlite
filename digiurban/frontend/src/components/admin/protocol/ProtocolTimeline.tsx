@@ -1,4 +1,5 @@
 'use client'
+import { notify } from '@/lib/dialogs'
 
 import { useMemo } from 'react'
 import { Card, CardContent } from '@/components/ui/card'
@@ -334,7 +335,7 @@ export function ProtocolTimeline({
       window.URL.revokeObjectURL(url)
     } catch (error: any) {
       console.error('Erro ao exportar timeline:', error)
-      alert('Erro ao exportar timeline em PDF')
+      notify('Erro ao exportar timeline em PDF')
     }
   }
 

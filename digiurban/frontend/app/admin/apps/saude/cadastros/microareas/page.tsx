@@ -1,4 +1,5 @@
 'use client';
+import { confirmDialog, notify } from '@/lib/dialogs'
 
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
@@ -100,7 +101,7 @@ export default function MicroareasListagem() {
   };
 
   const handleDelete = async (id: string, numero: string) => {
-    if (!confirm(`Deseja realmente desativar a microárea ${numero}?`)) return;
+    if (!(await confirmDialog(`Deseja realmente desativar a microárea ${numero}?`))) return;
 
     try {
       const response = await fetch(`/api/apps/saude/cadastros/microareas/${id}`, {
@@ -110,15 +111,15 @@ export default function MicroareasListagem() {
 
       if (!response.ok) {
         const error = await response.json();
-        alert(error.error || 'Erro ao desativar microárea');
+        notify(error.error || 'Erro ao desativar microárea');
         return;
       }
 
-      alert('Microárea desativada com sucesso!');
+      notify('Microárea desativada com sucesso!');
       loadMicroareas();
     } catch (error) {
       console.error('Erro ao desativar microárea:', error);
-      alert('Erro ao desativar microárea');
+      notify('Erro ao desativar microárea');
     }
   };
 
@@ -157,7 +158,7 @@ export default function MicroareasListagem() {
           <CardContent className="pt-6">
             <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
               <div>
-                <label className="text-sm font-medium mb-2 block">Status</label>
+                <label className="text-sm font-medium mb-2 block">Situação</label>
                 <Select value={filtroStatus} onValueChange={setFiltroStatus}>
                   <SelectTrigger>
                     <SelectValue />
@@ -295,7 +296,7 @@ export default function MicroareasListagem() {
                       <TableHead>Unidade</TableHead>
                       <TableHead>ACS Responsável</TableHead>
                       <TableHead className="text-center">Famílias</TableHead>
-                      <TableHead>Status</TableHead>
+                      <TableHead>Situação</TableHead>
                       <TableHead className="text-right">Ações</TableHead>
                     </TableRow>
                   </TableHeader>

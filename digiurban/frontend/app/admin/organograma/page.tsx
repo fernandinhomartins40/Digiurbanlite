@@ -1,4 +1,5 @@
 'use client';
+import { notify } from '@/lib/dialogs'
 
 import { useState, useEffect, useCallback } from 'react';
 import { Card } from '@/components/ui/card';
@@ -276,7 +277,7 @@ export default function OrganogramaPage() {
       });
       await fetchOrganogram();
     } catch (err: any) {
-      alert(err.message || 'Erro ao sincronizar secretaria raiz');
+      notify(err.message || 'Erro ao sincronizar secretaria raiz');
     } finally {
       setSyncingRoot(false);
     }
@@ -306,7 +307,7 @@ export default function OrganogramaPage() {
       setCreateModalOpen(false);
       fetchOrganogram();
     } catch (err: any) {
-      alert(err.message || 'Erro ao criar unidade');
+      notify(err.message || 'Erro ao criar unidade');
     } finally {
       setSaving(false);
     }
@@ -331,7 +332,7 @@ export default function OrganogramaPage() {
       setEditModalOpen(false);
       fetchOrganogram();
     } catch (err: any) {
-      alert(err.message || 'Erro ao atualizar unidade');
+      notify(err.message || 'Erro ao atualizar unidade');
     } finally {
       setSaving(false);
     }
@@ -347,7 +348,7 @@ export default function OrganogramaPage() {
       setDeleteConfirmOpen(false);
       fetchOrganogram();
     } catch (err: any) {
-      alert(err.message || 'Erro ao desativar unidade');
+      notify(err.message || 'Erro ao desativar unidade');
     } finally {
       setSaving(false);
     }

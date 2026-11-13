@@ -138,7 +138,7 @@ export function DepartmentManagementForm({
             </div>
 
             <div className="space-y-2">
-              <Label>Status</Label>
+              <Label>Situação</Label>
               <Select
                 value={formData.isActive}
                 onValueChange={(value) =>

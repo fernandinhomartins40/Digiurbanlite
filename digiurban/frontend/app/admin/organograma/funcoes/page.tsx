@@ -1,4 +1,5 @@
 'use client';
+import { notify } from '@/lib/dialogs'
 
 import { useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
@@ -134,7 +135,7 @@ export default function FuncoesPage() {
       setSelectedFuncao(null);
       void loadFuncoes();
     } catch (deleteError) {
-      alert(deleteError instanceof Error ? deleteError.message : 'Erro ao desativar função');
+      notify(deleteError instanceof Error ? deleteError.message : 'Erro ao desativar função');
     } finally {
       setSaving(false);
     }

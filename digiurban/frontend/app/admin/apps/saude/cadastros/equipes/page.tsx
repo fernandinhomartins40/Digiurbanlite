@@ -1,4 +1,5 @@
 'use client';
+import { confirmDialog, notify } from '@/lib/dialogs'
 
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
@@ -67,7 +68,7 @@ export default function EquipesESFListagem() {
   };
 
   const handleDelete = async (id: string, nome: string) => {
-    if (!confirm(`Deseja realmente desativar a equipe "${nome}"?`)) return;
+    if (!(await confirmDialog(`Deseja realmente desativar a equipe "${nome}"?`))) return;
 
     try {
       const response = await fetch(`/api/apps/saude/cadastros/equipes/${id}`, {
@@ -77,14 +78,14 @@ export default function EquipesESFListagem() {
 
       if (!response.ok) {
         const error = await response.json();
-        alert(error.error || 'Erro ao desativar equipe');
+        notify(error.error || 'Erro ao desativar equipe');
         return;
       }
 
       loadEquipes();
     } catch (error) {
       console.error('Erro ao desativar equipe:', error);
-      alert('Erro ao desativar equipe');
+      notify('Erro ao desativar equipe');
     }
   };
 
@@ -193,7 +194,7 @@ export default function EquipesESFListagem() {
           <CardHeader>
             <div className="flex items-center gap-4">
               <div className="flex-1">
-                <label className="text-sm font-medium text-gray-700 mb-2 block">Status</label>
+                <label className="text-sm font-medium text-gray-700 mb-2 block">Situação</label>
                 <Select value={filtroStatus} onValueChange={setFiltroStatus}>
                   <SelectTrigger>
                     <SelectValue />
@@ -233,7 +234,7 @@ export default function EquipesESFListagem() {
                       <TableHead className="text-center">Profissionais</TableHead>
                       <TableHead className="text-center">Microáreas</TableHead>
                       <TableHead className="text-center">Cidadãos</TableHead>
-                      <TableHead>Status</TableHead>
+                      <TableHead>Situação</TableHead>
                       <TableHead className="text-right">Ações</TableHead>
                     </TableRow>
                   </TableHeader>

@@ -1,4 +1,5 @@
 'use client';
+import { notify } from '@/lib/dialogs'
 
 import { useEffect, useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
@@ -82,7 +83,7 @@ export default function ProntuarioPage() {
 
   const registrarVacina = async () => {
     if (!novaVacina.vacina || !novaVacina.dose) {
-      alert('Informe a vacina e a dose');
+      notify('Informe a vacina e a dose');
       return;
     }
     setSalvandoVacina(true);
@@ -107,7 +108,7 @@ export default function ProntuarioPage() {
       });
       await loadImunizacoes(params.id as string);
     } catch (error: any) {
-      alert(String(error?.message || error));
+      notify(String(error?.message || error));
     } finally {
       setSalvandoVacina(false);
     }

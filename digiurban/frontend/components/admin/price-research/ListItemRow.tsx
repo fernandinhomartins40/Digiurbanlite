@@ -1,4 +1,5 @@
 'use client'
+import { confirmDialog } from '@/lib/dialogs'
 
 /**
  * Um item da lista de compras: uma linha simples (produto, quantidade, preço,
@@ -81,7 +82,7 @@ export function ListItemRow({ item, readOnly, startOpen, onChanged, onAttach }: 
   }
 
   const remove = async () => {
-    if (!window.confirm(`Tirar "${item.description}" da lista?`)) return
+    if (!(await confirmDialog(`Tirar "${item.description}" da lista?`))) return
     try {
       await apiRequest(`/prices/items/${item.id}`, { method: 'DELETE' })
       onChanged()

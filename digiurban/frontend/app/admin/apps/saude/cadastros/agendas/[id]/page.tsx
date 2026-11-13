@@ -1,4 +1,5 @@
 'use client';
+import { notify } from '@/lib/dialogs'
 
 import { useState, useEffect } from 'react';
 import { useRouter, useParams } from 'next/navigation';
@@ -115,7 +116,7 @@ export default function EditarAgenda() {
       });
     } catch (error) {
       console.error('Erro ao carregar agenda:', error);
-      alert('Erro ao carregar dados da agenda');
+      notify('Erro ao carregar dados da agenda');
       router.push('/admin/apps/saude/cadastros/agendas');
     } finally {
       setLoadingData(false);
@@ -155,7 +156,7 @@ export default function EditarAgenda() {
     e.preventDefault();
 
     if (!formData.dataInicio) {
-      alert('Data de início é obrigatória');
+      notify('Data de início é obrigatória');
       return;
     }
 
@@ -179,15 +180,15 @@ export default function EditarAgenda() {
       });
 
       if (response.ok) {
-        alert('Agenda atualizada com sucesso!');
+        notify('Agenda atualizada com sucesso!');
         router.push('/admin/apps/saude/cadastros/agendas');
       } else {
         const error = await response.json();
-        alert(`Erro: ${error.error || 'Falha ao atualizar agenda'}`);
+        notify(`Erro: ${error.error || 'Falha ao atualizar agenda'}`);
       }
     } catch (error) {
       console.error('Erro ao atualizar agenda:', error);
-      alert('Erro ao atualizar agenda');
+      notify('Erro ao atualizar agenda');
     } finally {
       setLoading(false);
     }
@@ -364,7 +365,7 @@ export default function EditarAgenda() {
 
                 {/* Status */}
                 <div className="col-span-2">
-                  <Label htmlFor="isActive">Status</Label>
+                  <Label htmlFor="isActive">Situação</Label>
                   <Select
                     value={formData.isActive ? 'true' : 'false'}
                     onValueChange={(value) => setFormData({ ...formData, isActive: value === 'true' })}

@@ -293,7 +293,7 @@ export function CentralAgendaEventModal({
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
-              <Label>Status</Label>
+              <Label>Situação</Label>
               <Select
                 value={formData.status}
                 onValueChange={(value: CentralCalendarEventStatus) =>

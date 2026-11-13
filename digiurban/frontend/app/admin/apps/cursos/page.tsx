@@ -1,4 +1,5 @@
 'use client';
+import { confirmDialog } from '@/lib/dialogs'
 
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -254,8 +255,8 @@ export default function CursosPage() {
                       size="sm"
                       className="bg-green-600 hover:bg-green-700"
                       disabled={salvando}
-                      onClick={() => {
-                        if (!window.confirm(`Concluir "${c.nome}"? Cada inscrito recebe o resultado (pela frequência) e o pedido é encerrado.`)) return;
+                      onClick={async () => {
+                        if (!(await confirmDialog(`Concluir "${c.nome}"? Cada inscrito recebe o resultado (pela frequência) e o pedido é encerrado.`))) return;
                         executar(() => enviar(`/cursos/${c.id}/concluir`), (r) => `Curso concluído: ${r?.concluiram ?? 0} de ${r?.inscritos ?? 0} concluíram`);
                       }}
                     >

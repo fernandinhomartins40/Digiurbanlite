@@ -1,4 +1,5 @@
 'use client';
+import { confirmDialog } from '@/lib/dialogs'
 
 /**
  * Backups do banco (plataforma).
@@ -93,7 +94,7 @@ export default function OperationsPage() {
   };
 
   const handleDeleteBackup = async (fileName: string) => {
-    if (!confirm(`Excluir o backup "${fileName}"? Esta ação não pode ser desfeita.`)) return;
+    if (!(await confirmDialog(`Excluir o backup "${fileName}"? Esta ação não pode ser desfeita.`))) return;
     try {
       const response = await fetch(`/api/platform/system/backup/${encodeURIComponent(fileName)}`, { method: 'DELETE' });
       if (!response.ok) throw new Error();

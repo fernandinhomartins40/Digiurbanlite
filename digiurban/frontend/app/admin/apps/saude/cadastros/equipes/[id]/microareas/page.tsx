@@ -1,4 +1,5 @@
 'use client';
+import { confirmDialog, notify } from '@/lib/dialogs'
 
 import { useState, useEffect } from 'react';
 import { useRouter, useParams } from 'next/navigation';
@@ -149,7 +150,7 @@ export default function MicroareasEquipePage() {
     e.preventDefault();
 
     if (!formData.numero) {
-      alert('Informe o número da microárea');
+      notify('Informe o número da microárea');
       return;
     }
 
@@ -170,7 +171,7 @@ export default function MicroareasEquipePage() {
 
       if (!response.ok) {
         const error = await response.json();
-        alert(error.error || 'Erro ao salvar microárea');
+        notify(error.error || 'Erro ao salvar microárea');
         return;
       }
 
@@ -178,12 +179,12 @@ export default function MicroareasEquipePage() {
       loadMicroareas();
     } catch (error) {
       console.error('Erro ao salvar microárea:', error);
-      alert('Erro ao salvar microárea');
+      notify('Erro ao salvar microárea');
     }
   };
 
   const handleDelete = async (id: string, numero: string) => {
-    if (!confirm(`Deseja realmente desativar a microárea ${numero}?`)) return;
+    if (!(await confirmDialog(`Deseja realmente desativar a microárea ${numero}?`))) return;
 
     try {
       const response = await fetch(`/api/apps/saude/cadastros/microareas/${id}`, {
@@ -193,14 +194,14 @@ export default function MicroareasEquipePage() {
 
       if (!response.ok) {
         const error = await response.json();
-        alert(error.error || 'Erro ao desativar microárea');
+        notify(error.error || 'Erro ao desativar microárea');
         return;
       }
 
       loadMicroareas();
     } catch (error) {
       console.error('Erro ao desativar microárea:', error);
-      alert('Erro ao desativar microárea');
+      notify('Erro ao desativar microárea');
     }
   };
 
@@ -361,7 +362,7 @@ export default function MicroareasEquipePage() {
                       <TableHead>Descrição</TableHead>
                       <TableHead>ACS Responsável</TableHead>
                       <TableHead className="text-center">Cidadãos</TableHead>
-                      <TableHead>Status</TableHead>
+                      <TableHead>Situação</TableHead>
                       <TableHead className="text-right">Ações</TableHead>
                     </TableRow>
                   </TableHeader>

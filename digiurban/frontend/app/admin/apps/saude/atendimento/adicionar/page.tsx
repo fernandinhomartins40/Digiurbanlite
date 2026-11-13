@@ -1,4 +1,5 @@
 'use client';
+import { notify } from '@/lib/dialogs'
 
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
@@ -94,12 +95,12 @@ export default function AdicionarCidadaoListaPage() {
     e.preventDefault();
 
     if (!selectedCidadao) {
-      alert('Selecione um cidadão antes de continuar');
+      notify('Selecione um cidadão antes de continuar');
       return;
     }
 
     if (!unidadeSelecionada?.id) {
-      alert('Selecione uma unidade antes de continuar');
+      notify('Selecione uma unidade antes de continuar');
       return;
     }
 
@@ -109,7 +110,7 @@ export default function AdicionarCidadaoListaPage() {
     if (fluxo === 'ESF') {
       // Em modo ESF, precisa ter equipe vinculada
       if (!formData.equipeId && !selectedCidadao.equipeId) {
-        alert(
+        notify(
           'Este cidadão não está vinculado a nenhuma equipe ESF. ' +
           'Por favor, vincule o cidadão a uma equipe antes de adicionar à lista.'
         );
@@ -118,7 +119,7 @@ export default function AdicionarCidadaoListaPage() {
     } else {
       // Em modo TRADICIONAL, precisa selecionar profissional
       if (!formData.profissionalId) {
-        alert('Selecione um profissional de saúde');
+        notify('Selecione um profissional de saúde');
         return;
       }
     }
@@ -162,18 +163,18 @@ export default function AdicionarCidadaoListaPage() {
 
       // Mensagem de sucesso diferente por tipo de fluxo
       if (fluxo === 'ESF') {
-        alert(`Cidadão adicionado à fila da equipe com sucesso!\nPróximo passo: Acolhimento`);
+        notify(`Cidadão adicionado à fila da equipe com sucesso!\nPróximo passo: Acolhimento`);
       } else if (unidadeDetalhes?.tipo === 'UPA') {
-        alert(`Cidadão adicionado à fila com sucesso!\nPróximo passo: Classificação de Risco (Manchester)`);
+        notify(`Cidadão adicionado à fila com sucesso!\nPróximo passo: Classificação de Risco (Manchester)`);
       } else {
-        alert(`Cidadão adicionado à fila com sucesso!\nPróximo passo: Acolhimento`);
+        notify(`Cidadão adicionado à fila com sucesso!\nPróximo passo: Acolhimento`);
       }
 
       // Redirecionar para lista de atendimentos
       router.push('/admin/apps/saude/atendimento');
     } catch (error: any) {
       console.error('Erro ao adicionar cidadão à lista:', error);
-      alert(`Erro ao adicionar cidadão à lista: ${error.message}`);
+      notify(`Erro ao adicionar cidadão à lista: ${error.message}`);
     } finally {
       setLoading(false);
     }

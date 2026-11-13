@@ -1,4 +1,5 @@
 'use client';
+import { confirmDialog } from '@/lib/dialogs'
 
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
@@ -35,7 +36,7 @@ export default function SalasListagem() {
   };
 
   const handleDelete = async (id: string) => {
-    if (!confirm('Deseja realmente desativar esta sala?')) return;
+    if (!(await confirmDialog('Deseja realmente desativar esta sala?'))) return;
 
     try {
       await fetch(`/api/apps/saude/cadastros/salas/${id}`, {
@@ -118,7 +119,7 @@ export default function SalasListagem() {
                     <TableHead>Tipo</TableHead>
                     <TableHead>Unidade</TableHead>
                     <TableHead>Capacidade</TableHead>
-                    <TableHead>Status</TableHead>
+                    <TableHead>Situação</TableHead>
                     <TableHead>Ações</TableHead>
                   </TableRow>
                 </TableHeader>

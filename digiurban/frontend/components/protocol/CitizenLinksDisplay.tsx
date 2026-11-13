@@ -1,4 +1,5 @@
 'use client'
+import { confirmDialog } from '@/lib/dialogs'
 
 import { useState, useEffect } from 'react'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
@@ -156,7 +157,7 @@ export function CitizenLinksDisplay({
   const handleRemoveLink = async (linkId: string) => {
     if (!linkId) return
 
-    if (!confirm('Tem certeza que deseja remover este vínculo?')) {
+    if (!(await confirmDialog('Tem certeza que deseja remover este vínculo?'))) {
       return
     }
 

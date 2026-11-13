@@ -1,4 +1,5 @@
 'use client'
+import { confirmDialog } from '@/lib/dialogs'
 
 /**
  * Fluxos e responsáveis do processo interno (administrador).
@@ -117,7 +118,7 @@ export default function ConfigurarProcessosPage() {
   }
 
   const resetType = async (type: TypeRow) => {
-    if (!window.confirm(`Voltar "${type.name}" ao padrão da lei? As suas mudanças nesse fluxo se perdem (processos já abertos não mudam).`)) return
+    if (!(await confirmDialog(`Voltar "${type.name}" ao padrão da lei? As suas mudanças nesse fluxo se perdem (processos já abertos não mudam).`))) return
     try {
       await apiRequest(`/internal-processes/flow-types/${type.id}/custom`, { method: 'DELETE' })
       toast({ title: 'Fluxo de volta ao padrão da lei' })

@@ -580,7 +580,7 @@ export function ProtocolStageHistorySection({
                     </div>
                     <div className="space-y-3">
                       <div className="space-y-2">
-                        <Label>Template</Label>
+                        <Label>Modelo</Label>
                         <select
                           className="h-10 w-full rounded-md border border-input bg-background px-3 text-sm"
                           value={draft.templateId}
