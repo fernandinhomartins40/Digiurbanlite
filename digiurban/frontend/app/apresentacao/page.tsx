@@ -332,7 +332,7 @@ function SlideProblema() {
             <div className="w-10 h-10 rounded-full bg-[#0fffbf]/20 flex items-center justify-center mr-3 border border-[#0fffbf]/50">
               <CheckCircle2 className="w-4 h-4 text-[#0fffbf]" />
             </div>
-            <h3 className="text-[#0fffbf] font-bold tracking-[3px] text-xs uppercase">A Solução DigiUrban</h3>
+            <h3 className="text-[#0fffbf] font-bold tracking-[3px] text-xs uppercase">O cidadão pede. A prefeitura responde. O prefeito acompanha.</h3>
           </div>
 
           <h2 className="text-[44px] font-black text-white leading-tight mb-6 tracking-tight">
@@ -371,7 +371,7 @@ function SlidePortais() {
           <div className="h-1.5 w-16 bg-[#0fffbf] mr-4 rounded-full" />
           <p className="text-xs font-bold tracking-[3px] text-slate-500 uppercase">Visão Geral</p>
         </div>
-        <h2 className="text-4xl font-black text-[#193642] tracking-tight">Os 3 Portais Integrados</h2>
+        <h2 className="text-4xl font-black text-[#193642] tracking-tight">Quem usa: o cidadão, o servidor e a plataforma</h2>
         <p className="text-xl text-slate-500 mt-2 font-light max-w-4xl">
           Uma única plataforma servindo três públicos distintos com interfaces otimizadas para cada necessidade.
         </p>
@@ -391,7 +391,7 @@ function SlidePortais() {
           <ul className="text-left w-full space-y-3 text-slate-700">
             <li className="flex items-start">
               <CheckCircle2 className="w-4 h-4 text-[#0f6fbe] mt-0.5 shrink-0" />
-              <p className="text-sm ml-2">Acesso 24/7 pelo celular, sem precisar instalar app (PWA).</p>
+              <p className="text-sm ml-2">Acesso 24/7 pelo celular: no navegador ou pelo app (Android e iPhone).</p>
             </li>
             <li className="flex items-start">
               <CheckCircle2 className="w-4 h-4 text-[#0f6fbe] mt-0.5 shrink-0" />
@@ -798,7 +798,7 @@ function SlideJornadaServidor() {
             <div className="w-8 h-8 rounded-full bg-indigo-600 text-white flex items-center justify-center font-bold text-sm shrink-0 z-10">3</div>
             <div>
               <h3 className="text-lg font-bold text-[#193642]">Execução do Serviço</h3>
-              <p className="text-sm text-slate-600 mb-2">Workflow digital completo, sem papel.</p>
+              <p className="text-sm text-slate-600 mb-2">Etapas com prazo, do começo ao fim, sem papel.</p>
               <ul className="text-xs text-slate-600 space-y-1">
                 <li className="flex items-center gap-2"><CheckCircle2 className="w-3 h-3 text-indigo-500 shrink-0" /> Atribuição de responsável</li>
                 <li className="flex items-center gap-2"><CheckCircle2 className="w-3 h-3 text-indigo-500 shrink-0" /> Registro de pendências (ex: aguarda material)</li>
@@ -855,7 +855,7 @@ function SlideModulos() {
 
   const healthCards = [
     {
-      icon: Stethoscope, title: 'Atendimento e-SUS', iconBg: 'bg-blue-50', iconColor: 'text-blue-600',
+      icon: Stethoscope, title: 'Atendimento na UBS', iconBg: 'bg-blue-50', iconColor: 'text-blue-600',
       items: ['Acolhimento / Escuta Inicial', 'Classificação de Risco (Manchester)', 'Triagem de Enfermagem', 'Painel de Chamada (TV)'],
     },
     {
@@ -930,8 +930,8 @@ function SlideModulos() {
               <Stethoscope className="w-6 h-6 text-[#0fffbf]" />
             </div>
             <div>
-              <h3 className="text-xl font-bold text-teal-900">Diferencial Competitivo: Sistema de Saúde</h3>
-              <p className="text-teal-700 text-sm">Integração completa com e-SUS e gestão hospitalar/UBS</p>
+              <h3 className="text-xl font-bold text-teal-900">Saúde no mesmo sistema</h3>
+              <p className="text-teal-700 text-sm">Atendimento na UBS, farmácia, TFD, pré-natal, odontologia e visitas domiciliares</p>
             </div>
           </div>
 
@@ -1238,7 +1238,7 @@ function SlideDiferenciais() {
 
         <div className="mb-6 relative z-10">
           <span className="text-[#0fffbf] text-xs font-bold uppercase tracking-[3px] mb-2 block">Por Baixo do Capô</span>
-          <h2 className="text-3xl font-extrabold text-white tracking-tight">Diferenciais Técnicos</h2>
+          <h2 className="text-3xl font-extrabold text-white tracking-tight">Por dentro: seguro e separado por município</h2>
           <p className="text-slate-400 text-sm mt-2">Arquitetura moderna, segura e escalável para gestão pública.</p>
         </div>
 
@@ -1412,7 +1412,7 @@ function SlideFechamento() {
           <h1 className="text-4xl font-extrabold text-[#193642] tracking-tight">
             O Legado para o <span className="text-[#0fffbf]">Município</span>
           </h1>
-          <p className="text-slate-500 mt-2 text-lg">Por que o DigiUrban transforma a gestão pública?</p>
+          <p className="text-slate-500 mt-2 text-lg">O que muda na prefeitura</p>
         </div>
 
         {/* Value Grid */}
@@ -1514,7 +1514,7 @@ function SlideROI() {
           <div>
             <div className="flex items-center mb-1.5">
               <span className="bg-[#193642] text-[#0fffbf] text-xs font-bold px-3 py-1 rounded-full uppercase tracking-wider mr-3">Comparativo</span>
-              <h3 className="text-slate-500 text-xs uppercase tracking-[3px] font-bold">DigiUrban vs. Soluções Tradicionais</h3>
+              <h3 className="text-slate-500 text-xs uppercase tracking-[3px] font-bold">Digiurban vs. Soluções Tradicionais</h3>
             </div>
             <h2 className="text-[34px] font-black text-[#193642] tracking-tight">
               Mais rápido, mais barato, <span className="text-[#0fffbf]">mais completo.</span>
@@ -1538,7 +1538,7 @@ function SlideROI() {
               <AlertTriangle className="w-3.5 h-3.5 text-red-400" /> Soluções tradicionais
             </div>
             <div className="px-6 py-3 text-xs font-bold uppercase tracking-widest text-[#0f6fbe] border-l border-slate-200 flex items-center gap-2">
-              <CheckCircle2 className="w-3.5 h-3.5 text-[#0fffbf]" /> DigiUrban
+              <CheckCircle2 className="w-3.5 h-3.5 text-[#0fffbf]" /> Digiurban
             </div>
           </div>
 
@@ -1641,7 +1641,7 @@ export default function ApresentacaoPage() {
       const url = window.URL.createObjectURL(blob);
       const link = document.createElement('a');
       link.href = url;
-      link.download = `DigiUrban_Apresentacao_Comercial.pdf`;
+      link.download = `Digiurban_Apresentacao_Comercial.pdf`;
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);

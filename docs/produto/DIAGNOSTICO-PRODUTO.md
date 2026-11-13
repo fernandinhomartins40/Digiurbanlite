@@ -245,6 +245,18 @@ Proposta:
 
 Fora desta rodada: funções novas, troca da identidade visual (o vidro fica) e acabamento do super-admin além do menu.
 
+## 6.1 O que já foi implementado (2026-11-12)
+
+| Etapa | Feito | Ficou para depois |
+|---|---|---|
+| 1 Sistema do miolo | Tabela de sentidos; um aviso só; confirmação do produto no lugar da janela do navegador (89 arquivos); título e margem de página únicos; cartão com um arredondamento | Trocar as cores fixas tela por tela (só as telas de protocolo e do cidadão leem a tabela); os quatro moldes como componentes |
+| 2 Protocolo | Cabeçalho com um botão de destaque e "Mais opções"; abas em 4 assuntos; coluna lateral sem números repetidos; lista com filtros atrás de "Filtrar" | Linha do tempo única juntando mensagens, documentos e etapas (precisa de uma consulta nova no servidor) |
+| 3 Cidadão | Pedir serviço em passos, conferência e tela "Pedido recebido"; "Aguardando você" no topo; "Mais" virou "Eu" | Juntar perfil e biometria numa tela só |
+| 4 Menus e palavras | Painel por tarefa; Cidadãos com abas; Minha conta no avatar; super-admin em 4 frentes; Situação/Prazo/Etapas/Modelo | "Status" dentro de frases e de telas de app menos usadas |
+| 5 Ficha do cidadão e Configurações | Ficha com "Abrir protocolo para esta pessoa" e níveis Bronze/Prata/Ouro; Configurações separadas em Minha conta e Prefeitura | Dividir a ficha (1.200 linhas) em arquivos |
+| 6 Venda | Frase nova; saíram números de clientes, satisfação e depoimentos; três provas do produto; apresentação sem e-SUS | Telas reais do produto no lugar das ilustrações |
+| 7 Espalhar | — | Aplicar os moldes às demais telas, por secretaria |
+
 ## 7. Decisões que são suas
 
 1. **Posicionamento.** A porta de entrada "pedidos + mesa + painel" serve para o seu mercado, ou você vende por outra frente (processo interno sem papel, Saúde)?

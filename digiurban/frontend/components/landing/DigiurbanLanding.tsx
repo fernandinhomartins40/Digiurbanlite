@@ -147,10 +147,10 @@ const HERO_ACTIONS: { label: string; icon: LucideIcon }[] = [
 ];
 
 const STATS: { value: string; label: string; icon: LucideIcon; fill?: boolean }[] = [
-  { value: '+ 250', label: 'Municípios atendidos', icon: BarChart3 },
-  { value: '+ 1,2 milhão', label: 'Cidadãos beneficiados', icon: Users, fill: true },
-  { value: '98%', label: 'Satisfação dos usuários', icon: ThumbsUp, fill: true },
-  { value: '24/7', label: 'Plataforma disponível', icon: Clock3 },
+  { value: '21', label: 'Secretarias atendidas', icon: BarChart3 },
+  { value: '+ 400', label: 'Serviços prontos para usar', icon: Users, fill: true },
+  { value: '1 app', label: 'Para Android e iPhone', icon: ThumbsUp, fill: true },
+  { value: '24/7', label: 'Pedidos a qualquer hora', icon: Clock3 },
 ];
 
 const ABOUT_FEATURES: { label: string; short: string; icon: LucideIcon }[] = [
@@ -189,24 +189,28 @@ const PHONE_ROWS: { label: string; icon: LucideIcon }[] = [
 ];
 
 const BENEFITS: { label: string; icon: LucideIcon; solid?: boolean }[] = [
-  { label: 'Redução de custos operacionais', icon: Settings },
-  { label: 'Processos mais ágeis e transparentes', icon: FileText },
-  { label: 'Dados e relatórios para melhor gestão', icon: ChartNoAxesColumnIncreasing, solid: true },
-  { label: 'Conformidade com a legislação (LGPD)', icon: ShieldPlus },
+  { label: 'Cada pedido com prazo e responsável', icon: Settings },
+  { label: 'O servidor vê o que fazer primeiro', icon: FileText },
+  { label: 'Painel do Prefeito: ver o atraso e cobrar', icon: ChartNoAxesColumnIncreasing, solid: true },
+  { label: 'Licitação guiada pela Lei 14.133 e LGPD', icon: ShieldPlus },
 ];
 
-const TESTIMONIALS = [
+/** As três provas do produto: quem pede, quem responde e quem acompanha */
+const PROOFS = [
   {
-    quote: 'O Digiurban facilitou muito a minha vida. Consegui resolver tudo pelo celular, sem precisar ir até a prefeitura.',
-    name: 'Mariana Silva',
-    role: 'Cidadã de Ribeirão - PR',
-    avatar: 'avatar-demo-feminino',
+    who: 'Para o cidadão',
+    title: 'Pede pelo celular e sabe para quando é',
+    desc: 'Cada pedido mostra a etapa, a secretaria que está com ele e a data prevista. Faltou um documento? O aviso chega no app.',
   },
   {
-    quote: 'A plataforma trouxe mais organização, transparência e agilidade para nossa gestão municipal.',
-    name: 'Carlos Mendes',
-    role: 'Prefeito de Novaes - SP',
-    avatar: 'avatar-demo-masculino',
+    who: 'Para o servidor',
+    title: 'Abre o sistema e vê o que fazer primeiro',
+    desc: 'A mesa junta pedidos, processos, assinaturas e conversas numa lista só, com o que está atrasado no topo.',
+  },
+  {
+    who: 'Para o prefeito',
+    title: 'Vê o atraso por secretaria e cobra em um toque',
+    desc: 'O painel mostra o dia do município, o mapa dos pedidos e quem precisa ser cobrado. Pode ficar aberto numa TV.',
   },
 ];
 
@@ -389,17 +393,17 @@ function Hero() {
         <div className="relative z-10 text-center md:max-w-[50%] md:pb-10 md:text-left lg:max-w-[45%] xl:max-w-[560px] lg:pb-6">
           <span className="dl-btn-ghost inline-flex items-center gap-2 rounded-full border-0 px-3.5 py-1.5 text-[12px] font-medium md:text-[12px] lg:px-4 lg:py-2 lg:text-[15px]" style={{ border: '1px solid rgba(255,255,255,0.35)' }}>
             <BarChart3 className="h-4 w-4" />
-            Cidades mais inteligentes, pessoas mais felizes
+            Governo digital para o município inteiro
           </span>
           <h1 className="mt-4 text-[34px] font-bold leading-[1.04] tracking-[-0.02em] sm:text-[40px] md:text-[34px] lg:mt-4 lg:text-[54px]">
-            Serviços públicos
+            O cidadão pede.
             <br />
-            <span className="dl-grad-text">modernos e acessíveis</span>
+            <span className="dl-grad-text">A prefeitura responde.</span>
             <br />
-            para todos
+            O prefeito acompanha.
           </h1>
           <p className="mx-auto mt-3 max-w-[460px] text-[15px] leading-[1.45] text-white/90 md:mx-0 md:text-[13.5px] lg:mt-3 lg:max-w-[540px] lg:text-[20px]">
-            Digitalize, simplifique e conecte o seu município. Com o Digiurban, o cidadão resolve suas demandas de forma rápida, segura e 100% online.
+            O pedido entra pelo celular, anda com prazo dentro da prefeitura e aparece no painel do prefeito. Tudo num sistema só.
           </p>
           <div className="mt-5 flex flex-col items-center gap-3 md:items-start lg:mt-5">
             <Link href="/cidadao/login" className="dl-btn dl-btn-teal h-[48px] w-[260px] rounded-[14px] text-[16px] md:w-auto md:px-6 lg:h-[58px] lg:px-10 lg:text-[19px]">
@@ -749,8 +753,8 @@ function Benefits() {
       <Container>
         <div className="text-center">
           <Chip>Para o seu município</Chip>
-          <h2 className="dl-h mt-2 text-[21px] sm:text-[24px] md:text-[24px] lg:text-[37px]">Mais eficiência. Mais resultados.</h2>
-          <p className="mt-1 text-[13px] sm:text-[14px] md:text-[13.5px] lg:text-[19px]">O Digiurban moderniza a gestão pública e gera impacto real na vida das pessoas.</p>
+          <h2 className="dl-h mt-2 text-[21px] sm:text-[24px] md:text-[24px] lg:text-[37px]">Prazo cumprido. Nada perdido.</h2>
+          <p className="mt-1 text-[13px] sm:text-[14px] md:text-[13.5px] lg:text-[19px]">Cada pedido tem dono e prazo, do protocolo ao painel de quem decide.</p>
         </div>
         <ul className="mt-5 grid grid-cols-2 gap-2.5 sm:grid-cols-4 md:gap-4">
           {BENEFITS.map(({ label, icon: Icon, solid }) => (
@@ -773,41 +777,22 @@ function Benefits() {
 
 function Testimonials() {
   return (
-    <section id="depoimentos" className="bg-[#eef5fd]/90 py-6 md:py-7 lg:py-7">
-      <Container className="grid gap-4 sm:grid-cols-[0.95fr_1fr_1fr] sm:items-center md:gap-5 lg:grid-cols-[1.25fr_1fr_1fr]">
-        <div>
-          <Chip>Depoimentos</Chip>
-          <h2 className="dl-h mt-2 text-[21px] md:text-[22px] lg:text-[38px]">Quem usa, recomenda</h2>
+    <section id="provas" className="bg-[#eef5fd]/90 py-6 md:py-7 lg:py-7">
+      <Container>
+        <div className="max-w-[760px]">
+          <Chip>Na prática</Chip>
+          <h2 className="dl-h mt-2 text-[21px] md:text-[22px] lg:text-[38px]">Três telas, um resultado</h2>
           <p className="mt-1.5 text-[12.5px] leading-snug md:text-[12.5px] lg:text-[19px]">
-            Histórias reais de municípios e cidadãos que já transformaram sua experiência com o Digiurban.
+            O pedido entra pelo celular, anda com prazo dentro da prefeitura e aparece no painel de quem decide.
           </p>
-          <a href={mailto('Quero conhecer mais depoimentos')} className="dl-btn dl-btn-blue mt-3 h-[38px] rounded-xl px-4 text-[13px] md:mt-4 md:h-[40px] md:px-5 md:text-[13.5px] lg:h-[50px] lg:px-8 lg:text-[17px]">
-            Ver mais depoimentos
-            <ArrowRight className="h-4 w-4" />
-          </a>
         </div>
-        <div className="grid grid-cols-2 gap-2.5 sm:contents">
-          {TESTIMONIALS.map((t) => (
-            <figure key={t.name} className="dl-card flex flex-col gap-2.5 rounded-2xl p-3 md:flex-row md:gap-4 md:p-5">
-              <Asset
-                name={t.avatar}
-                alt={`Foto de ${t.name} (demonstração)`}
-                sizes="96px"
-                className="h-12 w-12 shrink-0 rounded-full object-cover shadow-[0_4px_12px_-6px_rgba(0,0,0,0.5)] md:h-[60px] md:w-[60px] lg:h-[84px] lg:w-[84px]"
-              />
-              <div className="min-w-0">
-                <blockquote className="text-[11.5px] leading-snug text-[#3d4f70] md:text-[12px] lg:text-[16px]">“{t.quote}”</blockquote>
-                <figcaption className="mt-2">
-                  <p className="dl-h text-[13px] md:text-[13.5px] lg:text-[18px]">{t.name}</p>
-                  <p className="text-[11px] md:text-[12px] lg:text-[15px]">{t.role}</p>
-                  <div className="mt-1 flex gap-0.5 text-[#ffb400]" aria-label="5 de 5 estrelas">
-                    {[0, 1, 2, 3, 4].map((s) => (
-                      <Star key={s} className="h-3.5 w-3.5 fill-current md:h-[18px] md:w-[18px]" />
-                    ))}
-                  </div>
-                </figcaption>
-              </div>
-            </figure>
+        <div className="mt-4 grid gap-2.5 sm:grid-cols-3 md:gap-4 lg:mt-6">
+          {PROOFS.map((proof) => (
+            <div key={proof.who} className="dl-card rounded-2xl p-4 md:p-5">
+              <p className="text-[11.5px] font-semibold uppercase tracking-[0.04em] text-[#0f5bd8] md:text-[12px] lg:text-[14px]">{proof.who}</p>
+              <p className="dl-h mt-1.5 text-[15px] leading-snug md:text-[15px] lg:text-[21px]">{proof.title}</p>
+              <p className="mt-1.5 text-[12.5px] leading-snug text-[#3d4f70] md:text-[12.5px] lg:text-[16px]">{proof.desc}</p>
+            </div>
           ))}
         </div>
       </Container>
@@ -870,8 +855,8 @@ function FinalCta() {
       <Bg name="fundo-hero" />
       <div aria-hidden className="absolute inset-0 bg-gradient-to-r from-[#0b3ea8]/40 via-[#0a3a9e]/55 to-[#082f86]/80" />
       <Container className="pt-8 text-center md:hidden">
-        <h2 className="text-[25px] font-bold leading-[1.1] tracking-[-0.02em]">Pronto para transformar o seu município?</h2>
-        <p className="mt-2 text-[14px] text-white/90">Junte-se às cidades que já estão no Digiurban.</p>
+        <h2 className="text-[25px] font-bold leading-[1.1] tracking-[-0.02em]">Quer ver na sua prefeitura?</h2>
+        <p className="mt-2 text-[14px] text-white/90">Veja o sistema funcionando com os serviços da sua prefeitura.</p>
         <div className="mx-auto mt-4 flex max-w-[320px] flex-col gap-2.5">
           <button type="button" onClick={() => openLead('demo')} className="dl-btn dl-btn-teal h-[48px] rounded-xl text-[15px]">
             Solicitar uma Demonstração
@@ -901,11 +886,11 @@ function FinalCta() {
         />
         <div className="self-center pb-5 md:pb-7">
           <h2 className="text-[19px] font-bold leading-[1.1] tracking-[-0.02em] sm:text-[24px] md:text-[24px] lg:text-[42px]">
-            Pronto para transformar
-            <br />o seu município?
+            Quer ver na
+            <br />sua prefeitura?
           </h2>
           <p className="mt-1.5 max-w-[620px] text-[12px] leading-snug text-white/90 sm:text-[14px] md:text-[13.5px] lg:text-[20px]">
-            Junte-se a centenas de cidades que já estão construindo um futuro mais digital, eficiente e humano com o Digiurban.
+            Peça uma demonstração e veja o sistema funcionando com os serviços da sua prefeitura.
           </p>
           <div className="mt-3 flex flex-wrap gap-2 md:mt-5 md:gap-3">
             <button type="button" onClick={() => openLead('demo')} className="dl-btn dl-btn-teal h-[36px] rounded-xl px-3 text-[12px] md:h-[42px] md:px-6 md:text-[13.5px] lg:h-[50px] lg:text-[16px]">
