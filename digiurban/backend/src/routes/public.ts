@@ -40,8 +40,9 @@ router.get(
   handleAsync(async (req, res) => {
     const municipios = await runAsPlatform(async () =>
       prisma.tenant.findMany({
-        // exclui o tenant genérico "default" (não é um município real selecionável)
-        where: { status: 'ACTIVE', slug: { not: 'default' } },
+        // o "Município Demonstração" (slug default) TEM de aparecer: é por ele que os
+        // revisores da Apple/Google entram no app (não há outro jeito de escolhê-lo)
+        where: { status: 'ACTIVE' },
         select: {
           id: true,
           slug: true,
