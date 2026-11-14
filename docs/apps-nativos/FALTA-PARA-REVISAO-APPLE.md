@@ -24,6 +24,12 @@ versão **1.0.0**, situação "Preparar para envio".
 > **Enviado para revisão em 12/11/2026, 11h56 (Brasília)** — situação "Aguardando revisão".
 > Publicação automática ao aprovar. Privacidade do app publicada (o rascunho do envio aceitou a versão sem pendências).
 
+> **Recusado em 13/11/2026 (2.1a, iPad)**: o avaliador viu a tela "Você está offline" com internet.
+> Corrigido no envio 16 (`OfflineOnlyFilter`) e o Município Demonstração voltou à lista do login
+> (`routes/public.ts`). **Reenviado em 13/11/2026** com vídeo na nota do revisor — "Aguardando revisão".
+> Reenviar pela API: marcar o item recusado como resolvido (`PATCH reviewSubmissionItems/{id}` `resolved: true`)
+> e depois `PATCH reviewSubmissions/{id}` `submitted: true`. TestFlight: grupo interno "Equipe".
+
 ## Feito em 12/11/2026
 
 - **Município de demonstração com dados**: catálogo aplicado (404 serviços, 14 etiquetas); 2 cidadãos
