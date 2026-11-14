@@ -28,7 +28,7 @@ versão **1.0.0**, situação "Preparar para envio".
 
 - **Município de demonstração com dados**: catálogo aplicado (404 serviços, 14 etiquetas); 2 cidadãos
   de teste fictícios, sem e-mail (Ana Teste Revisão, nível Prata, com 3 pedidos, o 2026-000001 com foto
-  e ponto no mapa; Bruno Teste Exclusão, para o revisor testar a exclusão). CPFs e senhas ficam SÓ em
+  e ponto no mapa; Bruno Teste Exclusão, para o revisor testar a exclusão). Em 13/11/2026 entrou a 3ª: Carla Teste Gravação (chave `gravacao` do arquivo), só para gravar vídeos (inclusive o de excluir conta) sem gastar as contas do revisor. CPFs e senhas ficam SÓ em
   `Documents\DigiUrban-chaves-apps\contas-teste-revisao.json` e na ficha da Apple.
 - **Conta de teste e notas** preenchidas na ficha (caminhos dos menus conferidos com o app).
 - **9 capturas** na ficha (1320×2868, `make-store-images.js`): início, serviços, meus pedidos,
