@@ -13,6 +13,7 @@ public class MainActivity extends BridgeActivity {
     @Override
     public void onCreate(Bundle savedInstanceState) {
         registerPlugin(ExternalLinksPlugin.class);
+        registerPlugin(NativeInfoPlugin.class);
         super.onCreate(savedInstanceState);
         WebView webView = getBridge().getWebView();
 

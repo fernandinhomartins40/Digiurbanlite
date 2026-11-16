@@ -169,6 +169,12 @@ export async function registerNativePush(portal: 'citizen' | 'admin') {
   if (!isNativeApp() || !push) return;
   pushPortal = portal;
   try {
+    // Android sem Firebase fecha o app no register() (erro nativo, o catch não pega).
+    // Build sem o plugin NativeInfo = antigo, compilado sem Firebase: não registra.
+    if (nativePlatform() === 'android') {
+      const caps = await plugin('NativeInfo')?.capabilities?.().catch(() => null);
+      if (!caps?.push) return;
+    }
     if (!pushListenersOn) {
       pushListenersOn = true;
       await push.addListener('registration', (event: { value: string }) => {
