@@ -46,7 +46,7 @@ interface TenantDetail {
   plan: string; planEndsAt: string | null; customDomain: string | null;
   maxUsers: number; maxCitizens: number;
   features: Record<string, unknown> | null;
-  branding: Record<string, string> | null;
+  branding: Record<string, any> | null;
   usage: { users: number; citizens: number; protocols: number; maxUsers: number; maxCitizens: number };
   admins: Admin[];
 }
@@ -147,7 +147,8 @@ export default function TenantDetailPage() {
   };
 
   const currentBranding = () => {
-    const b: Record<string, string> = { corPrimaria, corSecundaria };
+    // mantém o que mais estiver guardado no branding (lista do app, Prefeitura em números...)
+    const b: Record<string, unknown> = { ...(tenant?.branding || {}), corPrimaria, corSecundaria };
     // grava a URL limpa (sem o cache-buster ?v= usado só na exibição)
     if (logoUrl) b.logoUrl = logoUrl.split('?')[0];
     return b;
@@ -404,6 +405,21 @@ export default function TenantDetailPage() {
                 Trocar o plano sugere os limites do catálogo — você pode ajustar manualmente (override por município). Os planos são configurados em <strong>Planos</strong>. Use <strong>-1</strong> para ilimitado.
               </p>
               <p className="text-xs text-muted-foreground">As cores e o logo da prefeitura ficam na aba <strong>Identidade Visual</strong>.</p>
+              <label className="flex items-start gap-3 rounded-md border p-3">
+                <Checkbox
+                  checked={tenant?.branding?.appListed === true}
+                  disabled={saving}
+                  onCheckedChange={(v) =>
+                    patchTenant({ branding: { ...currentBranding(), appListed: v === true } }, v === true ? 'O município aparece na lista do app' : 'O município saiu da lista do app')
+                  }
+                />
+                <span className="text-sm">
+                  <strong>Aparece na lista de municípios do app</strong>
+                  <span className="block text-xs text-muted-foreground">
+                    Marque só depois de receber a carta de autorização assinada pela prefeitura (exigência da Apple). Fora da lista, o município continua entrando pelo próprio endereço.
+                  </span>
+                </span>
+              </label>
               <Button onClick={saveConfig} disabled={saving}>{saving ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <Save className="h-4 w-4 mr-2" />} Salvar configuração</Button>
             </CardContent>
           </Card>

@@ -40,9 +40,14 @@ router.get(
   handleAsync(async (req, res) => {
     const municipios = await runAsPlatform(async () =>
       prisma.tenant.findMany({
-        // o "Município Demonstração" (slug default) TEM de aparecer: é por ele que os
-        // revisores da Apple/Google entram no app (não há outro jeito de escolhê-lo)
-        where: { status: 'ACTIVE' },
+        // Só entra na lista quem autorizou por escrito (Apple 5.1.1(ix): carta de cada município
+        // do app) — Super-admin › município › "Aparece na lista do app". O "Município
+        // Demonstração" (slug default, fictício) TEM de aparecer: é por ele que os revisores entram.
+        // Município fora da lista continua entrando pelo próprio endereço ({slug}.digiurban.com.br).
+        where: {
+          status: 'ACTIVE',
+          OR: [{ slug: 'default' }, { branding: { path: ['appListed'], equals: true } }],
+        },
         select: {
           id: true,
           slug: true,
