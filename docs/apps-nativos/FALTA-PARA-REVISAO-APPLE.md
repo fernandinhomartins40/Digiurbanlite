@@ -1,5 +1,7 @@
 # O que falta para enviar o iPhone à revisão da Apple (rascunho, 12/11/2026)
 
+> **Recusado em 16/11/2026 (5.1.1(ix))**: a Apple pediu carta de autorização de cada município do app. Palmital (teste, sem contrato) saiu da lista (`branding.appListed`, Super-admin › município); só o Município Demonstração aparece. **Reenviado em 16/11/2026 com o build 20** (nome Digiurban) — "Aguardando revisão". Modelo da carta: `CARTA-AUTORIZACAO-MUNICIPIO.md`.
+
 Conferido pela API do App Store Connect em 12/11/2026. App: **DigiUrban** (id 6833740939),
 versão **1.0.0**, situação "Preparar para envio".
 
