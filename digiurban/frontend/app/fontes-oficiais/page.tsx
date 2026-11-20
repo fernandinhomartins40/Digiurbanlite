@@ -2,8 +2,8 @@ import type { Metadata } from 'next'
 import { LegalPage, NOT_GOVERNMENT } from '@/components/legal/LegalPage'
 
 export const metadata: Metadata = {
-  title: 'Fontes oficiais - DigiUrban',
-  description: 'De onde vêm as informações de governo mostradas no DigiUrban e os links para as fontes oficiais (.gov.br).',
+  title: 'Fontes oficiais - Digiurban',
+  description: 'De onde vêm as informações de governo mostradas no Digiurban e os links para as fontes oficiais (.gov.br).',
   alternates: { canonical: '/fontes-oficiais' },
   robots: { index: true, follow: true },
 }
@@ -52,7 +52,7 @@ export default function OfficialSourcesPage() {
   return (
     <LegalPage
       title="Fontes oficiais"
-      intro="De onde vêm as informações de governo que aparecem no DigiUrban."
+      intro="De onde vêm as informações de governo que aparecem no Digiurban."
     >
       <p className="rounded-xl bg-blue-50 px-4 py-3 text-sm text-blue-900">{NOT_GOVERNMENT}</p>
 

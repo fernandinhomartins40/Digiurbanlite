@@ -24,7 +24,7 @@ export const LEGAL_LINKS = [
   { href: '/fontes-oficiais', label: 'Fontes oficiais' },
 ]
 
-export const NOT_GOVERNMENT = 'O DigiUrban é a plataforma digital usada pela sua prefeitura. Não é um órgão de governo.'
+export const NOT_GOVERNMENT = 'O Digiurban é a plataforma digital usada pela sua prefeitura. Não é um órgão de governo.'
 
 export function LegalPage({ title, intro, children, updated = true }: { title: string; intro?: string; children: React.ReactNode; updated?: boolean }) {
   return (
@@ -33,7 +33,7 @@ export function LegalPage({ title, intro, children, updated = true }: { title: s
         <div className="mb-6 flex items-center justify-between gap-3">
           <Link href="/cidadao" className="flex items-center gap-2 font-semibold text-gray-900">
             <img src="/icon-192x192.png" alt="" className="h-8 w-8 rounded-lg" />
-            DigiUrban
+            Digiurban
           </Link>
           <Link href="/legal" className="text-sm text-blue-700 hover:underline">
             Documentos
@@ -57,7 +57,7 @@ export function LegalPage({ title, intro, children, updated = true }: { title: s
             ))}
           </p>
           <p>
-            DigiUrban é mantido por {COMPANY.name} — CNPJ {COMPANY.cnpj} — {COMPANY.address}
+            Digiurban é mantido por {COMPANY.name} — CNPJ {COMPANY.cnpj} — {COMPANY.address}
           </p>
           <p>
             Contato: <a href={`mailto:${SUPPORT_EMAIL}`} className="underline">{SUPPORT_EMAIL}</a>

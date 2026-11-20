@@ -5,9 +5,9 @@ descrição curta 80, descrição completa 4.000.
 
 ## Aviso obrigatório (usar na descrição das duas lojas e no app, em "Sobre")
 
-> O DigiUrban é a plataforma usada pelas prefeituras para atender o cidadão pela internet.
-> O DigiUrban não é um órgão de governo: os pedidos são recebidos e decididos pela prefeitura
-> do seu município, que contratou a plataforma. Veja se o seu município usa o DigiUrban na
+> O Digiurban é a plataforma usada pelas prefeituras para atender o cidadão pela internet.
+> O Digiurban não é um órgão de governo: os pedidos são recebidos e decididos pela prefeitura
+> do seu município, que contratou a plataforma. Veja se o seu município usa o Digiurban na
 > tela de entrada do app.
 
 ## Nome e textos curtos
@@ -25,12 +25,12 @@ Google de representação enganosa e Apple 4.3/5.2).
 ## Descrição completa (Google e Apple)
 
 ```
-AVISO: o DigiUrban NÃO é um órgão de governo e não representa nenhuma entidade
+AVISO: o Digiurban NÃO é um órgão de governo e não representa nenhuma entidade
 governamental. É uma plataforma privada, da empresa FUSE AGENCIA LTDA, contratada pelas
 prefeituras para atender o cidadão pela internet. Os pedidos são recebidos e decididos pela
-prefeitura do seu município. Veja se o seu município usa o DigiUrban na tela de entrada do app.
+prefeitura do seu município. Veja se o seu município usa o Digiurban na tela de entrada do app.
 
-O DigiUrban leva os serviços da prefeitura para o seu celular. Escolha o seu município,
+O Digiurban leva os serviços da prefeitura para o seu celular. Escolha o seu município,
 entre com CPF e senha e resolva sem fila:
 
 • Faça pedidos à prefeitura: tapa-buraco, poda de árvore, iluminação, matrícula escolar,

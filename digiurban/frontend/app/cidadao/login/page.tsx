@@ -816,7 +816,7 @@ function CitizenLoginForm() {
               <Link href="/privacidade" className="underline">Política de privacidade</Link>.
             </p>
             <p className="mt-2 text-xs text-gray-400">
-              O DigiUrban é a plataforma digital usada pela sua prefeitura. Não é um órgão de governo.{' '}
+              O Digiurban é a plataforma digital usada pela sua prefeitura. Não é um órgão de governo.{' '}
               <Link href="/fontes-oficiais" className="underline">Fontes oficiais</Link>
             </p>
           </div>
