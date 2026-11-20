@@ -164,7 +164,9 @@ mesmo do Firebase; API "Google Play Android Developer" ligada). A chave JSON est
 `%USERPROFILE%\.digiurban\play-service-account.json` (fora do Git). Para valer, a conta precisa
 estar convidada em Play Console › Usuários e permissões, com permissão no app Digiurban:
 https://play.google.com/console/u/0/developers/6621228009230898416/users-and-permissions
-(conta de desenvolvedor Play nº 6621228009230898416).
+(conta de desenvolvedor Play nº 6621228009230898416). Convidada e funcionando em 20/11/2026: a
+descrição nova foi gravada pela API. Com o app recusado, a API só grava
+(`changesNotSentForReview=true`); o envio para revisão é o botão da Visão geral da publicação.
 
 ## Etapa 7 — App Store Connect
 
