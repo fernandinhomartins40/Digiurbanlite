@@ -88,6 +88,13 @@ export default function MaisPage() {
       icon: Info,
       href: '/legal',
     },
+    {
+      id: 'sources',
+      label: 'Fontes oficiais',
+      description: 'De onde vêm as informações de governo (sites .gov.br)',
+      icon: Shield,
+      href: '/fontes-oficiais',
+    },
   ];
 
   const dangerItems: MenuItem[] = [
@@ -210,7 +217,8 @@ export default function MaisPage() {
             </div>
             <p className="text-xs text-gray-500">Versão 1.0.0</p>
             <p className="text-xs text-gray-500 mt-2">
-              O Digiurban é a plataforma digital usada pela sua prefeitura. Não é um órgão de governo.
+              O Digiurban é a plataforma digital usada pela sua prefeitura. Não é um órgão de governo.{' '}
+              <a href="/fontes-oficiais" className="underline">Fontes oficiais</a>
             </p>
             <p className="text-xs text-gray-500 mt-1">
               Suporte: <a href={`mailto:${SUPPORT_EMAIL}`} className="underline">{SUPPORT_EMAIL}</a>

@@ -25,7 +25,7 @@ export default function sitemap(): MetadataRoute.Sitemap {
       changeFrequency: 'weekly',
       priority: 0.8,
     },
-    ...['/privacidade', '/termos', '/excluir-conta', '/suporte', '/legal'].map((path) => ({
+    ...['/privacidade', '/termos', '/excluir-conta', '/suporte', '/legal', '/fontes-oficiais'].map((path) => ({
       url: `${baseUrl}${path}`,
       lastModified: now,
       changeFrequency: 'monthly' as const,

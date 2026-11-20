@@ -21,6 +21,7 @@ export const LEGAL_LINKS = [
   { href: '/termos', label: 'Termos de uso' },
   { href: '/excluir-conta', label: 'Excluir a conta' },
   { href: '/suporte', label: 'Ajuda e suporte' },
+  { href: '/fontes-oficiais', label: 'Fontes oficiais' },
 ]
 
 export const NOT_GOVERNMENT = 'O DigiUrban é a plataforma digital usada pela sua prefeitura. Não é um órgão de governo.'

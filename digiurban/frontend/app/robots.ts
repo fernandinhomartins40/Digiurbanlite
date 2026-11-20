@@ -16,6 +16,7 @@ export default function robots(): MetadataRoute.Robots {
           '/excluir-conta',
           '/suporte',
           '/legal',
+          '/fontes-oficiais',
         ],
         disallow: [
           '/api/',
@@ -38,6 +39,7 @@ export default function robots(): MetadataRoute.Robots {
           '/excluir-conta',
           '/suporte',
           '/legal',
+          '/fontes-oficiais',
         ],
         disallow: [
           '/api/',

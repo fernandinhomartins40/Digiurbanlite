@@ -25,6 +25,11 @@ Google de representação enganosa e Apple 4.3/5.2).
 ## Descrição completa (Google e Apple)
 
 ```
+AVISO: o DigiUrban NÃO é um órgão de governo e não representa nenhuma entidade
+governamental. É uma plataforma privada, da empresa FUSE AGENCIA LTDA, contratada pelas
+prefeituras para atender o cidadão pela internet. Os pedidos são recebidos e decididos pela
+prefeitura do seu município. Veja se o seu município usa o DigiUrban na tela de entrada do app.
+
 O DigiUrban leva os serviços da prefeitura para o seu celular. Escolha o seu município,
 entre com CPF e senha e resolva sem fila:
 
@@ -43,10 +48,20 @@ entre com CPF e senha e resolva sem fila:
 • Seus dados, suas regras: baixe uma cópia dos seus dados ou exclua a sua conta pelo
   próprio app.
 
-O DigiUrban é a plataforma usada pelas prefeituras para atender o cidadão pela internet.
-O DigiUrban não é um órgão de governo: os pedidos são recebidos e decididos pela prefeitura
-do seu município, que contratou a plataforma. Veja se o seu município usa o DigiUrban na
-tela de entrada do app.
+Fontes oficiais das informações de governo:
+• Serviços, prazos e regras de cada município: a prefeitura do município escolhido. Confira
+  no site oficial dela (endereço terminado em .gov.br).
+• Portal de serviços do Governo Federal: https://www.gov.br/pt-br/servicos
+• Código de Defesa do Usuário do Serviço Público (Lei 13.460/2017):
+  https://www.planalto.gov.br/ccivil_03/_ato2015-2018/2017/lei/l13460.htm
+• Lei do Governo Digital (Lei 14.129/2021):
+  https://www.planalto.gov.br/ccivil_03/_ato2019-2022/2021/lei/l14129.htm
+• Assinaturas eletrônicas (Lei 14.063/2020):
+  https://www.planalto.gov.br/ccivil_03/_ato2019-2022/2020/lei/l14063.htm
+• LGPD (Lei 13.709/2018):
+  https://www.planalto.gov.br/ccivil_03/_ato2015-2018/2018/lei/l13709.htm
+• ANPD: https://www.gov.br/anpd/pt-br
+Lista completa no app (Eu › Fontes oficiais) e em https://digiurban.com.br/fontes-oficiais
 
 Privacidade: https://digiurban.com.br/privacidade
 Termos de uso: https://digiurban.com.br/termos

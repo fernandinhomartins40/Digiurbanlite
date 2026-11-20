@@ -145,6 +145,18 @@ em `digiurban/frontend/public/.well-known/`, você só fornece os números):
    **teste fechado** com 12 pessoas por 14 dias antes.
 6. Revisão do Google: de horas a ~7 dias no primeiro envio.
 
+**Recusa do Google em 18/11/2026 — "declarações enganosas" (falta link para a fonte de
+informações governamentais).** O app mostra informação de governo (serviços da prefeitura,
+leis) e a descrição não tinha links para as fontes oficiais (.gov.br). Correção: descrição com o
+aviso "não representa entidade governamental" no TOPO + bloco "Fontes oficiais" com links
+.gov.br (texto em FICHAS-LOJAS.md); dentro do app, página `/fontes-oficiais` (aba Eu, rodapé do
+login e das páginas legais). Não precisa de AAB novo (o app abre o site). Reenvio: colar a
+descrição na Ficha principal › Salvar › Visão geral da publicação › Enviar alterações. Outra
+saída é contestar com a carta assinada de uma prefeitura (só existe se alguma assinar). Município
+real que entrar na lista do app: pôr o site oficial dele (.gov.br) no bloco de fontes da descrição.
+Links conferidos em 19/11/2026 (o Planalto só responde de IP do Brasil; o IBGE Cidades bloqueia
+robô e ficou de fora).
+
 ## Etapa 7 — App Store Connect
 
 https://appstoreconnect.apple.com
