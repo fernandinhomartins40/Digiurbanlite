@@ -24,42 +24,30 @@ Google de representação enganosa e Apple 4.3/5.2).
 
 ## Descrição completa (Google e Apple)
 
+Texto pronto para colar (cada parágrafo numa linha só; não quebrar).
+
 ```
-AVISO: o Digiurban NÃO é um órgão de governo e não representa nenhuma entidade
-governamental. É uma plataforma privada, da empresa FUSE AGENCIA LTDA, contratada pelas
-prefeituras para atender o cidadão pela internet. Os pedidos são recebidos e decididos pela
-prefeitura do seu município. Veja se o seu município usa o Digiurban na tela de entrada do app.
+AVISO: o Digiurban NÃO é um órgão de governo e não representa nenhuma entidade governamental. É uma plataforma privada, da empresa FUSE AGENCIA LTDA, contratada pelas prefeituras para atender o cidadão pela internet. Os pedidos são recebidos e decididos pela prefeitura do seu município. Veja se o seu município usa o Digiurban na tela de entrada do app.
 
-O Digiurban leva os serviços da prefeitura para o seu celular. Escolha o seu município,
-entre com CPF e senha e resolva sem fila:
+O Digiurban leva os serviços da prefeitura para o seu celular. Escolha o seu município, entre com CPF e senha e resolva sem fila:
 
-• Faça pedidos à prefeitura: tapa-buraco, poda de árvore, iluminação, matrícula escolar,
-  consultas e remédios, benefícios sociais, licenças e muito mais (os serviços dependem
-  do seu município).
-• Acompanhe cada pedido pelo número do protocolo e receba aviso no celular quando houver
-  novidade ou quando a prefeitura pedir alguma informação.
+• Faça pedidos à prefeitura: tapa-buraco, poda de árvore, iluminação, matrícula escolar, consultas e remédios, benefícios sociais, licenças e muito mais (os serviços dependem do seu município).
+• Acompanhe cada pedido pelo número do protocolo e receba aviso no celular quando houver novidade ou quando a prefeitura pedir alguma informação.
 • Envie documentos pela câmera: o app ajuda a enquadrar, recorta e deixa a foto legível.
 • Marque no mapa o local do problema com a localização do celular ou tocando no mapa.
 • Converse com o assistente virtual e, quando precisar, com um atendente da prefeitura.
 • Cuide da família: cadastre seus dependentes e faça pedidos por eles.
 • Receba e assine documentos com a sua senha, com código de conferência pública.
-• Confirme a sua identidade com a biometria facial (opcional, com o seu consentimento),
-  para liberar serviços que exigem mais segurança.
-• Seus dados, suas regras: baixe uma cópia dos seus dados ou exclua a sua conta pelo
-  próprio app.
+• Confirme a sua identidade com a biometria facial (opcional, com o seu consentimento), para liberar serviços que exigem mais segurança.
+• Seus dados, suas regras: baixe uma cópia dos seus dados ou exclua a sua conta pelo próprio app.
 
 Fontes oficiais das informações de governo:
-• Serviços, prazos e regras de cada município: a prefeitura do município escolhido. Confira
-  no site oficial dela (endereço terminado em .gov.br).
+• Serviços, prazos e regras de cada município: a prefeitura do município escolhido. Confira no site oficial dela (endereço terminado em .gov.br).
 • Portal de serviços do Governo Federal: https://www.gov.br/pt-br/servicos
-• Código de Defesa do Usuário do Serviço Público (Lei 13.460/2017):
-  https://www.planalto.gov.br/ccivil_03/_ato2015-2018/2017/lei/l13460.htm
-• Lei do Governo Digital (Lei 14.129/2021):
-  https://www.planalto.gov.br/ccivil_03/_ato2019-2022/2021/lei/l14129.htm
-• Assinaturas eletrônicas (Lei 14.063/2020):
-  https://www.planalto.gov.br/ccivil_03/_ato2019-2022/2020/lei/l14063.htm
-• LGPD (Lei 13.709/2018):
-  https://www.planalto.gov.br/ccivil_03/_ato2015-2018/2018/lei/l13709.htm
+• Código de Defesa do Usuário do Serviço Público (Lei 13.460/2017): https://www.planalto.gov.br/ccivil_03/_ato2015-2018/2017/lei/l13460.htm
+• Lei do Governo Digital (Lei 14.129/2021): https://www.planalto.gov.br/ccivil_03/_ato2019-2022/2021/lei/l14129.htm
+• Assinaturas eletrônicas (Lei 14.063/2020): https://www.planalto.gov.br/ccivil_03/_ato2019-2022/2020/lei/l14063.htm
+• LGPD (Lei 13.709/2018): https://www.planalto.gov.br/ccivil_03/_ato2015-2018/2018/lei/l13709.htm
 • ANPD: https://www.gov.br/anpd/pt-br
 Lista completa no app (Eu › Fontes oficiais) e em https://digiurban.com.br/fontes-oficiais
 

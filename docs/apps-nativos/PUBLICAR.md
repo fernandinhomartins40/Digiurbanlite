@@ -157,6 +157,13 @@ real que entrar na lista do app: pôr o site oficial dele (.gov.br) no bloco de 
 Links conferidos em 19/11/2026 (o Planalto só responde de IP do Brasil; o IBGE Cidades bloqueia
 robô e ficou de fora).
 
+**Chave da API da Play (criada em 20/11/2026):** conta de serviço
+`play-publisher@digiurban-app.iam.gserviceaccount.com` (projeto Google Cloud `digiurban-app`, o
+mesmo do Firebase; API "Google Play Android Developer" ligada). A chave JSON está no segredo
+`PLAY_SERVICE_ACCOUNT_JSON` do GitHub (usado pelo `enviar_play` do workflow) e numa cópia em
+`%USERPROFILE%\.digiurban\play-service-account.json` (fora do Git). Para valer, a conta precisa
+estar convidada em Play Console › Usuários e permissões, com permissão no app Digiurban.
+
 ## Etapa 7 — App Store Connect
 
 https://appstoreconnect.apple.com
