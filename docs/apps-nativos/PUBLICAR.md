@@ -161,7 +161,8 @@ robô e ficou de fora).
 `play-publisher@digiurban-app.iam.gserviceaccount.com` (projeto Google Cloud `digiurban-app`, o
 mesmo do Firebase; API "Google Play Android Developer" ligada). A chave JSON está no segredo
 `PLAY_SERVICE_ACCOUNT_JSON` do GitHub (usado pelo `enviar_play` do workflow) e numa cópia em
-`%USERPROFILE%\.digiurban\play-service-account.json` (fora do Git). Para valer, a conta precisa
+`C:\Users\fusea\.google-play\service-account.json` (fora do Git; o `README.md` da mesma pasta
+explica como usar em qualquer app). Para valer, a conta precisa
 estar convidada em Play Console › Usuários e permissões, com permissão no app Digiurban:
 https://play.google.com/console/u/0/developers/6621228009230898416/users-and-permissions
 (conta de desenvolvedor Play nº 6621228009230898416). Convidada e funcionando em 20/11/2026: a
